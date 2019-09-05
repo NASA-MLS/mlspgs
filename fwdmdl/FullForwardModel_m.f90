@@ -550,8 +550,10 @@ contains
     call test_deallocate ( stat, moduleName, "QTM_Paths", ermsg=ermsg )
     deallocate ( F_and_V, stat=stat, errmsg=ermsg )
     call test_deallocate ( stat, moduleName, "F_and_V", ermsg=ermsg )
-    deallocate ( F_and_V_MIF, stat=stat, errmsg=ermsg )
-    call test_deallocate ( stat, moduleName, "F_and_V_MIF", ermsg=ermsg )
+    if ( allocated(F_and_V_MIF) ) then
+      deallocate ( F_and_V_MIF, stat=stat, errmsg=ermsg )
+      call test_deallocate ( stat, moduleName, "F_and_V_MIF", ermsg=ermsg )
+    end if
 
     call trace_end ( 'FullForwardModel, MAF=', fmStat%maf, cond=toggle(emit) )
 
@@ -4659,6 +4661,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.403  2019/06/24 23:28:16  pwagner
+! Updated to reflect TA-01-143
+!
 ! Revision 2.402  2018/10/30 23:14:36  vsnyder
 ! Make sure RadV always has a value in One_Frequency
 !
