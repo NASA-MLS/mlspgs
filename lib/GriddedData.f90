@@ -1190,7 +1190,9 @@ contains
         qty%missingValue = source%missingValue
         qty%verticalCoordinate = source%verticalCoordinate
         qty%units = source%units
+        qty%quantityName = source%quantityName
         qty%heightsUnits = source%heightsUnits
+        qty%dimList = source%dimList
       else ! We have no template, setup a very bare quantity
         qty%noHeights = 1
         qty%noLats = 1
@@ -1856,6 +1858,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.84  2019/09/05 17:50:13  pwagner
+! SetUp with sources quantityName, dimList, too
+!
 ! Revision 2.83  2017/11/03 20:01:16  pwagner
 ! Most array gymnastics moved from MLSFillValues to HyperSlabs module
 !
