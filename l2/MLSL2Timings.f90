@@ -412,8 +412,12 @@ contains ! =====     Public Procedures     =============================
         call output( 'skipDirectwrites: ', advance='no' )
         call output( skipDirectwrites, advance='yes' )
       case ( f_skipRetrieval )
+        ! Don't turn retrievals back on if cmdline options said to skip them
+        if ( L2Options%SkipRetrievalOriginal ) cycle
         L2Options%SkipRetrieval = get_boolean ( fieldValue )
       case ( f_skipRetrievalif )
+        ! Don't turn retrievals back on if cmdline options said to skip them
+        if ( L2Options%SkipRetrievalOriginal ) cycle
         call get_string( sub_rosa(subtree(2,son)), booleanString )
         if ( stamp ) call output( 'told to skipRetrieval: ', advance='no' )
         if ( stamp ) call output( BooleanValue ( lowercase(booleanString), &
@@ -1046,6 +1050,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.75  2019/09/05 17:52:54  pwagner
+! cmdline --skipretrievals no longer reversible
+!
 ! Revision 2.74  2019/07/17 20:21:11  pwagner
 ! Dont DumpOptions while output is suspended
 !
