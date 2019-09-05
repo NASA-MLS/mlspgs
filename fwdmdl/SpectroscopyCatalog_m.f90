@@ -454,10 +454,10 @@ contains ! =====  Public Procedures  ===================================
   contains
     ! ...........................................  Announce_Error  .....
     subroutine Announce_Error ( Where, Code, More, MSG )
-      use INTRINSIC, only: FIELD_INDICES, LIT_INDICES, PHYQ_INDICES
-      use MORETREE, only: STARTERRORMESSAGE
-      use OUTPUT_M, only: OUTPUT
-      use STRING_TABLE, only: DISPLAY_STRING
+      use Intrinsic, only: Field_Indices, Lit_Indices, Phyq_Indices
+      use Moretree, only: StarterrorMessage
+      use Output_M, only: Output
+      use String_Table, only: Display_String
       integer, intent(in) :: Where      ! In the tree
       integer, intent(in) :: Code       ! The error code
       integer, intent(in), optional :: More  ! In case some error messages need
@@ -512,7 +512,7 @@ contains ! =====  Public Procedures  ===================================
     subroutine Expr_Check ( Root, Value, NeededUnits )
     ! Evaluate the expression at Root giving Value.  Make sure its units
     ! are NeededUnits
-      use EXPR_M, only: EXPR
+      use Expr_M, only: Expr
       integer, intent(in) :: Root
       real(r8), intent(out) :: Value
       integer, intent(in) :: NeededUnits
@@ -537,7 +537,7 @@ contains ! =====  Public Procedures  ===================================
   ! --------------------------------------  Destroy_Line_Database  -----
   subroutine Destroy_Line_Database
 
-    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST, TEST_DEALLOCATE
+    use Allocate_Deallocate, only: Deallocate_test, Test_deallocate
     use, intrinsic :: ISO_C_Binding, only: C_Intptr_t
 
     integer(c_intptr_t) :: Addr         ! For tracing
@@ -558,7 +558,7 @@ contains ! =====  Public Procedures  ===================================
 
   ! ----------------------------------  Destroy_SpectCat_Database  -----
   subroutine Destroy_SpectCat_Database
-    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST
+    use Allocate_Deallocate, only: Deallocate_test
     integer :: I
     do i = first_molecule, last_molecule
       call deallocate_test ( catalog(i)%lines, "catalog(molecule)%Lines", moduleName )
@@ -570,9 +570,9 @@ contains ! =====  Public Procedures  ===================================
 
   ! --------------------------------------------------  Dump_Line  -----
   subroutine Dump_Line ( Line )
-    use DUMP_0, only: DUMP
-    use OUTPUT_M, only: BLANKS, OUTPUT
-    use STRING_TABLE, only: DISPLAY_STRING
+    use Dump_0, only: Dump
+    use Output_M, only: Blanks, Output
+    use String_Table, only: Display_String
     type(line_t), intent(in) :: Line
 
     if ( line%line_name /= 0 ) then
@@ -604,7 +604,7 @@ contains ! =====  Public Procedures  ===================================
 
   ! ----------------------------------------  Dump_Lines_Database  -----
   subroutine Dump_Lines_Database ( Start, End, Number )
-    use OUTPUT_M, only: BLANKS, OUTPUT
+    use Output_M, only: Blanks, Output
     integer, intent(in), optional :: Start, End
     logical, intent(in), optional :: Number
     integer :: I                   ! Subscript, loop inductor
@@ -638,7 +638,7 @@ contains ! =====  Public Procedures  ===================================
 
   ! -------------------------------------  Dump_SpectCat_Database  -----
   subroutine Dump_SpectCat_Database ( Catalog, Name, Sideband, Details )
-    use OUTPUT_M, only: NEWLINE, OUTPUT
+    use Output_M, only: Newline, Output
 
     type(catalog_T), intent(in) :: Catalog(:)
     character(len=*), intent(in), optional :: Name
@@ -662,10 +662,10 @@ contains ! =====  Public Procedures  ===================================
 
   ! -----------------------------------------  Dump_SpectCat_Item  -----
   subroutine Dump_SpectCat_Item ( Catalog, Details )
-    use DUMP_0, only: DUMP
-    use INTRINSIC, only: LIT_INDICES
-    use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
-    use STRING_TABLE, only: DISPLAY_STRING, STRING_LENGTH
+    use Dump_0, only: Dump
+    use Intrinsic, only: Lit_Indices
+    use Output_M, only: Blanks, Newline, Output
+    use String_Table, only: Display_String, String_Length
 
     type(catalog_T), intent(in) :: Catalog
     integer, optional, intent(in) :: Details ! <= 0 => Don't dump lines,
@@ -761,14 +761,15 @@ contains ! =====  Public Procedures  ===================================
   ! ............................................  Get_File_Name  .....
   subroutine Get_File_Name ( pcfCode, &
     & spectroscopyFile, fileDataBase, MLSFile, toolkit, MSG, pcfEndCode )
-    use HDF, only: DFACC_RDONLY
-    use INTRINSIC, only: L_HDF
-    use MLSCOMMON, only: MLSFILE_T
-    use MLSFILES, only: HDFVERSION_5, &
-      & ADDINITIALIZEMLSFILE, GETPCFROMREF, SPLIT_PATH_NAME
-    use OUTPUT_M, only: OUTPUT
-    use SDPTOOLKIT, only: PGS_PC_GETREFERENCE
-    use STRING_TABLE, only: GET_STRING
+    use HDF, only: Dfacc_Rdonly
+    use HighOutput, only: OutputnamedValue
+    use Intrinsic, only: L_HDF
+    use MLSCommon, only: MLSFile_T
+    use MLSFiles, only: HDFversion_5, &
+      & AddinitializeMLSFile, Getpcfromref, Split_Path_Name
+    use Output_M, only: Output
+    use Sdptoolkit, only: Pgs_Pc_Getreference
+    use String_Table, only: Get_String
     ! Dummy args
     integer, intent(in) :: pcfCode
     integer, intent(in) :: spectroscopyFile ! parser id
@@ -807,6 +808,10 @@ contains ! =====  Public Procedures  ===================================
           & exactName=PCFFileName)
         if ( returnStatus /= 0 ) then
           call output( MSG, advance='yes' )
+          call OutputNamedValue( 'PCFid', pcfCode )
+          call OutputNamedValue( 'PCFFileName', trim(PCFFileName) )
+          call OutputNamedValue( 'toolkit', toolkit )
+          call OutputNamedValue( 'returnStatus', returnStatus )
         else
           fileName = PCFFileName
         end if
@@ -823,13 +828,13 @@ contains ! =====  Public Procedures  ===================================
   ! Module-wide global variable LINES needs to be associated BEFORE
   ! calling this subroutine
   subroutine ReadIsotopeRatios ( Where, FileName, FileType )
-    use INTRINSIC, only: LIT_INDICES
-    use MLSHDF5, only: LOADFROMHDF5DS
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
-    use MLSSTRINGS, only: CAPITALIZE
-    use MOLECULES, only: ISEXTINCTION
-    use STRING_TABLE, only: GET_STRING
-    use HDF5, only: H5F_ACC_RDONLY_F, H5FOPEN_F, H5FCLOSE_F
+    use Intrinsic, only: Lit_Indices
+    use MLSHDF5, only: LoadfromHDF5ds
+    use MLSMessagemodule, only: MLSMessage, MLSMSG_Error
+    use MLSStrings, only: Capitalize
+    use Molecules, only: Isextinction
+    use String_Table, only: Get_String
+    use HDF5, only: H5f_Acc_Rdonly_F, H5fopen_F, H5fclose_F
 
     integer, intent(in) :: Where ! in the parse tree
     character(len=*), intent(in) :: FileName, FileType
@@ -869,24 +874,23 @@ contains ! =====  Public Procedures  ===================================
   ! calling this subroutine.
   ! Should be OK now.
   subroutine Read_Spectroscopy ( Where, FileName, FileType )
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, &
-      & TEST_ALLOCATE, TEST_DEALLOCATE
-!   use DECLARATION_TABLE, only: DECLARE, DECLS, GET_DECL, LABEL
-    use HDF, only: DFACC_RDONLY
-    use INTRINSIC, only: LIT_INDICES ! , PHYQ_INVALID
-    use IO_STUFF, only: GET_LUN
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t
-    use MACHINE, only: IO_ERROR
-    use MLSHDF5, only: GETHDF5ATTRIBUTE, GETHDF5DSDIMS, &
-      & ISHDF5ATTRIBUTEPRESENT, ISHDF5DSPRESENT, LOADFROMHDF5DS, LOADPTRFROMHDF5DS
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
-    use MLSSIGNALS_M, only: INSTRUMENT, MAXSIGLEN
-    use MLSSTRINGS, only: CAPITALIZE
-    use MORETREE, only: GETLITINDEXFROMSTRING, GETSTRINGINDEXFROMSTRING
-    use PARSE_SIGNAL_M, only: PARSE_SIGNAL
-    use STRING_TABLE, only: GET_STRING
-    use TREE, only: NULL_TREE
-    use HDF5, only: HSIZE_T
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, &
+      & Test_Allocate, Test_Deallocate
+    use HDF, only: Dfacc_Rdonly
+    use Intrinsic, only: Lit_Indices !, Phyq_Invalid
+    use Io_Stuff, only: Get_Lun
+    use, Intrinsic :: Iso_C_Binding, only: C_Intptr_T
+    use Machine, only: Io_Error
+    use MLSHDF5, only: GetHDF5attribute, GetHDF5dsdims, &
+      & IsHDF5attributepresent, IsHDF5dspresent, LoadfromHDF5ds, LoadptrfromHDF5ds
+    use MLSMessagemodule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+    use MLSSignals_M, only: Instrument, Maxsiglen
+    use MLSStrings, only: Capitalize
+    use Moretree, only: Getlitindexfromstring, Getstringindexfromstring
+    use Parse_Signal_M, only: Parse_Signal
+    use String_Table, only: Get_String
+    use Tree, only: Null_Tree
+    use HDF5, only: Hsize_T
 
     integer, intent(in) :: Where ! in the parse tree
     character(len=*), intent(in) :: FileName, FileType
@@ -1273,18 +1277,18 @@ contains ! =====  Public Procedures  ===================================
 
 ! -------------------------------------------  Write_Spectroscopy  -----
   subroutine Write_Spectroscopy ( Where, FileName, FileType )
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use INTRINSIC, only: LIT_INDICES
-    use IO_STUFF, only: GET_LUN
-    use MACHINE, only: IO_ERROR
-    use MLSHDF5, only: MAKEHDF5ATTRIBUTE, SAVEASHDF5DS
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
-    use MLSSIGNALS_M, only: GETSIGNALNAME, INSTRUMENT, MAXSIGLEN, SIGNALS
-    use MLSSTRINGS, only: CAPITALIZE
-    use MORETREE, only: STARTERRORMESSAGE
-    use OUTPUT_M, only: OUTPUT
-    use STRING_TABLE, only: GET_STRING, STRING_LENGTH
-    use HDF5, only: H5FCREATE_F, H5FCLOSE_F, H5F_ACC_TRUNC_F
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use Intrinsic, only: Lit_Indices
+    use Io_Stuff, only: Get_Lun
+    use Machine, only: Io_Error
+    use MLSHDF5, only: MakeHDF5attribute, SaveasHDF5ds
+    use MLSMessagemodule, only: MLSMessage, MLSMSG_Error
+    use MLSSignals_M, only: Getsignalname, Instrument, Maxsiglen, Signals
+    use MLSStrings, only: Capitalize
+    use Moretree, only: StarterrorMessage
+    use Output_M, only: Output
+    use String_Table, only: Get_String, String_Length
+    use HDF5, only: H5fcreate_F, H5fclose_F, H5f_Acc_Trunc_F
 
     integer, intent(in) :: Where ! in the parse tree
     character(len=*), intent(in) :: FileName, FileType
@@ -1577,6 +1581,10 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.66  2018/08/06 19:55:19  vsnyder
+! Use Get_C_Loc for Lines, Catalog.  Remove POINTER attribute from argument
+! in Dump_SpectCat_Database_2d because it's not needed.
+!
 ! Revision 2.65  2018/08/04 02:10:00  vsnyder
 ! Make Lines database allocatable instead of a pointer
 !
