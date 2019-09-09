@@ -22,9 +22,9 @@
 % -----------------------------------------------------------------------------
 %
 \title{Summary of Retriever}
-\subtitle{wvs-050r4}
+\subtitle{wvs-050r5}
 \author{Van Snyder}
-\date{28 August 2019} 
+\date{9 September 2019} 
 \titlegraphic{\includegraphics[width=1.0in]{eos_mls_logo_onpink}}
 \begin{document}
 \sloppy
@@ -151,6 +151,7 @@ $\delta\b{x}$.  Re-writing the second and third relations, we have
 or
 
 \begin{equation*}
+\b{K} \delta  \b{x} =
 \left[ \begin{array}{l}
   \b{W} \b{J} \\
   \b{F} \\
@@ -175,9 +176,9 @@ Putting these all together, weighting them, scaling, ... we have ...
 \newframe{Least-squares view of problem (4)}
 
 The Newton iteration consists of evaluating $\b{K}$ and $\b{f}$ at
-$\b{x}_n$, solving $\b{\tilde K}\delta\b{ \tilde x} \simeq -\b{f}$ to get
-$\b{x}_{n+1}$, and repeating until $|\b{f}|$ or $|\delta\b{x}|$ is ``small
-enough''.  In detail:
+$\b{x}_n$, solving $\b{\tilde K}\delta\b{ \tilde x} \simeq -\b{\tilde f}$
+to get $\b{x}_{n+1}$, and repeating until $|\b{f}|$ or $|\delta\b{x}|$ is
+``small enough.''  In detail:
 
 \begin{equation*}
 \b{\tilde K} \delta \b{\tilde x} = \b{K} \b{C} \; \b{C}^{-1} \delta\b{x} =
@@ -387,12 +388,15 @@ for_sparse_matrix_solution\#Cholesky_factorization}
 \end{tiny}
 
 \vspace*{5pt}
-Finding the optimal $\mathbf{P}$ is NP-complete, but there are many heuristics to
-reduce fill-in significantly.  One example is \emph{Algorithm 836: A
-Column Approximate Minimum Degree Ordering Algorithm}, {\bf ACM
-Transactions on Mathematical Software 30}, 3 (September 2004) pp 377--380,
-for which the code is available from {\tt
-http://www.netlib.org/toms/836.gz}.
+
+Finding the optimal $\mathbf{P}$ is NP-complete, but there are many
+heuristics to reduce fill-in significantly.  One example is
+\emph{Algorithm 836: A Column Approximate Minimum Degree Ordering
+Algorithm}, {\bf ACM Transactions on Mathematical Software 30}, 3
+(September 2004) pp 377--380 by Timothy A. Davis (University of Florida),
+John R. Gilbert (UC Santa Barbara), Stefan I. Larimore (Microsoft), and
+Esmond G. Ng (Lawrence Berkeley Laboratory), for which the code is
+available from {\tt http://www.netlib.org/toms/836.gz}.
 
 
 \end{frame}
@@ -481,6 +485,9 @@ appropriate representation as output, is provided.
 %%% End: 
 
 % $Log$
+% Revision 1.7  2019/09/03 23:54:31  pwagner
+% Builds properly again with make scripts
+%
 % Revision 1.6  2019/08/27 00:47:08  vsnyder
 % Add reference for the Moré-Sorensen algorithm to compute the Levenberg-
 % Marquardt stabilization parameter, and a discussion of unnecessary fill-in
