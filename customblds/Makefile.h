@@ -433,6 +433,16 @@ wvs-048.dvi: wvs-048.tex wvs-048-grid2.eps
 
 wvs-048.pdf: wvs-048.tex wvs-048-grid2.pdf
 
+wvs-063-eq-circ.eps: wvs-063-eq-circ.obj
+	tgif -print -eps -page 1 -color wvs-063-eq-circ.obj
+
+wvs-063-eq-circ.pdf: wvs-063-eq-circ.obj
+	tgif -print -pdf -page 1 -color wvs-063-eq-circ.obj
+
+wvs-063.dvi: wvs-063.tex wvs-063-eq-circ.eps
+
+wvs-063.pdf: wvs-063.tex wvs-063-eq-circ.pdf
+
 wvs-074-scatter-1.eps: wvs-074-scatter.obj
 	tgif -print -eps -page 1 -color wvs-074-scatter.obj
 	mv wvs-074-scatter.eps wvs-074-scatter-1.eps
@@ -798,6 +808,9 @@ iy-006.bbl: yanovsky.bib iy-006.aux
 
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.39  2019/06/18 23:37:22  pwagner
+# Can now build iy-005.tex in doc
+#
 # Revision 1.38  2019/06/18 20:26:51  pwagner
 # Added cmds to build iy-006.tex in doc
 #
