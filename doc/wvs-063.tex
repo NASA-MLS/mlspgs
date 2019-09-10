@@ -9,6 +9,7 @@
 \usepackage{floatflt}
 %
 \renewcommand{\b}{\mathbf}
+\renewcommand{\d}{\text{d}}
 \newcommand{\T}{^{T}}
 \newcommand{\cs}[1]{$_{\text{#1}}$}
 \newcommand{\inv}{^{\mathrm -1}}
@@ -21,9 +22,9 @@
 % -----------------------------------------------------------------------------
 %
 \title{Summary of Full Forward Model}
-\subtitle{wvs-063r4}
+\subtitle{wvs-063r5}
 \author{Van Snyder}
-\date{3 September 2019}
+\date{9 September 2019}
 \titlegraphic{\includegraphics[width=1.0in]{eos_mls_logo_onpink}}
 
 \begin{document}
@@ -80,7 +81,7 @@ structures are not further described here.
 
 $\zeta \times \phi$ arrays, where $\phi$ is the horizontal representation basis
 for temperature and $\zeta$ is the union of $\zeta$ grids for all interesting
-species, represent quantities at reference $\phi$ and $\zeta$ values.
+species, represent quantities at reference $\zeta$ and $\phi$ values.
 
 Path arrays represent ``boundary'' quantities and ``layer'' quantities. 
 Boundary quantities are those whose values are assumed to be on a
@@ -99,13 +100,13 @@ points inserted to allow higher-accuracy line-of-sight integration.
 %
 \newframe{Data structures --- more arrays}
 
-Derivatives are Path $\times$ species quantities.  Some of these use the
+Derivatives are Path $\times$ Species quantities.  Some of these use the
 same representation as used for interpolation coefficients, which are
 sparse because we use bilinear interpolation.  Interpolation coefficients
 are used for the chain rule.
 
 Derivatives and related quantities were originally represented by Path
-$\times$ species arrays.  Just filling them with zeros was taking 15\% of
+$\times$ Species arrays.  Just filling them with zeros was taking 15\% of
 our run time!
 
 The sparse representation for interpolation coefficients is described in
@@ -128,7 +129,7 @@ part isn't used by other models, such as the quasi-linear model, the cloud
 model, the scan model, \dots.
 
 The {\tt Grids\_T} structure represents coordinates ($f,\,\zeta$, $\phi$,
-and across the viewing plane, for the magnetic field) and values on grids
+and across the viewing plane for the magnetic field) and values on grids
 for one or more species from the state or extra vectors.  The coordinate
 grids, and indeed whether a dimension is present, can be different for
 each species, so this is a complicated structure.
@@ -147,7 +148,8 @@ grids, and data values\\
 
 2-, 3-, or 4-d arrays of data values are stored in column-major order ($f
 \times \zeta \times \phi\, \times\,$\emph{cross}) in a 1-d array.  Explicit
-multidimensional subscript calculations are necessary.
+multidimensional subscript calculations are necessary (using {\tt
+mlspgs/lib} support routines).
 
 \end{frame}
 %
@@ -179,15 +181,15 @@ allocation for some compilers.
 then some cleaning up.
 
 First it references the subroutine {\tt Both\_Sidebands\_Setup} to get
-quantities from the state vector or extra vector, to compute output chi angles,
-and to compute the integration $\zeta$ grid from the $\zeta$ reference grid by
-inserting points needed for Gauss-Legendre integration.
+quantities from the state vector or extra vector, to compute output chi
+angles, and to compute the integration $\zeta$ grid from the $\zeta$
+reference grid by inserting points needed for Gauss-Legendre integration.
 
-Then it uses {\tt Two\_d\_Hydrostatic} to compute temperature, height and some
-derivatives of height with respect to temperature and $\zeta$ on $\phi \times
-\zeta$ grids, given temperature on state-vector grids, where $\phi$ is the
-horizontal representation basis for temperature, and $\zeta$ is the integration
-$\zeta$ grid.
+Then it uses {\tt Two\_d\_Hydrostatic} to compute temperature, height and
+some derivatives of height with respect to temperature and $\zeta$ on
+$\zeta \times \phi$ grids, given temperature on state-vector grids, where
+$\phi$ is the horizontal representation basis for temperature, and $\zeta$
+is the integration $\zeta$ grid.
 
 Cleaning up consists of some debug printing and deallocating the few arrays that
 are explicitly allocated.
@@ -224,16 +226,39 @@ Convolution}, which either does antenna convolution, or interpolates to PTan.
 The body of the pointing loop is the {\tt One\_Pointing} internal subroutine.
 It does
 \begin{enumerate}
-\item Setup
-\item Metrics calculations
-\item More setup that depends on metrics
-\item Compute pointing chi angles
-\item Refractive correction using the subroutine {\tt Comp\_Refcor}
-\item SLAbs preparation
+
 \item Calls the internal subroutine {\tt Frequency\_Setup\_2} to get the
-frequencies needed for the current pointing
+frequencies needed for the current pointing (before {\tt One\_Pointing})
+
+\item Setup
+
+\item Metrics calculations
+
+\item More setup that depends on metrics
+
+\item Get the magnetic field on the path if necessary
+
+\item Computes $\eta^k_i(s)$ for species that do not depend upon frequency
+
+\item Uses $\eta^k_i(s)$ to interpolate mixing ratios from {\tt Grids\_T}
+  to the line-of-sight path giving $f^k_i(s)$, for species that do not
+  depend upon frequency
+
+\item Computes pointing chi angles
+
 \end{enumerate}
 \dots
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Equivalent Circular Earth Geometry}
+
+\vspace*{-8pt}
+\hfill
+\includegraphics[angle=270,scale=0.475]{wvs-063-eq-circ}
+\hfill
+
 \end{frame}
 %
 % -----------------------------------------------------------------------------
@@ -242,20 +267,22 @@ frequencies needed for the current pointing
 
 \dots
 \begin{enumerate}
-\setcounter{enumi}{7}
+\setcounter{enumi}{8}
 
-\item Interpolates mixing ratios from {\tt Grids\_T} to the line-of-sight
-path giving $f^k_i$, for species that do not depend upon frequency.
+\item Computes refractive correction using the subroutine {\tt
+ Comp\_Refcor}
+
+\item SLAbs preparation using {\tt Get\_GL\_SLabs\_Arrays}
 
 \item Calls the internal subroutine {\tt Frequency\_Loop}, once for LBL
-(if there are any LBL species) and once for PFA (if there are any PFA
-species), to do the radiative transfer
+ (if there are any LBL species) and once for PFA (if there are any PFA
+ species), to do the radiative transfer
 
 \item Combines LBL and PFA results
 
 \item Either does frequency averaging using the filter shapes, or just
-stores the result of monochromatic or pure PFA (no LBL molecules)
-calculations.
+ stores the result of monochromatic or pure PFA (no LBL molecules)
+ calculations.
 
 \end{enumerate}
 
@@ -263,7 +290,7 @@ calculations.
 %
 % -----------------------------------------------------------------------------
 %
-\newframe{Metrics}
+\newframe{Metrics (1)}
 
 \small
 Metrics calculations are done in several steps
@@ -282,19 +309,9 @@ earth-intersecting ray.
 \item The subroutine {\tt Height\_Metrics} calculates $H$ and $\phi$ for the
 intersections of the line of sight with the integration grid $\zeta$'s.
 
-\item The subroutines {\tt More\_Points}, {\tt Min\_Zeta} and {\tt Add\_Points}
-might add $\zeta$'s in addition to the ones identified by {\tt
-Tangent\_Metrics}.
-
-\item The subroutine {\tt Compute\_GL\_Grid} inserts $\zeta$ points along the
-line of sight for Gauss-Legendre integration -- postponed until now because
-{\tt Add\_Points} might add some.
-
-\item The subroutine {\tt More\_Metrics} calculates temperature and
-geometry-related derivatives along the line of sight, including at the GL
-points.
-
 \end{enumerate}
+
+\dots
 
 \end{frame}
 %
@@ -304,7 +321,8 @@ points.
 
 \begin{multicols}{2}
 \small
-This is the problem solved by {\tt Height\_Metrics}.
+This is the problem solved by {\tt Height\_Metrics}, in $\phi \times h$
+Cartesian co\"ordinates, not polar co\"ordinates.
 
 Green lines are the heights of surfaces of constant $\zeta$, represented as
 piecewise-linear segments by the $\zeta\times\phi$ height reference array
@@ -336,11 +354,36 @@ plus the average height of the facet's vertices (see wvs-132).  It then
 calculates the intersections of the straight-line path with those
 surfaces (see wvs-141).
 
+\vspace*{5pt}
 The same scheme could be used in the two-dimensional model by
 approximating the heights of constant-pressure surfaces as segments of
 circles. The resulting metrics calculation would be much simpler -- a
 geometric calculation instead of a Newton iteration -- but would produce
 very slightly different results.
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Metrics (2)}
+
+\begin{enumerate}
+\setcounter{enumi}{3}
+
+\item The subroutines {\tt More\_Points}, {\tt Min\_Zeta} and {\tt Add\_Points}
+ might add $\zeta$'s in addition to the ones identified by {\tt
+ Tangent\_Metrics}.
+
+\item The subroutine {\tt Compute\_GL\_Grid} inserts $\zeta$ points along the
+ line of sight for Gauss-Legendre integration -- postponed until now because
+ {\tt Add\_Points} might add some.
+
+\item The subroutine {\tt More\_Metrics} calculates temperature $T_i(s)$,
+ geometry-related derivatives along the line of sight, including at the GL
+ points $\frac{\d h_i(s)}{\d \zeta}$, temperature interpolation
+ coefficients $\eta^T_i(s)$, \dots.
+
+\end{enumerate}
 
 \end{frame}
 %
@@ -467,20 +510,22 @@ $\frac{\text{d}s}{\text{d}h} = \frac{h}{\sqrt{h^2-h_t^2}}$, which is singular
 at the tangent point $h = h_t$; this is partially canceled using the
 rectangular estimate:\\
 $\int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
-\frac{\text{d}h}{\text{d}\zeta}\, \text{d} \zeta =
+ \frac{\text{d}h}{\text{d}\zeta}\, \text{d} \zeta =
 G(\zeta_i) \int_{\zeta_i}^{\zeta_{i-1}} \frac{\text{d}s}{\text{d}h}
-\frac{\text{d}h}{\text{d}\zeta}\, \text{d} \zeta +
-\int_{\zeta_i}^{\zeta_{i-1}} [G(\zeta)-G(\zeta_i) \frac{\text{d}s}{\text{d}h}
-\frac{\text{d}h}{\text{d}\zeta}\, \text{d} \zeta$.\\
-The first integral on the right is just $\Delta s_{i \rightarrow i-1}$, so the
-first term on the right is the rectangular estimate.  $G(\zeta)-G(\zeta_i) = 0$
-for $\zeta = \zeta_i$, which cancels the singularity in
-$\frac{\text{d}s}{\text{d}h}$ at the tangent point if $\zeta_i = \zeta_t$.
+ \frac{\text{d}h}{\text{d}\zeta}\, \text{d} \zeta +
+ \int_{\zeta_i}^{\zeta_{i-1}} \left[G(\zeta)-G(\zeta_i)
+ \frac{\text{d}s}{\text{d}h}
+ \frac{\text{d}h}{\text{d}\zeta}\right]\, \text{d} \zeta$.\\
+The first integral on the right is just $\Delta s_{i \rightarrow i-1}$, so
+the first term on the right is the rectangular estimate. 
+$G(\zeta)-G(\zeta_i) = 0$ for $\zeta = \zeta_i$, which cancels the
+singularity in $\frac{\text{d}s}{\text{d}h}$ at the tangent point if
+$\zeta_i = \zeta_t$.
 
 $\tau_i = \exp \left( - \sum_{j=2}^i \Delta\delta_{i \rightarrow i-1}
 \right)$.  The running sum of $\Delta \delta_{i \rightarrow i-1}$ is only
 taken until it exceeds $\ln \Omega$, where $\Omega$ is the largest
-floating-point number, after which $\exp$ underflows, so $\tau_i = 0$
+floating-point number, after which {\tt exp} underflows, so $\tau_i = 0$
 thereafter.
 
 \end{frame}
@@ -556,15 +601,16 @@ The frequency loop is run separately, first for LBL species (if any) and then
 for PFA species (if any). If there are any PFA species, the radiances from LBL
 species are separately frequency averaged at every point on the path.
 
-PFA $\beta^k_i$ is obtained by interpolation in PFA tables instead of
-spectroscopic modeling.
+PFA $\beta^k_i$ is obtained by interpolation in PFA ($T \times P$) tables
+instead of spectroscopic modeling.
 
 $\tau_i$ for PFA is multiplied by the frequency-averaged radiance from the LBL
 calculation, and the product summed to give combined LBL and PFA radiance for
 the channel.  See wvs-028 and its references.
 
 Temperature derivatives are computed as if they were mixing-ratio derivatives,
-to avoid including the Planck function twice.
+to avoid including the Planck function derivative
+$\frac{\partial \Delta B_i}{\partial T_i}$ twice.
 
 LBL and PFA derivatives are simply added during the frequency-averaging step.
 
@@ -578,15 +624,15 @@ The internal subroutine {\tt Convolution} either convolves the radiances and
 derivatives from all the pointings with the antenna pattern, or just
 interpolates them to PTan.
 
-First, it makes sure the pointing angles are strictly increasing, and patches
-them in an ad-hoc way if not.
+First, it makes sure the pointing $\chi$ angles are strictly increasing,
+and patches them in an ad-hoc way if not.
 
 Then it works out which antenna pattern to use, and applies the elevation
 offset.
 
 Then it uses {\tt FOV\_Convolve\_Setup} from the
 {\tt FOV\_Convolve\_m} module to fill the {\tt Convolve\_Support} structure with
-data that depend only on pointing angles.
+data that depend only on pointing $\chi$ angles.
 
 \end{frame}
 %
@@ -599,19 +645,22 @@ Using the {\tt Convolve\_Support} structure, the radiances are convolved using
 the following subroutines from the {\tt Convolve\_All\_m} module:
 \begin{itemize}
 \item {\tt Convolve\_Radiance} for radiances.
+
 \item {\tt Convolve\_Temperature\_Deriv} for temperature derivatives.  The
-temperature derivative also includes hydrostatic contributions that model the
-effect of a temperature change on the antenna pattern that is remapped onto
-$\zeta$ coordinates.
-\item {\tt Convolve\_Other\_Deriv} for mixing-ratio or spectroscopy-parameter.
-derivatives
+ temperature derivative also includes hydrostatic contributions that model
+ the effect of a temperature change on the antenna pattern that is
+ remapped onto $\zeta$ coordinates.
+
+\item {\tt Convolve\_Other\_Deriv} for mixing-ratio or
+spectroscopy-parameter. derivatives
+
 \end{itemize}
 
 The subroutine {\tt Convolve\_Radiance} uses the subroutine {\tt
-FOV\_Con\-volve\_\-1d} from the module {\tt FOV\_Convolve\_m}.  The subroutine
-{\tt Con\-volve\_\-Tem\-perature\_Deriv} uses the subroutine {\tt
-FOV\_Con\-volve\_\-Temp\_Derivs}.  The subroutine {\tt Convolve\_Other\_Deriv}
-uses the subroutine {\tt FOV\_Convolve\_2d}.
+FOV\_Con\-volve\_\-1d} from the module {\tt FOV\_Convolve\_m}.  The
+subroutine {\tt Con\-volve\_\-Tem\-perature\_Deriv} uses the subroutine
+{\tt FOV\_Con\-volve\_\-Temp\_Derivs}.  The subroutine {\tt
+Convolve\_Other\_Deriv} uses the subroutine {\tt FOV\_Convolve\_2d}.
 
 The subroutines in the module {\tt FOV\_Convolve\_m} use the Math77 subroutines
 {\tt DTCST} to compute a cosine transform, and {\tt DRFT1} to compute a full
@@ -641,12 +690,13 @@ spectroscopy-parameter derivatives
 \newframe{Sideband loop --- Cleaning up}
 
 After antenna convolution or interpolation to PTan, the subroutines {\tt
-ScanAverage\_1d} and {\tt ScanAverage\_2d} from the module {\tt ScanAverage\_m}
-are used to average the radiances and derivatives, respectively, from the
-pointing angles to the MIF angles, taking motion during the MIF into account.
+ScanAverage\_1d} and {\tt ScanAverage\_2d} from the module {\tt
+ScanAverage\_m} are used to average the radiances and derivatives,
+respectively, from the pointing $\chi$ angles to the MIF $\chi$ angles,
+taking motion during the MIF into account.
 
 The subroutine {\tt Interpolate\_Values} is used to interpolate radiances and
-derivatives to eight-point grids GL between each pair of values from the {\tt
+derivatives to eight-point GL grids between each pair of values from the {\tt
 MIF\_Times} grid.  Those interpolated values are then integrated to the {\tt
 MIF\_Times} grid using an eighth-order Gauss-Legendre quadrature.
 
@@ -727,6 +777,9 @@ $\zeta_{\text{min}}$]
 %%% End: 
 
 % $Log$
+% Revision 1.6  2019/09/04 00:13:27  vsnyder
+% Correct page 14, add page 15
+%
 % Revision 1.5  2019/08/27 01:08:27  vsnyder
 % Modest revisions and improvements
 %
