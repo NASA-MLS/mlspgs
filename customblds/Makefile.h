@@ -439,9 +439,21 @@ wvs-063-eq-circ.eps: wvs-063-eq-circ.obj
 wvs-063-eq-circ.pdf: wvs-063-eq-circ.obj
 	tgif -print -pdf -page 1 -color wvs-063-eq-circ.obj
 
-wvs-063.dvi: wvs-063.tex wvs-063-eq-circ.eps
+wvs-063-grids_t.eps: wvs-063-grids_t.obj
+	tgif -print -eps -page 1 -color wvs-063-grids_t.obj
 
-wvs-063.pdf: wvs-063.tex wvs-063-eq-circ.pdf
+wvs-063-grids_t.pdf: wvs-063-grids_t.obj
+	tgif -print -pdf -page 1 -color wvs-063-grids_t.obj
+
+wvs-063-diag.eps: wvs-063-diag.obj
+	tgif -print -eps -page 1 -color wvs-063-diag.obj
+
+wvs-063-diag.pdf: wvs-063-diag.obj
+	tgif -print -pdf -page 1 -color wvs-063-diag.obj
+
+wvs-063.dvi: wvs-063.tex wvs-063-eq-circ.eps wvs-063-grids_t.eps wvs-048-grid2.eps wvs-063-diag.eps
+
+wvs-063.pdf: wvs-063.tex wvs-063-eq-circ.pdf wvs-063-grids_t.pdf wvs-048-grid2.pdf wvs-063-diag.pdf
 
 wvs-074-scatter-1.eps: wvs-074-scatter.obj
 	tgif -print -eps -page 1 -color wvs-074-scatter.obj
@@ -808,6 +820,9 @@ iy-006.bbl: yanovsky.bib iy-006.aux
 
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.40  2019/09/10 17:37:47  pwagner
+# Copes with new wvs-063-eq-circ.obj
+#
 # Revision 1.39  2019/06/18 23:37:22  pwagner
 # Can now build iy-005.tex in doc
 #
