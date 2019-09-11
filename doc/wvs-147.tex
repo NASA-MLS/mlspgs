@@ -75,11 +75,13 @@
 \renewcommand{\d}{\text{d}}
 
 \title{Configuration File Processing
-\thanks{See {\tt mlspgs/doc/wvs-004} for more detail}}
+\thanks{See {\tt mlspgs/doc/wvs-004} for more detail} \\
+wvs-147r4}
 
 \author{Van Snyder}
 
-\date{30 May 2018}
+\date{11 September 2019}
+\titlegraphic{\includegraphics[width=1.0in]{eos_mls_logo_onpink}}
 
 
 \begin{document}
@@ -424,13 +426,16 @@ Otherwise, end-of-line denotes the end of a statement.
 A token is represented by its token index (in {\tt symbol\_types}), its
 {\bf string index}, and its position in the input file.
 
+\vspace*{5pt}
 The lexer reads characters by way of the {\tt get\_char} subroutine in
 the {\tt string\_table} module.
 
+\vspace*{5pt}
 As they are read, they are added to the end of the character table.  When
 the lexer finds the end of a token, its text is searched using the hash
 table.
 
+\vspace*{5pt}
 If it is found, the found string index is used and the characters are
 erased from the character table.  Otherwise, it's added to the string
 table and the new string index is used.
@@ -479,8 +484,9 @@ is labeled by a set of symbols from the alphabet.  It has a distinguished
 starting state (a starting vertex in the graph).  Every time it is called,
 it starts in the starting state.\\[5pt]
 
-When a character is read, if it is the label of an edge, the character is
-consumed, and the state of the lexer changes to the next vertex.\\[5pt]
+When a character is read, if it is the label of an edge incident from the
+vertex that represents the current state, the character is consumed, and
+the state of the lexer changes to the next vertex.\\[5pt]
 
 When the lexer reaches a state identified as a final state, and there are
 no transitions possible, the token specified by that state is returned to
@@ -539,10 +545,11 @@ Within a section, there are three kinds of statements:
     \emph{/name} is only valid for fields that can have logical or boolean
     values, and is equivalent to \emph{name=true}.
 
-    The type of the value of a field or parameter can be numeric, a
-    string, an enumerator, or the label of a specification.  The set of
-    enumeration types, and the enumerators of each type, are specified by
-    the program.
+    \vspace*{5pt}
+    The type of the value of a field, parameter, or variable can be
+    numeric, a string, an enumerator, or the label of a specification. 
+    The set of enumeration types, and the enumerators of each type, are
+    specified by the program.
 
 \end{itemize}
 
@@ -554,9 +561,9 @@ Within a section, there are three kinds of statements:
 
 (Statements cont.)
 
-
 Variable definitions can occur outside sections.
 
+\vspace*{3pt}
 Either surrounding sections and variable definitions, or within sections,
 {\tt case}, {\tt if}, {\tt do}, and {\tt do while} constructs, having
 the same syntax and semantics as in Fortran (except that the ``=" sign in
@@ -567,6 +574,7 @@ is considered to be an array of length one in this context); the body of
 the construct is invoked once for each element of the expression. 
 Constructs must be correctly nested.
 
+\vspace*{3pt}
 An {\tt exit} or {\tt cycle} statement may appear within a {\tt do}
 construct, with the same semantics as in Fortran, except that if the
 statement is within a section, the label referenced in the statement may
@@ -908,9 +916,11 @@ is its string index, called \emph{sub-rosa} information because it is
 passed ``under the table'' through the parser, from the lexer to
 subsequent phases.
 
+\vspace*{3pt}
 True terminal symbols, such as operators or punctuation, do not have any
 automatic translation.
 
+\vspace*{3pt}
 The notation ``{\tt =$>$ x ?}'' means ``generate {\tt x} if and only if it
 would have more than one son.''
 
@@ -920,8 +930,6 @@ would have more than one son.''
 
 \newframe{Translation (cont.)}
 
-\vspace*{-6pt}
-\small
 To return to our simple example, with generation specified:
 \vspace*{-6pt}
 \begin{tabbing}
@@ -931,18 +939,27 @@ To return to our simple example, with generation specified:
      \>     \> $ \rightarrow T * N \Rightarrow\, '*' $ \\
      \> $N$ \> $ \rightarrow a \,|\, b \,|\, c$
 \end{tabbing}
-\vspace*{-6pt}
 
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Translation (cont.)}
+
+\small
 The MLS parsing method, called LR, produces the reverse of a rightmost
 derivation, i.e., for the example {\tt a + b * c}, the reverse of
 
+\vspace*{5pt}
 $E \Rightarrow E + T \Rightarrow E + T * N \Rightarrow E + T * c
 \Rightarrow E + N * c \Rightarrow E + b * c \Rightarrow T + b * c
 \Rightarrow N + b * c \Rightarrow a + b * c$ is produced.
 
+\vspace*{5pt}
 We use ``Cambridge Polish'' notation $< x\, y\, z\, \dots >$ for a subtree
 to denote $x$ at the root with sons $y\,z\,\dots$.
 
+\vspace*{5pt}
 The reverse of the second step consists of recognizing that $T * N$ should
 be \emph{reduced} to $T$ using the fourth production.  The translation of
 $T * N$ at that point is the sequence ({\tt b c}), the concatenation of
@@ -950,6 +967,7 @@ the translations of $T$ and $N$, so the translation $\mathcal{T} =\, < *\,
 b\, c >$ is constructed, and becomes the translation of $T$ upon
 reduction.
 
+\vspace*{5pt}
 When $E + T$ is reduced to $E$, the translation of $E + T$ is the sequence
 ({\tt a}~$\mathcal{T})$, so the translation $< +\, a\,\, \mathcal{T} \,>$
 is generated, and the complete translation is $< +\, a\, < *\, b\, c >
@@ -1057,11 +1075,13 @@ Type checking verifies that
 Type checking also constructs symbol and declaration tables, and connects
 references to declarations.
 
+\vspace*{3pt}
 Symbol table entries are indexed by the string index passed through the
 parser as \emph{sub-rosa} information for pseudo-terminal symbols.
 
-A symbol might have several declarations, which are linked from the symbol
-table entry.
+\vspace*{3pt}
+A symbol might have several declarations, which are in a linked list
+starting from the symbol table entry.
 
 \end{frame}
 
@@ -1171,10 +1191,9 @@ mlspgs/lib}.
 
 \newframe{Traversing the tree -- sections}
 
-{\tt root} is the root of the subtree; {\tt first\_section} is the subtree
-index of the next son to process.
-
-Get the next son and update the state (which one to do next):
+Given {\tt root} as the root of the subtree and {\tt first\_section} as
+the subtree index of the next son to process, get the next son and update
+the state (which one to do next):
 
 {\tt son = next\_tree\_node(root,state,start=first\_section)
 }\\[5pt]
@@ -1205,9 +1224,9 @@ Process MLS signals (for instance):
 
 \newframe{Traversing the tree -- within a section}
 
-{\tt root} is the root of the subtree.  Its sons are either specifications
-or parameter assignments.  (In MLSSignals we know they're all
-specifications.)  Get the next son:
+Let {\tt root} be the root of the subtree.  Its sons are either
+specifications or parameter assignments.  (In MLSSignals we know they're
+all specifications.)  Get the next son:
 
 {\tt son = next\_tree\_node ( root, state )
 }\\[5pt]
@@ -1258,6 +1277,9 @@ suffix}\\
 % $Id$
 
 % $Log$
+% Revision 1.5  2018/11/30 22:29:02  pwagner
+% Replaced \includegraphics* with \includegraphics
+%
 % Revision 1.4  2018/11/21 01:21:32  vsnyder
 % Add comments about how to make the graphics.  Fiddle includegraphics lines
 % so that graphics come out oriented and sized correctly.
