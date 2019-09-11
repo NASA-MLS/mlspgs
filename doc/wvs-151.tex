@@ -1,3 +1,13 @@
+% Making the graphics:
+% tgif -print -color -eps wvs-151-1.obj; epstopdf wvs-151-1.eps
+% tgif -print -color -eps wvs-151-2.obj; epstopdf wvs-151-2.eps
+% tgif -print -color -eps wvs-151-3.obj; epstopdf wvs-151-3.eps
+% tgif -print -color -eps Sparse.obj; epstopdf Sparse.eps
+% tgif -print -color -jpeg wvs-151-1.obj
+% tgif -print -color -jpeg wvs-151-2.obj
+% tgif -print -color -jpeg wvs-151-3.obj
+% tgif -print -color -jpeg Sparse.obj
+
 \makeatletter\let\ifGm@compatii\relax\makeatother
 \documentclass[landscape]{beamer}
 
@@ -54,11 +64,13 @@
 \newcommand{\newframe}[2][]{\begin{frame}\frametitle{\hfill #2 \hfil}}
 \renewcommand{\d}{\text{d}}
 
-\title{Sparse Interpolators in the Forward Models}
+\title{Sparse Interpolators in the Forward Models\\
+wvs-151r1}
 
 \author{Van Snyder}
 
-\date{9 January 2019}
+\date{11 September 2019}
+\titlegraphic{\includegraphics[width=1.0in]{eos_mls_logo_onpink}}
 
 \begin{document}
 \setlength{\parskip}{\dimexpr(\parskip+4pt)\relax}
@@ -83,9 +95,9 @@ purposes:
 
 \end{itemize}
 
-They can be thought of as a matrix in which each row corresponds to a
-position on the path of integration, and each column corresponds to a
-state-vector basis element.
+In that context, they can be thought of as a matrix in which each row
+corresponds to a position on the path of integration, and each column
+corresponds to a state-vector basis element.
 
 The state-vector basis might be one-dimensional ($\phi$ or $\zeta$),
 two-dimensional ($\zeta \times \phi$), three-dimensional ($\zeta \times$
@@ -106,7 +118,8 @@ Because we use (multi) linear interpolation, the matrix is sparse.
 
 \vspace*{-2.1in}
 Interpolating to {\bf X} on the path of integration depends only upon {\bf
-A} and {\bf B} $\Rightarrow$ only two nonzero columns in row {\bf X}.
+A} and {\bf B} $\Rightarrow$ only two nonzero columns in row {\bf X} for
+the quantity of which {\bf X} is a member.
 
 The datum at {\bf B} in the representation basis affects only values at
 {\bf X}, {\bf Y}, and {\bf Z} on the path $\Rightarrow$ only one nonzero
@@ -311,8 +324,8 @@ with the vector {\bf V}:
 
 \newframe{Dot Product of a Sparse Representation and a Vector}
 
-Compute the matrix-vector product {\bf P} of a sparse matrix {\bf S} with the
-vector {\bf V}:
+Compute the matrix-vector product {\bf P} of a sparse matrix {\bf S} with
+the (dense) vector {\bf V}:
 
 \begin{alltt}
 ~~p~=~0.0 !~Array broadcast\\
@@ -680,7 +693,7 @@ invoked. When the iterator executes a {\tt\bf return} or {\tt\bf end}
 statement, the construct completes.  When the iterator executes a {\tt\bf
 suspend} statement, {\tt\bf E}, its result, is associated with an element
 of the {\bf E} component of {\bf S}, and control is returned to the body
-of the construct.  When execution of the body completes, control resurns
+of the construct.  When execution of the body completes, control returns
 to the iterator at the statement after the {\tt\bf suspend} statement. 
 The suspend-resume cycle does not require to destroy and re-construct to
 activation record.
@@ -723,3 +736,6 @@ for Fortran, to traverse row {\bf R} of sparse matrix {\bf S}:
 % $Id$
 
 % $Log$
+% Revision 1.1  2018/11/29 21:34:50  vsnyder
+% Initial commit
+%
