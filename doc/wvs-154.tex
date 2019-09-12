@@ -1,0 +1,155 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-154}
+\newcommand{\docdate}{11 September 2019}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+   
+\usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\renewcommand\d{\text{d}}
+\newcommand\T{\mathcal{T}}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>MLS group\\
+Subject: \>Angle between two vectors\\
+From: \>Van Snyder\\
+%Reference: \\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+
+The formula usually used to compute the angle between two vectors $x$ and
+$y$ is
+
+\begin{equation}\label{one}
+\theta = \cos^{-1} z \text{ where }
+ z = \frac{ x \cdot y }{ ||x|| \, ||y|| } \,.
+\end{equation}
+
+This can be severely inaccurate if $x$ and $y$ are nearly parallel or
+antiparallel because
+
+\begin{equation*}
+\frac{ \d \, \cos^{-1} z }{ \d z } = \frac{-1}{\sqrt{1-z^2}}
+\end{equation*}
+
+becomes singular as $|z| \rightarrow 1$, i.e., when $x$ and $y$ are nearly
+parallel or nearly antiparallel.
+
+In three dimensions, one can use
+
+\begin{equation*}
+\theta = \left\{
+ \begin{array}{ll}
+  \sin^{-1} \left( \frac{ || x \times y || }{ || x || \, || y || }
+            \right) & x \cdot y \geq 0 \\
+  \pi - \sin^{-1} \left( \frac{ || x \times y || }{ || x || \, || y || }
+                 \right) & x \cdot y < 0
+ \end{array} \right.
+\end{equation*}
+
+but this has the same sort of singularity when $x$ and $y$ are nearly
+orthogonal.  This also only works in three dimensions.  Analogs in higher
+dimensions have increasing complexity.
+
+For unit vectors $u$ and $v$, it is easy to verify that $u-v$ and $u+v$
+are orthogonal:
+
+\begin{equation*}
+( u - v ) \cdot ( u + v ) =
+ u \cdot u + u \cdot v - v \cdot u - v \cdot v = 0 \,,
+\end{equation*}
+
+and therefore the angle between $u$ and $v$ is
+
+\begin{equation*}
+\theta = 2 \tan^{-1} \left( \frac{ || u - v || } { || u + v || } \right) \,.
+\end{equation*}
+
+If each of the vectors $x$ and $y$ are scaled by the other's length, which
+is equivalent to considering unit vectors parallel to $x$ and $y$ but
+doesn't require dividing, we have
+
+\begin{equation}\label{two}
+\theta = 2 \tan^{-1} \left( \frac{ || \, ( x || y || - y || x || ) \,|| }
+                                 { || \, ( x || y || + y || x || ) \,|| }
+                     \right) \,,
+\end{equation}
+
+which doesn't have any singularities.  This is quite a bit more expensive
+than Equation (\ref{one}).  Instead, one might first compute $z$, then use
+Equation (\ref{two}) if $ |z| \approx 1 $ and Equation (\ref{one})
+otherwise.
+
+\vspace*{-1pt} \label{lastpage} \end{document}
+
+% $Id$
+
+% $Log$
