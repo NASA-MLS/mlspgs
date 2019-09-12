@@ -1,3 +1,6 @@
+% Instructions to generate graphics:
+% dot -Teps -o dnwt.epsi dnwt.dot; epstopdf dnwt.epsi
+
 \documentclass[11pt]{article}
 \usepackage{alltt}
 \usepackage[fleqn]{amsmath}
@@ -12,8 +15,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-150}
-\newcommand{\docdate}{24 July 2018}
+\newcommand{\docname}{wvs-150r1}
+\newcommand{\docdate}{11 September 2019}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -82,17 +85,16 @@ From: \>Van Snyder\\
 
 \parindent 0pt \parskip 6pt
 
-Starting state is green.  Blue states are final states.  Red states are error
-states.  White states are work caller needs to do.  User can restart at own
-peril from final or error states.
+Starting state is green.  Blue states are final states.  Red states are
+error states.  White states are work caller needs to do.  User can restart
+at own peril from final or error states.  The usual sequence of
+transitions is shown with broad red edges.
 
-\ifnum\pdfoutput>0
-\vspace*{-2.5in}
-\includegraphics[scale=0.9]{dnwt}
-\else
+\begin{centering}
 \vspace*{0.6in}
-\includegraphics[bb=38 38 316 540, scale=0.9]{dnwt.epsi}
-\fi
+\includegraphics[bb=38 38 316 540, scale=0.9]{dnwt}
+\\
+\end{centering}
 
 \label{lastpage}
 \vspace*{-0.1in} % Somehow, this causes lastpage to be defined
@@ -101,3 +103,6 @@ peril from final or error states.
 % $Id$
 
 % $Log$
+% Revision 1.1  2018/07/25 03:23:02  vsnyder
+% Initial commit
+%

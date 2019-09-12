@@ -15,30 +15,30 @@ TolX_Best [ style=filled, fillcolor = lightblue label="TolX Best" ] ;
 too_small [ style=filled, fillcolor = pink label="Too Small" ] ;
 FandJ [ style=filled, fillcolor = pink ] ;
 
-Start -> EvalF ;
+Start -> EvalF [style=bold, color=red] ;
 Start -> Gmove ;
 
-EvalF -> FandJ ;
+EvalF ->FandJ ;
 EvalF -> Gmove ;
-EvalF -> EvalJ ;
-EvalF -> TolX ;
+EvalF -> EvalJ [style=bold, color=red] ;
+EvalF -> TolX [style=bold, color=red] ;
 EvalF -> TolX_Best ;
 
-EvalJ -> TolF ;
-EvalJ -> Solve ;
+EvalJ -> TolF [style=bold, color=red] ;
+EvalJ -> Solve [style=bold, color=red] ;
 
 Solve -> Gmove ;
 Solve -> Best ;
-Solve -> dx ;
-Solve -> Lev ;
+Solve -> dx [style=bold, color=red] ;
+Solve -> Lev [style=bold, color=red] ;
 Solve -> TolX ;
 Solve -> TolX_Best ;
 
-Lev -> Solve ;
+Lev -> Solve [style=bold, color=red] ;
 
 NewX -> Gmove ;
 NewX -> too_small ;
-NewX -> EvalF ;
+NewX -> EvalF [style=bold, color=red] ;
 
 Gmove -> NewX ;
 
@@ -48,7 +48,7 @@ Best -> Aitken ;
 Aitken -> dx_Aitken ;
 Aitken -> dx ;
 
-dx -> NewX ;
+dx -> NewX [style=bold, color=red] ;
 
 dx_Aitken [ label="dx Aitken" ] ;
 dx_Aitken -> NewX ;
@@ -68,3 +68,6 @@ FandJ -> Gmove ;
 // $Id$
 
 // $Log$
+// Revision 1.1  2018/07/25 03:23:02  vsnyder
+// Initial commit
+//
