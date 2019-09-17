@@ -102,7 +102,7 @@ contains
     else if ( abs(z) <= s2 ) then
       theta = acos(z)
     else
-      theta = atan2 ( norm2(x * yn - y * xn), norm2(x * yn + y * xn) )
+      theta = 2.0d0 * atan2 ( norm2(x * yn - y * xn), norm2(x * yn + y * xn) )
     end if
   end function Vector_Angle_D
 
@@ -131,7 +131,7 @@ contains
     else if ( abs(z) <= s2 ) then
       theta = acos(z)
     else
-      theta = atan2 ( norm2(x * yn - y * xn), norm2(x * yn + y * xn) )
+      theta = 2.0e0 * atan2 ( norm2(x * yn - y * xn), norm2(x * yn + y * xn) )
     end if
   end function Vector_Angle_S
 
@@ -148,6 +148,9 @@ contains
 end module Vector_Angle_m
 
 ! $Log$
+! Revision 2.3  2019/09/17 22:20:13  vsnyder
+! Correct the atan2 case
+!
 ! Revision 2.2  2019/09/17 03:19:54  vsnyder
 ! More accurate switching points to minimize error
 !
