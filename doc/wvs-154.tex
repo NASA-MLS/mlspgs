@@ -105,7 +105,7 @@ parallel or nearly antiparallel.
 
 In three dimensions, one can use
 
-\begin{equation*}
+\begin{equation}\label{two}
 \theta = \left\{
  \begin{array}{ll}
   \sin^{-1} \left( \frac{ || x \times y || }{ || x || \, || y || }
@@ -113,7 +113,7 @@ In three dimensions, one can use
   \pi - \sin^{-1} \left( \frac{ || x \times y || }{ || x || \, || y || }
                  \right) & x \cdot y < 0
  \end{array} \right.
-\end{equation*}
+\end{equation}
 
 but this has the same sort of singularity when $x$ and $y$ are nearly
 orthogonal.  This also only works in three dimensions.  Analogs in higher
@@ -137,19 +137,53 @@ If each of the vectors $x$ and $y$ are scaled by the other's length, which
 is equivalent to considering unit vectors parallel to $x$ and $y$ but
 doesn't require dividing, we have
 
-\begin{equation}\label{two}
+\begin{equation}\label{three}
 \theta = 2 \tan^{-1} \left( \frac{ || \, ( x || y || - y || x || ) \,|| }
                                  { || \, ( x || y || + y || x || ) \,|| }
                      \right) \,,
 \end{equation}
 
 which doesn't have any singularities.  This is quite a bit more expensive
-than Equation (\ref{one}).  Instead, one might first compute $z$, then use
-Equation (\ref{two}) if $ |z| \approx 1 $ and Equation (\ref{one})
+than Equation (\ref{one}).
+
+Equations (\ref{one}) and (\ref{two}) have the same error at $|z| =
+\frac{\sqrt{2}}2 \approx 0.7071$, where the error is $\sqrt{2} \, \epsilon
+\approx 1.414 \, \epsilon$.
+
+Equations (\ref{one}) and (\ref{three}) have the same error at $|z| =
+\sqrt{3 - 2\sqrt{3}} \approx 0.6813$, where the error is
+$\frac1{\sqrt{4-2\sqrt{3}}} \, \epsilon \approx 1.366 \, \epsilon$.
+
+For a computational method that approximately minimizes the maximum error,
+and has good performance in three dimensions, first compute $z$.  In three
+dimensions, use  Equation (\ref{one}) for $z \leq \frac{\sqrt{2}}2$ and
+Equation (\ref{two}) otherwise.  For other dimensions, use Equation
+(\ref{one}) for $z \leq \sqrt{3 - 2\sqrt{3}}$, and Equation (\ref{three})
 otherwise.
+
+For maximum performance and minimum maximum error, use Equation
+(\ref{one}) for $|z| \leq \sqrt{3 - 2\sqrt{3}}$, use Equation
+(\ref{three}) for $|z| > \sqrt{3 - 2\sqrt{3}}$ in more than three
+dimensions, use Equation (\ref{three}) for $\sqrt{3 - 2\sqrt{3}} < |z| <
+\frac{\sqrt{2}}2$ in three dimensions, and use Equation (\ref{two}) for
+$|z| \geq \frac{\sqrt{2}}2$ in three dimensions.
+
+The difference between the errors in Equation (\ref{one}) at $|z| =
+\frac{\sqrt{2}}2$ and $|z| = \sqrt{3 - 2\sqrt{3}}$ is $\approx 0.048 \,
+\epsilon$, so the same $|z|$ could be used for selecting the method in
+three dimensions or other dimensions.
+
+The error in Equation (\ref{three}) is always less than $2\, \epsilon$.
+The error in Equation (\ref{one}) is equal to $2\, \epsilon$ for $|z| =
+\frac{\sqrt{3}}2$.  For higher average performance, Equation (\ref{one})
+could be used for $|z| \leq \frac{\sqrt{3}}2 \approx 0.866$, if errors as
+large as $2\, \epsilon$ are acceptable.
 
 \vspace*{-1pt} \label{lastpage} \end{document}
 
 % $Id$
 
 % $Log$
+% Revision 1.1  2019/09/12 02:51:53  vsnyder
+% Initial commit
+%
