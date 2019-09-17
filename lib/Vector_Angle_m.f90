@@ -21,35 +21,43 @@ module Vector_Angle_m
   !{ Compute the angle between two vectors.
   !
   ! The usual formula is
-  ! \begin{equation*}
+  ! \begin{equation}\label{one}
   !  \theta = \cos^{-1} z \text{ where }
   !   z = \frac{x \cdot y}{ || x || \, || y || } \,.
-  ! \end{equation*}
+  ! \end{equation}
   ! This can become severely inaccurate if $x$ and $y$ are nearly parallel
   ! or antiparallel because $\text{d} \theta / \text{d} z$ has a singularity
   ! at $z = 1$.
   !
   ! An alternative is
-  ! \begin{equation*}
+  ! \begin{equation}\label{two}
   !  \theta = \sin^{-1} \left( \frac { || x \times y || }
   !                                  { || x || \, || y || }
   !                     \right) \,\,\, ( x \cdot y \geq 0 ) \text{ or }
   !  \theta = \pi -\sin^{-1} \left( \frac { || x \times y || }
   !                               { || x || \, || y || }
   !                     \right) \,\,\, ( x \cdot y < 0 ) \,,
-  ! \end{equation*}
+  ! \end{equation}
   ! but this only works for three-dimensional vectors, and is inaccurate
   ! when $x$ and $y$ are nearly orthogonal because $\sin^{-1}$ has a
   ! derivative singularity at $\pm 90^\circ$.
   !
   ! A reliable but expensive formula is
-  ! \begin{equation*}
+  ! \begin{equation}\label{three}
   !  \theta = 2 \tan^{-1} \left(
   !   \frac{ || ( x || y || - y || x || ) || }
   !        { || ( x || y || + y || x || ) || } \right)
-  ! \end{equation*}
+  ! \end{equation}
   !
   ! See wvs-154.
+  !
+  ! The errors of methods (\ref{one}) and (\ref{two}) are equal at
+  ! $z = \frac12 \sqrt{2}$, where the errors are
+  ! $\sqrt{2}\, \epsilon \approx 0.7071 \, \epsilon$.
+  !
+  ! The errors of methods (\ref{one}) and (\ref{three}) are equal at
+  ! $z = \sqrt{3 - 2 \sqrt{3}}$, where the errors are
+  ! $\frac1{\sqrt{4-2\sqrt{3}}} \, \epsilon \approx 1.366 \, \epsilon$.
 
   interface Vector_Angle
     module procedure Vector_Angle_D, Vector_Angle_S
@@ -63,17 +71,36 @@ module Vector_Angle_m
 
 contains
 
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  !!!!!                                                        !!!!!
+  !!!!! ASSUMES SIZE(X) == SIZE(Y)!                            !!!!!
+  !!!!!                                                        !!!!!
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
   double precision function Vector_Angle_D ( X, Y ) result ( Theta )
     double precision, intent(in) :: X(:), Y(:)
+    integer :: N
+    ! S1 ~ 0.7071 is the value at which arccos and arcsin methods have
+    ! equal error.
+    double precision, parameter :: S1 = 0.5d0 * sqrt(2.0d0)
+    ! S2 ~ 0.6813 is the value at which arccos and arctan methods have
+    ! equal error. The difference in the errors of the arccos method at
+    ! S1 and S2 ~ 0.048 epsilon(1.0d0).
+    double precision, parameter :: S2 = sqrt ( 2.0d0 * sqrt(3.0d0) - 3.0d0 )
     double precision :: XN, YN, Z
+    n = size(x)
     xn = norm2(x)
     yn = norm2(y)
     z = dot_product ( x, y ) / ( xn * yn )
-    if ( abs(z) <= 0.9 ) then
+    if ( n == 3 ) then
+      if ( abs(z) <= s1 ) then
+        theta = acos(z)
+      else
+        theta = asin ( norm2(cross(x,y)) / ( xn * yn ) )
+        if ( z < 0 ) theta = pi - theta
+      end if
+    else if ( abs(z) <= s2 ) then
       theta = acos(z)
-    else if ( size(x) == 3 ) then
-      theta = asin ( norm2(cross(x,y)) / ( xn * yn ) )
-      if ( z < 0 ) theta = pi - theta
     else
       theta = atan2 ( norm2(x * yn - y * xn), norm2(x * yn + y * xn) )
     end if
@@ -81,15 +108,28 @@ contains
 
   real function Vector_Angle_S ( X, Y ) result ( Theta )
     real, intent(in) :: X(:), Y(:)
+    integer :: N
+    ! S1 ~ 0.7071 is the value at which arccos and arcsin methods have
+    ! equal error.
+    real, parameter :: S1 = 0.5e0 * sqrt(2.0e0)
+    ! S2 ~ 0.6813 is the value at which arccos and arctan methods have
+    ! equal error. The difference in the errors of the arccos method at
+    ! S1 and S2 ~ 0.048 epsilon(1.0e0).
+    real, parameter :: s2 = sqrt ( 2.0e0 * sqrt(3.0e0) - 3.0e0 )
     real :: XN, YN, Z
+    n = size(x)
     xn = norm2(x)
     yn = norm2(y)
     z = dot_product ( x, y ) / ( xn * yn )
-    if ( abs(z) <= 0.9 ) then
+    if ( n == 3 ) then
+      if ( abs(z) <= s2 ) then
+        theta = acos(z)
+      else
+        theta = asin ( norm2(cross(x,y)) / ( xn * yn ) )
+        if ( z < 0 ) theta = pi - theta
+      end if
+    else if ( abs(z) <= s2 ) then
       theta = acos(z)
-    else if ( size(x) == 3 ) then
-      theta = asin ( norm2(cross(x,y)) / ( xn * yn ) )
-      if ( z < 0 ) theta = pi - theta
     else
       theta = atan2 ( norm2(x * yn - y * xn), norm2(x * yn + y * xn) )
     end if
@@ -108,6 +148,9 @@ contains
 end module Vector_Angle_m
 
 ! $Log$
+! Revision 2.2  2019/09/17 03:19:54  vsnyder
+! More accurate switching points to minimize error
+!
 ! Revision 2.1  2019/09/17 00:53:36  vsnyder
 ! Initial commit
 !
