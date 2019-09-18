@@ -103,6 +103,7 @@ contains
       theta = acos(z)
     else
       theta = 2.0d0 * atan2 ( norm2(x * yn - y * xn), norm2(x * yn + y * xn) )
+      if ( z < 0 ) theta = pi - theta
     end if
   end function Vector_Angle_D
 
@@ -132,6 +133,7 @@ contains
       theta = acos(z)
     else
       theta = 2.0e0 * atan2 ( norm2(x * yn - y * xn), norm2(x * yn + y * xn) )
+      if ( z < 0 ) theta = pi - theta
     end if
   end function Vector_Angle_S
 
@@ -148,6 +150,9 @@ contains
 end module Vector_Angle_m
 
 ! $Log$
+! Revision 2.4  2019/09/18 22:20:37  vsnyder
+! Correct arctan method for angles > 90 degrees
+!
 ! Revision 2.3  2019/09/17 22:20:13  vsnyder
 ! Correct the atan2 case
 !
