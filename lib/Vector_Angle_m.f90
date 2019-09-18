@@ -63,6 +63,8 @@ module Vector_Angle_m
     module procedure Vector_Angle_D, Vector_Angle_S
   end interface Vector_Angle
 
+  real(kind(pi)), parameter :: HalfPi = 0.5d0 * Pi
+
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -80,6 +82,7 @@ contains
   double precision function Vector_Angle_D ( X, Y ) result ( Theta )
     double precision, intent(in) :: X(:), Y(:)
     integer :: N
+    double precision, parameter :: HalfPi = 0.5d0 * Pi
     ! S1 ~ 0.7071 is the value at which arccos and arcsin methods have
     ! equal error.
     double precision, parameter :: S1 = 0.5d0 * sqrt(2.0d0)
@@ -91,6 +94,10 @@ contains
     n = size(x)
     xn = norm2(x)
     yn = norm2(y)
+    if ( xn == 0.0 .or. yn == 0.0 ) then
+      theta = halfpi
+      return
+    end if
     z = dot_product ( x, y ) / ( xn * yn )
     if ( n == 3 ) then
       if ( abs(z) <= s1 ) then
@@ -121,6 +128,10 @@ contains
     n = size(x)
     xn = norm2(x)
     yn = norm2(y)
+    if ( xn == 0.0 .or. yn == 0.0 ) then
+      theta = halfpi
+      return
+    end if
     z = dot_product ( x, y ) / ( xn * yn )
     if ( n == 3 ) then
       if ( abs(z) <= s2 ) then
@@ -150,6 +161,9 @@ contains
 end module Vector_Angle_m
 
 ! $Log$
+! Revision 2.5  2019/09/18 22:48:00  vsnyder
+! Handle the case of zero norm
+!
 ! Revision 2.4  2019/09/18 22:20:37  vsnyder
 ! Correct arctan method for angles > 90 degrees
 !
