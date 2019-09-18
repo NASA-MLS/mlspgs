@@ -1,3 +1,7 @@
+% To make the graphic
+% tgif -print -epsi wvs-154-1.obj; epstopdf wvs-154-1.eps
+% tgif -print -jpeg wvs-154-1.obj
+
 \documentclass[11pt]{article}
 \usepackage{alltt}
 \usepackage[fleqn]{amsmath}
@@ -12,8 +16,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-154}
-\newcommand{\docdate}{11 September 2019}
+\newcommand{\docname}{wvs-154r1}
+\newcommand{\docdate}{17 September 2019}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -90,18 +94,21 @@ $y$ is
 
 \begin{equation}\label{one}
 \theta = \cos^{-1} z \text{ where }
- z = \frac{ x \cdot y }{ ||x|| \, ||y|| } \,.
+ z = \frac{ x \cdot y }{ ||x|| \,\, ||y|| } \,.
 \end{equation}
 
-This can be severely inaccurate if $x$ and $y$ are nearly parallel or
-antiparallel because
+In general, to first order, the error in computing a function $f(z)$ is
+$\delta f(z) \approx \delta z f^\prime (z)$.
+
+The derivative of $\cos^{-1} z$ is
 
 \begin{equation*}
-\frac{ \d \, \cos^{-1} z }{ \d z } = \frac{-1}{\sqrt{1-z^2}}
+\frac{ \d \, \cos^{-1} z }{ \d z } = \frac{-1}{\sqrt{1-z^2}} \,,
 \end{equation*}
 
-becomes singular as $|z| \rightarrow 1$, i.e., when $x$ and $y$ are nearly
-parallel or nearly antiparallel.
+which becomes singular as $|z| \rightarrow 1$, i.e., when $x$ and $y$ are
+nearly parallel or nearly antiparallel, and therefore $|\delta \theta|$
+becomes arbitrarily large.
 
 In three dimensions, one can use
 
@@ -124,35 +131,68 @@ are orthogonal:
 
 \begin{equation*}
 ( u - v ) \cdot ( u + v ) =
- u \cdot u + u \cdot v - v \cdot u - v \cdot v = 0 \,,
+ u \cdot u + u \cdot v - v \cdot u - v \cdot v = 0 \,.
 \end{equation*}
 
-and therefore the angle between $u$ and $v$ is
+From
+
+\includegraphics{wvs-154-1}
+
+it is easy to see that the angle $\theta$ between $u$ and $v$ is
 
 \begin{equation*}
-\theta = 2 \tan^{-1} \left( \frac{ || u - v || } { || u + v || } \right) \,.
+\theta = \left \{ \begin{array}{ll}
+ 2\, \tan^{-1} z & x \cdot y \geq 0 \\
+ \pi - 2\, \tan^{-1} z & x \cdot y < 0 \\
+ \end{array} \right.
+ \text{ where } z = \left( \frac{ \frac12 || u - v || }
+                                { \frac12 || u + v || } \right)
+                  = \left( \frac{ || u - v || }
+                                { || u + v || } \right) \,.
 \end{equation*}
 
 If each of the vectors $x$ and $y$ are scaled by the other's length, which
 is equivalent to considering unit vectors parallel to $x$ and $y$ but
-doesn't require dividing, we have
+doesn't require dividing each by its norm (which might be zero), we have
 
 \begin{equation}\label{three}
-\theta = 2 \tan^{-1} \left( \frac{ || \, ( x || y || - y || x || ) \,|| }
-                                 { || \, ( x || y || + y || x || ) \,|| }
-                     \right) \,,
+\theta = \left \{ \begin{array}{ll}
+ 2\, \tan^{-1} z & x \cdot y \geq 0 \\
+ \pi - 2\, \tan^{-1} z & x \cdot y < 0 \\
+ \end{array} \right.
+ \text{ where }
+ z = \left( \frac{ \frac{x}{||x||} - \frac{y}{||y||}}
+                 { \frac{x}{||x||} + \frac{y}{||y||}} \right)
+   = \left( \frac{ || \, ( x || y || - y || x || ) \,|| }
+                 { || \, ( x || y || + y || x || ) \,|| }
+     \right) \,.
 \end{equation}
 
-which doesn't have any singularities.  This is quite a bit more expensive
-than Equation (\ref{one}).
+If either $||x|| = 0$ or $||y|| = 0$, $\theta = \tan^{-1} \frac00$.  In
+this case, one can arbitrarily assign $\theta = 0$ or $\theta =
+\frac{\pi}2$ or $\theta = \pm \pi$. To avoid trying to compute $\frac00$,
+use the two-argument arctangent function. In Fortran, {\tt atan2(y,0)} is
+defined to be a processor-dependent approximation to $\pm\frac{\pi}2$,
+regardless of whether {\tt y} is zero.  If the processor distinguishes
+between positive and negative zero, the result has the same sign as {\tt
+y}.
+
+The derivative of $\tan^{-1} z$,
+
+\begin{equation*}
+\frac{\d \tan^{-1} z}{\d z} = \frac1{z^2+1} < 1 \,,
+\end{equation*}
+
+doesn't have any singularities for real $z$.  Equation (\ref{three}) is
+quite a bit more expensive than Equation (\ref{one}).
 
 Equations (\ref{one}) and (\ref{two}) have the same error at $|z| =
-\frac{\sqrt{2}}2 \approx 0.7071$, where the error is $\sqrt{2} \, \epsilon
-\approx 1.414 \, \epsilon$.
+\frac{\sqrt{2}}2 \approx 0.7071$, where the error is $\sqrt{2} \, \delta z
+\approx 1.414, \delta z$.
 
 Equations (\ref{one}) and (\ref{three}) have the same error at $|z| =
 \sqrt{3 - 2\sqrt{3}} \approx 0.6813$, where the error is
-$\frac1{\sqrt{4-2\sqrt{3}}} \, \epsilon \approx 1.366 \, \epsilon$.
+$\frac1{\sqrt{4-2\sqrt{3}}} \, \delta z \approx 1.366 \, \delta z$.
 
 For a computational method that approximately minimizes the maximum error,
 and has good performance in three dimensions, first compute $z$.  In three
@@ -170,20 +210,23 @@ $|z| \geq \frac{\sqrt{2}}2$ in three dimensions.
 
 The difference between the errors in Equation (\ref{one}) at $|z| =
 \frac{\sqrt{2}}2$ and $|z| = \sqrt{3 - 2\sqrt{3}}$ is $\approx 0.048 \,
-\epsilon$, so the same $|z|$ could be used for selecting the method in
+\delta z$, so the same $|z|$ could be used for selecting the method in
 three dimensions or other dimensions.
 
-The error in Equation (\ref{three}) is always less than $2\, \epsilon$.
-The error in Equation (\ref{one}) is equal to $2\, \epsilon$ for $|z| =
-\frac{\sqrt{3}}2$.  For higher average performance, Equation (\ref{one})
-could be used for $|z| \leq \frac{\sqrt{3}}2 \approx 0.866$, if errors as
-large as $2\, \epsilon$ are acceptable.
+In Equation (\ref{three}), the error is $\frac2{z^2+1}\, \delta z < 2\,
+\delta z$. The error in Equation (\ref{one}) is equal to $2\, \delta z$
+for $|z| = \frac{\sqrt{3}}2$.  For higher average performance, Equation
+(\ref{one}) could be used for $|z| \leq \frac{\sqrt{3}}2 \approx 0.866$,
+if errors as large as $2\, \delta z$ are acceptable.
 
 \vspace*{-1pt} \label{lastpage} \end{document}
 
 % $Id$
 
 % $Log$
+% Revision 1.2  2019/09/17 03:20:26  vsnyder
+% Explain error calculations
+%
 % Revision 1.1  2019/09/12 02:51:53  vsnyder
 % Initial commit
 %
