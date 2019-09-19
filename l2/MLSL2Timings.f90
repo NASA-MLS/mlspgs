@@ -963,15 +963,20 @@ contains ! =====     Public Procedures     =============================
 
   ! -----------------------------------------  restartTimings  -----
   subroutine restartTimings( which )
-  ! Zero out accumulating timings
+  ! Zero out accumulating timings unless 'flags'-only
   ! re-initialize some specific flags and parameters
   ! Args
   character(len=*), intent(in) :: which ! phases, sections, or all
   ! Internal variables
   logical :: sections, phases
   ! Executable
-    num_section_times = NumStringElements(section_names, countEmpty)
-    num_retrieval_times = NumStringElements(retrieval_names, countEmpty)
+  num_section_times = NumStringElements(section_names, countEmpty)
+  num_retrieval_times = NumStringElements(retrieval_names, countEmpty)
+  if ( lowercase(which) == 'flags' ) then
+    FINISHEDSECTIONTIMES = .false.
+    FINISHEDPHASETIMES = .false.
+    return
+  endif
   ! Do sections, phases, both?
   sections = (StringElementNum('all,both,sections', LowerCase(which), &
     & countEmpty) > 0)
@@ -1050,6 +1055,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.76  2019/09/19 16:10:28  pwagner
+! restartTimings will optionally reset only flags, not timings
+!
 ! Revision 2.75  2019/09/05 17:52:54  pwagner
 ! cmdline --skipretrievals no longer reversible
 !
