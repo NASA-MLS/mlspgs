@@ -194,13 +194,17 @@ begin MergeGrids
     a=gmaoTemperatureInput5, b=gmaoPressureInput5
 })  
   ;; to save memory Convert, then Merge right after reading
-  geos59Converted$1: ConvertEtaToP, $
+  geos59ConvertedTemp$1: ConvertEtaToP, $
     a=gmaoTemperatureInput$1, b=gmaoPressureInput$1, Grid=gridTemperature
   Delete, grid=gmaoTemperatureInput$1
-  Delete, grid=gmaoPressureInput$1
-  MergeGrids, grid=geos59Merged$1, operational=geos59Converted$1, $
+  MergeGrids, grid=geos59Merged$1, operational=geos59ConvertedTemp$1, $
     climatology=gridTemperature, height=1mb, scale=5km
-  Delete, grid=geos59Converted$1
+  Delete, grid=geos59ConvertedTemp$1
+
+  geos59ConvertedGPH$1: ConvertEtaToP, $
+    a=gmaoGPHInput$1, b=gmaoPressureInput$1, Grid=gridTemperature
+  Delete, grid=gmaoGPHInput$1
+  Delete, grid=gmaoPressureInput$1
 end MergeGrids
 })
 
@@ -238,19 +242,19 @@ end MergeGrids
 
 begin MergeGrids
   ConcatenateGrids, grid=mergedGPH, $
-    sourceGrid=[gmaoGPHInput1, gmaoGPHInput2, $
-    gmaoGPHInput3, gmaoGPHInput4, gmaoGPHInput5, gmaoGPHInput6, $
-    gmaoGPHInput7, gmaoGPHInput8, $
-    gmaoGPHInputNext], /deleteGrids
-  Delete, grid=gmaoGPHInput1
-  Delete, grid=gmaoGPHInput2
-  Delete, grid=gmaoGPHInput3
-  Delete, grid=gmaoGPHInput4
-  Delete, grid=gmaoGPHInput5
-  Delete, grid=gmaoGPHInput6
-  Delete, grid=gmaoGPHInput7
-  Delete, grid=gmaoGPHInput8
-  Delete, grid=gmaoGPHInputNext
+    sourceGrid=[geos59ConvertedGPH1, geos59ConvertedGPH2, $
+    geos59ConvertedGPH3, geos59ConvertedGPH4, geos59ConvertedGPH5, geos59ConvertedGPH6, $
+    geos59ConvertedGPH7, geos59ConvertedGPH8, $
+    geos59ConvertedGPHNext], /deleteGrids
+  Delete, grid=geos59ConvertedGPH1
+  Delete, grid=geos59ConvertedGPH2
+  Delete, grid=geos59ConvertedGPH3
+  Delete, grid=geos59ConvertedGPH4
+  Delete, grid=geos59ConvertedGPH5
+  Delete, grid=geos59ConvertedGPH6
+  Delete, grid=geos59ConvertedGPH7
+  Delete, grid=geos59ConvertedGPH8
+  Delete, grid=geos59ConvertedGPHNext
 end MergeGrids
 
 
@@ -266,6 +270,9 @@ begin MergeGrids
 end MergeGrids
 
 ;$Log$
+;Revision 1.2  2019/08/22 16:52:17  pwagner
+;Correct an error that used up the 1st PCFid
+;
 ;Revision 1.1  2019/08/16 21:55:50  pwagner
 ;First commit
 ;
