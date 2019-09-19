@@ -130,7 +130,7 @@ vpath %.jpg $(DOCDIR)
 # Define some suffix rules
 
 .SUFFIXES:
-.SUFFIXES: .o .tex .dvi .pdf .eps .f .jpg
+.SUFFIXES: .o .tex .dvi .pdf .eps .f .jpg .obj
 .tex.dvi:
 	echo "\def\dvidir{../dvi}" | cat - $< > $*.temp
 	echo "\def\pdfdir{../pdf}" | cat - $*.temp > $(TEXDIR)/$<
@@ -157,6 +157,12 @@ vpath %.jpg $(DOCDIR)
 
 .jpg.eps:
 	convert $*.jpg $*.eps
+
+.obj.eps:
+	tgif -print -eps -page 1 -color $*.obj
+
+.obj.pdf:
+	tgif -print -pdf -page 1 -color $*.obj
 
 all doc:
 
@@ -245,6 +251,9 @@ update:
 
 # ========================================================================
 # $Log$
+# Revision 1.9  2019/06/27 21:08:47  pwagner
+# make clean more thorough
+#
 # Revision 1.8  2019/06/24 18:48:01  pwagner
 # make clean is now more thorough
 #
