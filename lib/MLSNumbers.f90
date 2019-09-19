@@ -79,6 +79,7 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
 !                            by dividing out their gcd
 ! Subtract                 Subtract two composite numbers, or
 !                              two rational numbers
+! AreRelativelyPrime       gcd(A,B) = 1 ?
 ! IsGreaterThan            A > B ?
 ! IsEqual                  Are the two args equal?
 ! IsLessThan               A < B ?
@@ -91,6 +92,7 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
 ! === (start of api) ===
 ! Add ( compNum A, compNum B, compNum C )
 ! Add ( rationalNum A, rationalNum B, rationalNum C )
+! log AreRelativelyPrime( compNum A, compNum B )
 ! int BigPrime( int n, [int primes(:)] )
 ! int BinomialCoef ( int n, int m )
 ! Copy ( compNum A, compNum C )
@@ -151,7 +153,7 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
   public :: Fibonacci
   public :: CompositeNum_T, RationalNum_T
   public :: Copy, Create, Destroy, Dump, Estimate
-  public :: IsEqual, IsGreaterThan, IsLessThan
+  public :: AreRelativelyPrime, IsEqual, IsGreaterThan, IsLessThan
   public :: EstimateCompositeNum, EvaluateCompositeNum, InRange
   public :: GreatestCommonDivisor, LeastCommonMultiple
   public :: Add, Subtract, Multiply, Divide, Power, Reduce, Invert
@@ -354,6 +356,27 @@ contains
     call Copy ( A, CR%numerator )
     call Copy ( B, CR%denominator )
   end subroutine Add_rational
+
+  ! --------------- AreRelativelyPrime --------------------
+  ! Are the two numbers relatively prime?
+  ! (1) gcd(A,B) == 1?
+  logical function AreRelativelyPrime( A, B )
+    ! Args
+    type(CompositeNum_T), intent(in)       :: A, B
+    ! Local variables
+    integer, dimension(:), allocatable     :: C1, C2
+    integer                                :: n
+    ! Executable
+    AreRelativelyPrime = .true.
+    if ( isOne ( a ) .or. &
+      & isOne ( b ) ) return ! gcd(any,"1") == "1"
+    call allocate_test( C1, size(A%factors), 'C1', &
+      & ModuleName // 'AreRelativelyPrime C1' )
+    call allocate_test( C2, size(A%factors), 'C2', &
+      & ModuleName // 'AreRelativelyPrime C2' )
+    call FindIntersection ( A%factors, B%factors, C1, C2, n )
+    AreRelativelyPrime = ( n == 0 )
+  end function AreRelativelyPrime
 
   ! --------------- BigPrime --------------------
   function BigPrime( n, primes ) result( next )
@@ -883,6 +906,8 @@ contains
   !       {c%factors[i]} = {a%factors[i]} /\ {b%factors[i]}
   ! (2) For each c%factors(i), choose the smaller of the corresponding a or b
   !      power
+  ! Note that if either A or B is "one", C will be "one", too
+  ! by a side-effect of declaring C with intent(out)
   subroutine GreatestCommonDivisor( A, B, C, AOC, BOC )
     ! Args
     type(CompositeNum_T), intent(in)                 :: A
@@ -896,6 +921,7 @@ contains
     integer                                          :: na
     integer                                          :: nb
     ! Executable
+    ! Check whether  or B is "one"
     if (  allocated(a%factors) .and. allocated(b%factors) ) then
       ! c%factors = Intersection( a%factors, b%factors )
       ! c%powers =  Intersection( a%powers, b%powers )
@@ -1704,6 +1730,9 @@ end module MLSNumbers
 
 !
 ! $Log$
+! Revision 2.8  2019/09/19 16:01:02  pwagner
+! Added AreRelativelyPrime function
+!
 ! Revision 2.7  2019/08/08 17:41:09  pwagner
 ! Added procedures for -Num types to Add, Subtract, islessThan, and isGreaterThan
 !
