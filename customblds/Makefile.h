@@ -797,6 +797,16 @@ wvs-151-3.pdf: wvs-151-3.obj
 dnwt.epsi: dnwt.ps
 	ps2epsi dnwt.ps
         
+wvs-154.dvi: wvs-154.tex wvs-154-1.eps
+
+wvs-154.pdf: wvs-154.tex wvs-154-1.pdf
+
+wvs-154-1.eps: wvs-154-1.obj
+	tgif -print -eps -page 1 -color wvs-154-1.obj
+
+wvs-154-1.pdf: wvs-154-1.obj
+	tgif -print -pdf -page 1 -color wvs-154-1.obj
+
 iy-005.aux: iy-005.tex
 	latex iy-005.tex
 
@@ -820,6 +830,9 @@ iy-006.bbl: yanovsky.bib iy-006.aux
 
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.41  2019/09/11 16:45:39  pwagner
+# Augmented dependencies for wvs-063
+#
 # Revision 1.40  2019/09/10 17:37:47  pwagner
 # Copes with new wvs-063-eq-circ.obj
 #
