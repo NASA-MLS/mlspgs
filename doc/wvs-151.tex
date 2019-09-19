@@ -65,11 +65,11 @@
 \renewcommand{\d}{\text{d}}
 
 \title{Sparse Interpolators in the Forward Models\\
-wvs-151r1}
+wvs-151r2}
 
 \author{Van Snyder}
 
-\date{11 September 2019}
+\date{18 September 2019}
 \titlegraphic{\includegraphics[width=1.0in]{pinklogo}}
 
 \begin{document}
@@ -97,12 +97,15 @@ purposes:
 
 In that context, they can be thought of as a matrix in which each row
 corresponds to a position on the path of integration, and each column
-corresponds to a state-vector basis element.
+corresponds to a state-vector basis element, such as temperature or ozone
+at one place in the atmosphere.
 
 The state-vector basis might be one-dimensional ($\phi$ or $\zeta$),
 two-dimensional ($\zeta \times \phi$), three-dimensional ($\zeta \times$
-QTM or $\zeta \times$ lat $\times$ lon), or could include frequency as an
-additional first dimension ($\nu \times \zeta \times \phi$).
+QTM) or $(\zeta \times$ lat $\times$ lon), or could include frequency as an
+additional first dimension ($\nu \times \zeta \times \phi$) of ($\nu
+\times \zeta \times\, $QTM), or an across-plane dimension for the magnetic
+field, ($\nu \times \zeta \times \phi \times \chi$).
 
 \end{frame}
 
@@ -446,17 +449,56 @@ If $r_1 = 1$, the effect is as if $r_1 = r_2$, with all rows of $\eta^1$
 having the same value (e.g., for frequency interpolation).  Otherwise,
 $r_1 = r_2$ is required.\\[3pt]
 
+\end{itemize}
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Computing $\eta$}
+
+{\bf Example}: Compute $\eta^k_l$ for $\zeta$. {\tt Eta_1D} assumes the
+path positions are sorted. $\zeta$ increases monotonically on each side of
+the tangent.  To avoid sorting {\tt Z_Path}, which would put the
+interpolating coefficients into the wrong rows of the $\eta$ matrix, do it
+for each side of the tangent separately:
+
+{\small
+{\tt~~call eta_z\%eta_1d ( grids_f\%zet_basis(z1:z2), z_path, \& }\\
+{\tt~~~~~~~~~~~~~~~~~~~~\& row1=tan_pt, rowN=1, \&} \\
+{\tt~~~~~~~~~~~~~~~~~~~~\& create=.false. ) }
+ 
+{\tt~~call eta_z\%eta_1d ( grids_f\%zet_basis(z1:z2), z_path, \& }\\
+{\tt~~~~~~~~~~~~~~~~~~~~\& row1=tan_pt+mySkip, rowN=n_path, \&} \\
+{\tt~~~~~~~~~~~~~~~~~~~~\& create=.false.)}
+}
+
+We don't section {\tt z_path(tan_pt:1:-1)} and {\tt
+z_path(tan_pt+mySkip:n_path)} because that would put the interpolation
+coefficients in the wrong rows of the $\eta^k_l$ matrix.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Computing $\eta$}
+
+{\bf Example}: Compute $\eta^k_m$ for $\phi$. We know $\phi$ is sorted.
+
+{\tt~~call eta_phi\%eta_1d ( grids_f\%phi_basis(p1:p2), \&}\\
+{\tt~~~~~~~~~~~~~~~~~~~~~~~\& phi_path, \& }\\
+{\tt~~~~~~~~~~~~~~~~~~~~~~~\& what=what, resize=.true. ) }
+
 {\bf Example}: Compute $\zeta \times \phi$ interpolating coefficients
-$\eta^k_{lm}$ from $\zeta$ and $\phi$ ones $\eta^k_l$ and $\eta^k_m$:\\[3pt]
+$\eta^k_{lm}$ from $\zeta$ and $\phi$ ones $\eta^k_l$ and
+$\eta^k_m$:\\[3pt]
 
 {\tt~~call eta_zp(k)\%eta_nd ( eta_z(k), eta_p(k) )}\\[3pt]
 
-or compute $f \times \zeta \times \phi$ ones $\eta^k_{\nu l m}$ from
+and then compute $f \times \zeta \times \phi$ ones $\eta^k_{\nu l m}$ from
 $\eta^k_\nu$ and $\eta^k_{lm}$:\\[3pt]
 
 {\tt~~call eta_fzp(k)\%eta_nd ( eta_f(k), eta_zp(k)~)}
-
-\end{itemize}
 
 \end{frame}
 
@@ -736,6 +778,9 @@ for Fortran, to traverse row {\bf R} of sparse matrix {\bf S}:
 % $Id$
 
 % $Log$
+% Revision 1.3  2019/09/12 19:27:20  pwagner
+% Builds successfully again with new logo name
+%
 % Revision 1.2  2019/09/11 23:29:37  vsnyder
 % Minor corrections, some cannonball polishing
 %
