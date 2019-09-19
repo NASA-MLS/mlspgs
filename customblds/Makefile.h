@@ -403,53 +403,41 @@ ifeq ($(short_name),doc)
 # (the same pattern will be reused often)
 # (1) an eps-type file
 sparse.eps: sparse.obj
-	tgif -print -eps -page 1 -color sparse.obj
 
 # (2) a pdf-type file
 sparse.pdf: sparse.obj
-	tgif -print -pdf -page 1 -color sparse.obj
 
 wvs-010.dvi: wvs-010.tex sparse.eps
 
 wvs-010.pdf: wvs-010.tex sparse.pdf
 
 wvs-030-nearest.eps: wvs-030-nearest.obj
-	tgif -print -eps -page 1 -color wvs-030-nearest.obj
 
 wvs-030-nearest.pdf: wvs-030-nearest.obj
-	tgif -print -pdf -page 1 -color wvs-030-nearest.obj
 
 wvs-030.dvi: wvs-030.tex wvs-030-nearest.eps
 
 wvs-030.pdf: wvs-030.tex wvs-030-nearest.pdf
 
 wvs-048-grid2.eps: wvs-048-grid2.obj
-	tgif -print -eps -page 1 -color wvs-048-grid2.obj
 
 wvs-048-grid2.pdf: wvs-048-grid2.obj
-	tgif -print -pdf -page 1 -color wvs-048-grid2.obj
 
 wvs-048.dvi: wvs-048.tex wvs-048-grid2.eps
 
 wvs-048.pdf: wvs-048.tex wvs-048-grid2.pdf
 
 wvs-063-eq-circ.eps: wvs-063-eq-circ.obj
-	tgif -print -eps -page 1 -color wvs-063-eq-circ.obj
 
 wvs-063-eq-circ.pdf: wvs-063-eq-circ.obj
-	tgif -print -pdf -page 1 -color wvs-063-eq-circ.obj
 
 wvs-063-grids_t.eps: wvs-063-grids_t.obj
-	tgif -print -eps -page 1 -color wvs-063-grids_t.obj
 
 wvs-063-grids_t.pdf: wvs-063-grids_t.obj
-	tgif -print -pdf -page 1 -color wvs-063-grids_t.obj
 
 wvs-063-diag.eps: wvs-063-diag.obj
-	tgif -print -eps -page 1 -color wvs-063-diag.obj
 
 wvs-063-diag.pdf: wvs-063-diag.obj
-	tgif -print -pdf -page 1 -color wvs-063-diag.obj
 
 wvs-063.dvi: wvs-063.tex wvs-063-eq-circ.eps wvs-063-grids_t.eps wvs-048-grid2.eps wvs-063-diag.eps
 
@@ -476,30 +464,24 @@ wvs-074.dvi: wvs-074.tex wvs-074-scatter-1.eps wvs-074-scatter-2.eps
 wvs-074.pdf: wvs-074.tex wvs-074-scatter-1.pdf wvs-074-scatter-2.pdf
 
 wvs-083-grid.eps: wvs-083-grid.obj
-	tgif -print -eps -page 1 -color wvs-083-grid.obj
 
 wvs-083-grid.pdf: wvs-083-grid.obj
-	tgif -print -pdf -page 1 -color wvs-083-grid.obj
 
 wvs-083.dvi: wvs-083.tex wvs-083-grid.eps
 
 wvs-083.pdf: wvs-083.tex wvs-083-grid.pdf
 
 wvs-089-pic.eps: wvs-089-pic.obj
-	tgif -print -eps -page 1 -color wvs-089-pic.obj
 
 wvs-089-pic.pdf: wvs-089-pic.obj
-	tgif -print -pdf -page 1 -color wvs-089-pic.obj
 
 wvs-089.dvi: wvs-089.tex wvs-089-pic.eps
 
 wvs-089.pdf: wvs-089.tex wvs-089-pic.pdf
 
 wvs-095-eta.eps: wvs-095-eta.obj
-	tgif -print -eps -page 1 -color wvs-095-eta.obj
 
 wvs-095-eta.pdf: wvs-095-eta.obj
-	tgif -print -pdf -page 1 -color wvs-095-eta.obj
 
 wvs-095.dvi: wvs-095.tex wvs-095-eta.eps
 #	latex wvs-095
@@ -522,36 +504,28 @@ wvs-126.dvi: wvs-126.tex wvs-126-1.eps
 wvs-126.pdf: wvs-126.tex wvs-126-1.pdf
 
 wvs-126-1.eps: wvs-126-1.obj
-	tgif -print -eps -page 1 -color wvs-126-1.obj
 
 wvs-126-1.pdf: wvs-126-1.obj
-	tgif -print -pdf -page 1 -color wvs-126-1.obj
 
 wvs-128.dvi: wvs-128.tex wvs-128-QTM-2.eps wvs-128-QTM-3.eps
 
 wvs-128.pdf: wvs-128.tex wvs-128-QTM-2.pdf wvs-128-QTM-3.pdf
 
 wvs-128-QTM-2.eps: wvs-128-QTM-2.obj
-	tgif -print -eps -page 1 -color wvs-128-QTM-2.obj
 
 wvs-128-QTM-2.pdf: wvs-128-QTM-2.obj
-	tgif -print -pdf -page 1 -color wvs-128-QTM-2.obj
 
 wvs-128-QTM-3.eps: wvs-128-QTM-3.obj
-	tgif -print -eps -page 1 -color wvs-128-QTM-3.obj
 
 wvs-128-QTM-3.pdf: wvs-128-QTM-3.obj
-	tgif -print -pdf -page 1 -color wvs-128-QTM-3.obj
 
 wvs-133.dvi: wvs-133.tex wvs-133-fig.eps
 
 wvs-133.pdf: wvs-133.tex wvs-133-fig.pdf
 
 wvs-133-fig.eps: wvs-133-fig.obj
-	tgif -print -eps -page 1 -color wvs-133-fig.obj
 
 wvs-133-fig.pdf: wvs-133-fig.obj
-	tgif -print -pdf -page 1 -color wvs-133-fig.obj
 
 
 wvs-134.dvi: wvs-134.tex wvs-134-1.eps
@@ -559,124 +533,96 @@ wvs-134.dvi: wvs-134.tex wvs-134-1.eps
 wvs-134.pdf: wvs-134.tex wvs-134-1.pdf
 
 wvs-134-1.eps: wvs-134-1.obj
-	tgif -print -eps -page 1 -color wvs-134-1.obj
 
 wvs-134-1.pdf: wvs-134-1.obj
-	tgif -print -pdf -page 1 -color wvs-134-1.obj
 
 wvs-136.dvi: wvs-136.tex wvs-136-lines.eps
 
 wvs-136.pdf: wvs-136.tex wvs-136-lines.pdf
 
 wvs-136-lines.eps: wvs-136-lines.obj
-	tgif -print -eps -page 1 -color wvs-136-lines.obj
 
 wvs-136-lines.pdf: wvs-136-lines.obj
-	tgif -print -pdf -page 1 -color wvs-136-lines.obj
 
 wvs-137.dvi: wvs-137.tex wvs-137-1.eps wvs-137-2.eps wvs-137-3.eps
 
 wvs-137.pdf: wvs-137.tex wvs-137-1.pdf wvs-137-2.pdf wvs-137-3.pdf
 
 wvs-137-1.eps: wvs-137-1.obj
-	tgif -print -eps -page 1 -color wvs-137-1.obj
 
 wvs-137-1.pdf: wvs-137-1.obj
-	tgif -print -pdf -page 1 -color wvs-137-1.obj
 
 wvs-137-2.eps: wvs-137-2.obj
-	tgif -print -eps -page 1 -color wvs-137-2.obj
 
 wvs-137-2.pdf: wvs-137-2.obj
-	tgif -print -pdf -page 1 -color wvs-137-2.obj
 
 wvs-137-3.eps: wvs-137-3.obj
-	tgif -print -eps -page 1 -color wvs-137-3.obj
 
 wvs-137-3.pdf: wvs-137-3.obj
-	tgif -print -pdf -page 1 -color wvs-137-3.obj
 
 wvs-138.dvi: wvs-138.tex wvs-138-1.eps
 
 wvs-138.pdf: wvs-138.tex wvs-138-1.pdf
 
 wvs-138-1.eps: wvs-138-1.obj
-	tgif -print -eps -page 1 -color wvs-138-1.obj
 
 wvs-138-1.pdf: wvs-138-1.obj
-	tgif -print -pdf -page 1 -color wvs-138-1.obj
 
 wvs-139.dvi: wvs-139.tex wvs-139-1.eps
 
 wvs-139.pdf: wvs-139.tex wvs-139-1.pdf
 
 wvs-139-1.eps: wvs-139-1.obj
-	tgif -print -eps -page 1 -color wvs-139-1.obj
 
 wvs-139-1.pdf: wvs-139-1.obj
-	tgif -print -pdf -page 1 -color wvs-139-1.obj
 
 wvs-141.dvi: wvs-141.tex wvs-141-1.eps
 
 wvs-141.pdf: wvs-141.tex wvs-141-1.pdf
 
 wvs-141-1.eps: wvs-141-1.obj
-	tgif -print -eps -page 1 -color wvs-141-1.obj
 
 wvs-141-1.pdf: wvs-141-1.obj
-	tgif -print -pdf -page 1 -color wvs-141-1.obj
 
 wvs-142.dvi: wvs-142.tex wvs-142-1.eps
 
 wvs-142.pdf: wvs-142.tex wvs-142-1.pdf
 
 wvs-142-1.eps: wvs-142-1.obj
-	tgif -print -eps -page 1 -color wvs-142-1.obj
 
 wvs-142-1.pdf: wvs-142-1.obj
-	tgif -print -pdf -page 1 -color wvs-142-1.obj
 
 wvs-143.dvi: wvs-143.tex wvs-143-1.eps wvs-143-2.eps
 
 wvs-143.pdf: wvs-143.tex wvs-143-1.pdf wvs-143-2.pdf
 
 wvs-143-1.eps: wvs-143-1.obj
-	tgif -print -eps -page 1 -color wvs-143-1.obj
 
 wvs-143-1.pdf: wvs-143-1.obj
-	tgif -print -pdf -page 1 -color wvs-143-1.obj
 
 wvs-143-2.eps: wvs-143-2.obj
-	tgif -print -eps -page 1 -color wvs-143-2.obj
 
 wvs-143-2.pdf: wvs-143-2.obj
-	tgif -print -pdf -page 1 -color wvs-143-2.obj
 
 wvs-144.dvi: wvs-144.tex Sparse.eps
 
 wvs-144.pdf: wvs-144.tex Sparse.pdf
 
 Sparse.eps: Sparse.obj
-	tgif -print -eps -page 1 -color Sparse.obj
 
 Sparse.pdf: Sparse.obj
-	tgif -print -pdf -page 1 -color Sparse.obj
 
 wvs-145.dvi: wvs-145.tex wvs-145-1.eps wvs-145-2.eps
 
 wvs-145.pdf: wvs-145.tex wvs-145-1.pdf wvs-145-2.pdf
 
 wvs-145-1.eps: wvs-145-1.obj
-	tgif -print -eps -page 1 -color wvs-145-1.obj
 
 wvs-145-1.pdf: wvs-145-1.obj
-	tgif -print -pdf -page 1 -color wvs-145-1.obj
 
 wvs-145-2.eps: wvs-145-2.obj
-	tgif -print -eps -page 1 -color wvs-145-2.obj
 
 wvs-145-2.pdf: wvs-145-2.obj
-	tgif -print -pdf -page 1 -color wvs-145-2.obj
 
 
 wvs-147.dvi: wvs-147.tex \
@@ -690,58 +636,40 @@ wvs-147.pdf: wvs-147.tex \
              wvs-147-7.pdf wvs-147-2-5.pdf wvs-147-0.pdf 
 
 wvs-147-1.eps: wvs-147-1.obj
-	tgif -print -eps -page 1 -color wvs-147-1.obj
 
 wvs-147-1.pdf: wvs-147-1.obj
-	tgif -print -pdf -page 1 -color wvs-147-1.obj
 
 wvs-147-2.eps: wvs-147-2.obj
-	tgif -print -eps -page 1 -color wvs-147-2.obj
 
 wvs-147-2.pdf: wvs-147-2.obj
-	tgif -print -pdf -page 1 -color wvs-147-2.obj
 
 wvs-147-3.eps: wvs-147-3.obj
-	tgif -print -eps -page 1 -color wvs-147-3.obj
 
 wvs-147-3.pdf: wvs-147-3.obj
-	tgif -print -pdf -page 1 -color wvs-147-3.obj
 
 wvs-147-0.eps: wvs-147-0.obj
-	tgif -print -eps -page 1 -color wvs-147-0.obj
 
 wvs-147-0.pdf: wvs-147-0.obj
-	tgif -print -pdf -page 1 -color wvs-147-0.obj
 
 wvs-147-4.eps: wvs-147-4.obj
-	tgif -print -eps -page 1 -color wvs-147-4.obj
 
 wvs-147-4.pdf: wvs-147-4.obj
-	tgif -print -pdf -page 1 -color wvs-147-4.obj
 
 wvs-147-5.eps: wvs-147-5.obj
-	tgif -print -eps -page 1 -color wvs-147-5.obj
 
 wvs-147-5.pdf: wvs-147-5.obj
-	tgif -print -pdf -page 1 -color wvs-147-5.obj
 
 wvs-147-6.eps: wvs-147-6.obj
-	tgif -print -eps -page 1 -color wvs-147-6.obj
 
 wvs-147-6.pdf: wvs-147-6.obj
-	tgif -print -pdf -page 1 -color wvs-147-6.obj
 
 wvs-147-7.eps: wvs-147-7.obj
-	tgif -print -eps -page 1 -color wvs-147-7.obj
 
 wvs-147-7.pdf: wvs-147-7.obj
-	tgif -print -pdf -page 1 -color wvs-147-7.obj
 
 wvs-147-2-5.eps: wvs-147-2-5.obj
-	tgif -print -eps -page 1 -color wvs-147-2-5.obj
 
 wvs-147-2-5.pdf: wvs-147-2-5.obj
-	tgif -print -pdf -page 1 -color wvs-147-2-5.obj
 
 wvs-149.dvi: wvs-149.tex wvs-149-1.txp wvs-149.bbl wvs-149-1.600pk
 
@@ -777,22 +705,16 @@ wvs-151.dvi: wvs-151.tex wvs-151-1.eps wvs-151-2.eps wvs-151-3.eps
 wvs-151.pdf: wvs-151.tex wvs-151-1.pdf wvs-151-2.pdf wvs-151-3.pdf
 
 wvs-151-1.eps: wvs-151-1.obj
-	tgif -print -eps -page 1 -color wvs-151-1.obj
 
 wvs-151-1.pdf: wvs-151-1.obj
-	tgif -print -pdf -page 1 -color wvs-151-1.obj
 
 wvs-151-2.eps: wvs-151-2.obj
-	tgif -print -eps -page 1 -color wvs-151-2.obj
 
 wvs-151-2.pdf: wvs-151-2.obj
-	tgif -print -pdf -page 1 -color wvs-151-2.obj
 
 wvs-151-3.eps: wvs-151-3.obj
-	tgif -print -eps -page 1 -color wvs-151-3.obj
 
 wvs-151-3.pdf: wvs-151-3.obj
-	tgif -print -pdf -page 1 -color wvs-151-3.obj
 
 dnwt.epsi: dnwt.ps
 	ps2epsi dnwt.ps
@@ -802,10 +724,8 @@ wvs-154.dvi: wvs-154.tex wvs-154-1.eps
 wvs-154.pdf: wvs-154.tex wvs-154-1.pdf
 
 wvs-154-1.eps: wvs-154-1.obj
-	tgif -print -eps -page 1 -color wvs-154-1.obj
 
 wvs-154-1.pdf: wvs-154-1.obj
-	tgif -print -pdf -page 1 -color wvs-154-1.obj
 
 iy-005.aux: iy-005.tex
 	latex iy-005.tex
@@ -830,6 +750,9 @@ iy-006.bbl: yanovsky.bib iy-006.aux
 
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.42  2019/09/19 16:08:12  pwagner
+# Added build commands for wvs-154
+#
 # Revision 1.41  2019/09/11 16:45:39  pwagner
 # Augmented dependencies for wvs-063
 #
