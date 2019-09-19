@@ -17,6 +17,11 @@ module dates_module
   ! consults a leap-second file before converting to internal
   ! time representations (TAI93) while this module maintains
   ! its own internal database of leap seconds.
+  
+  ! There are two other date-handling and time-handling modules:
+  !   Calendar.f90
+  !   CCSDS_Time.f90
+  ! No other module uses them currently.
 
   use IO_Stuff, only: PrintMessage
   use Machine, only: Exit_With_Status
@@ -85,7 +90,7 @@ module dates_module
 ! hoursbetween2utcs  How many hours between 2 date-times
 ! hoursinday         How many hours since the start of the day
 ! isUTCInRange       Is the utc a date within allowable range of dates?
-! lastday            How many days in leap month
+! lastday            How many days in normal month (does anyone use this?)
 ! nextMoon           utc date, time of next (new) moon 
 !                     (or next after input date); less accurate than toolkit AA
 ! precedesutc        Did utcdate1 precede utcdate2?
@@ -230,8 +235,9 @@ module dates_module
   
   ! PAW chose a different starting date for dai (might be better called dai01)
   ! which is January 1 2001
-  ! so try to keep distinct the 3 numerical date types
+  ! so try to keep distinct our 3 numerical date types
   ! name             meaning                             numerical type
+  ! ----             -------                             --------------
   ! tai93s (toolkit) seconds since midnight 1993 Jan 1        d.p.
   ! tai93  (here) days since midnight 1993 Jan 1              int
   ! dai01  (here) days since midnight 2001 Jan 1              int
@@ -258,22 +264,25 @@ module dates_module
   !
   ! It would not be that difficult to enable us to take advantage
   ! of a leapsec file, and, after having read it, fill out our leapsec database.
-  ! Difficult or easy, we have not yet bestirred ourselves.
+  ! Difficult or easy, we have not yet bestirred ourselves. Instead we
+  ! define a character-valued array of leapsecond dates
   
   ! Our implementation of leapseconds is not strictly accurate:
   ! (a) Our database includes dates prior to 1972, contrary to the usual definition
   ! (b) Our implementation assumes that each leapsecond adds exactly 1 second
   !     the definition allows for possible negative leap seconds
-  !     early leap seconds were sometimes fractional
+  !     early leap seconds were sometimes even fractional
 ! === (end of api) ===
 
 ! Further notes:
 ! (1) We maintain a private datatype, MLSDate_Time_T
-! it is an intermediary in various operations and conversions
-! Would it be useful to uncloak it so callers might access it directly?
-! (2) This module has grown rather long. Should we consider
-! Splitting into two, and if so, what would be the criteria for
-! grouping procedures into a common module?
+!     it is an intermediary in various operations and conversions
+!     Would it be useful to uncloak it so callers might access it directly?
+! (2) We call eudtf an internal data format, and yet procedures
+!     to convert to and from it are public. Contradictory?
+! (3) This module has grown rather long. Should we consider
+!     Splitting into two, and if so, what would be the criteria for
+!     grouping procedures into a common module?
 
   ! Here are the functions this module provides
   public :: Adddaystoutc, Addhourstoutc, Addsecondstoutc, Buildcalendar, &
@@ -335,6 +344,7 @@ module dates_module
 
   integer, private, parameter :: Secondsinaday = 24*60*60
   
+  ! Should we read the following from a file, like the Toolkit does?
   character(len=*), dimension(41), parameter :: leapSecDates = (/ &
     '1961 JAN 1', & 
     '1961 AUG 1', & 
@@ -437,6 +447,8 @@ module dates_module
   end type MLSDate_Time_T
   
   ! This will be the starting date for all MLSDate_Time_T
+  ! We could switch to letting each MLSDate_Time_T keep its
+  ! own StartingDate.
   character(len=16), save :: DTStartingDates = '2001-01-01'
   ! This accounts for the number of days between the dates
   ! '1993-01-01' and '2001-01-01':
@@ -445,6 +457,10 @@ module dates_module
   integer            :: DAISTARTTODAI01 = DAI93TODAI01
   
 contains
+  ! ----------- Public funtions and subroutines ------------
+  ! Many of these merely convert from one format to another
+  ! Often they work by first converting to MLSDate_Time_T
+  ! and then from MLSDate_Time_T to whatever end format you wanted
   ! ---------------------------------------------  adddaystoutc  -----
   function adddaystoutc( utc, days ) result(after)
     ! Given a utc return a date later (or earlier) by days
@@ -872,12 +888,16 @@ contains
   ! ---------------------------------------------  daysInMonth  -----
   elemental function daysInMonth( month, year ) result(days)
     ! Given a month, year, return the number of days in the month
+    ! Return 0 if the month is not a valid number
     ! Args
-    integer, intent(in) :: month
-    integer, intent(in) :: year
+    integer, intent(in)          :: month
+    integer, intent(in)          :: year
     integer                      :: days
     ! Executable
-    if ( leapyear(year) ) then
+    ! Valid month? If not, return 0
+    if ( month < lbound(DayMaxLY, 1) .or. month > ubound(DayMaxLY, 1) ) then
+      days = 0
+    elseif ( leapyear(year) ) then
        days = DAYMAXLY(month)
     else
        days = DAYMAXNY(month)
@@ -885,6 +905,7 @@ contains
   end function daysInMonth
 
   ! -----------------------------------------------  DumpDateTime  -----
+  ! Not yet a public procedure
   subroutine dumpDateTime( dateTime, name )
     ! Dump an MLSDate_Time_T
     ! Args
@@ -929,6 +950,7 @@ contains
   end function hoursinday
 
   function lastday(imonth) result (day)
+    ! See also daysInMonth
     integer,intent(in)::imonth
     integer::day
     if(imonth < 1 .or. imonth >12) then
@@ -3004,6 +3026,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.45  2019/07/09 23:12:55  pwagner
+! Made MonthName public
+!
 ! Revision 2.44  2018/12/11 01:21:14  pwagner
 ! No longer uses Printit_M
 !
