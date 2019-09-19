@@ -91,7 +91,7 @@ contains ! ====     Public Procedures     ==============================
       & Signals, SpectrometerTypes
     use MLSStringLists, only: ExpandStringRange, IsInList, SwitchDetail
     use MLSStrings, only: Lowercase
-    use MLSL2Timings, only: Add_To_Section_Timing
+    use MLSL2Timings, only: Add_To_Section_Timing, RestartTimings
     use Next_Tree_Node_M, only: Dump, &
       & Next_Tree_Node, Next_Tree_Node_State
     use Open_Init, only: OpenAndInitialize
@@ -424,6 +424,7 @@ contains ! ====     Public Procedures     ==============================
           do chunkNo = firstChunk, lastChunk ! --------------------- Chunk loop
             state = save1 ! Back up so first repeated section is next
             call resumeOutput ! In case the last phase was  silent
+            call restartTimings( 'flags' ) ! reset only the flags
             if ( chunksSkipped(chunkNo) ) cycle
             call time_now ( tChunk )
             if ( BeVerbose( (/ 'chu', 'pro' /), 0) .or. verbose ) then
@@ -754,6 +755,9 @@ subtrees:   do
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.212  2018/09/13 20:23:23  pwagner
+! Moved changeable options to new L2Options; added DumpOptions
+!
 ! Revision 2.211  2018/07/27 23:19:53  pwagner
 ! Renamed level 2-savvy MLSMessage MLSL2Message
 !
