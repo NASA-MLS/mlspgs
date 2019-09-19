@@ -1,0 +1,29 @@
+!divert(-1)
+; $Id$
+
+; ----------- Phase name vs. retrieval name
+; Some phase(s) may not have Retrieve sections
+; and so we'll need to know the last one
+!define(retrophase,{!phase})
+
+!divert!dnl
+; This l2cf fragment does all the quality flagging for the N2OOnly phase
+; products.
+
+
+begin Fill
+  ;; ------------------------------------- H2O-N2OOnly
+  !define(flaggingBands,{2,3})
+  !define(flaggingRadiometers,{R2})!dnl
+  !makeQualityForOneProduct(product=H2O,chisqScale=1.0,minRads=8300,cloudMax=15K,cloudMin= -20K)
+  !makeStatusForOneProduct(product=H2O,chisqScale=1.0,minRads=8300,cloudMax=15K,cloudMin= -20K)
+
+  ;; --------------------------------------- N2O-N2OOnly
+  !define(flaggingBands,{3})
+  !define(flaggingRadiometers,{R2})!dnl
+  !makeQualityForOneProduct(product=N2O,chisqScale=1.0,minRads=600,cloudMax=15K,cloudMin= -20K)
+  !makeStatusForOneProduct(product=N2O,chisqScale=1.0,minRads=600,cloudMax=15K,cloudMin= -20K)
+
+end Fill
+
+; $Log$
