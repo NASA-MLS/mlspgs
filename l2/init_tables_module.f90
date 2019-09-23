@@ -719,7 +719,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_a, field_spec(s_gridded,s_concatenate), &
              begin, f+f_b, field_spec(s_gridded,s_concatenate), &
              begin, f+f_Grid, field_spec(s_Gridded), &
-             nadp+n_spec_def /) )
+             begin, f+f_logBasis, boolean(), &
+             ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_concatenate, &  ! Must be AFTER S_Gridded and S_ConvertEtaToP
              begin, f+f_a, field_spec(s_gridded,s_convertetatop), &
@@ -2137,6 +2138,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.648  2019/09/23 20:39:27  pwagner
+! Conversion from Eta surfaces may optionally be logarithmic
+!
 ! Revision 2.647  2019/04/24 19:15:25  vsnyder
 ! Add MIFTangent field to forwardModel
 !
