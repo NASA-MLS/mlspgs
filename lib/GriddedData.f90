@@ -371,7 +371,7 @@ contains
   end subroutine ConcatenateGriddedData_array
 
   ! ---------------------------------------- ConvertFromEtaLevelGrids ------------------
-  subroutine ConvertFromEtaLevelGrids ( TGrid, PGrid, NGrid, OutGrid )
+  subroutine ConvertFromEtaLevelGrids ( TGrid, PGrid, NGrid, OutGrid, ByLog )
     ! Converts two eta-level grids, one of them pressures, 
     ! to a pressure-level Grid
     use MLSNumerics, only: Interpolatevalues, Uselookuptable
@@ -380,6 +380,7 @@ contains
     type ( GriddedData_T ), intent(in)  :: PGrid  ! Pressures on eta surfaces
     type ( GriddedData_T ), intent(in)  :: NGrid  ! What surfaces to use
     type ( GriddedData_T ), intent(out) :: OutGrid ! T on pressure level
+    logical, optional, intent(in)       :: ByLog  ! Interpolate using zeta
 
     ! Internal variables
     integer :: iDate, iSza, iLst, iLon, iLat, iHeight
@@ -387,9 +388,12 @@ contains
     real(rgr), dimension(TGrid%noHeights) :: pEta
     logical, parameter :: DEEBUG = .false.
     logical            :: why
+    logical            :: ZetaSurfaces
 
     ! Executable code
     call trace_begin ( me, 'ConvertFromEtaLevelGrids' , cond=.false. )
+    ZetaSurfaces = .false.
+    if ( present(ByLog) ) ZetaSurfaces = ByLog
 
     ! GriddedData must match
     if ( .not. DoGriddeddataMatch( PGrid, TGrid ) ) then
@@ -442,10 +446,17 @@ contains
                 call MLSMessage(MLSMSG_Error, ModuleName, &
                   & 'unrecognized quantity for eta-level pressures '// trim(PGrid%units) )
               endif
-              call InterpolateValues( &
+              if ( ZetaSurfaces ) then
+                call InterpolateValues( &
+                & log10(pEta), TGrid%field( :, iLat, iLon, iLst, iSza, iDate ), &
+                & log10(NGrid%heights), OutGrid%field( :, iLat, iLon, iLst, iSza, iDate ), &
+                & 'L', 'B', TGrid%missingValue )
+              else
+                call InterpolateValues( &
                 & pEta, TGrid%field( :, iLat, iLon, iLst, iSza, iDate ), &
                 & NGrid%heights, OutGrid%field( :, iLat, iLon, iLst, iSza, iDate ), &
                 & 'L', 'B', TGrid%missingValue )
+              endif
             enddo
           enddo
         enddo
@@ -1858,6 +1869,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.85  2019/09/23 20:38:32  pwagner
+! Conversion from Eta surfaces may optionally be logarithmic
+!
 ! Revision 2.84  2019/09/05 17:50:13  pwagner
 ! SetUp with sources quantityName, dimList, too
 !
