@@ -208,7 +208,8 @@ contains ! ===================================  Public procedures  =====
     & result ( newGrid )
     use GriddedData, only: GriddedData_T, Dump, NullifyGriddedData, &
       & ConvertFromEtaLevelGrids
-    use Init_Tables_Module, only: F_A, F_B, F_GRID
+    use Init_Tables_Module, only: F_A, F_B, F_GRID, F_LogBasis
+    use MoreTree, only: Get_Boolean
     use Toggles, only: Gen, Toggle
     use Trace_M, only: Trace_Begin, Trace_End
     use Tree, only: Nsons, Subtree, Decoration
@@ -221,6 +222,7 @@ contains ! ===================================  Public procedures  =====
     ! to pressure surfaces
 
     ! Local variables
+    logical :: ByLog                  ! Do logarithmic interpolation?
     integer :: FIELD                  ! Another tree node
     integer :: FIELD_INDEX            ! Type of tree node
     integer :: I                      ! Loop counter
@@ -240,6 +242,7 @@ contains ! ===================================  Public procedures  =====
     call trace_begin ( me, "ConvertEtaToP", root, cond=toggle(gen) )
     nullify( a, b, v )
     call nullifyGriddedData ( newGrid ) ! for Sun's still useless compiler
+    ByLog = .false.
 
     if ( DEEBUG ) then
       call dump(griddedDataBase)
@@ -251,9 +254,11 @@ contains ! ===================================  Public procedures  =====
       son = subtree(i,root)
       L2CFNODE = son
       field = subtree(1,son)
-      value = subtree(2,son)
+      if ( nsons(son) > 1 ) value = subtree(2,son)
       field_index = decoration(field)
       select case ( field_index )
+      case ( f_logBasis ) 
+        ByLog = get_boolean(son)
       case ( f_a ) 
         a => griddedDataBase ( decoration ( decoration ( value ) ) )
         ! Did we defer reading a?
@@ -310,7 +315,7 @@ contains ! ===================================  Public procedures  =====
       call dump( v, details=0 )
       call output( 'about to convert from eta level grids', advance='yes' )
     endif
-    call ConvertFromEtaLevelGrids ( a, b, V, newGrid )
+    call ConvertFromEtaLevelGrids ( a, b, V, newGrid, ByLog )
     if ( DEEBUG ) call output( 'done converting from eta level grids', advance='yes' )
     newGrid%sourceFileName      = a%sourceFileName
     newGrid%quantityName        = a%quantityName
@@ -1204,6 +1209,9 @@ contains ! ===================================  Public procedures  =====
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.67  2019/09/23 20:39:04  pwagner
+! Conversion from Eta surfaces may optionally be logarithmic
+!
 ! Revision 2.66  2018/07/27 23:19:53  pwagner
 ! Renamed level 2-savvy MLSMessage MLSL2Message
 !
