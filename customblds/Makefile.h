@@ -727,6 +727,14 @@ wvs-154-1.eps: wvs-154-1.obj
 
 wvs-154-1.pdf: wvs-154-1.obj
 
+wvs-155.dvi: wvs-155.tex Barycentric.eps
+
+wvs-155.pdf: wvs-155.tex Barycentric.pdf
+
+Barycentric.eps: Barycentric.obj
+
+Barycentric.pdf: Barycentric.obj
+
 iy-005.aux: iy-005.tex
 	latex iy-005.tex
 
@@ -750,6 +758,9 @@ iy-006.bbl: yanovsky.bib iy-006.aux
 
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.43  2019/09/19 22:19:57  pwagner
+# Use default build rules for .obj files
+#
 # Revision 1.42  2019/09/19 16:08:12  pwagner
 # Added build commands for wvs-154
 #
