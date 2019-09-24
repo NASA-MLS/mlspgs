@@ -21,8 +21,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-128r5}
-\newcommand{\docdate}{13 July 2016}
+\newcommand{\docname}{wvs-128r6}
+\newcommand{\docdate}{23 September 2019}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -177,10 +177,8 @@ midpoint is $B_n = 6 - ( B_a + B_b )$, where $B_a$ and $B_b$ are the basis
 numbers of the end points.  The QID of each facet at level 1 is its octant
 number.  When a facet is subdivided, the QID of the central facet is the
 QID of the parent facet, with zero appended.  The QID of each other facet
-is the QID of the parent facet, with the basis number of the vertex
-opposite the edge in common with the central facet appended.  This is also
-the basis number of the vertex of the larger facet that is a vertex of the
-smaller facet.
+is the QID of the parent facet, with the basis number of the vertex in
+common with the parent facet appended.
 
 In the ZOT projection, every triangle in the mesh is an isosceles right
 triangle.  The right angle is called the \emph{polar angle} because it is
@@ -198,7 +196,7 @@ $y$ are initially computed in the $\ell_1$ metric using
 
 \begin{equation*}\begin{split}
 \delta x =\,& 1 - \frac{| \theta |}{ 90 }\\
-x = \,& \delta x
+x = \,& \delta x \,
     \frac{ \lfloor \phi \rfloor \!\!\!\!\mod 90 + \phi - \lfloor \phi \rfloor }
     {90} \\
 y = \,& \delta x - x \\
@@ -213,15 +211,15 @@ co\"ordinates of the point, and uses its octant number as the initial
 QID.  If the level of facet identified does not have sufficient
 resolution, the QID of a sub-facet is determined by computing the
 distances $dx$ and $dy$ of the $x$ and $y$ ZOT co\"ordinates from the pole
-node.  Let the length of a horizontal or vertical edge of a facet be $s$.
-If $|dx| + |dy| < s/2$, append the basis number of the pole node to the
-QID of the parent facet.  Otherwise if either $|dx| > s/2$ or $|dy| > s/2$
-append the basis number of the $x$ or $y$ node respectively.  Otherwise,
-append zero.  If $|dx| > s/2$ and $|dy| > s/2$, you made a mistake along
-the way and you're working in the wrong facet.  No square roots or
-trigonometric functions are needed.  The process is repeated if the size
-of the facet is not sufficiently small.  The maximum number of repetitions
-is equal to the degree of refinement of the mesh.
+node.  Let the length of a horizontal or vertical edge of the parent facet
+be $s$. If $|dx| + |dy| < s/2$, append the basis number of the pole node
+to the QID of the parent facet.  Otherwise if either $|dx| > s/2$ or $|dy|
+> s/2$ append the basis number of the $x$ or $y$ node respectively. 
+Otherwise, append zero.  If $|dx| > s/2$ and $|dy| > s/2$, you made a
+mistake along the way and you're working in the wrong facet.  No square
+roots or trigonometric functions are needed.  The process is repeated if
+the size of the facet is not sufficiently small.  The maximum number of
+repetitions is equal to the degree of refinement of the mesh.
 
 \begin{figure}[h]
 \hfil\includegraphics{wvs-128-QTM-3}\hfill
@@ -310,8 +308,8 @@ works even if the mesh is not refined to the same level everywhere.
 
 Assuming the distance along a meridian between the poles is 20,000 km, the
 height of a facet at level $l$ refinement, i.e., the distance from its
-polar vertex to the opposite edge, is 20,000/$2^l$ km.  This is always
-along a meridian because the edge opposite the polar vertex is a parallel
+polar node to the opposite edge, is 20,000/$2^l$ km.  This is always
+along a meridian because the edge opposite the polar node is a parallel
 of latitude, as can be seen in Figure \ref{Two}.  It is the same distance
 for every facet at the same level of refinement because parallels of
 latitude at a particular level of refinement are equally spaced. 
@@ -349,7 +347,7 @@ To construct and use a QTM for MLS
       points.
 
 \item Construct the QTM top down, starting with level 1.  If a facet has a
-      point in the polygon, or the polygon has a point in that facet, or
+      vertex in the polygon, or the polygon has a vertex in that facet, or
       an edge of the polygon intersects an edge of that facet, and the
       level of refinement of that facet is not sufficient, refine that
       facet.
@@ -357,8 +355,8 @@ To construct and use a QTM for MLS
 \item \label{step3} When a facet is constructed, add its vertices that are
       within the polygon to the set of vertices that are geolocations for
       the state vector.  If the facet is at the specified refinement
-      level, and it has any points in the polygon, add all its points to
-      the set.  Points of facets of the QTM at the finest level of
+      level, and it has any vertices in the polygon, add all its vertices
+      to the set.  Vertices of facets of the QTM at the finest level of
       refinement that immediately surround the polygon are in the set so
       that it is possible to interpolate within a facet to any point
       within the polygon or on its boundary.  A hash table is used to
@@ -398,15 +396,15 @@ To construct and use a QTM for MLS
       to the point of interest.  This is constant extrapolation from the
       point on the boundary of the polygon that is nearest to the point of
       interest.  First, find the vertex of the polygon that is nearest to
-      the point of interest.  Then, construct lines that are perpendicular
-      to the two edges incident on that vertex.  If either of those lines
-      intersects an incident edge between its vertices, use the
-      intersection that is closer to the point of interest (there might be
-      two such intersections if the polygon is not convex); otherwise, use
-      the nearest vertex.  By step \ref{step3} of the construction, this
-      point will be within a facet.  Interpolate within that facet to that
-      point.  Alternatively, use the value where the line of sight
-      intersects the region of interest.
+      the point of interest.  Then, construct lines from the point that
+      are perpendicular to the two edges incident on that vertex.  If
+      either of those lines intersects an incident edge between its
+      vertices, use the intersection that is closer to the point of
+      interest (there might be two such intersections if the polygon is
+      not convex); otherwise, use the nearest vertex.  By step \ref{step3}
+      of the construction, this point will be within a facet.  Interpolate
+      within that facet to that point.  Alternatively, use the value where
+      the line of sight intersects the region of interest.
 
       Once one has identified a facet and its vertices, interpolation
       to a point within it is easy:  One computes the normalized
@@ -449,7 +447,7 @@ in which order the vertices are numbered.  If any normalized barycentric
 co\"ordinate is negative, the point $(x,y)$ is outside the triangle.
 
 Assuming $(x,y)$ is within the facet, the interpolated value at $f(x,y)$
-from $\{f(x_{s_i},y_{s_i})\}$ is
+from $\{f(x_{s_k},y_{s_k})\}$ is
 
 \begin{equation*}
 f(x,y) = \sum_{k=1}^3 \lambda_{s_k} f(x_{s_k},y_{s_k})\,.
@@ -504,6 +502,9 @@ $\{\mathbf{V}_i\}$.
 % $Id$
 
 % $Log$
+% Revision 1.7  2019/09/23 20:18:58  vsnyder
+% Add comments about making the graphics
+%
 % Revision 1.6  2016/07/28 01:51:57  vsnyder
 % Add description of lat/lon to ZOT conversion
 %
