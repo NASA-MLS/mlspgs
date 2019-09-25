@@ -32,7 +32,7 @@
 % -----------------------------------------------------------------------------
 %
 \title{Summary of QTM}
-\subtitle{wvs-155}
+\subtitle{wvs-155r1}
 \author{Van Snyder}
 \date{24 September 2019}
 \titlegraphic{\includegraphics[width=1.0in]{eos_mls_logo_onpink}}
@@ -89,15 +89,16 @@ fourth level \\
 
 \begin{itemize}
 
-\item By construction, the number of facets at level $\ell$, where $\ell =
-      1$ is the initial octahedron is
+\item By construction, in a globally-uniform refinement to level $\ell$,
+      where $\ell = 1$ is the initial octahedron, the number of facets is
 %
       \begin{equation*}
       f_\ell = 8 \times 4^{\ell-1} = 2^{2 \ell + 1}
       \end{equation*}
 
 \item Smaller facets are formed by bisecting edges, so the number of
-      vertices $v_\ell = v_{\ell-1} + e_{\ell-1}$.
+      vertices $v_\ell = v_{\ell-1} + e_{\ell-1}$, where $v_1 = 6$ and
+      $e_1 = 12$.
 
 \item From Euler's polyhedron formula, $e_\ell = f_\ell + v_\ell - 2$.
 
@@ -122,7 +123,11 @@ fourth level \\
       equally-spaced parallels of latitude.\\[10pt]
 
 \item Along the $k^\text{th}$ parallel of latitude from each pole,
-      vertices are on $4k$ equally-spaced longitudes.
+      vertices are on $4k$ equally-spaced longitudes.\\[10pt]
+
+\item Therefore, unlike on a lat-lon grid, the set of latitudes on one
+      parallel of latitude is not the same as the set of latitudes on an
+      adjacent parallel of latitude.
 
 \end{itemize}
 
@@ -162,7 +167,7 @@ Facet identifier, called \emph{QTM ID} or \emph{QID} consists of
 
 \itemsep 10pt
 
-\item Internally, the octant number is shifted from the range $0\cdots7$
+\item Internally, the octant number is shifted from the range $1\cdots8$
       to the range $8 \cdots 15$, allowing to determine unambiguously the
       number of digits in the QID, and thereby the facet resolution.
 
@@ -170,7 +175,7 @@ Facet identifier, called \emph{QTM ID} or \emph{QID} consists of
       thirteen levels of refinement to fit in a 31-bit integer.
 
 \item At the $13^\text{th}$ level of refinement, the height of a facet
-      (north-south extent) is about 1.2 km.
+      (north- south extent) is about 1.2 km.
 
 \item Using a 63-bit integer would allow 29 levels of refinement.
 
@@ -202,7 +207,7 @@ book\\
 \newframe{ZOT projection and facet numbering}
 
 \begin{centering}
-\includegraphics[scale=0.4,angle=270]{wvs-128-QTM-2}\\
+\includegraphics[scale=0.375,angle=270]{wvs-128-QTM-2}\\
 \end{centering}
 
 \begin{itemize}
@@ -213,7 +218,11 @@ book\\
 
 \item Outer boundary consists of southern-hemisphere meridians.
 
-\item Halves of each outer boundary are aliased.
+\item Halves of each outer boundary are aliased -- the same
+      southern-hemisphere meridian.
+
+\item Fold the corners under. The aliased edges come together, and the
+      south pole corners all come to the center.
 
 \end{itemize}
 
@@ -224,7 +233,7 @@ book\\
 \newframe{ZOT projection and facet numbering}
 
 \begin{centering}
-\includegraphics[scale=0.4,angle=270]{wvs-128-QTM-2}\\
+\includegraphics[scale=0.375,angle=270]{wvs-128-QTM-2}\\
 \end{centering}
 
 \begin{itemize}
@@ -233,7 +242,9 @@ book\\
 
 \item Diagonal heavy lines are the equator.
 
-\item Meridians are straight lines from the poles to the equator.
+\item Meridians are straight lines from the poles to the equator.  The
+      dotted red line is the $45^\circ$ meridian, and the dotted blue line
+      is the $22.5^\circ$ meridian.
 
 \item Narrow lines are boundaries of level-2 refinement. Dashed lines are
       boundaries of level-3 refinement.
@@ -254,8 +265,8 @@ book\\
 
 \item Vertices are assigned \emph{basis numbers} in $1 \cdots 3$.
 
-\item To start, poles are 1, $0^\circ$ and $180^\circ$ equatorial
-      vertices are 2, $90^\circ$ and $270^\circ$ are 3.
+\item To start, poles have basis number 1, $0^\circ$ and $180^\circ$
+      equatorial vertices have 2, $90^\circ$ and $270^\circ$ have 3.
 
 \end{itemize}
 
@@ -290,19 +301,23 @@ book\\
 %
 \newframe{ZOT projection}
 
+\vspace*{-6pt}
 \begin{centering}
-\includegraphics[scale=0.4,angle=270]{wvs-128-QTM-2}\\
+\includegraphics[scale=0.375,angle=270]{wvs-128-QTM-2}\\
 \end{centering}
 
 \begin{itemize}
 
 \item Each facet is an isosceles right triangle.
 
-\item Right angle is the one nearest to the pole; the vertex is called the
+\item The right angle is at the vertex that is opposite to the edge that
+      is a parallel of latitude, and is therefore not at the same distance
+      from either pole as any other vertex; this vertex is called the
       \emph{pole node}.
 
-\item One edge incident on the pole node is vertical; the other is
-      horizontal.
+\item One edge incident on the pole node is horizontal and incident on the
+      \emph{xnode}; the other is vertical and incident on the
+      \emph{ynode}.
 
 \end{itemize}
 
@@ -313,14 +328,15 @@ book\\
 \newframe{ZOT co\"ordinates}
 
 \begin{itemize}
+\itemsep 5pt
 
-\item ZOT coordinates are in the range $-1 \cdots 1$.
+\item ZOT co\"ordinates are in the range $-1 \cdots 1$.
 
-\item North pole is at $(0,0)$.
+\item North pole is at $(0,0)$ (center of the ZOT projection).
 
-\item South pole is at $(\pm 1, \pm 1)$.
+\item South pole is at $(\pm 1, \pm 1)$ (corners of the ZOT projection).
 
-\item Mapping from longitude and latitude to ZOT coordinates uses the
+\item Mapping from longitude and latitude to ZOT co\"ordinates uses the
       $\ell_1$ metric and is computed by the function {\tt Geo\_to\_ZOT}
       in the module {\tt QTM\_m}.
 
@@ -332,8 +348,8 @@ book\\
 %
 \newframe{ZOT co\"ordinates}
 
-Given longitude $\lambda$ and latitude $\theta$, compute initial ZOT
-coordinates using
+Given longitude $\lambda \geq 0$ in degrees and latitude $-90 \leq \theta
+\leq 90$ in degrees, compute initial ZOT co\"ordinates using
 %
 \begin{equation*}\begin{split}
 \delta x =\,& 1 - \frac{| \theta |}{ 90 }\\
@@ -386,11 +402,11 @@ To compute the QID of a facet containing a $(\lambda,\theta)$ point:
 
     \item If $|\d x| + |\d y| < s/2$, where $s$ is the length in ZOT
           co\"ordinates of a horizontal or vertical edge of the parent
-          facet, append the basis number of the pole node to the QID of
-          the parent facet,
+          facet, append the basis number of the \emph{pole node} to the
+          QID of the parent facet,
 
     \item Otherwise if $|\d x| > s/2$ or $|\d y| > s/2$, append the basis
-          number of the $x$ or $y$ node, respectively,
+          number of the \emph{xnode} or \emph{ynode}, respectively,
 
     \item Otherwise append zero.
 
@@ -419,12 +435,14 @@ Calculation of sub-facet and QID, from Dutton's book\\
 \newframe{QTM in MLS}
 
 \begin{itemize}
+\itemsep 5pt
 
 \item Assume polar circumference is 40,000 km (the original definition of
       the meter).
 
-\item At level $\ell$ of refinement, height of a facet, i.e., distance
-      from its polar node to the opposite edge, is 20,000/$2^\ell$ km.
+\item At level $\ell$ of refinement, the height of a facet, i.e., the
+      distance from its pole node to the opposite edge, is
+      20,000/$2^\ell$ km.
 
 \item Same distance for every facet at the same level of refinement
       because diagonal edges are equally-spaced parallels of latitude.
@@ -432,7 +450,7 @@ Calculation of sub-facet and QID, from Dutton's book\\
 \item With $\ell = 7$ the distance is 156.25 km, or $\approx 1.4^\circ$
       latitude.
 
-\item QTM over entire Earth will not be used:
+\item QTM over entire Earth will not be used for MLS:
 
   \begin{itemize}
 
@@ -454,6 +472,7 @@ Calculation of sub-facet and QID, from Dutton's book\\
 \newframe{Identifying vertices}
 
 \begin{itemize}
+\itemsep 8pt
 
 \item Each facet is bounded by three vertices.
 
@@ -475,21 +494,21 @@ Calculation of sub-facet and QID, from Dutton's book\\
 %
 \newframe{Constructing a QTM within a polygon}
 
-On the surface of the Earth, ``inside'' a polygon is ambiguous.
-
 \begin{enumerate}
 
-\item Specify a point that is within the polygon.
+\item Specify a point that is within the polygon because ``inside''
+      is ambiguous on the surface of the Earth.
 
 \item If a polygon has an edge that crosses a southern-hemisphere meridian
       of the original octahedron, add edges in the ZOT projection of the
-      polygon along the crossed meridian to join the aliased points.
+      polygon along the crossed meridian to join the aliased points. This
+      closes the polygon in ZOT co\"ordinates.
 
 \item Construct the QTM top down, starting with level 1.
 
-\item If a facet has a vertex within the polygon, i.e., a line from that
-      vertex to the ``inside'' vertex of the polygon crosses an even
-      number (including zero) of the edges of the polygon,\\[4pt]
+\item If a facet has a vertex within the polygon, i.e., if a line from
+      that vertex to the ``inside'' vertex crosses an even number
+      (including zero) of the edges of the polygon,\\[4pt]
 
       or the polygon has a vertex in the facet,\\[4pt]
       
@@ -518,14 +537,43 @@ On the surface of the Earth, ``inside'' a polygon is ambiguous.
       that it is possible to interpolate within it, even if some of its
       vertices are outside the polygon.\\[5pt]
 
-      A hash table lookup, based upon the QID and basis number of each
-      vertex, is used to avoid duplicates.\\[5pt]
-
-      Each added vertex gets an unique serial number that is used to
-      calculate a column subscript of the Jacobian, and a subscript of the
-      state vector.\\[5pt]
+      Each added vertex gets an unique serial number -- its ordinal number
+      among unique vertices as they are discovered to be members of the
+      set. Its serial number is used to calculate a column subscript of
+      the Jacobian, and a subscript of the state vector.\\[5pt]
 
 \end{enumerate}
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Constructing a QTM within a polygon}
+
+\begin{itemize}
+
+\item A QTM uniformly refined to level $\ell$ has at most $2^\ell$+1 ZOT
+      $x$ and $y$ co\"ordinates, each set equally spaced in $[-1 \cdots 1]$.
+
+\item Therefore $0 \leq 2^\ell ( 1+x) \leq 2^{\ell+1}$ and
+                $0 \leq 2^\ell ( 1+y) \leq 2^{\ell+1}$ are integers.
+
+\item If $|x| = 1$ use $\eta = |y|$; if $|y| = 1$ use $\xi = |x|$ \dots\
+      because southern-hemisphere meridians are aliased. Otherwise, use
+      $\xi = x$ and $\eta = y$.
+
+\item Then $0 \leq 2^{\ell+1} ( 1 + \xi + ( 2^\ell + 1 ) ( 1 + \eta ))
+      \leq 2^{2 \ell + 2}$ is an unique vertex identifier. This is
+      computed by the function {\tt Condense\_ZOT} bound to the type {\tt
+      QTM\_t} in the module {\tt QTM\_m}.
+
+\item In MLS, $\ell\leq 7$.  Therefore, $2^{2\ell+2} \leq 2^{30}$ fits in
+      a 31-bit integer.
+
+\item A hash table containing these unique identifiers is used to prevent
+      creating duplicate representations of QTM vertices.
+
+\end{itemize}
 
 \end{frame}
 %
@@ -536,17 +584,22 @@ On the surface of the Earth, ``inside'' a polygon is ambiguous.
 \begin{enumerate}
 \setcounter{enumi}{5}
 
-\item As the QTM is constructed, construct a quadtree in which each vertex
-      represents a facet.\\[8pt]
-      
+\item As the QTM is constructed, construct a quadtree -- a tree in which
+      each vertex has four sons.  Each vertex represents a facet.\\[8pt]
+
       A vertex of the quadtree contains the serial numbers of QTM vertices
-      of the facet that it represents, that are at the finest level of
-      refinement and inside the polygon, or zero for a vertex that is
-      outside the polygon or not at the finest level of refinement.\\[8pt]
+      of the facet that it represents, or zero for vertices that are
+      outside the polygon and not vertices of a facet at the specified
+      level of refinement.\\[8pt]
+
+      All vertices of facets at the specified level of refinement have
+      serial numbers, even if some are outside the polygon. Every facet at
+      the specified level of refinement has at least one vertex in the
+      polygon. Therefore, there might be geophysical values slightly
+      outside the polygon.\\[8pt]
 
       Internal vertices of the quadtree represent facets that are not at
-      the finest level of refinement, and therefore contain zeroes instead
-      of QTM vertex serial numbers.
+      the finest level of refinement.
 
 \end{enumerate}
 
@@ -556,23 +609,27 @@ On the surface of the Earth, ``inside'' a polygon is ambiguous.
 %
 \newframe{Using a QTM}
 
-When a value is needed at a $(\lambda,\theta)$ point
+When a geophysical value is needed at a $(\lambda,\theta)$ point
 
 \begin{enumerate}
 
-\item Determine its ZOT coordinates.
+\item Determine its ZOT co\"ordinates $(x,y)$.
 
 \item Determine the QID of the facet at the desired level of
-refinement.
+      refinement.
 
-\item Use the digits of the QID to traverse the quadtree.\\[4pt]
+\item Use the digits of the QID to traverse the quadtree to find the facet
+      that contains $(\lambda,\theta)$.\\[4pt]
 
       Cost is proportional to the level of refinement, not the size of the
       QTM.
 
-\item If the facet containing the specified point has serial numbers for
-      all its vertices, and the specified point is within the polygon,
-      interpolate within that facet.
+\item If the facet containing $(\lambda,\theta)$ has serial numbers for
+      its vertices, interpolate within that facet from the state vector to
+      $(\lambda,\theta)$ or to ZOT co\"ordinates $(x,y)$.\\[4pt]
+
+      $(\lambda,\theta)$ might be a tiny bit outside the polygon, but
+      still within a facet having one vertex within the polygon.
 
 \end{enumerate}
 
@@ -580,34 +637,102 @@ refinement.
 %
 % -----------------------------------------------------------------------------
 %
-\newframe{Using a QTM}
+\newframe{Interpolate to exterior points}
 
 \begin{enumerate}
 \setcounter{enumi}{4}
 
-\item If the facet containing the specified point does not have serial
-      numbers for all its vertices, use the value on the polygon boundary
-      that is nearest to that point. This is constant extrapolation.
+\item If the facet containing $(\lambda,\theta)$ does not have serial
+      numbers for its vertices, we can't interpolate to
+      $(\lambda,\theta)$.
 
   \begin{enumerate}
 
-    \item Find the polygon vertex that is nearest to the specified point.
+    \item\label{nearest} Choose a point $P$ on the polygon boundary that
+      is nearest to $(\lambda,\theta)$:
 
-    \item Construct lines from the specified point that are perpendicular
-          to the two edges incident on that polygon vertex.
+    \begin{enumerate}
 
-    \item If either of those lines intersects an incident edge between the
-          nearest vertex and an adjacent one, choose the intersection that is
-          closer to the specified point (there might be two if the polygon
-          is not convex).
+      \item Find the polygon vertex that is nearest to
+            $(\lambda,\theta)$.
 
-    \item Otherwise choose the vertex nearest to the specified point.
+      \item Construct lines from $(\lambda,\theta)$ that are
+            perpendicular to the two polygon edges incident on that
+            polygon vertex.
 
-    \item Interpolate within that facet to the chosen point.
+      \item If either of those lines intersects an incident edge between
+            the nearest vertex and an adjacent one, choose $P$ to be at
+            the intersection that is closer to $(\lambda,\theta)$ (there
+            might be two if the polygon is not convex).
+
+      \item Otherwise choose $P$ to be at the polygon vertex nearest to
+            $(\lambda,\theta)$.
+
+    \end{enumerate}
+
+  \item Find the facet $F$ containing $P$.
+
+  \item Interpolate within $F$ to $P$ and use that value at
+        $(\lambda,\theta)$.
+
+  This is the 2-D generalization of constant extrapolation.
 
   \end{enumerate}
 
 \end{enumerate}
+
+This could be done in $(\lambda,\theta)$ or $(x,y)$ co\"ordinates.
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Interpolate to exterior points -- alternative}
+
+
+\begin{enumerate}
+\setcounter{enumi}{4}
+
+\item If the facet containing $(\lambda,\theta)$ does not have serial
+      numbers for its vertices, we can't interpolate to
+      $(\lambda,\theta)$.
+
+  \begin{enumerate}
+
+    \item\label{nearest} Choose a point $P$ on a facet boundary that
+      is nearest to $(\lambda,\theta)$:
+
+    \begin{enumerate}
+
+      \item Find the vertex of a facet $F$ that is nearest to
+            $(\lambda,\theta)$. This need only consider facets that have
+            exactly one vertex within the polygon.
+
+      \item Construct lines from $(\lambda,\theta)$ that are
+            perpendicular to the two facet edges incident on that
+            facet vertex.
+
+      \item If either of those lines intersects an incident edge between
+            the nearest vertex and an adjacent one, choose $P$ to be at
+            the intersection that is closer to $(\lambda,\theta)$ (there
+            might be two if the polygon is not convex).
+
+      \item Otherwise choose $P$ to be at the facet vertex nearest to
+            $(\lambda,\theta)$.
+
+    \end{enumerate}
+
+  \item Interpolate within $F$ to $P$ and use that value at
+        $(\lambda,\theta)$.
+
+  This is the 2-D generalization of constant extrapolation.
+
+  \end{enumerate}
+
+\end{enumerate}
+
+I don't believe the code does this yet. It would be a bit more accurate
+for points very near to but outside the polygon.
 
 \end{frame}
 %
@@ -617,7 +742,9 @@ refinement.
 
 \parskip 8pt
 
-ZOT polygons are not comformal to spherical polygons.
+ZOT polygons are not comformal to spherical polygons because edges of ZOT
+polygons are straight lines in ZOT co\"ordinates, while edges of spherical
+triangles are segments of great circles.
 
 A point that is within (outwith) a ZOT polygon might be outwith (within) a
 spherical polygon.
@@ -627,6 +754,12 @@ co\"ordinates for its vertices, and its edges are great circles, rather
 than worry about this, choose a slightly larger polygon that encloses the
 interesting points (and maybe a few others).
 
+There would (almost) always be facets at the specified level of refinement
+that span the polygon boundary, resulting in vertices outside the polygon.
+You'll (almost) always have a few more than the ``interesting'' points,
+unless you choose a polygon such that every point (not just every vertex)
+on its boundary is on a facet edge or at a facet vertex.
+
 \end{frame}
 %
 % -----------------------------------------------------------------------------
@@ -635,10 +768,10 @@ interesting points (and maybe a few others).
 
 \parskip 6pt
 
-The unnormalized barycentric coordinates $\hat\lambda_{s_k}$ of a point
+The unnormalized barycentric co\"ordinates $\hat\lambda_{s_k}$ of a point
 $(x,y)$ within a triangle having vertices $(x_{s_i},y_{s_i})$, where $i
-\in \{1,2,3\}$ and $s_i$ is the serial number of vertex $i$ of the QTM
-facet, are
+\in \{1,2,3\}$ and $s_i$ is the serial number of the QTM facet's vertex
+that has basis number $i$, are
 
 \begin{equation*}
 \hat\lambda_{s_k} = (y_{s_j}-y_{s_i})(x-x_{s_i}) -
@@ -663,13 +796,14 @@ the triangle.
 \newframe{Barycentric interpolation}
 
 Assuming $(x,y)$ is within the facet, the value $f(x,y)$ interpolated from
-$\{f(x_{s_k},y_{s_k})\}$ is
+$\{f(x_{s_k},y_{s_k}) \,|\, k = 1\cdots3 \}$ is
 
 \begin{equation*}
 f(x,y) = \sum_{k=1}^3 \lambda_{s_k} f(x_{s_k},y_{s_k})\,.
 \end{equation*}
 
-The system was introduced in 1827 by August Ferdinand M{\"o}bius.
+The system was introduced in 1827 by August Ferdinand M{\"o}bius (yeah,
+THAT August Ferdinand M{\"o}bius).
 
 Barycentric co\"ordinates can be computed using either longitude and
 latitude, or ZOT co\"ordinates, which would result in slightly different
@@ -700,10 +834,11 @@ The state vector uses a stacked and coherent basis: The same QTM at every
 level, and the same set of levels on every line perpendicular to a surface
 QTM vertex.
 
-To interpolate to a point $(x,y,z)$, compute the barycentric coordinates
+To interpolate to a point $(x,y,z)$, compute the barycentric co\"ordinates
 $\lambda_{s_k}$ of $(x,y)$. Use linear interpolation to compute an
-interpolation coefficient $\mu_h$ from $(z_h,z_{h+1})$ to $z$, assuming
-$z_h \leq z \leq z_{h+1}$, and $\mu_{h+1} = 1 - \mu_h$.
+interpolation coefficient $\mu_h = \frac{z_{h+1}-z}{z_{h+1}-z_h}$ from
+$(z_h,z_{h+1})$ to $z$, assuming $z_h \leq z \leq z_{h+1}$, and $\mu_{h+1}
+= 1 - \mu_h$.
 
 This results in six interpolation weights $\eta_{s_k}j$ where $k
 \in \{1,2,3\}$ and $j \in \{h,h+1\}$.  Then
@@ -730,11 +865,20 @@ f(x,y,z) = \sum_{k=1}^3 \sum_{j=h}^{h+1} \lambda_{s_k}\mu_j
 
 \end{frame}
 %
+% -----------------------------------------------------------------------------
+%
+\begin{frame}
+ \titlepage
+\end{frame}
+%
 % ----------------------------------------------------------------------------
 %
 \end{document}
 
 % $Log$
+% Revision 1.2  2019/09/24 02:35:04  vsnyder
+% Correct some typos
+%
 % Revision 1.1  2019/09/24 01:58:55  vsnyder
 % Initial commit
 %
