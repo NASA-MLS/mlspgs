@@ -7791,7 +7791,6 @@ contains ! =====     Public Procedures     =============================
       if ( verbose ) &
           & call MLSMessage ( MLSMSG_Info, ModuleName, &
           & trim(name) // ' will be read from file' )
-      goto 999
       call GetHDF5DSDims ( MLSFile, name, DIMS )
       dimInts = max(dims, int(1,hsize_t))
       caseName = lowercase(fileType)
@@ -7988,6 +7987,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.148  2019/09/27 16:48:42  pwagner
+! Removed faulty goto 999 from NamedQtyFromFile
+!
 ! Revision 2.147  2019/01/24 00:02:27  pwagner
 ! Coded around a strange NAG error
 !
