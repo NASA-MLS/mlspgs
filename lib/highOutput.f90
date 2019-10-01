@@ -1430,10 +1430,12 @@ contains
 
   ! ----------------------------------------------------  numToChars  -----
   ! This family of functions return what would otherwise be printed by output
-  function numToChars_double( value, format ) result ( line )
+  function numToChars_double( value, format, trim ) result ( line )
     ! Args
     double precision, intent(in) :: VALUE
     character(len=*), intent(in), optional :: Format    ! How to print
+    logical, intent(in), optional :: Trim ! Trim blanks even if Format present
+    logical :: Do_Trim
     character(len=30) :: line
     ! Internal variables
     character(len=30) :: FormatSpec
@@ -1461,10 +1463,12 @@ contains
     line = adjustl(line)
   end function numToChars_integer
 
-  function numToChars_single( value, format ) result ( line )
+  function numToChars_single( value, format, trim ) result ( line )
     ! Args
     real, intent(in) :: VALUE
     character(len=*), intent(in), optional :: Format    ! How to print
+    logical, intent(in), optional :: Trim ! Trim blanks even if Format present
+    logical :: Do_Trim
     character(len=30) :: line
     ! Internal variables
     character(len=30) :: FormatSpec
@@ -2707,6 +2711,9 @@ contains
 end module HighOutput
 
 ! $Log$
+! Revision 2.34  2019/10/01 23:40:51  vsnyder
+! Add Trim optional argument to floating-point output
+!
 ! Revision 2.33  2019/08/01 23:44:25  pwagner
 ! Removed unused stuff; numerous other changes
 !
