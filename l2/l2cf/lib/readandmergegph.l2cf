@@ -155,6 +155,15 @@ begin ReadApriori
   gmaoGPHInputNext: gridded, origin=none
 end ReadApriori
 
+; We will need a gridded quantity with a compatible set pf  pressure levels
+; strangely, the Temperature field from Climatology is not suitable
+; so we will try extinction, instead
+; This will be used first for GPH
+begin ReadApriori
+  gridEXTN: gridded,field='EXTN', origin=climatology, $
+       file='Climatologies'
+end ReadApriori
+
 ; Initialize the run-time Booleans and flags
 begin MergeGrids
   meteorologyType: Boolean, label="geos5_9-nc4"  ;; The kind of meteorology used
@@ -195,19 +204,18 @@ begin MergeGrids
 })  
   ;; to save memory Convert, then Merge right after reading
   geos59ConvertedTemp$1: ConvertEtaToP, $
-    a=gmaoTemperatureInput$1, b=gmaoPressureInput$1, Grid=gridTemperature
+    a=gmaoTemperatureInput$1, b=gmaoPressureInput$1, Grid=gridEXTN, /logBasis
   Delete, grid=gmaoTemperatureInput$1
   MergeGrids, grid=geos59Merged$1, operational=geos59ConvertedTemp$1, $
     climatology=gridTemperature, height=1mb, scale=5km
   Delete, grid=geos59ConvertedTemp$1
 
   geos59ConvertedGPH$1: ConvertEtaToP, $
-    a=gmaoGPHInput$1, b=gmaoPressureInput$1, Grid=gridTemperature
+    a=gmaoGPHInput$1, b=gmaoPressureInput$1, Grid=gridEXTN, /logBasis
   Delete, grid=gmaoGPHInput$1
   Delete, grid=gmaoPressureInput$1
 end MergeGrids
 })
-
 
 begin ReadApriori
   carryover: Boolean, formula="true"
@@ -270,6 +278,9 @@ begin MergeGrids
 end MergeGrids
 
 ;$Log$
+;Revision 1.3  2019/09/19 16:16:54  pwagner
+;First attempt to use ConvertEtaToP with GPH
+;
 ;Revision 1.2  2019/08/22 16:52:17  pwagner
 ;Correct an error that used up the 1st PCFid
 ;
