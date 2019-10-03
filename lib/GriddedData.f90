@@ -23,8 +23,8 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
     & L_Theta
   use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
   use MLSCommon, only: LineLen, NameLen, UndefinedValue
-  ! R4 CORRESPONDS TO SING. PREC. :: SAME AS STORED IN FILES
-  ! (EXCEPT FOR DAO DIMENSIONS)
+  ! r4 corresponds to sing. prec. :: same as stored in files
+  ! (except for dao dimensions)
   use MLSKinds, only: RGR=>R4, R8
   use MLSMessageModule, only: MLSMSG_Error, &
     & MLSMSG_Warning, MLSMessageConfig, MLSMessage
@@ -57,49 +57,49 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
 !                           an earlier and a later
 ! ConvertFromEtaLevelGrids Convert two eta-level grids, one of them pressures,
 !                           to a pressure-level Grid
-! DestroyGriddedData Deallocate all the pointer components
+! DestroyGriddedData       Deallocate all the pointer components
 ! DestroyGriddedDataDatabase
-!                    Destroy all the elements of the database
-! Diff               Print differences between two grids
-! DoGriddeddataMatch Same shapes, are on same geolocations, etc.?
-! DownsampleGriddeddata Resample grid onto coarser grid derived by step sizes
-! Dump               Print details, values of a grid
-! NullifyGriddedData Nullify all its pointer components
+!                          Destroy all the elements of the database
+! Diff                     Print differences between two grids
+! DoGriddeddataMatch       Same shapes, are on same geolocations, etc.?
+! DownsampleGriddeddata    Resample grid onto coarser grid derived by step sizes
+! Dump                     Print details, values of a grid
+! NullifyGriddedData       Nullify all its pointer components
 ! SetupNewGriddedData
-!                    What the name says
-! SliceGriddedData   Resample grid at supplied coords (Consider renaming it)
-! WrapGriddedData    Add extra points in longitude beyond +/-180
-!                     and in solar time beyond 0..24 to aid in interpolations
+!                          What the name says
+! SliceGriddedData         Resample grid at supplied coords (Consider renaming it)
+! WrapGriddedData          Add extra points in longitude beyond +/-180
+!                           and in solar time beyond 0..24 to aid in interpolations
 ! === (end of toc) ===
 
 ! === (start of api) ===
 ! === (end of api) ===
-  public :: GRIDDEDDATA_T, ADDGRIDDEDDATATODATABASE, &
-    & CONCATENATEGRIDDEDDATA, CONVERTFROMETALEVELGRIDS, COPYGRID, &
-    & DESTROYGRIDDEDDATA, DESTROYGRIDDEDDATADATABASE, &
-    & DIFF, DOGRIDDEDDATAMATCH, DOWNSAMPLEGRIDDEDDATA, DUMP, &
-    & NULLIFYGRIDDEDDATA, RGR, SETUPNEWGRIDDEDDATA, SLICEGRIDDEDDATA, &
-    & WRAPGRIDDEDDATA
+  public :: GriddedData_T, AddgriddedDatatoDatabase, &
+    & ConcatenategriddedData, Convertfrometalevelgrids, Copygrid, &
+    & DestroygriddedData, DestroygriddedDataDatabase, &
+    & Diff, DogriddedDatamatch, DownsamplegriddedData, Dump, &
+    & NullifygriddedData, Rgr, SetupnewgriddedData, SlicegriddedData, &
+    & WrapgriddedData
+  
+  logical, private, parameter :: MaydumpfieldValues = .true.
 
-  logical, private, parameter :: MAYDUMPFIELDVALUES = .true.
-
-  interface CONCATENATEGRIDDEDDATA
+  interface ConcatenategriddedData
     module procedure ConcatenateGriddedData_2
     module procedure ConcatenateGriddedData_array
   end interface
 
-  interface DIFF
+  interface Diff
     module procedure DiffGriddedData
   end interface
 
-  interface DUMP
+  interface Dump
     module procedure DumpGriddedData
     module procedure DumpGriddedDatabase
   end interface
 
   ! These are 'enumerated types' consistent with hph's
   ! work in l3ascii_read_field
-  public :: V_IS_PRESSURE, V_IS_ALTITUDE, V_IS_GPH, V_IS_THETA, V_IS_ETA
+  public :: V_Is_Pressure, V_Is_Altitude, V_Is_Gph, V_Is_Theta, V_Is_Eta
 
   integer, parameter :: V_is_pressure = L_PRESSURE ! 1
   integer, parameter :: V_is_altitude = L_GEODALTITUDE ! v_is_pressure+1
@@ -371,29 +371,35 @@ contains
   end subroutine ConcatenateGriddedData_array
 
   ! ---------------------------------------- ConvertFromEtaLevelGrids ------------------
-  subroutine ConvertFromEtaLevelGrids ( TGrid, PGrid, NGrid, OutGrid, ByLog )
+  subroutine ConvertFromEtaLevelGrids ( TGrid, PGrid, NGrid, OutGrid, &
+    & VGrid, ByLog )
     ! Converts two eta-level grids, one of them pressures, 
     ! to a pressure-level Grid
     use MLSNumerics, only: Interpolatevalues, Uselookuptable
-    use dump_0, only: Dump
+    use Dump_0, only: Dump
+    use VGridsDatabase, only: VGrid_T
     type ( GriddedData_T ), intent(in)  :: TGrid  ! E.g., T on eta surfaces
     type ( GriddedData_T ), intent(in)  :: PGrid  ! Pressures on eta surfaces
     type ( GriddedData_T ), intent(in)  :: NGrid  ! What surfaces to use
     type ( GriddedData_T ), intent(out) :: OutGrid ! T on pressure level
+    type ( VGrid_T ), pointer           :: VGrid  ! What surfaces to use
     logical, optional, intent(in)       :: ByLog  ! Interpolate using zeta
 
     ! Internal variables
     integer :: iDate, iSza, iLst, iLon, iLat, iHeight
     integer :: Me = -1                  ! String index for trace cacheing
     real(rgr), dimension(TGrid%noHeights) :: pEta
-    logical, parameter :: DEEBUG = .false.
-    logical            :: why
-    logical            :: ZetaSurfaces
+    logical, parameter                    :: DEEBUG = .false.
+    logical                               :: GotVgrid ! Are heights supplied by a VGrid?
+    logical                               :: why
+    logical                               :: ZetaSurfaces
+    real (rgr), pointer, dimension(:)     :: heights  => NULL()
 
     ! Executable code
     call trace_begin ( me, 'ConvertFromEtaLevelGrids' , cond=.false. )
     ZetaSurfaces = .false.
     if ( present(ByLog) ) ZetaSurfaces = ByLog
+    GotVgrid = associated(VGrid)
 
     ! GriddedData must match
     if ( .not. DoGriddeddataMatch( PGrid, TGrid ) ) then
@@ -404,29 +410,36 @@ contains
         & 'Gridded T,P data must match' )
     endif
     call DestroyGriddedData ( OutGrid )
-    call SetupNewGriddedData ( OutGrid, source=TGrid, noHeights=NGrid%noHeights )
     ! Copy the information over
-    OutGrid%verticalCoordinate = NGrid%VerticalCoordinate
+    if ( GotVgrid ) then
+      call SetupNewGriddedData ( OutGrid, source=TGrid, noHeights=VGrid%noSurfs )
+      OutGrid%verticalCoordinate = VGrid%VerticalCoordinate
+      OutGrid%heights(1:OutGrid%noHeights) = VGrid%Surfs(1:OutGrid%noHeights,1)
+    else
+      call SetupNewGriddedData ( OutGrid, source=TGrid, noHeights=NGrid%noHeights )
+      OutGrid%verticalCoordinate = NGrid%VerticalCoordinate
+      if ( size(OutGrid%heights) /= size(NGrid%heights) ) then
+        call outputNamedValue('num heights(outGrid)', size(OutGrid%heights), advance='yes' )
+        call outputNamedValue('num heights(NGrid)', size(NGrid%heights), advance='yes' )
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'Grid shapes do not conform' )
+        go to 9
+      endif
+      OutGrid%heights(1:OutGrid%noHeights) = NGrid%heights(1:OutGrid%noHeights)
+    endif
     if ( PGrid%empty .or. TGrid%empty) then
       call MLSMessage ( MLSMSG_Warning, moduleName, &
         & 'Temperatures or Pressures grid was empty' )
       go to 9
     endif
-    if ( size(OutGrid%heights) /= size(NGrid%heights) ) then
-      call outputNamedValue('num heights(outGrid)', size(OutGrid%heights), advance='yes' )
-      call outputNamedValue('num heights(NGrid)', size(NGrid%heights), advance='yes' )
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & 'Grid shapes do not conform' )
-      go to 9
-    endif
-    OutGrid%heights(1:OutGrid%noHeights) = NGrid%heights(1:OutGrid%noHeights)
     OutGrid%lats = TGrid%lats
     OutGrid%lons = TGrid%lons
     OutGrid%lsts = TGrid%lsts
     OutGrid%szas = TGrid%szas
     OutGrid%dateStarts = TGrid%dateStarts
     OutGrid%dateEnds = TGrid%dateEnds
-    ! Now we'll interpolate to the NGrid surfaces
+    heights => OutGrid%heights
+    ! Now we'll interpolate to the OutGrid surfaces
     do idate=1, TGrid%noDates
       do iSza=1, TGrid%noSzas
         do iLst=1, TGrid%noLsts
@@ -436,7 +449,7 @@ contains
               ! Because we're in a hurry, we won't use ConvertVGrid
               ! but just do it by hand
               ! What we'll do is assume
-              ! The grid we need NGrid is in 'hPa'
+              ! The grid we need OutGrid is in 'hPa'
               ! The eta-level pressures are either already in hPa or else in pa
               if ( lowercase(PGrid%units) == 'hpa' ) then
                 pEta = PGrid%field( :, iLat, iLon, iLst, iSza, iDate )
@@ -449,12 +462,12 @@ contains
               if ( ZetaSurfaces ) then
                 call InterpolateValues( &
                 & log10(pEta), TGrid%field( :, iLat, iLon, iLst, iSza, iDate ), &
-                & log10(NGrid%heights), OutGrid%field( :, iLat, iLon, iLst, iSza, iDate ), &
+                & log10(heights), OutGrid%field( :, iLat, iLon, iLst, iSza, iDate ), &
                 & 'L', 'B', TGrid%missingValue )
               else
                 call InterpolateValues( &
                 & pEta, TGrid%field( :, iLat, iLon, iLst, iSza, iDate ), &
-                & NGrid%heights, OutGrid%field( :, iLat, iLon, iLst, iSza, iDate ), &
+                & heights, OutGrid%field( :, iLat, iLon, iLst, iSza, iDate ), &
                 & 'L', 'B', TGrid%missingValue )
               endif
             enddo
@@ -466,14 +479,14 @@ contains
       call outputNamedValue( 'PGrid%units', PGrid%units )
       call dump( TGrid%field( :, 1, 1, 1, 1, 1 ), 'T' )
       call dump( PGrid%field( :, 1, 1, 1, 1, 1 ), 'P' )
-      call dump( NGrid%heights, 'heights' )
+      call dump( heights, 'heights' )
       call dump( OutGrid%field( :, 1, 1, 1, 1, 1 ), 'T out' )
       pEta = PGrid%field( :, 1, 1, 1, 1, 1 ) / 100
       call dump( pEta, 'heights(eta)' )
-      do iHeight = 1, NGrid%noHeights
-        call outputNamedValue( 'height', NGrid%heights(iHeight) )
+      do iHeight = 1, OutGrid%noHeights
+        call outputNamedValue( 'height', heights(iHeight) )
         OutGrid%field( iHeight, 1, 1, 1, 1, 1 ) = &
-        & UseLookUpTable ( NGrid%heights(iHeight), TGrid%field( :, 1, 1, 1, 1, 1 ), &
+        & UseLookUpTable ( heights(iHeight), TGrid%field( :, 1, 1, 1, 1, 1 ), &
         & xtable=pEta, missingValue=TGrid%missingValue, options='ip' )
       enddo
       call dump( OutGrid%field( :, 1, 1, 1, 1, 1 ), 'T out (2)' )
@@ -1869,6 +1882,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.86  2019/10/03 17:31:24  pwagner
+! Convert from eta levels may now take a vGrid field
+!
 ! Revision 2.85  2019/09/23 20:38:32  pwagner
 ! Conversion from Eta surfaces may optionally be logarithmic
 !
