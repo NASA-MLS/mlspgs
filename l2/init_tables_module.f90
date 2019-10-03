@@ -719,6 +719,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_a, field_spec(s_gridded,s_concatenate), &
              begin, f+f_b, field_spec(s_gridded,s_concatenate), &
              begin, f+f_Grid, field_spec(s_Gridded), &
+             begin, f+f_vGrid, field_spec(s_vGrid,scalar=scalar), &
              begin, f+f_logBasis, boolean(), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
@@ -2138,6 +2139,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.649  2019/10/03 17:29:52  pwagner
+! Convert from eta levels may now take a vGrid field
+!
 ! Revision 2.648  2019/09/23 20:39:27  pwagner
 ! Conversion from Eta surfaces may optionally be logarithmic
 !
