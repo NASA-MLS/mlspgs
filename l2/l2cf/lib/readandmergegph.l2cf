@@ -204,14 +204,15 @@ begin MergeGrids
 })  
   ;; to save memory Convert, then Merge right after reading
   geos59ConvertedTemp$1: ConvertEtaToP, $
-    a=gmaoTemperatureInput$1, b=gmaoPressureInput$1, Grid=gridEXTN, /logBasis
+    a=gmaoTemperatureInput$1, b=gmaoPressureInput$1, Grid=gridTemperature, /logBasis
   Delete, grid=gmaoTemperatureInput$1
   MergeGrids, grid=geos59Merged$1, operational=geos59ConvertedTemp$1, $
     climatology=gridTemperature, height=1mb, scale=5km
-  Delete, grid=geos59ConvertedTemp$1
+  ;; Instead of Deleting this grid, we will keep it so it can be Concatenated
+  ;;Delete, grid=geos59ConvertedTemp$1
 
   geos59ConvertedGPH$1: ConvertEtaToP, $
-    a=gmaoGPHInput$1, b=gmaoPressureInput$1, Grid=gridEXTN, /logBasis
+    a=gmaoGPHInput$1, b=gmaoPressureInput$1, Grid=gridTemperature, /logBasis
   Delete, grid=gmaoGPHInput$1
   Delete, grid=gmaoPressureInput$1
 end MergeGrids
@@ -248,6 +249,27 @@ begin MergeGrids
   Delete, grid=geos59MergedNext
 end MergeGrids
 
+;; An unmerged, separate Concatenated Temperature grid of GMAO
+begin ReadApriori
+  gmaoTemperatures: gridded, origin=none
+end readApriori
+begin MergeGrids
+  ConcatenateGrids, grid=gmaoTemperatures, $
+    sourceGrid=[geos59ConvertedTemp1, geos59ConvertedTemp2, $
+    geos59ConvertedTemp3, geos59ConvertedTemp4, geos59ConvertedTemp5, geos59ConvertedTemp6, $
+    geos59ConvertedTemp7, geos59ConvertedTemp8, $
+    geos59ConvertedTempNext], /deleteGrids
+  Delete, grid=geos59ConvertedTemp1
+  Delete, grid=geos59ConvertedTemp2
+  Delete, grid=geos59ConvertedTemp3
+  Delete, grid=geos59ConvertedTemp4
+  Delete, grid=geos59ConvertedTemp5
+  Delete, grid=geos59ConvertedTemp6
+  Delete, grid=geos59ConvertedTemp7
+  Delete, grid=geos59ConvertedTemp8
+  Delete, grid=geos59ConvertedTempNext
+end MergeGrids
+
 begin MergeGrids
   ConcatenateGrids, grid=mergedGPH, $
     sourceGrid=[geos59ConvertedGPH1, geos59ConvertedGPH2, $
@@ -278,6 +300,9 @@ begin MergeGrids
 end MergeGrids
 
 ;$Log$
+;Revision 1.4  2019/10/01 17:28:41  pwagner
+;Consistent with SA-01 090
+;
 ;Revision 1.3  2019/09/19 16:16:54  pwagner
 ;First attempt to use ConvertEtaToP with GPH
 ;
