@@ -87,11 +87,13 @@ contains ! ===================================  Public procedures  =====
     type(next_tree_node_state) :: State ! of tree traverser
     integer :: Value
     logical :: verbose
+    logical :: verboser
 
     ! excutable code
     call trace_begin ( me, "MergeGrids", root, cond=toggle(gen) )
 
     verbose = ( switchDetail(switches, 'grid' ) > -1 )
+    verboser = ( switchDetail(switches, 'grid' ) > 0 )
     
     do 
       son = next_tree_node ( root, state )
@@ -116,9 +118,11 @@ contains ! ===================================  Public procedures  =====
       case ( s_changeSettings ) ! ===============================  changeSettings ==
         ! Change settings for this phase
         call addPhaseToPhaseNames ( 0, key )
-        ! call Dump( OutputOptions )
-        ! call Dump( StampOptions )
-        ! call DumpConfig
+        ! How verbose must we be to Dump the new settings?
+        if ( .not. verboser ) cycle
+        call Dump( OutputOptions )
+        call Dump( StampOptions )
+        call DumpConfig
       case ( s_concatenate )
         call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
           & Concatenate ( key, griddedDataBase ) ) )
@@ -208,11 +212,12 @@ contains ! ===================================  Public procedures  =====
     & result ( newGrid )
     use GriddedData, only: GriddedData_T, Dump, NullifyGriddedData, &
       & ConvertFromEtaLevelGrids
-    use Init_Tables_Module, only: F_A, F_B, F_GRID, F_LogBasis
+    use Init_Tables_Module, only: F_A, F_B, F_Grid, F_VGrid, F_LogBasis
     use MoreTree, only: Get_Boolean
     use Toggles, only: Gen, Toggle
     use Trace_M, only: Trace_Begin, Trace_End
     use Tree, only: Nsons, Subtree, Decoration
+    use VGridsDatabase, only: VGrid_T, VGrids
     ! use VGridsDatabase, only: VGrid_T, VGrids, ConvertVGrid
     
     integer, intent(in) :: ROOT         ! Tree node
@@ -234,13 +239,13 @@ contains ! ===================================  Public procedures  =====
     type (griddedData_T), pointer :: A ! Temperatures on eta surfaces
     type (griddedData_T), pointer :: B ! Pressures on eta surfaces
     type (griddedData_T), pointer :: V ! Grid with proper pressure surfaces
-!    type (VGrid_T), pointer       :: V ! Desired pressure surfaces
+    type (VGrid_T), pointer       :: VGrid ! Desired pressure surfaces
 
     logical, parameter :: DEEBUG = .false.
 
     ! Executable code
     call trace_begin ( me, "ConvertEtaToP", root, cond=toggle(gen) )
-    nullify( a, b, v )
+    nullify( a, b, v, vGrid )
     call nullifyGriddedData ( newGrid ) ! for Sun's still useless compiler
     ByLog = .false.
 
@@ -278,7 +283,8 @@ contains ! ===================================  Public procedures  =====
       case ( f_grid )
         v => griddedDataBase ( decoration ( decoration ( value ) ) )
         ! Did we fail reading v?
-        if ( .not. associated(v) ) call MLSL2Message ( MLSMSG_Error, ModuleName, &
+        if ( .not. associated(v) ) &
+          & call MLSL2Message ( MLSMSG_Error, ModuleName, &
           & 'The v (climatology?) grid for the conversion is not associated' )
         ! Did we defer reading v?
         if ( v%empty .and. v%deferReading ) then
@@ -289,13 +295,24 @@ contains ! ===================================  Public procedures  =====
         ! Did we succeed in reading v (at last?)
         if ( v%empty )  call MLSL2Message ( MLSMSG_Error, ModuleName, &
           & 'The v (climatology?) grid for the conversion is empty' )
-!       case ( f_VGrid )
-!         v => VGrids ( decoration ( decoration ( value ) ) )
+      case ( f_vgrid )
+        vGrid => VGrids ( decoration ( decoration ( value ) ) )
+        ! Did we fail reading v?
+        if ( .not. associated(vGrid) ) &
+          & call MLSL2Message ( MLSMSG_Error, ModuleName, &
+          & 'The vgrid for the conversion is not associated' )
       end select
     end do
+    if (  .not. associated(vGrid) .and.  .not. associated(v) ) then
+      call MLSL2Message ( MLSMSG_Error, ModuleName, &
+          & 'Either v or vgrid for the conversion must be specified' )
+    elseif ( DEEBUG ) then
+      call output( 'Have either v or vgrid', advance='yes' )
+    endif
     if ( DEEBUG ) call output( 'Have T, P grids', advance='yes' )
     newGrid%empty = .true.
-    if ( DEEBUG ) call outputNamedValue( 'size(griddedDataBase)', size(griddedDataBase) )
+    if ( DEEBUG ) &
+      & call outputNamedValue( 'size(griddedDataBase)', size(griddedDataBase) )
     if ( size(griddedDataBase) < 2 ) go to 9
     if ( DEEBUG ) then
       call output( 'About to check on a, b', advance='yes' )
@@ -315,7 +332,7 @@ contains ! ===================================  Public procedures  =====
       call dump( v, details=0 )
       call output( 'about to convert from eta level grids', advance='yes' )
     endif
-    call ConvertFromEtaLevelGrids ( a, b, V, newGrid, ByLog )
+    call ConvertFromEtaLevelGrids ( a, b, V, newGrid, VGrid, ByLog )
     if ( DEEBUG ) call output( 'done converting from eta level grids', advance='yes' )
     newGrid%sourceFileName      = a%sourceFileName
     newGrid%quantityName        = a%quantityName
@@ -1209,6 +1226,9 @@ contains ! ===================================  Public procedures  =====
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.68  2019/10/03 17:30:17  pwagner
+! Convert from eta levels may now take a vGrid field
+!
 ! Revision 2.67  2019/09/23 20:39:04  pwagner
 ! Conversion from Eta surfaces may optionally be logarithmic
 !
