@@ -1,3 +1,6 @@
+# This file is processed by util/init_gen to produce parameter statements
+# and references to add_ident to put text into the string and symbol tables.
+
 # You can put one or two names on a line, separated by spaces.
 
 # The first name is the parameter name WITHOUT ITS PREFIX.  The
@@ -14,7 +17,7 @@
 
 # Blank lines don't count.
 
-# Comments begin with # and extend to the end of the line.
+# Comments begin with #, ! or % and extend to the end of the line.
 
 # $Id$
 
@@ -52,6 +55,7 @@ columnabundance
 columns
 complete
 convergenceRatio
+correct # for trapezoidal quadrature in the full forward model
 create
 
 days
@@ -239,6 +243,8 @@ USBFrequency
 
 vmr
 
+wrong # for trapezoidal quadrature in the full forward model
+
 xptl1
 xyz
 
@@ -251,6 +257,9 @@ zonalavg
 temperature
 
 # $Log$
+# Revision 2.78  2019/10/07 20:03:18  vsnyder
+# Add Correct and Wrong for trapezoidal quadrature in FullForwardModel
+#
 # Revision 2.77  2018/02/23 22:10:53  mmadatya
 # Added instECR for ASMLS
 #
