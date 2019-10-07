@@ -47,13 +47,9 @@ module FullForwardModel_m
     ! state vector in each pointing.  Sizes of automatic arrays in
     ! FullForwardModelAuto depend upon them.
 
-  logical, parameter, private :: UseTrapezoidal = .true.   ! Use trapezoidal
-    ! quadrature for radiance instead of rectangular quadrature on panels for
-    ! which GL is not used.  In any case, on panels where GL is used, keep
-    ! the result of rectangular quadrature to cancel the singularity at the
-    ! tangent point.  See Equation (10.13) in the 19 August 2004 ATBD.
+  ! This is set from the configuration:
 
-  logical, parameter, private :: WrongTrapezoidal = useTrapezoidal .and. .true.
+  logical, private :: WrongTrapezoidal = .true.
     ! If GL is not used on a panel, the rectangular estimate used to cancel
     ! the singularity at the tangent point is replaced by a trapezoidal
     ! estimate.  Originally, this was done incorrectly, using delta
@@ -84,7 +80,7 @@ contains
     use HGridsDatabase, only: HGrid_T
     use Interpolate_MIF_to_Tan_Press_m, only: Get_Lines_of_Sight
     use Intrinsic, only: Lit_Indices, L_ECRtoFOV, L_PhiTan, L_PTan, L_ScECR, &
-      & L_TScat, L_VMR
+      & L_TScat, L_VMR, L_Wrong
     use Load_SPS_Data_M, only: DestroyGrids_T, Dump, EmptyGrids_T, Grids_T, &
       & Load_One_Item_Grid, Load_SPS_Data
     use MatrixModule_1, only: Matrix_T
@@ -252,6 +248,8 @@ contains
       & quantityType=l_ptan, foundInFirst=pTan_der, config=fwdModelConf, &
       & instrumentModule=fwdModelConf%signals(1)%instrumentModule )
     pTan_der = pTan_der .and. present ( jacobian )
+
+    wrongTrapezoidal = fwdModelConf%trapezoid == l_wrong
 
     ! Compute some sizes
     n_t_zeta = temp%template%noSurfs ! Number of zeta levels for temperature
@@ -3956,8 +3954,8 @@ contains
         & cond=toggle(emit) .and. levels(emit) > 4 )
 
       if ( .not. same_facets ) then ! Same_Facets is false only if UsingQTM
-        call load_one_item_grid ( grids_tmp, temp, fmStat%maf, phitan, fwdModelConf, &
-          & setDerivFlags=.true., subset=F_and_V%vertices )
+        call load_one_item_grid ( grids_tmp, temp, fmStat%maf, phitan, &
+          & fwdModelConf, setDerivFlags=.true., subset=F_and_V%vertices )
 
         call load_sps_data ( FwdModelConf, phitan, fmStat%maf, grids_f, &
           & subset=F_and_V%vertices )
@@ -4661,6 +4659,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.404  2019/09/05 17:10:33  pwagner
+! Dont try to deallocate F_and_V_MIF unless allocated already
+!
 ! Revision 2.403  2019/06/24 23:28:16  pwagner
 ! Updated to reflect TA-01-143
 !
