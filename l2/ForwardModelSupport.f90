@@ -416,9 +416,9 @@ contains ! =====     Public Procedures     =============================
       & F_ReferenceMIF, F_Refract, F_Scanaverage, F_Signals, F_Skipoverlaps, &
       & F_Specificquantities, F_Spect_Der, F_Switchingmirror, F_Tangentgrid, &
       & F_Temp_Der, F_Tolerance, F_TransformMIFextinction, F_TransformMIFrhi, &
-      & F_TscatMIF, F_Type, F_Usblblmolecules, F_Usbpfamolecules, F_Usetscat, &
-      & F_Xstar, F_Ystar
-    use Intrinsic, only: L_None, L_Clear, L_PTAN, Phyq_Angle, &
+      & F_Trapezoid, F_TscatMIF, F_Type, F_Usblblmolecules, F_Usbpfamolecules, &
+      & F_Usetscat, F_Xstar, F_Ystar
+    use Intrinsic, only: L_None, L_Clear, L_PTAN, L_Wrong, Phyq_Angle, &
       & Phyq_Dimensionless, Phyq_ProFiles
     use, Intrinsic :: Iso_C_Binding, only: C_Intptr_T, C_Loc
     use L2pc_M, only: Binselectors, Defaultselector_Latitude, L2pcDatabase, &
@@ -540,6 +540,7 @@ contains ! =====     Public Procedures     =============================
     info%temp_der = .false.
     info%transformMIFextinction = .false.
     info%transformMIFRHI = .false.
+    info%trapezoid = l_wrong
     info%TScatMIF = 1
     info%useTScat = .false.
     info%where = root
@@ -757,6 +758,8 @@ contains ! =====     Public Procedures     =============================
         info%transformMIFextinction = get_Boolean(son)
       case ( f_transformMIFRHI )
         info%transformMIFRHI = get_Boolean(son)
+      case ( f_trapezoid )
+        info%trapezoid = decoration(subtree(2,son))
       case ( f_TScatMIF )
         call expr ( subtree(2,son), expr_units, value )
         info%TScatMIF = nint(value(1))
@@ -1580,6 +1583,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.192  2019/10/07 20:05:16  vsnyder
+! Add trapezoid field to ForwardModel, for quadrature in FullForwardModel
+!
 ! Revision 2.191  2019/04/24 19:15:25  vsnyder
 ! Add MIFTangent field to forwardModel
 !
