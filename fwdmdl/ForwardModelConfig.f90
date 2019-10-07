@@ -146,6 +146,7 @@ module ForwardModelConfig
                                       ! l_cloudy_110rh_in_cloud,
                                       ! l_cloudy_nearside_only
     integer :: InstrumentModule       ! Module for scan model (actually a spec index)
+    integer :: Trapezoid              ! "Wrong" or "Correct"
     integer :: WindowUnits            ! Either degrees or profiles
     ! Now the other integers
     integer :: Cat_Size(2)            ! Catalog size, by sideband, 1 = LSB, 2 = USB
@@ -1578,6 +1579,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.144  2019/04/24 19:17:24  vsnyder
+! Add MIFTangent field to forwardModel
+!
 ! Revision 2.143  2018/08/06 19:58:24  vsnyder
 ! Use ASSOCIATE construct to avoid necessity for Lines database to have the
 ! TARGET attribute.  Some cannonball polishing.
