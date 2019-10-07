@@ -507,6 +507,7 @@ totalPowerQuantity
 totalVectorSizes
 transformMIFextinction
 transformMIFRHI
+trapezoid # for trapezoidal quadrature in the full forward model
 truncate # Keep prior MIFgeolocation in Forge
 truthExtra
 truthForwardModel
@@ -554,6 +555,9 @@ yStar
 ZOT # Tells dump of HGrid whether to print QTM coordinates in ZOT or Geo
 
 # $Log$
+# Revision 2.271  2019/10/07 20:05:16  vsnyder
+# Add trapezoid field to ForwardModel, for quadrature in FullForwardModel
+#
 # Revision 2.270  2019/04/24 19:15:25  vsnyder
 # Add MIFTangent field to forwardModel
 #
