@@ -99,7 +99,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: T_SPECIES        = t_scale+1
   integer, parameter :: T_TGRIDCOORD     = t_species+1
   integer, parameter :: T_TGRIDTYPE      = t_tgridcoord+1
-  integer, parameter :: T_UNITS          = t_tgridtype+1
+  integer, parameter :: T_Trapezoid      = t_tgridtype+1
+  integer, parameter :: T_UNITS          = t_trapezoid+1
   integer, parameter :: T_VGRIDCOORD     = t_units+1
   integer, parameter :: T_VGRIDTYPE      = t_vgridcoord+1
   integer, parameter :: T_LAST           = t_vgridtype
@@ -315,6 +316,7 @@ contains ! =====     Public procedures     =============================
     data_type_indices(t_species) =           add_ident ( 'species' )
     data_type_indices(t_tgridcoord) =        add_ident ( 'tGridCoord' )
     data_type_indices(t_tgridtype) =         add_ident ( 'tGridType' )
+    data_type_indices(t_trapezoid) =         add_ident ( 'trapezoid' )
     data_type_indices(t_units) =             add_ident ( 'units' )
     data_type_indices(t_vgridcoord) =        add_ident ( 'vGridCoord' )
     data_type_indices(t_vgridtype) =         add_ident ( 'vGridType' )
@@ -586,6 +588,7 @@ contains ! =====     Public procedures     =============================
              l+l_temperature_prec, n+n_dt_def, &
       begin, t+t_tgridcoord, l+l_theta, n+n_dt_def, &
       begin, t+t_tgridtype, l+l_logarithmic, n+n_dt_def, &
+      begin, t+t_trapezoid, l+l_correct, l+l_wrong, n+n_dt_def, &
       begin, t+t_units, &
              l+l_c, l+l_days, l+l_deg, l+l_degrees, l+l_dimensionless, &
              l+l_dimless, l+l_dl, l+l_dobsonUnits, l+l_DU, l+l_ghz, &
@@ -1524,6 +1527,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_tolerance, numeric(phyq_temperature), &
              begin, f+f_transformMIFextinction, boolean(), &
              begin, f+f_transformMIFRHI, boolean(), &
+             begin, f+f_trapezoid, field_type(t_trapezoid), &
              begin, f+f_TScatMIF, numeric(phyq_dimensionless), &
              begin, f+f_TScatMoleculeDerivatives, field_type(t_molecule), &
              begin, f+f_TScatMolecules, field_type(t_molecule), &
@@ -2139,6 +2143,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.650  2019/10/07 20:05:16  vsnyder
+! Add trapezoid field to ForwardModel, for quadrature in FullForwardModel
+!
 ! Revision 2.649  2019/10/03 17:29:52  pwagner
 ! Convert from eta levels may now take a vGrid field
 !
