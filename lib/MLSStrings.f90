@@ -50,6 +50,8 @@ module MLSStrings               ! Some low level string handling stuff
 ! Count_words        Counts the number of space-separated words in a string
 ! Delete             Deletes each instance of a char
 ! Depunctuate        Replaces punctuation with blanks
+! Enclosure          Finds outermost indices of substring enclosing an arg
+!                      with '(' and ')'; optionally some other brackets
 ! FlushArrayLeft     Flush character array left over blank elements
 ! Hhmmss_value       Converts 'hh:mm:ss' formatted string to a real r8
 !                    (See also PGS_TD_UTCtoTAI and mls_UTCtoTAI)
@@ -113,6 +115,7 @@ module MLSStrings               ! Some low level string handling stuff
 ! int count_words (char* str)
 ! char* delete (char* str, char ch, [int max])
 ! char* depunctuate (char* str)
+! Enclosure ( char* str, int i1, int i2, [ char brackets(:)] )
 ! FlushArrayLeft ( char* a(:), char* b(:), [char* options] )
 ! int(:) indexes (char* string, char* substrings, [char* mode])
 ! ints2Strings (int ints(:,:), char* strs(:))
@@ -216,7 +219,7 @@ module MLSStrings               ! Some low level string handling stuff
 
   public :: Asciify, &
     & Capitalize, CatStrings, CharToInt, CompressString, Count_Words, &
-    & Delete, Depunctuate, FlushArrayLeft, Hhmmss_Value, &
+    & Delete, Depunctuate, Enclosure, FlushArrayLeft, Hhmmss_Value, &
     & Indexes, Ints2Strings, &
     & IsAllAscii, IsAlphabet, IsComment, IsDigits, IsRepeat, &
     & LenTrimToAscii, LinearSearchStringArray, Lowercase, &
@@ -457,6 +460,75 @@ contains
     end do
 
   end function Depunctuate
+
+  ! ------------------------------------------------  Enclosure  -----
+  subroutine Enclosure ( str, i1, i2, brackets )
+    ! Find outermost substring indices enclosing an arg
+    ! with "(" and ")"; any failure returns 0 and 0
+    ! E.g., if
+    !   str = 'abs(a+(b+c)/d)'
+    !          123456789012345
+    ! returns i1=4 and i2=14
+    ! Optionally will use 
+    !   brackets(1) instead of "(" and 
+    !   brackets(2) instead of ")"
+    !
+    ! Method:
+    ! Each '(' adds 1, each ')' subtracts 1, though never going negative
+    ! If 0 when done, we're balanced, not if not
+    !
+    ! brackets(1) and (2) must not be th same
+    ! Args
+    character(len=*), intent(in)                  :: str
+    integer, intent(out)                          :: i1
+    integer, intent(out)                          :: i2
+    character, dimension(:), optional, intent(in) :: brackets
+    ! Internal variables
+    integer                                       :: i
+    integer                                       :: balance
+    character                                     :: lef ! "("
+    character                                     :: rig ! ")"
+    ! Executable
+    lef = '('
+    rig = ')'
+    i1 = 0
+    i2 = 0
+    if ( present(brackets) ) then
+      if ( size(brackets) > 1 ) then
+        lef = brackets(1)
+        rig = brackets(2)
+      endif
+    endif
+    if ( lef == rig ) then
+      ! print *, 'The lef and rig brackets must not be the same'
+      return
+    endif
+    i1 = index( str, lef )
+    if ( i1 < 1 ) then
+      ! Failed right off the bat to find a 1st "("
+      i1 = 0
+      i2 = 0
+      return
+    endif
+    balance = 1
+    do i = index( str, lef ) + 1, len_trim(str)
+      select case(str(i:i))
+      case ('(')
+        balance = balance + 1
+      case (')')
+        balance = max( 0, balance - 1 )
+      ! case default (leaves balance unchanged)
+      end select
+      if ( balance < 1 ) exit
+    enddo
+    if ( i > len_trim(str) ) then
+      ! Failed to find the matching ")"
+      i1 = 0
+      i2 = 0
+    else
+      i2 = i
+    endif
+  end subroutine Enclosure
 
   ! ------------------------------------------------  FlushArrayLeft  -----
   subroutine FlushArrayLeft ( a, b, options )
@@ -1352,6 +1424,11 @@ contains
     !
     ! E.g., given 'A string    ' reverse_trim returns 'gnirst A   ' while
     ! a simple Reverse returns '   gnirst A'
+    !
+    ! Uses:
+    ! To find the last non-blank character in a string str
+    !   rev = reverse_trim(str)
+    !   it = rev(1:1)
     !--------Argument--------!
     character (len=*), intent(in) :: str
     character (len=max(len_trim(str), 1)) :: outstr
@@ -2744,6 +2821,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.110  2019/10/16 20:50:13  pwagner
+! Added Enclosure
+!
 ! Revision 2.109  2019/07/17 20:13:42  pwagner
 ! Replace may now take the arg reverse to replace non-matching oldChar; added Swap
 !
