@@ -1,0 +1,31 @@
+!divert(-1)
+; $Id$
+
+!define(retrophase,{FinalPtan})
+
+!divert!dnl
+; This l2cf fragment does all the quality flagging for the merra2 phase
+; products of the emls instrument
+
+begin Fill
+  !define(flaggingBands,{1})
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+
+  Dump, text='In gphonlyflags.l2cf'
+  ;; Copy the flags over from temperature to GPH
+  Fill, quantity=standardDiagnostics.statusGPH_hr, method=vector, $
+    sourceQuantity=standardDiagnostics.statusTemperature_hr, /ignoreTemplate
+  Fill, quantity=standardDiagnostics.qualityGPH_hr, method=vector, $
+    sourceQuantity=standardDiagnostics.qualityTemperature_hr, /ignoreTemplate
+  Fill, quantity=standardDiagnostics.convergenceGPH_hr, method=vector, $
+    sourceQuantity=standardDiagnostics.convergenceTemperature_hr, /ignoreTemplate
+End Fill
+
+Begin Fill
+  Fill, quantity=standardPrecision.GPH_hr, method=gphPrecision, $
+    refGPHPrecisionquantity=standardPrecision.refGPH, $
+    tempPrecisionQuantity=standardPrecision.temperature_hr
+
+end Fill
+
+; $Log$
