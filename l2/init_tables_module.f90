@@ -1432,6 +1432,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_mask, field_type(t_masks), &
              begin, f+f_maxValue, numeric(), &
              begin, f+f_minValue, numeric(), &
+             begin, f+f_missingValue, numeric(phyq_dimensionless), &
              begin, f+f_surface, numeric_or_range(), &
              begin, f+f_opticalDepth, vectorQuantity(), &
              begin, f+f_opticalDepthCutoff, numeric(phyq_dimensionless), &
@@ -2143,6 +2144,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.651  2019/10/16 20:54:28  pwagner
+! Subset command may take a MissingValue field
+!
 ! Revision 2.650  2019/10/07 20:05:16  vsnyder
 ! Add trapezoid field to ForwardModel, for quadrature in FullForwardModel
 !
