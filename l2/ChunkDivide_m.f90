@@ -851,6 +851,7 @@ contains ! ===================================== Public Procedures =====
     subroutine ChunkDivideL2CF ( root )
       ! This subroutine identifies, separates, and checks values from the section
       ! of the MLSCF (ChunkDivide) passed to Scan/Divide.
+      use HighOutput, only: LetsDebug, OutputNamedValue
       use Init_Tables_Module, only: Field_Indices
       use moreTree, only: get_boolean
       integer, intent(in) :: ROOT    ! Root of the ChunkDivide command
@@ -884,6 +885,7 @@ contains ! ===================================== Public Procedures =====
         & (/ f_noChunks, f_homeModule, f_homeGeodAngle /)
 
       ! Local variables
+      logical :: debug
       integer :: FieldIndex               ! Of son of the ChunkDivide command
       integer :: FieldValue
       integer :: GSON                     ! A son of son the ChunkDivide command node
@@ -904,6 +906,7 @@ contains ! ===================================== Public Procedures =====
       call trace_begin ( me, 'ChunkDivideL2CF', root, &
         & cond=toggle(gen) .and. levels(gen) > 0 )
       swlevel = switchDetail(switches, 'chu' )
+      debug = LetsDebug ( 'chu', 2 )
       error = 0
       ChunkDivideConfig%where = root
 
@@ -922,18 +925,31 @@ contains ! ===================================== Public Procedures =====
         call trace_begin ( 'ChunkDivideL2CF.loop', root, &
           & string=field_indices(fieldIndex),&
           & cond=toggle(gen) .and. levels(gen) > 1 )
-        ! print *, 'fieldIndex ', fieldIndex
-        ! print *, 'nsons(son) ', nsons(son)
+        if ( &
+          & any(fieldIndex == &
+          & (/ f_excludePostOverlaps, f_excludePriorOverlaps, f_skipL1BCheck, &
+          & f_crashIfPhiNotMono, f_saveObstructions /) &
+          & ) &
+          & ) then
+          log_value = get_Boolean(son)
+        else
+          log_value = .false.
+        endif
+        if ( debug ) then
+        call OutputNamedValue ( 'fieldIndex ', fieldIndex )
+        call OutputNamedValue ( 'nsons(son) ', nsons(son) )
+        call OutputNamedValue ( 'log_value ', log_value )
+        endif
         if (nsons(son) > 1 ) then
           gson = subtree(2,son)
           call expr ( gson, units, value )
           ! log_value = get_boolean ( fieldValue )
         elseif (nsons(son) > 0 ) then
           value = 0.0
-          log_value = get_boolean ( fieldValue )
+          ! log_value = get_boolean ( fieldValue )
         else
           value = 0.0
-          log_value = .false.
+          ! log_value = .false.
         end if
         ! Get value for this field if appropriate
         select case ( fieldIndex )
@@ -1005,12 +1021,12 @@ contains ! ===================================== Public Procedures =====
               & ChunkDivideConfig%criticalSignals(j-1), strip=.true. )
           end do
         case ( f_excludePostOverlaps )
-          ChunkDivideConfig%allowPostOverlaps = .not. get_boolean ( fieldValue ) ! log_value
+          ChunkDivideConfig%allowPostOverlaps = .not. log_value ! log_value
           if ( .not. ChunkDivideConfig%allowPostOverlaps ) &
             & call MLSMessage(MLSMSG_Warning, ModuleName, &
             & 'You have elected to exclude MAFs after time range' )
         case ( f_excludePriorOverlaps )
-          ChunkDivideConfig%allowPriorOverlaps = .not. get_boolean ( fieldValue ) ! log_value
+          ChunkDivideConfig%allowPriorOverlaps = .not. log_value ! log_value
           if ( .not. ChunkDivideConfig%allowPriorOverlaps ) &
             & call MLSMessage(MLSMSG_Warning, ModuleName, &
             & 'You have elected to exclude MAFs prior to time range' )
@@ -1019,18 +1035,18 @@ contains ! ===================================== Public Procedures =====
           ChunkDivideConfig%maxGapFamily = units(1)
         case ( f_skipL1BCheck )
           ! print *, 'processing f_skipL1BCheck ', log_value
-          ChunkDivideConfig%skipL1BCheck = get_boolean ( fieldValue ) ! log_value
+          ChunkDivideConfig%skipL1BCheck = log_value ! log_value
           if ( ChunkDivideConfig%skipL1BCheck ) &
             & call MLSMessage(MLSMSG_Warning, ModuleName, &
             & 'You have elected to skip checking the l1b data for problems' )
         case ( f_crashIfPhiNotMono )
-          ChunkDivideConfig%crashIfPhiNotMono = get_boolean ( fieldValue ) ! log_value
+          ChunkDivideConfig%crashIfPhiNotMono = log_value ! log_value
           if ( ChunkDivideConfig%crashIfPhiNotMono ) &
             & call MLSMessage(MLSMSG_Warning, ModuleName, &
             & 'You have elected to crash if phi, the master geodetic angle, is' // &
             & ' not monotonic' )
         case ( f_saveObstructions )
-          ChunkDivideConfig%saveObstructions = get_boolean ( fieldValue ) ! log_value
+          ChunkDivideConfig%saveObstructions = log_value ! log_value
           if ( ChunkDivideConfig%saveObstructions ) &
             & call MLSMessage(MLSMSG_Warning, ModuleName, &
             & 'You have elected to save obstructions (possibly for Output_Close)' )
@@ -3003,6 +3019,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.136  2019/10/16 20:57:37  pwagner
+! Fixed a strange bug involving get_boolean
+!
 ! Revision 2.135  2018/10/05 20:42:21  pwagner
 ! Improved appearance of how we Dump Critical Signals
 !
