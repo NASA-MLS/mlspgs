@@ -12,8 +12,7 @@
 module MLSFinds
   use MLSStrings_0, only: LowerCase
 
-! Ignore the module's name, these are just the simplest Finds
-! For actual set operations, see MLSSets_1
+! These are just the simplest Finds
 
   implicit none
   private
@@ -44,7 +43,8 @@ module MLSFinds
 !                  [int re_mainder(:)], [int which_not(:)])      
 ! FindAllLogical (log set(:), int which(:), [int how_many], &
 !                  [int which_not(:)])      
-! int FindFirstCharacter (char* set(:), char* probe)      
+! int FindFirstCharacter (char* set(:), char* probe[, char* Tol] )      
+! int FindFirstInCharacter ( char* Str, char* set(:), int c1 )      
 ! int FindFirstNumType (numtype set(:), numtype probe, [numtype tol], &
 !      [numtype Period])
 !     (where numtype can be an int, real, or dble)
@@ -73,21 +73,21 @@ module MLSFinds
 
 ! === (end of api) ===
 
-  public :: FINDALL, FINDFIRST, FINDLAST, FINDLONGESTRANGE, &
-    & FINDNEXT, FINDUNIQUE, FINDLONGESTSTRETCH
+  public :: Findall, FindFirst, FindLast, Findlongestrange, &
+    & Findnext, Findunique, Findlongeststretch
 
-  interface FINDFIRST
-    module procedure FINDFIRSTINTEGER, FINDFIRSTLOGICAL, FINDFIRSTCHARACTER
-    module procedure FINDFIRSTREAL, FINDFIRSTDOUBLE, FINDFIRSTLOGICAL2D
-    module procedure FINDFIRSTSUBSTRING
-    module procedure FINDFIRSTVECTOR
-    module procedure FINDFIRSTRUN
+  interface FindFirst
+    module procedure FindFirstInteger, FindFirstlogical
+    module procedure FindFirstReal, FindFirstdouble, findFirstlogical2d
+    module procedure FindFirstSubstring, findFirstcharacter, findFirstIncharacter
+    module procedure FindFirstVector
+    module procedure FindFirstRun
   end interface
 
-  interface FINDLAST
-    module procedure FINDLASTINTEGER, FINDLASTLOGICAL, FINDLASTCHARACTER
-    module procedure FINDLASTREAL, FINDLASTDOUBLE, FINDLASTLOGICAL2D
-    module procedure FINDLASTSUBSTRING
+  interface Findlast
+    module procedure FindLastinteger, FindLastlogical, FindLastcharacter
+    module procedure FindLastreal, FindLastdouble, FindLastlogical2d
+    module procedure FindLastsubstring
   end interface
 
   interface FINDLONGESTRANGE
@@ -358,6 +358,31 @@ contains ! =====     Public Procedures     =============================
     end do
     FindFirstCharacter = 0
   end function FindFirstCharacter
+
+  ! -------------------------------------------  FindFirstInCharacter  -----
+  integer function FindFirstInCharacter ( Str, Set, c1 )
+    ! Find the first occurrence in str of any element in the array Set
+    character(len=*), intent(in)               :: Str
+    character(len=*), dimension(:), intent(in) :: Set
+    integer, intent(out)                       :: c1 ! its substring index
+    ! Internal variables
+    integer                   :: j
+    integer                   :: k
+
+    ! Executable code
+    c1 = len_trim(str) + 1
+    FindFirstInCharacter = 0
+    do k = 1, size(set)
+      j = index( str, trim(set(k)) )
+      if ( j > 0 ) then
+        ! Does this elem occur before the earliest we found?
+        if ( j < c1 ) then
+          c1 = j
+          FindFirstInCharacter = k
+        endif
+      endif
+    end do
+  end function FindFirstInCharacter
 
   ! ----------------------  FindFirst[Integer,real,double]  -----
   function FindFirstInteger ( Set, Probe, Tol, Period ) Result( theFirst )
@@ -1270,6 +1295,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSFinds
 
 ! $Log$
+! Revision 2.6  2019/10/16 20:50:53  pwagner
+! Added FindFirstInCharacter
+!
 ! Revision 2.5  2019/04/09 20:33:04  pwagner
 ! Now USEs LowerCase from MLSStrings_0
 !
