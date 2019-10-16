@@ -213,6 +213,24 @@ begin Fill
     flags=diag$1.dnwt_flag
 end Fill
 
+!ifdef(flagBeExtraVerbose,{
+;;
+;; We do this after every phase whether that phase recomputed
+;; Ptan or not. A more selective approach would aim for the 
+;;   !directWriteDGM(ptanGHz,GHz.ptan-!phase) and
+;;   !directWriteDGM(ptanGHz,THz.ptan-!phase) macros
+})
+!ifdef(flagSetPtanPrecPositive,{
+begin Fill
+  Fill, quantity=outputPrecision.ptanGHZ, method=manipulate, $
+    a=outputPrecision.ptanGHZ, manipulation='abs(a)', $
+    c=999.98
+  Fill, quantity=outputPrecision.ptanTHZ, method=manipulate, $
+    a=outputPrecision.ptanTHZ, manipulation='abs(a)', $
+    c=999.98
+end Fill
+})
+
 !ifdef(flagSuppressRegularOutput,{
   !define(flagSkipWritingDiagnostics,{yes})
 })
@@ -1235,6 +1253,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.160  2019/08/22 16:53:02  pwagner
+; Add a new flagSkipGPHNeedsFancyThings
+;
 ; Revision 1.159  2017/12/01 18:21:35  pwagner
 ; Overwrite GPH standardPrecision whenever it is recalculated (before, it was always apriori)
 ;
