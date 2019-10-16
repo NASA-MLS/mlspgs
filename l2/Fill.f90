@@ -1995,17 +1995,19 @@ contains ! =====     Public Procedures     =============================
       if ( any( fillMethod == (/ l_status, l_quality /) ) ) then
         call ApplyMaskToQuantity( quantity, &
           & radQuantity, ptanQuantity, odQuantity, nullQuantity, 0._r8, &
-          & maxValue, minValue, heightRange, whereRange, &
+          & maxValue, minValue, -999.99_r8, &
+          & heightRange, whereRange, &
           & .false., .false., additional=.true., expandMask=.false., reset=.false., &
           & maskBit=M_Fill, heightNode=0, surfNode=0, &
-          & instancesNode=instancesNode, channelsNode=0 )
+          & instancesNode=instancesNode, channelsNode=0, got=got )
       else
         call ApplyMaskToQuantity( quantity, &
           & radQuantity, ptanQuantity, odQuantity, nullQuantity, 0._r8, &
-          & maxValue, minValue, heightRange, whereRange, &
+          & maxValue, minValue, -999.99_r8, &
+          & heightRange, whereRange, &
           & .false., .false., additional=.true., expandMask=.false., reset=.false., &
           & maskBit=M_Fill, heightNode=heightNode, surfNode=surfNode, &
-          & instancesNode=instancesNode, channelsNode=channelsNode )
+          & instancesNode=instancesNode, channelsNode=channelsNode, got=got )
       endif
       if ( heightNode /= 0 .and. DEEBUG ) call dumpQuantityMask ( quantity )
       ! Then we Fill the newly masked quantity
@@ -3385,6 +3387,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.482  2019/10/16 20:55:57  pwagner
+! Subset command may take a MissingValue field
+!
 ! Revision 2.481  2019/02/21 22:37:22  pwagner
 ! Assure Dumps are sent to stdout
 !
