@@ -26,12 +26,16 @@ module ManipulationUtils        ! operations to manipulate quantities
   use MLSStringLists, only: Array2List, CatLists, GetStringElement, &
     & List2Array, NumStringElements, &
     & ReplaceSubstring
-  use MLSStrings, only: Indexes, LowerCase, NCopies, SplitNest, Stretch
+  use MLSStrings, only: Enclosure, Indexes, LowerCase, NCopies, &
+    & Reverse_Trim, SplitNest, Stretch
   use Output_M, only: Output
   use VectorsModule, only: VectorValue_T, M_Fill, ReshapeVectorValue
   ! This module allows us to do algebraic operations on vector quantities
   ! saving the result in a vector quantity
   ! See also Algebra Module (though I never got Algebra to work--paw)
+  !
+  ! Don't we want to be able to call this with args that are
+  ! arrays instead of demanding only VectorValue_T ?
 
   implicit none
   private
@@ -64,11 +68,25 @@ module ManipulationUtils        ! operations to manipulate quantities
   logical, parameter :: DEEBUG     = .false.                 ! Usually FALSE
   integer, parameter, public :: MAXMANIPULATIONLEN = 128     ! Is this enough?
   integer, parameter, public :: NO_ERROR_CODE = 0
+  integer, parameter :: NFUNNAMES = 41
+  character(len=16), dimension(NFUNNAMES) :: FUNCOLONS
+  character(len=8), dimension(NFUNNAMES), parameter :: FUNNAMES = &
+    & (/ 'stddev  ', 'rms     ', 'median  ', 'mean    ', 'max     ', &
+    &    'min     ', 'count   ', 'slip    ', 'shift   ', 'channel ', &
+    &    'surface ', 'instance', 'height  ', 'lon     ', 'lat     ', &
+    &    'sza     ', 'map     ', 'log10   ', 'log     ', 'ln      ', &
+    &    'exp     ', 'ifpos   ', 'ifneg   ', 'sign    ', 'abs     ',&
+    &    'sin     ', 'cos     ', 'tan     ', &
+    &    'sindeg  ', 'cosdeg  ', 'tandeg  ', &
+    &    'asin    ', 'acos    ', 'atan    ', &
+    &    'sinh    ', 'cosh    ', 'tanh    ', &
+    &    'asinh   ', 'acosh   ', 'atanh   ', &
+    &    'trunc   '/)
 
 contains ! =====     Public Procedures     =============================
 
-  subroutine Manipulate( QUANTITY, A, B, C, STR, &
-    & SPREADFLAG, DIMLIST )
+  subroutine Manipulate( Quantity, A, B, C, Str, &
+    & SpreadFlag, Dimlist )
     ! Args:
     type (VectorValue_T), intent(inout) :: QUANTITY
     type (VectorValue_T), pointer :: A
@@ -80,14 +98,18 @@ contains ! =====     Public Procedures     =============================
     ! Evaluate mstr assuming it's of the form
     ! expr1 [op1 expr2]
     ! where each expr is either a primitive 'x' (one of {a, b, or c})
-    ! or else ['('] 'x op y' [')']
-    ! where 'op' is one of {+, -, *, /,<,>}
+    ! or else ['('] 'x op y' [')'] or 'fun(x)'
+    ! where 'op' is one of {+, -, *, /,<,>, ^}
+    ! and fun is one of the recognized FunNames
 
     ! Method:
     ! Progressively collapse all the '(..)' pairs into their values
     ! (stored in primitives database)
     ! until only primitives remain
     ! Then evaluate the primitives
+    
+    ! Unless the /spread flag of map() function was used,
+    ! obey mask bits before setting any Quantity%values
     !
     ! Limitations:
     ! Does not check for unmatched parens or other illegal syntax
@@ -109,22 +131,8 @@ contains ! =====     Public Procedures     =============================
     character(len=MAXMANIPULATIONLEN) :: part2
     character(len=MAXMANIPULATIONLEN) :: part3
     character(len=4) :: vchar
-    integer, parameter :: NFUNNAMES = 41
-    character(len=16), dimension(NFUNNAMES) :: FUNCOLONS
-    character(len=8), dimension(NFUNNAMES), parameter :: FUNNAMES = &
-      & (/ 'stddev  ', 'rms     ', 'median  ', 'mean    ', 'max     ', &
-      &    'min     ', 'count   ', 'slip    ', 'shift   ', 'channel ', &
-      &    'surface ', 'instance', 'height  ', 'lon     ', 'lat     ', &
-      &    'sza     ', 'map     ', 'log10   ', 'log     ', 'ln      ', &
-      &    'exp     ', 'ifpos   ', 'ifneg   ', 'sign    ', 'abs     ',&
-      &    'sin     ', 'cos     ', 'tan     ', &
-      &    'sindeg  ', 'cosdeg  ', 'tandeg  ', &
-      &    'asin    ', 'acos    ', 'atan    ', &
-      &    'sinh    ', 'cosh    ', 'tanh    ', &
-      &    'asinh   ', 'acosh   ', 'atanh   ', &
-      &    'trunc   '/)
       
-    ! logical, parameter :: DEEBUG = .true.
+    logical, parameter :: DEEBUG = .false.
     ! Executable
     ! Hackery-quackery alert!
     ! We surround the function names with colons ":"
@@ -167,7 +175,7 @@ contains ! =====     Public Procedures     =============================
     ! so we'll attempt to identify multiplications and divisions
     ! and surround such subexpressions with extra parentheses
 
-    call reorderPrecedence( mstr, collapsedstr )
+    call ReorderPrecedence( mstr, collapsedstr )
     if ( DeeBUG ) then
       print *, 'incoming ', mstr
       print *, 'after reordering precedence ', collapsedstr
@@ -286,7 +294,7 @@ contains ! =====     Public Procedures     =============================
       endif
       ! Before exiting, will we need to reorder any priorities?
       if ( index( collapsedstr, '(' ) < 1 ) then
-        call reorderPrecedence( collapsedstr, mstr )
+        call ReorderPrecedence( collapsedstr, mstr )
         collapsedstr = mstr
         if ( DeeBUG ) then
           print *, 'collapsedstr (reordered) ', trim(collapsedstr)
@@ -327,6 +335,7 @@ contains ! =====     Public Procedures     =============================
     elseif ( .not. associated ( quantity%mask ) ) then
       quantity%values = primitives(np)%values
     else
+      ! In all other cases, obey the mask
       where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
         quantity%values = primitives(np)%values
       end where
@@ -456,7 +465,7 @@ contains ! =====     Public Procedures     =============================
     if ( DeeBug ) print *, 'outstr ', outstr
   end subroutine markDigits
 
-  subroutine reorderPrecedence( mstr, collapsedstr )
+  subroutine ReorderPrecedence( mstr, collapsedstr )
     ! Identify all the terms where each term are separated by
     ! the lower-precedence operators {+, -,<,>}
     ! If any terms contain higher-precedence operators {*, /}
@@ -464,9 +473,18 @@ contains ! =====     Public Procedures     =============================
     character(len=*), intent(in)  :: mstr
     character(len=*), intent(out) :: collapsedstr
     ! Internal variables
-    integer :: i
+    integer :: c1
+    integer :: c2
+    integer :: cf
+    integer :: j
+    integer :: k
+    integer :: kp
     integer :: n
+    integer :: posblank
+    integer :: posdb
+    integer :: posnext
     character(len=(len(mstr)+3)) :: element
+    character(len=MAXMANIPULATIONLEN)             :: rev
     character(len=(len(mstr)+3)) :: temp
     character(len=1), parameter  :: null = achar(0) ! formerly '&'
     ! Executable
@@ -505,25 +523,67 @@ contains ! =====     Public Procedures     =============================
       return
     endif
     collapsedstr = ' '
-    do i=1, n
-      call GetStringElement ( temp, element, i, countEmpty, inseparator='+' )
-      ! Surround term with parentheses if it's a product or quotient
-      ! but not if it's (already) parenthetical or parentheses are not balanced
-      if ( ( index(element, '*') > 0 .or. index(element, '/') > 0 .or. &
-        & index(element, '^') > 0 ) .and. &
-        & ( &
-        &   .not. isParenthetical(element) .and. isBalanced(element) &
-        & .or. &
-        &   ncopies( trim(element), '('           ) == 0 &
-        &   .and. ncopies( trim(element), ')'           ) == 1 &
-        & ) &
-        & ) then
-        if ( DEEBUG ) print *, 'element to be parenthesized: ', trim(element)
-        element = '(' // trim(element) // ')'
+    k = 1
+    ! Go through temp looking for FunNames
+    ! If we find one, just treat its arg; otherwise, finish off rest of string
+    do
+      j = FindFirst( temp(k:), FUNNAMES, cf )
+      if ( DeeBUG ) print *, 'temp(k:): ', trim(temp(k:))
+      if ( j > 0 ) then
+        ! Has the function's arg already been reduced to a database entry?
+        ! e.g., 
+        !             ifneg: 1
+        if ( DeeBUG ) print *, '1st check: ', temp(k+cf-1:k+cf+len_trim(FunNames(j)))
+        if ( temp(k+cf-1:k+cf+len_trim(FunNames(j))) == trim(FunNames(j)) // ':' ) then
+          ! Treat any chars from k through k+cf-2
+          if ( cf > 1 ) then
+            call SurroundTerms ( temp(k:k+cf-2) )
+            ! Ensure we don't lose a '+' sign along the way
+            rev = reverse_trim(temp(k:k+cf-2) )
+            if ( rev(1:1) == '+' ) collapsedstr = trim(collapsedstr) // ' +'
+            if ( DeeBUG ) print *, 'After SurroundTerms: ', trim(collapsedstr)
+          endif
+          ! Must find index of database entry posdb 
+          posdb = FindFirst ( temp(k+cf+len_trim(FunNames(j)):), ' ', &
+            & reverse=.true. )
+          ! and of next non-blank char posnext
+          posblank = FindFirst ( temp(k+cf+len_trim(FunNames(j))+posdb-1:), ' ', &
+            & reverse=.false. )
+          posnext = FindFirst ( temp(k+cf+len_trim(FunNames(j))+posdb-1+posblank-1:), ' ', &
+            & reverse=.true. )
+          ! So what we do is surround the function and db like this
+          !             (ifneg: 1)
+          collapsedstr = trim(collapsedstr) // '(' // &
+            & temp(k+cf-1:k+cf+len_trim(FunNames(j))+posdb-1+posblank-1) // &
+            & ')' 
+          kp = k+cf+len_trim(FunNames(j))+posdb-1+posblank-1
+          k = kp + 1
+          cycle
+        endif
+        ! Must find range of characters in Enclosure
+        call Enclosure( temp(k+cf-1:), c1, c2 )
+        if ( c2 < 1 ) then
+          ! Apparently the function reference has been stripped of its
+          ! args down to a form like this
+          !    ifneg: 1
+          kp = k+cf-2+len_trim(FunNames(j))
+          k = kp + 1
+          collapsedstr = trim(collapsedstr) // temp(k:kp)
+          cycle
+        endif
+        ! Treat any chars from k through k+cf-2
+        if ( cf > 1 ) call SurroundTerms ( temp(k:k+cf-2) )
+        ! Now the rest within the fun's arg
+        kp = k+cf-2+c2
+        call SurroundTerms ( temp(k+cf-1:kp) )
+      else
+        kp = len_trim(temp)
+        call SurroundTerms ( temp(k:kp) )
       endif
-      collapsedstr = catLists( collapsedstr, element, inseparator='+' )
+      k = kp + 1
+      if ( DeeBUG ) print *, 'k, j, cf, c1, c2: ', k, j, cf, c1, c2
+      if ( k > len_trim(temp) ) exit
     enddo
-
     ! Now undo change by reverting all '+-'
     ! (including any that may have been split by parentheses
     call ReplaceSubString( collapsedstr, temp, '+-', ' -', &
@@ -544,6 +604,62 @@ contains ! =====     Public Procedures     =============================
       & which='all', no_trim=.false. )
     collapsedstr = temp
     call stretchOperators ( collapsedstr )
+  contains
+    subroutine SurroundTerms ( arg, sep )
+      character(len=*), intent(in)                  :: arg
+      character, optional, intent(in)               :: sep
+      !
+      integer                                       :: i
+      integer                                       :: n
+      character                                     :: separator
+      !
+      separator = '+'
+      if ( present(sep) ) separator = sep
+      if ( DeeBUG ) print *, 'arg in SurroundTerms: ', trim(arg)
+      if ( len_trim(arg) < 1 ) then
+        return
+      elseif ( len_trim(adjustl(arg)) == 1 &
+        & .and. &
+        & index( '+-*/^', trim(adjustl(arg)) ) > 0 ) then
+        collapsedstr  = trim(collapsedstr) // arg
+        return
+      elseif ( index(arg, '+') < 1 ) then
+        collapsedstr  = trim(collapsedstr) // arg
+        return
+      endif
+      n = NumStringElements( arg, COUNTEMPTY, inseparator='+' )
+      do i=1, n
+        call GetStringElement ( arg, element, i, countEmpty, inseparator='+' )
+        ! Surround term with parentheses if it's a product or quotient
+        ! but not if it's (already) parenthetical or parentheses are not balanced
+        if ( ( index(element, '*') > 0 .or. index(element, '/') > 0 .or. &
+          & index(element, '^') > 0 ) .and. &
+          & ( &
+          &   .not. isParenthetical(element) .and. isBalanced(element) &
+          & ) &
+          & ) then
+          if ( DEEBug ) then
+          print *, 'element to be parenthesized: ', trim(element)
+          print *, 'isParenthetical(element): ', isParenthetical(element)
+          print *, 'isBalanced(element): ', isBalanced(element)
+          print *, 'ncopies( trim(element), "("): ', ncopies( trim(element), '(')
+          print *, 'ncopies( trim(element), ")"): ', ncopies( trim(element), ')')
+          endif
+          element = '(' // trim(element) // ')'
+        endif
+        ! Avoid producing two consecutive ops, like '+ +' or '* +'
+        ! which would happen if collapsedstr ends with an op
+        ! Begin by finding its last non-blank char
+        !
+        rev = Reverse_trim(collapsedstr)
+        ! Is it an op?
+        if ( index( '+-*/', rev(1:1) ) > 0 ) then
+          collapsedstr = trim(collapsedstr) // element
+        else
+          collapsedstr = catLists( collapsedstr, element, inseparator='+' )
+        endif
+      enddo
+    end subroutine SurroundTerms
   end subroutine reorderPrecedence
   
   subroutine stretchOperators ( str )
@@ -1489,6 +1605,7 @@ contains ! =====     Public Procedures     =============================
   function isBalanced ( str ) result ( itIs )
     use MLSStrings, only: NCopies
     ! Are numbers of '(' and ')' in str equal?
+    ! See also Enclosure subroutine in MLSStrings
     character(len=*), intent(in) :: str
     logical                      :: itIs
     ! Internal variables
@@ -1502,7 +1619,7 @@ contains ! =====     Public Procedures     =============================
     if ( .not. itIs ) return
     ! Now look more closely
     ! Each '(' adds 1, each ')' subtracts 1, though never going negative
-    ! If 0 when done, we;'re balanced, not if not
+    ! If 0 when done, we're balanced, != 0 if not
     balance = 0
     do i=1, len_trim(str)
       select case(str(i:i))
@@ -1530,6 +1647,9 @@ end module ManipulationUtils
 
 !
 ! $Log$
+! Revision 2.25  2019/10/17 23:58:21  pwagner
+! Fixed more bugs; must grant functions precedence now
+!
 ! Revision 2.24  2019/05/09 20:40:38  pwagner
 ! Needed 2nd chance to detect and Parenthesize FunNames
 !
