@@ -916,6 +916,7 @@ contains ! =====     Public Procedures     =============================
     call SetupNewQuantityTemplate ( Quantity%template, l2gp%nTimes, l2gp%nLevels, &
       & 1, .true., .true., .true. )
     call CreateVectorValue ( Quantity, 'L2GP'  )
+    if ( associated(l2gp%l2gpValue) ) Quantity%values = l2gp%l2gpValue(1,:,:)
     ! Don't bother copying any of the gelocations if l2gp%latitudes not associated
     if ( .not. associated(l2gp%latitude) ) return
     Quantity%template%geodLat(1,:)        = l2gp%latitude
@@ -924,7 +925,6 @@ contains ! =====     Public Procedures     =============================
     Quantity%template%losAngle(1,:)       = l2gp%losAngle
     Quantity%template%solarTime(1,:)      = l2gp%solarTime
     Quantity%template%solarZenith(1,:)    = l2gp%solarZenith
-    if ( associated(l2gp%l2gpValue) ) Quantity%values = l2gp%l2gpValue(1,:,:)
   end subroutine ConvertL2GPToQuantity
 
   ! ---------------------- cpHE5GlobalAttrs  ---------------------------
@@ -5587,6 +5587,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.240  2019/05/13 23:32:55  pwagner
+! Use UndefinedIntegerValue to prevent failure taking an int of -1.e15 in case of GPH
+!
 ! Revision 2.239  2019/01/29 21:45:47  pwagner
 ! Initializes some hdfeos character fields to prevent bleed-thru
 !
