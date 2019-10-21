@@ -251,20 +251,20 @@ module MLSStringLists               ! Module to treat string lists
 ! the "${qty}" idiom instead of "${1}".
 
 ! Warnings: 
-! (1) in the routines Array2List, and SortArray
-! the input arguments include an array of strings;
-! This array is of assumed-size
-! I.e., all elements from array(1:size(array)) are relevant
-! Therefore in calling one of these you probably need to use the format
-!   call SortArray(myArray(1:mySize), ..
-! to avoid operating on undefined array elements
+! (1) In the routines Array2List, and SortArray
+!     the input arguments include an array of strings;
+!     This array is of assumed-size
+!     I.e., all elements from array(1:size(array)) are relevant
+!     Therefore in calling one of these you probably need to call it as
+!       call SortArray(myArray(1:mySize), ..
+!     to avoid operating on undefined array elements
 ! (2) In operating on string lists it is sometimes assumed that no
-! element is longer than a limit: MAXSTRELEMENTLENGTH
-! (3) integer hashes should not be used if some negative
-! values are expected. The value KEYNOTFOUND=-1 is used to indicate
-! "no such key."
+!     element is longer than a limit: MAXSTRELEMENTLENGTH
+! (3) Integer hashes should not be used if some negative
+!     values are expected. The value KEYNOTFOUND=-1 is used to indicate
+!     "no such key."
 ! (4) "No such key" is indicated by FALSE for logical values and "," strings
-! (5) if the optional extra array or list is supplied to the GetUnique...
+! (5) If the optional extra array or list is supplied to the GetUnique...
 !     function, repeated elements purely in the first arg are left undeleted;
 !     if you want uniqueness among them, too, you must invoke it twice:
 !     first w/o the extra arg, and the second time with the extra arg
@@ -3574,17 +3574,21 @@ contains
   ! and returns the array of ordered integers
   ! sorting the array; i.e., if ss[n] is the sub-string which is
   ! the n'th element, and ia[k] is the k'th element of the integer array
-  ! then {psl[ia[k]]=ss[k], k=1..n} yields the properly sorted array
+  ! then 
+  !         {psl[ia[k]]=ss[k], k=1..n} 
+  ! yields the properly sorted array
   ! (unless leftRight equals one of {"r", "R"} 
-  ! in which case {psl[k]=ss[ia[k]], k=1..n})
-  ! Parallel use of ia is how you would normally 
+  ! in which case 
+  !         {psl[k]=ss[ia[k]], k=1..n}
+  ! does the job)
+  ! Identical use of ia is how you would normally 
   ! sort any other arrays associated with ss
   
   ! The sorting is ordered by ascii collating sequence:
   ! "0" < "9" < "A" < "Z" < "a" < "z"
   ! unless caseSensitive is FALSE, when "0" < "9" < "A" < "a" < "Z" < "z"
 
-  ! As an optional arg the properly sorted array is returned, too
+  ! As an optional arg the properly sorted array is returned, too.
   ! You may safely supply the same arg for both inStrArray and sortedArray
   
   ! The optional arg options may be used to set
@@ -3592,6 +3596,7 @@ contains
   ! ----------------           -------
   !        c                   case insensitive
   !        s                   shorter first
+  !        r                   reverse the sorting order (of both returned arrays)
   !        S                   sort as if switches
   !        L                   LeftRight is "L" (default)
   !        R                   LeftRight is "R"
@@ -3605,17 +3610,22 @@ contains
   !  (if you want them ignored, it's easy enough: create a tempArray
   !     tempArray(1:N) = adjustl(strArray(1:N))
   !   and pass it in instead)
+  
+  ! "Sort as if switches" is an explanation staggering in its failure
+  ! to explain. What we do is to Replace each ' ' with achar(127) which
+  ! has the effect of moving shorter strings from the head of the line 
+  ! to the back of the line; 
+  ! e.g., 'switch4' would be sorted ahead of 'sort' instead of behind it
 
   ! Method:
-  ! The strings are sifted one character at a time through a series
-  ! of ever-finer bins using the selection sort embodied in
-  ! subroutine tie_breaker (which see; it surely can be easily improved
-  ! upon, but the overall computational gains would be modest)
-  ! until each bin is occupied by no more than one string
-  ! The bin number is the ranking index of that string which
-  ! is returned as outIntArray
+  ! The older method was removed--instead we rely on sortp which now
+  ! can sort characters, too.
+  
+  ! Is the distinction between 'L' and 'R' sufficiently intuitive? 
+  ! 'L' means that the ia[k] appears on the Left-hand side of '='
+  ! 'R' means that the ia[k] appears on the Right
   subroutine SortArray( inStrArray, outIntArray, &
-   & sortedArray, options )
+    & sortedArray, options )
     ! Dummy arguments
     character (len=*), dimension(:), intent(in)   :: instrarray
     integer, dimension(:), intent(out)            :: outintarray
@@ -3628,6 +3638,7 @@ contains
     logical, parameter                     :: DeeBUG = .false.
     integer                                :: elem, nElems
     character(len=1)                       :: LeftRight
+    logical                                :: reverse
     logical                                :: shorterfirst
     logical                                :: switchable
     integer, dimension(:), allocatable     :: invBinNumber 
@@ -3643,6 +3654,7 @@ contains
     myOptions = ' '
     if ( present(options) ) myOptions = options
     caseSensitive = index(myOptions, 'c' ) == 0
+    reverse = index(myOptions, 'r' ) > 0
     shorterFirst = index(myOptions, 's' ) > 0
     switchable = index(myOptions, 'S' ) > 0
     leftRight = 'L'
@@ -3679,6 +3691,7 @@ contains
         stringArray(elem) = inStrArray(elem)
       endif
       if ( shorterFirst ) then
+        ! Trickery alert!
         ! This causes shorter strings to have more leading spaces
         ! and therefore come up first when sorted
         ! (which is why we always ignore leading spaces in inStrArray)
@@ -3703,10 +3716,16 @@ contains
     !   outIntArray(OriginalIntArray(elem)) = elem
     ! enddo
 
-    ! Were we asked to return the sorted array?
+    ! Were we asked to reverse the sorting order?
+    if ( reverse ) then
+      invBinNumber = outIntArray
+      outIntArray = invBinNumber( NElems:1:-1 )
+    endif
+    
+    ! Were we asked to return the sorted array, too?
     if ( present(sortedArray) ) sortedArray = inStrArray( outIntArray )
     
-    ! What about left-right?
+    ! What about left-right inversion?
     if ( LeftRight == 'L' ) then
       ! Need to 'invert' outIntArray
       invBinNumber = outIntArray
@@ -3748,6 +3767,9 @@ contains
   ! As an optional arg the separator may supplied, in case it isn't comma
   ! if the optional arg ignoreLeadingSpaces is TRUE, "a, b, c" is
   ! sorted like "a,b,c"; otherwise the leading spaces make" b, c,a"
+
+  ! Meaning of options:
+  ! (see SortArray)
 
   ! Method:
   ! (see SortArray)
@@ -4691,6 +4713,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.83  2019/10/21 23:18:01  pwagner
+! SortArray may now reverse its sort order
+!
 ! Revision 2.82  2019/07/09 22:59:54  pwagner
 ! Wrap may now put its output in an array
 !
