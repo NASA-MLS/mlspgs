@@ -3658,7 +3658,7 @@ contains
     shorterFirst = index(myOptions, 's' ) > 0
     switchable = index(myOptions, 'S' ) > 0
     leftRight = 'L'
-    if ( index(lowercase(myOptions), 'r' ) > 0 ) leftRight = 'R'
+    if ( index(myOptions, 'R' ) > 0 ) leftRight = 'R'
 
     nElems = size(inStrArray)
     if ( size(outIntArray) <= 0 .or. nElems <= 0 ) then
@@ -4713,6 +4713,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.84  2019/10/22 18:50:27  pwagner
+! Fixed bug confusing r and R options in SortArray
+!
 ! Revision 2.83  2019/10/21 23:18:01  pwagner
 ! SortArray may now reverse its sort order
 !
