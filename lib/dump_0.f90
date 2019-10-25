@@ -168,17 +168,21 @@ module Dump_0
   ! --------------------------------------------------------------------------
 
   ! These are private variables declared module-wide purely for convenience
-  integer, parameter :: MaxNumElements          = 2000
-  logical           :: DumpTheseZeros
-  character(len=16) :: MyOptions
-  character(len=16) :: MyPCTFormat
+  integer, parameter          :: MaxNumElements    = 2000 
+  logical                     :: DumpTheseZeros           
+  character(len=16)           :: MyOptions                
+  character(len=16)           :: MyPCTFormat              
+  integer                     :: Bwidth                   
+  integer                     :: myRank                   
+  integer                     :: numFill               
+  integer                     :: numNonFill               
+  integer                     :: indx2BSliced             
+  real                        :: Pctnzero                 
+  logical, save               :: ThisIsADiff = .false.    
+  integer                     :: How_many                 
+  integer, dimension(1024)    :: which                    
+  complex, parameter          :: one_c4 = (1., 0.)        
   character(len=*), parameter :: OldNameOnEachLine = ' ' ! Should be in dump_options
-  integer           :: Bwidth, myRank, numNonFill, numFill, indx2BSliced
-  real              :: Pctnzero
-  logical, save     :: ThisIsADiff = .false.
-  integer           :: How_many
-  integer, dimension(1024) :: which
-  complex, parameter       :: one_c4 = (1., 0.)
 
 contains
 
@@ -280,7 +284,9 @@ contains
       if ( getOutputStatus( 'start' ) /= 1 ) call newLine
       do j = 1, size(array), MyWidth
         DumpTheseZeros = dopts(clean)%v .or. &
-          & any(array(j:min(j+2*myWidth-1, size(array))) /= myFillValue)
+          & any(array(j:min(j+2*myWidth-1, size(array))) /= myFillValue) &
+          & .or. &
+          & size(array) <= myWidth
         if (.not. dopts(clean)%v) then
           if ( DumpTheseZeros ) then
             call say_fill ( (/ j-1, size(array) /), numZeroRows, &
@@ -1973,6 +1979,9 @@ contains
 end module Dump_0
 
 ! $Log$
+! Revision 2.161  2019/10/25 20:54:58  pwagner
+! Dump full row of zeros if narrower than my width
+!
 ! Revision 2.160  2019/07/22 22:21:38  pwagner
 ! -N opt now will display the indices where true and the indices where false if array is logical-valued
 !
