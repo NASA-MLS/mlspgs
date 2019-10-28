@@ -16,7 +16,7 @@ module ManipulationUtils        ! operations to manipulate quantities
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use Dates_Module, only: Tai93s2hid
   use Dump_0, only: Dump
-  use HighOutput, only: OutputNamedValue
+  use HighOutput, only: LetsDebug, OutputNamedValue
   use MLSKinds, only: Rv
   use MLSL2Options, only: MLSL2Message
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
@@ -25,7 +25,7 @@ module ManipulationUtils        ! operations to manipulate quantities
     & MLSRMS, MLSStddev
   use MLSStringLists, only: Array2List, CatLists, GetStringElement, &
     & List2Array, NumStringElements, &
-    & ReplaceSubstring
+    & ReplaceSubstring, SortArray
   use MLSStrings, only: Enclosure, Indexes, LowerCase, NCopies, &
     & Reverse_Trim, SplitNest, Stretch
   use Output_M, only: Output
@@ -35,11 +35,12 @@ module ManipulationUtils        ! operations to manipulate quantities
   ! See also Algebra Module (though I never got Algebra to work--paw)
   !
   ! Don't we want to be able to call this with args that are
-  ! arrays instead of demanding only VectorValue_T ?
+  ! arrays instead of demanding only VectorValue_T ? Yes, so
+  ! we created an api for 2d arrays that look like arrayTemp_T
 
   implicit none
   private
-  public :: manipulate
+  public :: Manipulate
 
 ! === (start of toc) ===
 ! Manipulate     Apply manipulation encoded in a string m to fill quantity
@@ -56,6 +57,10 @@ module ManipulationUtils        ! operations to manipulate quantities
   private :: not_used_here
 !---------------------------------------------------------------------------
 
+  interface Manipulate
+    module procedure Manipulate_Arrays, Manipulate_Qty
+  end interface
+
   type arrayTemp_T
      real(rv), dimension(:,:), pointer :: VALUES => NULL() ! shaped like a
   end type arrayTemp_T
@@ -64,13 +69,14 @@ module ManipulationUtils        ! operations to manipulate quantities
   ! order of evaluation is 
   type(arrayTemp_T), dimension(:), save, pointer :: primitives => null()
 
-  logical, parameter :: COUNTEMPTY = .true.
-  logical, parameter :: DEEBUG     = .false.                 ! Usually FALSE
-  integer, parameter, public :: MAXMANIPULATIONLEN = 128     ! Is this enough?
-  integer, parameter, public :: NO_ERROR_CODE = 0
-  integer, parameter :: NFUNNAMES = 41
-  character(len=16), dimension(NFUNNAMES) :: FUNCOLONS
-  character(len=8), dimension(NFUNNAMES), parameter :: FUNNAMES = &
+  logical, parameter         :: Countempty = .true.
+  logical, parameter         :: Deebug     = .false.         ! Usually FALSE
+  integer, parameter, public :: Maxmanipulationlen = 128     ! Is this enough?
+  integer, parameter, public :: No_error_code = 0
+  integer, parameter         :: NFunNames = 41
+  character(len=16), dimension(NFunNames) :: Funcolons
+  character(len=16), dimension(NFunNames) :: FunNames
+  character(len=8), dimension(NFunNames), parameter :: UnsortedFunnames = &
     & (/ 'stddev  ', 'rms     ', 'median  ', 'mean    ', 'max     ', &
     &    'min     ', 'count   ', 'slip    ', 'shift   ', 'channel ', &
     &    'surface ', 'instance', 'height  ', 'lon     ', 'lat     ', &
@@ -85,7 +91,59 @@ module ManipulationUtils        ! operations to manipulate quantities
 
 contains ! =====     Public Procedures     =============================
 
-  subroutine Manipulate( Quantity, A, B, C, Str, &
+  subroutine Manipulate_Arrays( Qa, Aa, Ba, C, Str, &
+    & SpreadFlag, Dimlist )
+    use L2GPData, only: L2GPData_T, ConvertL2GPToQuantity, DestroyL2GPContents, &
+      & SetupNewL2GPRecord
+    use VectorsModule, only: DestroyVectorQuantityValue
+    ! Perform manipulation specified in Str, supplying
+    ! operands as 2d arrays, Aa and Ba. Result is returned as a 2d array
+    ! Qa.
+    
+    ! Note that crtain geoloaction rfunctions
+    ! Args:
+    real(rv), dimension(:,:), intent(out) :: qa
+    real(rv), dimension(:,:), intent(in)  :: Aa
+    real(rv), dimension(:,:), intent(in)  :: Ba
+    real(rv)                      :: C          ! constant "c" in manipulation
+    character (len=*), intent(in) :: STR        ! manipulation encoded as a string
+    logical, intent(in)           :: SPREADFLAG ! ignore shape, mask, etc.
+    character(len=*), intent(in)  :: DIMLIST ! E.g., 's' to shift surfaces, not chans
+    ! Evaluate mstr assuming it's of the form
+    ! Internal variables
+    type (VectorValue_T), target  :: NewQUANTITY, newA, newB
+    type (VectorValue_T), pointer :: QUANTITY
+    type (VectorValue_T), pointer :: A
+    type (VectorValue_T), pointer :: B
+    type (L2GPData_T)             :: l2gp
+    integer                       :: NTimes
+    integer                       :: NLevels
+    ! Executable
+    nullify( Quantity, A, B )
+    NTimes  = size(qa, 2)
+    NLevels = size(qa, 1)
+    call SetupNewL2GPRecord ( l2gp, 1, NLevels, NTimes )
+    call ConvertL2GPToQuantity ( l2gp, NewQuantity )
+    call ConvertL2GPToQuantity ( l2gp, NewA )
+    call ConvertL2GPToQuantity ( l2gp, NewB )
+    Quantity => newQuantity
+    A => newA
+    B => newB
+    A%values = Aa
+    if ( size(Ba) > 0 ) then
+      B%values = Ba
+    endif
+    call Manipulate ( Quantity, A, B, C, Str, &
+      & SpreadFlag, Dimlist )
+    qa = Quantity%values
+    ! Housekeeping
+    call DestroyVectorQuantityValue ( Quantity )
+    call DestroyVectorQuantityValue ( A )
+    call DestroyVectorQuantityValue ( B )
+    call DestroyL2GPContents ( l2gp )
+  end subroutine Manipulate_Arrays
+
+  subroutine Manipulate_Qty( Quantity, A, B, C, Str, &
     & SpreadFlag, Dimlist )
     ! Args:
     type (VectorValue_T), intent(inout) :: QUANTITY
@@ -119,28 +177,41 @@ contains ! =====     Public Procedures     =============================
     ! (2) Make ops into array, and loop over them where convenient
 
     ! Internal variables
-    logical :: ALREADYVALPARENS
+    logical                            :: Alreadyvalparens
     character (len=MAXMANIPULATIONLEN) :: mstr ! manipulation being manipulated
     integer, parameter :: MAXNESTINGS=64 ! Max number of '(..)' pairs
-    character(len=MAXMANIPULATIONLEN) :: collapsedstr
-    integer :: IFUN
-    integer :: level
-    logical :: MAPFUNCTION
-    integer :: np ! number of primitives
-    character(len=MAXMANIPULATIONLEN) :: part1
-    character(len=MAXMANIPULATIONLEN) :: part2
-    character(len=MAXMANIPULATIONLEN) :: part3
-    character(len=4) :: vchar
+    character(len=MAXMANIPULATIONLEN)  :: collapsedstr
+    integer, dimension(NFunNames)      :: Ints
+    integer                            :: IFUN
+    integer                            :: level
+    logical                            :: MAPFUNCTION
+    integer                            :: np ! number of primitives
+    character(len=MAXMANIPULATIONLEN)  :: part1
+    character(len=MAXMANIPULATIONLEN)  :: part2
+    character(len=MAXMANIPULATIONLEN)  :: part3
+    character(len=4)                   :: vchar
       
-    logical, parameter :: DEEBUG = .false.
+    ! logical, parameter                 :: DEEBUG = .false.
+    logical                            :: DEEBUG
     ! Executable
+    DEEBUG = LetsDebug ( 'manipulate', 0 )
     ! Hackery-quackery alert!
+    ! We will use an array of function names sorted from
+    ! longest to shortest, so that if we ever FindFirst
+    ! we won't get a false match of "tan" for the actual "tandeg".
+    ! The options string contains 's' to sort from shortest to longest,
+    ! and 'r' to reverse the sorting order before returning FunNames
+    call SortArray( UnsortedFunNames, ints, FunNames, options='-rs' )
+    if ( DeeBug ) &
+      & call Dump( Funnames, 'functions after sorting', width=5 )
     ! We surround the function names with colons ":"
     ! to prevent confusion of, say, "acos" with "cos"
+    ! (But didn't sorting already solve that problem?)
     do iFun = 1, NFUNNAMES
       FUNCOLONS(iFun) = ':' // trim(FunNames(iFun)) // ':'
     enddo
-    if ( DeeBug ) call Dump( Funcolons, 'functions with colons' )
+    if ( DeeBug ) &
+      & call Dump( Funcolons, 'functions with colons', width=5 )
     mstr = str
     if ( DeeBUG ) print *, 'mstr: ', trim(mstr)
     MapFunction = ( index(mstr, 'map' ) > 0 )
@@ -342,7 +413,7 @@ contains ! =====     Public Procedures     =============================
     end if
     if ( DeeBUG ) call dumpPrimitives(primitives)
     call destroyPrimitives(primitives)
-  end subroutine Manipulate
+  end subroutine Manipulate_Qty
 
   !============ Private procedures ===============
   ! ---------------------------------------------  ANNOUNCE_ERROR  -----
@@ -473,20 +544,23 @@ contains ! =====     Public Procedures     =============================
     character(len=*), intent(in)  :: mstr
     character(len=*), intent(out) :: collapsedstr
     ! Internal variables
-    integer :: c1
-    integer :: c2
-    integer :: cf
-    integer :: j
-    integer :: k
-    integer :: kp
-    integer :: n
-    integer :: posblank
-    integer :: posdb
-    integer :: posnext
-    character(len=(len(mstr)+3)) :: element
+    integer                       :: c1
+    integer                       :: c2
+    integer                       :: cf
+    integer                       :: j
+    integer                       :: k
+    integer                       :: kp
+    integer                       :: n
+    integer                       :: posblank
+    integer                       :: posdb
+    integer                       :: posnext
+    character(len=(len(mstr)+3))  :: element
     character(len=MAXMANIPULATIONLEN)             :: rev
-    character(len=(len(mstr)+3)) :: temp
-    character(len=1), parameter  :: null = achar(0) ! formerly '&'
+    character(len=(len(mstr)+3))  :: temp
+    character(len=1), parameter   :: null = achar(0) ! formerly '&'
+    logical                       :: DEEBUG
+    ! Executable
+    DEEBUG = LetsDebug ( 'manipulate', 0 )
     ! Executable
     ! Nah--just return
     ! collapsedstr = mstr
@@ -630,6 +704,14 @@ contains ! =====     Public Procedures     =============================
       n = NumStringElements( arg, COUNTEMPTY, inseparator='+' )
       do i=1, n
         call GetStringElement ( arg, element, i, countEmpty, inseparator='+' )
+        ! Be careful not to surround a string that ends with an op
+        ! (Why does this keep happening?)
+        rev = Reverse_trim(element)
+        ! Is it an op?
+        if ( index( '+-*/', rev(1:1) ) > 0 ) then
+          collapsedstr = catLists( collapsedstr, element, inseparator='+' )
+          cycle
+        endif
         ! Surround term with parentheses if it's a product or quotient
         ! but not if it's (already) parenthetical or parentheses are not balanced
         if ( ( index(element, '*') > 0 .or. index(element, '/') > 0 .or. &
@@ -1647,6 +1729,9 @@ end module ManipulationUtils
 
 !
 ! $Log$
+! Revision 2.26  2019/10/28 16:24:29  pwagner
+! Fixed another bug that somtines resultd in (c +); added Manipulate_Qty
+!
 ! Revision 2.25  2019/10/17 23:58:21  pwagner
 ! Fixed more bugs; must grant functions precedence now
 !
