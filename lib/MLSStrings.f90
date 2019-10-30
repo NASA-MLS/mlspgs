@@ -12,12 +12,12 @@
 !=============================================================================
 module MLSStrings               ! Some low level string handling stuff
 !=============================================================================
-  use MLSFinds, only: FindFirst, FindNext
+  use MLSFinds, only: FindFirst, FindNext, FindLast
   use MLSStrings_0, only: Asciify, Capitalize, DecimalCode, &
     & IsAllAscii, IsAlphabet, &
     & NCharsInFormat, ReplaceNonAscii, Lowercase, &
     & MNemonicCode, OctalCode, &
-    & Readintsfromchars, Stretch, Trim_Safe
+    & ReadIntsFromChars, Stretch, Trim_Safe
   implicit none
   private
 
@@ -62,6 +62,7 @@ module MLSStrings               ! Some low level string handling stuff
 ! IsComment          Does the string begin with a Comment character?
 ! IsDigits           Is the string composed entirely of digits?
 ! IsRepeat           Is a string composed entirely of one substring repeated?
+! Justify            Return the string str Justified to fit the available length
 ! LenTrimToAscii     len_trim of string ignoring all non-ascii chars
 ! LinearSearchStringArray     
 !                    Finds string index of substring in array of strings
@@ -76,12 +77,12 @@ module MLSStrings               ! Some low level string handling stuff
 ! ReadIntsFromChars  Converts an [array of] strings to int[s] using Fortran read
 ! ReadNumsFromChars  Converts an [array of] strings to num[s] using Fortran read
 ! ReadRomanNumerals  Converts a Roman numeral (e.g. 'ix') to its integer value
-! Replace            Replaces every instance of oldChar with newChar
 ! Remap              Replaces every instance in str of char old[k] with 
 !                       corresponding new[k]
+! Replace            Replaces every instance of oldChar with newChar
 ! ReplaceNonAscii    Replaces every non-ascii char with newChar (see also Asciify)
 ! Reverse            Turns 'a string' -> 'gnirts a'
-! Reverse_trim       (Reverses after trimming its argument)
+! Reverse_trim       (Reverses after first trimming its argument)
 ! Rot13              Like ROT13 but for general integer nn
 ! Size_trim          Returns len_trim of equivalent character scalar for array
 ! SplitDetails       Splits 'pro1' into 'pro' and 1
@@ -124,6 +125,7 @@ module MLSStrings               ! Some low level string handling stuff
 ! log(:) isComment( char* arg(:), [char Comment] )
 ! log(:) isDigits( char* arg(:) )
 ! log IsRepeat ( char* str, [char* subtring] )
+! char* Justify ( char* str, int length, [char mode] )
 ! int lenTrimToAscii (char* str)
 ! int LinearSearchStringArray (char* list(:), char* string, 
 !   [log caseInsensitive, [log testSubstring], [log listInString])
@@ -133,13 +135,13 @@ module MLSStrings               ! Some low level string handling stuff
 ! int NCopies (char* str, char* substring, [log overlap])
 ! ReadCompleteLineWithoutComments (int unit, char* fullLine, [log eof], &
 !       & [char commentChar], [char continuationChar])
-! readNumFromBaseN ( char* strs, real float, int N, [char* options] )
-! readIntFromBaseN ( char* strs, int int, int N, [char* options] )
-! readIntsFromChars ( char* strs[(:)], int ints[(:)], &
+! ReadNumFromBaseN ( char* strs, real float, int N, [char* options] )
+! ReadIntFromBaseN ( char* strs, int int, int N, [char* options] )
+! ReadIntsFromChars ( char* strs[(:)], int ints[(:)], &
 !       & [char* forbiddens], [char* ignore] )
-! readNumsFromChars ( char* strs[(:)], num num[(:)], &
+! ReadNumsFromChars ( char* strs[(:)], num num[(:)], &
 !       & [char* forbiddens], [char* ignore] )
-! readRomanNumerals ( char* strs, int int )
+! ReadRomanNumerals ( char* strs, int int )
 ! char* remap ( char* str, char* old, char* new )
 ! char* Replace ( char* str, char oldChar, char newChar, &
 !      & [int max], [log reverse] )
@@ -203,25 +205,25 @@ module MLSStrings               ! Some low level string handling stuff
 ! -------                   -----------
 ! CatStrings                Capitalize
 ! Depunctuate               CompressString
-! HHMMSS_value              count_words
-! indexes                   LowerCase
-! isRepeat                  Reverse
-! LinearSearchStringArray   strings2Ints
-! nappearances              trim_safe
-! ncopies
-! readIntsFromChars         
-! reFormatDate              
-! reFormatTime              
+! HHMMSS_value              Count_words
+! Indexes                   LowerCase
+! IsRepeat                  Reverse
+! LinearSearchStringArray   Strings2Ints
+! Nappearances              Trim_safe
+! Ncopies
+! ReadIntsFromChars         
+! ReFormatDate              
+! ReFormatTime              
 ! Reverse_trim              
 ! SplitWords                
-! streq                     
+! Streq                     
 ! === (end of api) ===
 
   public :: Asciify, &
     & Capitalize, CatStrings, CharToInt, CompressString, Count_Words, &
     & Delete, Depunctuate, Enclosure, FlushArrayLeft, Hhmmss_Value, &
     & Indexes, Ints2Strings, &
-    & IsAllAscii, IsAlphabet, IsComment, IsDigits, IsRepeat, &
+    & IsAllAscii, IsAlphabet, IsComment, IsDigits, IsRepeat, Justify, &
     & LenTrimToAscii, LinearSearchStringArray, Lowercase, &
     & NAppearances, NCharsInFormat, NCopies, &
     & ReadCompleteLineWithoutComments, ReadIntFromBaseN, ReadIntsFromChars, &
@@ -827,6 +829,121 @@ contains
      aChar = str(1:1)
      isRepeat = (ncopies(trim(str), aChar) >= strlen)
   end function isRepeat
+
+  ! ------------------------------------------------  Justify  -----
+  function Justify ( str, length, mode ) result ( Justified )
+    ! Return the string str Justified to fit the supplied length
+    ! by padding its interior spaces. 
+    ! Thus it turns
+!The first line                                                                *
+    ! into 
+!The                                 final                                 line*
+   
+    ! Note:
+    !      meaning both left-right justified; we aim to distribute
+    !      any padding fairly, by which we mean not favoring gaps due their
+    !      position but only their occurrence number.
+    !      An alternate strategy would be based on the substring index number
+    !      instead of the gap occurrence number. Could we implement both
+    !      and allow the user to choose? Let's use the optional arg 'mode':
+    !      mode           means
+    !      ----           -----
+    !       g             count gaps
+    !       s             count substrings
+    !
+    ! See also Stretch
+    ! Args
+    character (len=*), intent(in)                :: str
+    integer, intent(in)                          :: length
+    character, intent(in), optional              :: mode ! 's' or 'g'
+    character (len=length)                       :: justified
+    ! Local variables
+    character(len=length)                        :: newStr ! A temp
+    integer                                      :: i ! substring index of str
+    integer                                      :: j ! index of last gap
+    integer                                      :: k ! index of justified
+    character                                    :: myMode
+    integer                                      :: n ! integer part of x
+    integer                                      :: nWords
+    logical                                      :: stillInGap ! Was last char blank?
+    integer                                      :: surplus ! how many extra
+    real                                         :: dx ! density of extra
+    real                                         :: x  ! accumulated extra
+    ! Executable
+    justified = str
+    ! print *, 'length, len_trim(justified): ', length, len_trim(justified)
+    if ( length <= len_trim(justified) ) return
+    nWords = count_words ( str )
+    ! print *, 'nWords: ', nWords
+    if ( nWords < 2 ) return
+    myMode = 'g' ! Defaults to counting gaps, not substrings
+    if ( present(mode) ) myMode = mode
+    newStr = adjustl(str)
+    surplus = length - len_trim(newstr)
+    if ( myMode == 'g' ) then
+      ! dx is the avg number of spaces to add to each gap
+      dx = surplus / (nWords - 1.0)
+    else
+      ! dx is the avg number of spaces to add at each char
+      dx = surplus / real(len_trim(newStr))
+    endif
+    ! print *, 'surplus, dx: ', surplus, dx
+    ! We'll accumulate them at each gap, 
+    ! acting only when we have enough to add an extra space
+    x = 0.
+    stillInGap = .false.
+    k = 0
+    do i=1, len_trim(newStr)
+      if ( myMode /= 'g' ) x = x + dx
+      if ( newStr(i:i) /= ' ' .or. stillInGap ) then
+        k = k + 1
+        justified(k:k) = newStr(i:i)
+        stillInGap = ( newStr(i:i) == ' ' )
+        if ( myMode /= 'g'  .and. x > 1. .and. stillInGap ) then
+          ! Yes, we must add more spaces. How many?
+          n = x
+          ! print *, 'Adding spaces: ', n
+          justified(k+1:k+n) = ' '
+          x = x - n
+          k = k + n
+        endif
+        cycle
+      endif
+      ! We're starting a new gap--must we add spaces?
+      if ( myMode == 'g' ) x = x + dx
+      if ( x > 1. ) then
+        ! Yes, we must. How many?
+        n = x
+        ! print *, 'Adding spaces: ', n
+        justified(k+1:k+n) = ' '
+        x = x - n
+        k = k + n
+      endif
+      stillInGap = .true.
+      k = k + 1
+      justified(k:k) = newStr(i:i)
+    enddo
+    ! Did we end at length?
+    ! Probably not, so must add more spaces
+    ! print *, 'k, length: ', k, length
+    if ( k >= length ) return
+    newStr = justified
+    i = FindFirst( newStr, ' ' )
+    n = length - k
+    ! print *, 'i, n: ', i, n
+    if ( nWords < 3 .or. n < 2 ) then
+      ! crowd all n extra spaces inside the first gap
+      justified = ' '
+      justified = newStr(1:i) // repeat( ' ', n ) // newStr(i+1:)
+    else
+      ! Put (n/2) extra spaces inside the first gap
+      ! and the other (n/2) inside the last gap
+      j = FindLast( trim(newStr), ' ' )
+      justified = ' '
+      justified = newStr(1:i) // repeat( ' ', n/2 ) // newStr(i+1:j) // &
+        & repeat( ' ', n - (n/2) ) // newStr(j+1:)
+    endif
+  end function Justify
 
   ! ------------------------------------------------  lenTrimToAscii  -----
   function lenTrimToAscii (str) result (trimmedLength)
@@ -2821,6 +2938,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.111  2019/10/30 20:04:31  pwagner
+! Added Justify function
+!
 ! Revision 2.110  2019/10/16 20:50:13  pwagner
 ! Added Enclosure
 !
