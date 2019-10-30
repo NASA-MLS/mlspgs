@@ -348,7 +348,7 @@ contains
      call addRow ('Process level                ', trim( GlobalAttributes%ProcessLevel    ) )
      call addRow ('PGE version                  ', trim( GlobalAttributes%PGEVersion      ) )
      call addRow ('Misc Notes                   ', trim( GlobalAttributes%MiscNotes      ), &
-       & BlocLen=38, options='-w' )
+       & BlocLen=38, options='-w', wrappingChar=',' )
      call addRow ('DOI                          ', trim( GlobalAttributes%DOI          ))
      call outputTable ( sep='|', border='-' )
      call outputNamedValue('Orbit numbers       ', GlobalAttributes%orbNum)
@@ -1912,6 +1912,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.76  2019/10/30 20:08:40  pwagner
+!# Dumping Misc Notes spans lines properly
+!#
 !# Revision 2.75  2019/07/09 23:05:59  pwagner
 !# Use Table cells to DumpGlobalAttributes
 !#
