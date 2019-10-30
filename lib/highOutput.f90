@@ -13,7 +13,7 @@ module HighOutput
 
   ! Very high level printing and formatting
   
-  ! See also dump_0 and output_m
+  ! See also Dump_0 and Output_M
   
   use Dates_Module, only: BuildCalendar, DaysInMonth, &
     & ReformatDate, ReformatTime, Utc_To_Yyyymmdd
@@ -22,7 +22,8 @@ module HighOutput
   use MLSFinds, only: FindFirst, FindNext
   use MLSStringLists, only: ExpandStringRange, GetStringElement, &
     & List2Array, NumStringElements, SwitchDetail, Wrap
-  use MLSStrings, only: Asciify, Indexes, Lowercase, NCharsInFormat, Ncopies, &
+  use MLSStrings, only: Asciify, Indexes, Justify, Lowercase, &
+    & NCharsInFormat, Ncopies, &
     & Replace, Stretch, Trim_Safe, WriteIntsToChars
   use Output_M, only: Advance_Is_Yes_Or_No, Blanks, GetOutputStatus, &
     & MaxOutputLineslen, Newline, &
@@ -56,7 +57,7 @@ module HighOutput
 !                            *-----------------------------------------------*
 !                            *            Your message here                  *
 !                            *-----------------------------------------------*
-! BeVerbose                Should we do extra printing?
+! BeVerbose                Should we print extra, optional data?
 ! BlanksToColumn           Print blanks [or fill chars] out to specified column
 ! BlanksToTab              Print blanks [or fill chars] out to next tab stop
 ! Dump                     Dump output, pattern, or stamp options
@@ -65,7 +66,7 @@ module HighOutput
 ! GetStamp                 Get stamp being added to every output
 ! HeadLine                 Print a line with eye-catching features
 !                           e.g., '*-------  Your message here   -------*'
-! LetsDebug                Should we do debug printing?
+! LetsDebug                Should we print extra debugging data?
 ! NumNeedsFormat           Return what format is needed to output num
 ! NumToChars               Return what string would be printed by output
 ! OutputCalendar           Output nicely-formatted calendar page
@@ -149,7 +150,7 @@ module HighOutput
 !
 ! To understand the codes for dateformat and timeFormat, see the dates_module
 ! 
-! To use this module to build a 2d table of names and values
+! You can use this module to build a 2d table of names and values
 ! (1) Call startTable
 ! (2) Optionally call AddRow_header
 ! (3) Optionally call AddRow_divider
@@ -159,6 +160,18 @@ module HighOutput
 ! (5) Call OutputTable
 !
 ! (see CellDatabase)
+!
+! The aligment arg in AlignToFit  can be explained best with an example,
+! in fact 4 different examples (showing L, R, C, and J in that order)
+! ------------------------------------------------------------------------------
+! The first line                                                                
+!                                                                The second line
+!                                 The third line                                
+! The                                 final                                 line
+! ------------------------------------------------------------------------------
+! The same 4 styles can be applied to Banner and StyledOutput by
+! suitable choices of the options arg.
+
   public :: AddRow, AddRow_Divider, AddRow_Header, AlignToFit, &
     & Banner, BeVerbose, BlanksToColumn, BlanksToTab, &
     & Dump, DumpSize, DumpTabs, GetStamp, HeadLine, &
@@ -192,9 +205,16 @@ module HighOutput
     module procedure Banner_Chararray
   end interface
 
+! Other modules may interrogate Beverbose or LetsDebug to decide whether or not
+! to print some intermediate results or messages
   interface Beverbose
     module procedure Beverbose_Chars
     module procedure Beverbose_Chararray
+  end interface
+
+  interface Letsdebug
+    module procedure Letsdebug_Chars
+    module procedure Letsdebug_Chararray
   end interface
 
   interface Dump
@@ -208,11 +228,6 @@ module HighOutput
 
   interface Getoption
     module procedure Getoption_Char, Getoption_Log
-  end interface
-
-  interface Letsdebug
-    module procedure Letsdebug_Chars
-    module procedure Letsdebug_Chararray
   end interface
 
   interface NumNeedsFormat
@@ -375,27 +390,31 @@ module HighOutput
 contains
 
   ! ----------------------------------------------  AddRow  -----
-  ! This family of routines adds a paired name and value
+  ! This family of routines pairs each added name with its value
   ! by inserting a new row into the CellDatabase
   
   ! later to be printed as a neatly-formatted table to stdout
   ! By means of optional args you can create a line like
   ! *   name                   value   *
-  subroutine AddRow_character_blocs ( name, value, BlocLen, options, format )
+  subroutine AddRow_character_blocs ( name, value, BlocLen, &
+    & options, format, wrappingChar )
     ! For character values of great length, the values may
     ! span multiple lines, which we'll call "blocs"
     ! Method: divide value up into separate blocs, each BlocLen long
     ! The 1st bloc will have its name in the name cell,
     ! later blocs won't.
     ! If options is present and contains the character 'w', the blocs
-    ! will be divided at spaces instead of arbitrarily
+    ! will be divided at spaces (or wrappingChar if present) 
+    ! instead of arbitrarily
     character(len=*), intent(in)             :: name
     character(len=*), intent(in)             :: value
     integer, intent(in)                      :: BlocLen ! How long is each bloc?
     character(len=*), intent(in), optional   :: options
     character(len=*), intent(in), optional   :: format
+    character(len=*), intent(in), optional   :: wrappingChar
     ! Local variables
     integer                                  :: BlocLength
+    character(len=1)                         :: break
     integer, parameter                       :: MaxNBlocs = 50
     integer                                  :: c1, c2 ! 1st and last positions
     integer                                  :: i
@@ -417,11 +436,14 @@ contains
     endif
     nBlocs = ( len_trim(value ) - 1)/BlocLength + 1
     if ( wrapvalue ) then
+      ! Instead of wrapping hard at fixed bloc sizes, 
+      ! try to wrap soft at spaces
       null = achar(10)
-      wrapped = ' '
+      break = ' '
+      if ( present(wrappingChar) ) break = wrappingChar
       if ( DeeBug ) call output( trim(value), advance='yes' )
       call wrap( trim(value), wrapped, BlocLength, inseparator=null, &
-        & mode='soft', addedLines=nBlocs )
+        & mode='soft', break=break, addedLines=nBlocs )
       wrapped = adjustl(wrapped) ! Still unsure why this is necessary
       if ( DeeBug ) call output( trim(wrapped), advance='yes' )
       nBlocs = nBlocs + 1
@@ -541,9 +563,9 @@ contains
   ! Align chars to fit within column range
   ! Alignment controls whether the chars are
   ! L    Flushed left
-  ! R    Flushed right
-  ! C    Centered
-  ! J    Justified (padding spaces to any existing spaces)
+  ! R                                              Flushed right
+  ! C                 Centered
+  ! J    Justified       (padding spaces to any existing spaces)
   subroutine AlignToFit_Chars ( chars, columnrange, alignment, skips )
     character(len=*), intent(in)                :: Chars
     ! If columnRange(1) < 1, just use starting columns; otherwise move to
@@ -553,7 +575,9 @@ contains
     !
     ! Internal variables
     character(len=max(len(chars), abs(columnRange(2)-columnRange(1)))) :: &
-      & ALLCHARS
+      & Allchars
+    character(len=max(len(chars), abs(columnRange(2)-columnRange(1)))) :: &
+      & Justified
     integer :: char1
     integer :: char2
     integer :: firstSpace
@@ -590,7 +614,14 @@ contains
       char2    = nc
       padLeft  = spaces - (char2-char1+1)
       padRight = 0
-    case ('c', 'j')
+    case ('j')
+      ! print *, 'columnRange: ', columnRange
+      nc = abs(columnRange(2)-columnRange(1))
+      Justified = Justify( allChars, nc-1 )
+      call output_( Justified(1:nc-1) )
+      return
+    case ('c')
+    ! case ('c', 'j')
       m = (spaces - nc) / 2
       padLeft  = max( m, 0 )
       padRight = max( spaces - nc - m, 0 )
@@ -599,6 +630,8 @@ contains
       if ( lowercase(alignment) == 'j' .and. padRight > 0 ) &
         & firstSpace = index( allChars, ' ' )
     end select
+    ! print *, 'char1, char2, padLeft, padRight, firstSpace ', &
+    !   & char1, char2, padLeft, padRight, firstSpace
     if ( firstSpace > 1 ) then
       call output_( allChars(char1:firstSpace-1) )
       call blanks( padRight+padLeft+1 )
@@ -661,9 +694,17 @@ contains
   ! For multiline messages, you may divide them into elements of
   ! a character array, or else a longer character scalar and
   ! supply LineLength asking the routine to wrap at word boundaries
+  !
+  ! Another way to combine multiple mesgs is like this
+  !   call Banner ( first, Bottomless=.true. )
+  !   call Banner ( second, Bottomless=.true., Topless=.true. )
+  !     .   .   .
+  !   call Banner ( last, Topless=.true. )
+  !
+  ! See also HeadLine, StyledOutput
   subroutine Banner_Chars ( inChars, &
     & columnRange, alignment, skips, lineLength, &
-      & mode, pattern, underline, Stretched )
+      & mode, pattern, underline, Stretched, Topless, Bottomless )
     character(len=*), intent(in)                :: inChars
     ! If columnRange(1) < 1, just use starting columns; otherwise move to
     integer, dimension(2), optional, intent(in) :: Columnrange
@@ -674,6 +715,8 @@ contains
     character (len=1), optional, intent(in)     :: pattern ! if not stripes
     logical, optional, intent(in)               :: underline ! beneath non-blank chars
     logical, optional, intent(in)               :: Stretched   ! s t r e t c h
+    logical, optional, intent(in)               :: Topless     ! skip top stripe
+    logical, optional, intent(in)               :: Bottomless  ! skip bottom
     !
     ! Internal variables
     integer                          :: addedLines
@@ -686,6 +729,8 @@ contains
     logical                          :: myStretched
     logical                          :: myUnderline              
     logical, parameter               :: DEBUG = .false.          
+    logical                          :: skipTop
+    logical                          :: skipBottom
     character(len=len(chars))        :: underlineChars
     character(len=2*len(chars))      :: wrappedChars
     ! Executable
@@ -708,6 +753,10 @@ contains
     else
       Chars = inChars
     endif
+    skipTop = .false.
+    if ( present(Topless) ) skipTop = Topless
+    skipBottom = .false.
+    if ( present(Bottomless) ) skipBottom = Bottomless
     if ( lineLen > 4 ) then
       ! We will wrap the input to fit within LineLength, but remembering
       ! the stars and padding
@@ -723,11 +772,15 @@ contains
       return
     else if ( present(columnRange) ) then
       myColumnRange = columnRange
-    else
+    elseif ( myAlignment == 'C' ) then
       lineLen = max( 80, 4 + len_trim(chars)*(1+mySkips) )
       padding = ( lineLen - len_trim(chars)*(1+mySkips) ) / 2
       myColumnRange(1) = 1 + padding
       myColumnRange(2) = lineLen - padding
+    else
+      lineLen = max( 80, 4 + len_trim(chars)*(1+mySkips) )
+      myColumnRange(1) = 1
+      myColumnRange(2) = LineLen
     end if
     
     ! define padding as the larger of columnrange(1) and 1
@@ -743,9 +796,11 @@ contains
     OldNeverStamp = stampOptions%neverStamp
     stampOptions%neverStamp = .true.
     ! Top border
-    call output( '*' )
-    call blanks ( lineLen-2, FillChar=myFillChar )
-    call output( '*', advance = 'yes' )
+    if ( .not. SkipTop ) then
+      call output( '*' )
+      call blanks ( lineLen-2, FillChar=myFillChar )
+      call output( '*', advance = 'yes' )
+    endif
     ! Left star, then message, then right star
     call output( '*' )
     call AlignToFit( chars, myColumnRange, myAlignment, skips )
@@ -760,9 +815,11 @@ contains
       call output( '*', advance = 'yes' )
     endif
     ! Bottom border
-    call output( '*' )
-    call blanks ( lineLen-2, FillChar=myFillChar )
-    call output( '*', advance = 'yes' )
+    if ( .not. SkipBottom ) then
+      call output( '*' )
+      call blanks ( lineLen-2, FillChar=myFillChar )
+      call output( '*', advance = 'yes' )
+    endif
     ! Restore Stamping
     stampOptions%neverStamp = OldNeverStamp
   end subroutine Banner_Chars
@@ -856,7 +913,7 @@ contains
 
   ! -----------------------------------------------------  BlanksToColumn  -----
   subroutine BlanksToColumn ( column, fillchar, advance, dont_stamp )
-  ! Output N_BLANKS blanks to PRUNIT out to column COLUMN.
+  ! Output blanks to PRUNIT out to column COLUMN.
   ! (or optionally that many copies of fillChar)
     integer, intent(in) :: COLUMN
     character(len=*), intent(in), optional :: advance
@@ -878,6 +935,7 @@ contains
   ! ------------------------------------------------  blanksToTab  -----
   ! Print blanks out to next tabstop
   ! (or else to tabstop number tabn)
+  ! (or optionally that many copies of fillChar)
   subroutine blanksToTab ( tabn, fillChar )
     ! Args
     integer, optional, intent(in) :: TABN
@@ -1201,7 +1259,7 @@ contains
   ! -----------------------------------------------------  HeadLine  -----
   ! Print your message with extra formatting features; e.g.,
   ! *----------------  Your message here   ----------------*
-  ! See also banner
+  ! See also Banner, StyledOutput
   subroutine HeadLine ( inChars, fillChar, Before, After, &
     & ColumnRange, Alignment, Skips, Underline, Stretched )
     character(len=*), intent(in)                ::inChars
@@ -1848,57 +1906,57 @@ contains
   ! to print following line to stdout
   !  name: value
   ! Optional args control
-  ! before: what extra to print at start of each line
-  ! after: what extra to print at end of each line
-  ! colon: what to print instead of ':'
-  ! fillChar: instead of spaces if you use tabs to align name, value
-  ! tabn: column number where name begins
-  ! tabc: column number where colon occurs
-  ! taba: column number where after begins
-  ! advance: whether to advance after printing pair (by default we WILL advance)
-  ! dont_stamp: override setting to stamp end of each line
-  ! By means of optional args you can create a line like
+  ! Before:     what extra to print at start of each line
+  ! After:      what extra to print at end of each line
+  ! Colon:      what to print instead of ':'
+  ! FillChar:   instead of spaces if you use tabs to align name, value
+  ! Tabn:       column number where name begins
+  ! Tabc:       column number where colon occurs
+  ! Taba:       column number where after begins
+  ! Advance:    whether to advance after printing pair (by default we will advance)
+  ! Dont_stamp: override setting to stamp end of each line
+  ! By means of optional args you can create a line like the following
   ! *   name                   value   *
   ! See also startTable, AddRow, outputTable
   subroutine Output_Nvp_whatever ( name, &
    & chvalue, ivalue, cmvalue, dbvalue, snvalue, &
-   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
-    character(len=*), intent(in)          :: name
-    character(len=*), intent(in), optional:: chvalue
-    complex, intent(in), optional         :: cmvalue
-    double precision, intent(in), optional:: dbvalue
-    integer, intent(in), optional         :: ivalue
-    real, intent(in), optional            :: snvalue
-    character(len=*), intent(in), optional :: ADVANCE
-    character(len=1), intent(in), optional :: COLON
-    character(len=1), intent(in), optional :: fillChar
-    integer, intent(in), optional :: TABN
-    integer, intent(in), optional :: TABC
-    integer, intent(in), optional :: TABA
-    logical, intent(in), optional :: DONT_STAMP
+   & Advance, colon, fillChar, Before, After, Tabn, Tabc, Taba, Dont_stamp, options )
+    character(len=*), intent(in)           :: name
+    character(len=*), intent(in), optional :: chvalue
+    complex, intent(in), optional          :: cmvalue
+    double precision, intent(in), optional :: dbvalue
+    integer, intent(in), optional          :: ivalue
+    real, intent(in), optional             :: snvalue
+    character(len=*), intent(in), optional :: Advance
+    character(len=1), intent(in), optional :: Colon
+    character(len=1), intent(in), optional :: Fillchar
+    integer, intent(in), optional          :: Tabn
+    integer, intent(in), optional          :: Tabc
+    integer, intent(in), optional          :: Taba
+    logical, intent(in), optional          :: Dont_stamp
     character(len=*), intent(in), optional :: Before, After ! text to print
     character(len=*), intent(in), optional :: options
     ! Local variables
     if ( present(chvalue) ) then
       call Output_Nvp_character ( name, chvalue, &
-        & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
+        & Advance, colon, fillChar, Before, After, Tabn, Tabc, Taba, Dont_stamp, options )
     elseif ( present(cmvalue) ) then
       call Output_Nvp_complex ( name, cmvalue, &
-        & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
+        & Advance, colon, fillChar, Before, After, Tabn, Tabc, Taba, Dont_stamp, options )
     elseif ( present(dbvalue) ) then
       call Output_Nvp_double ( name, dbvalue, &
-        & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
+        & Advance, colon, fillChar, Before, After, Tabn, Tabc, Taba, Dont_stamp, options )
     elseif ( present(ivalue) ) then
       call Output_Nvp_integer ( name, ivalue, &
-        & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
+        & Advance, colon, fillChar, Before, After, Tabn, Tabc, Taba, Dont_stamp, options )
     elseif ( present(snvalue) ) then
       call Output_Nvp_single ( name, snvalue, &
-        & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
+        & Advance, colon, fillChar, Before, After, Tabn, Tabc, Taba, Dont_stamp, options )
     endif
   end subroutine Output_Nvp_whatever
 
   subroutine Output_Nvp_character ( name, value, &
-   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
+   & Advance, colon, fillChar, Before, After, Tabn, Tabc, Taba, Dont_stamp, options )
     character(len=*), intent(in)          :: name
     character(len=*), intent(in)          :: value
     character(len=*), intent(in), optional :: ADVANCE
@@ -1912,14 +1970,14 @@ contains
     character(len=*), intent(in), optional :: options
     if ( TrimCharacterValues ) then
       call possiblyTrimmedvalue ( name, trim(value), &
-        & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
+        & Advance, colon, fillChar, Before, After, Tabn, Tabc, Taba, Dont_stamp, options )
     else
       call possiblyTrimmedvalue ( name, value, &
-        & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
+        & Advance, colon, fillChar, Before, After, Tabn, Tabc, Taba, Dont_stamp, options )
     endif
   contains
     subroutine possiblyTrimmedvalue ( name, value, &
-      & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
+      & Advance, colon, fillChar, Before, After, Tabn, Tabc, Taba, Dont_stamp, options )
       character(len=*), intent(in)          :: name
       character(len=*), intent(in)          :: value
       include 'output_name_value_pair.f9h'
@@ -1927,63 +1985,63 @@ contains
   end subroutine Output_Nvp_character
 
   subroutine Output_Nvp_complex ( name, value, &
-   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
+   & Advance, colon, fillChar, Before, After, Tabn, Tabc, Taba, Dont_stamp, options )
     character(len=*), intent(in)          :: name
     complex, intent(in)                   :: value
     include 'output_name_value_pair.f9h'
   end subroutine Output_Nvp_complex
 
   subroutine Output_Nvp_double ( name, value, &
-   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
+   & Advance, colon, fillChar, Before, After, Tabn, Tabc, Taba, Dont_stamp, options )
     character(len=*), intent(in)          :: name
     double precision, intent(in)                   :: value
     include 'output_name_value_pair.f9h'
   end subroutine Output_Nvp_double
 
   subroutine Output_Nvp_dbl_array ( name, value, &
-   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
+   & Advance, colon, fillChar, Before, After, Tabn, Tabc, Taba, Dont_stamp, options )
     character(len=*), intent(in)          :: name
     double precision, dimension(:), intent(in)     :: value
     include 'output_name_value_pair.f9h'
   end subroutine Output_Nvp_dbl_array
 
   subroutine Output_Nvp_int_array ( name, value, &
-   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
+   & Advance, colon, fillChar, Before, After, Tabn, Tabc, Taba, Dont_stamp, options )
     character(len=*), intent(in)          :: name
     integer, dimension(:), intent(in)     :: value
     include 'output_name_value_pair.f9h'
   end subroutine Output_Nvp_int_array
 
   subroutine Output_Nvp_integer ( name, value, &
-   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
+   & Advance, colon, fillChar, Before, After, Tabn, Tabc, Taba, Dont_stamp, options )
     character(len=*), intent(in)          :: name
     integer, intent(in)                   :: value
     include 'output_name_value_pair.f9h'
   end subroutine Output_Nvp_integer
 
   subroutine Output_Nvp_log_array ( name, value, &
-   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
+   & Advance, colon, fillChar, Before, After, Tabn, Tabc, Taba, Dont_stamp, options )
     character(len=*), intent(in)          :: name
     logical, dimension(:), intent(in)     :: value
     include 'output_name_value_pair.f9h'
   end subroutine Output_Nvp_log_array
 
   subroutine Output_Nvp_logical ( name, value, &
-   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
+   & Advance, colon, fillChar, Before, After, Tabn, Tabc, Taba, Dont_stamp, options )
     character(len=*), intent(in)          :: name
     logical, intent(in)                   :: value
     include 'output_name_value_pair.f9h'
   end subroutine Output_Nvp_logical
 
   subroutine Output_Nvp_single ( name, value, &
-   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
+   & Advance, colon, fillChar, Before, After, Tabn, Tabc, Taba, Dont_stamp, options )
     character(len=*), intent(in)          :: name
     real, intent(in)                      :: value
     include 'output_name_value_pair.f9h'
   end subroutine Output_Nvp_single
 
   subroutine Output_Nvp_sngl_array ( name, value, &
-   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
+   & Advance, colon, fillChar, Before, After, Tabn, Tabc, Taba, Dont_stamp, options )
     character(len=*), intent(in)          :: name
     real, dimension(:), intent(in)     :: value
     include 'output_name_value_pair.f9h'
@@ -2150,6 +2208,10 @@ contains
   !      H               Headline
   !      U               Underline
   !      S               s t r e t c h e d
+  !            sub-options of Banner
+  !      L, C, R, or J   Alignment (if not default)
+  !      w               Don't print top stripe of banner
+  !      m               Don't print bottom stripe of banner
   !
   ! Some, though not all, of these options may be combined; e.g. "-USB"
   !
@@ -2159,9 +2221,12 @@ contains
     character(len=*), intent(in)                :: chars
     character(len=*), intent(in), optional      :: options
     ! Internal variables
+    character(len=1)                            :: Alignment
     logical                                     :: AsBanner
     logical                                     :: AsHeadLine
+    logical                                     :: Bottomless
     logical                                     :: Stretched
+    logical                                     :: Topless
     logical                                     :: Underline
     character(len=4*len(chars))                 :: UnderlineChars
     ! Executable
@@ -2175,9 +2240,24 @@ contains
     asHeadLine = index( options, 'H' ) > 0
     Stretched  = index( options, 'S' ) > 0
     Underline  = index( options, 'U' ) > 0 .or. StyleOptions%Underline
+    ! Sub-options for Banner
+    Topless  = index( options, 'w' ) > 0
+    Bottomless  = index( options, 'm' ) > 0
     if ( asBanner ) then
+      Alignment = StyleOptions%BannerAlignment
+      if ( index(options, 'L' ) > 0 ) then
+        Alignment = 'L'
+      elseif ( index(options, 'R' ) > 0 ) then
+        Alignment = 'R'
+      elseif ( index(options, 'J' ) > 0 ) then
+        Alignment = 'J'
+      else
+        Alignment = 'C'
+      endif
       Stretched = Stretched .or. StyleOptions%BannerStretch
-      call Banner( chars, Underline=Underline, Stretched=Stretched )
+      call Banner( chars, Underline=Underline, Stretched=Stretched, &
+        & Alignment=Alignment, &
+        & Topless=Topless, BottomLess=BottomLess )
     elseif ( asHeadLine ) then
       StyleOptions%HeadLineFill = '-'
       StyleOptions%HeadLineBefore = '*'
@@ -2711,6 +2791,9 @@ contains
 end module HighOutput
 
 ! $Log$
+! Revision 2.35  2019/10/30 20:07:18  pwagner
+! Banner and styledOutput may align output as one of {LRCJ}
+!
 ! Revision 2.34  2019/10/01 23:40:51  vsnyder
 ! Add Trim optional argument to floating-point output
 !
