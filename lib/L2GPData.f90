@@ -3979,6 +3979,7 @@ contains ! =====     Public Procedures     =============================
       nDims = swinqdims(swid, list, dims)
     else
       nDims = HE5_SWinqdims(swid, list, hdims)
+      nDims = min( nDims, MAXDIMSIZE )
       dims(1:nDims) = hdims(1:nDims)                                  
       if ( nDims < MAXDIMSIZE ) dims(nDims+1:) = 0 ! Just to make sure they're defined, not junk
       nFlds = HE5_SWinqdflds( swid, fieldlist, ranks, types )
@@ -5587,6 +5588,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.241  2019/10/21 23:20:14  pwagner
+! Converts l2gp to quantity even if geolocations not associated
+!
 ! Revision 2.240  2019/05/13 23:32:55  pwagner
 ! Use UndefinedIntegerValue to prevent failure taking an int of -1.e15 in case of GPH
 !
