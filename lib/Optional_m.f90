@@ -25,8 +25,11 @@ module Optional_m
 ! Exception_t        The container for kind, cause, times, etc.
 !
 !         Functions, operations, routines
+! AddExceptionToDatabase       
+!                    Adds an Exception_t to a database
 ! Default            Returns either the value of an optional arg
 !                       if it is present, otherwise a default value
+! Dump               Dump an Exception_t or a database of such types
 ! HowWeHandle        Returns one of two values depending on whether an 
 !                       optional arg is present; if present sets it to TRUE
 ! Pass_or_catch      Do we Process an Exception_t datatype, or Pass it on up
@@ -34,17 +37,25 @@ module Optional_m
 ! Raise              Construct an Exception_t datatype
 ! === (end of toc) ===
 
+! === (start of api) ===
+! DumpException ( exception_t Exception )
+! === (end of api) ===
+
   implicit none
   private
 
   public :: Default, Default_Char, Default_Double, Default_Integer
   public :: Default_Logical, Default_Single
   public :: HowWeHandle_int, HowWeHandle_log
-  public :: Raise, Pass_or_Catch
+  public :: Dump, DumpException, Raise, Pass_or_Catch
 
   interface Default
     module procedure Default_Char, Default_Double, Default_Integer
     module procedure Default_Logical, Default_Single
+  end interface
+
+  interface Dump
+    module procedure DumpException, DumpDatabase
   end interface
 
   interface Pass_or_Catch
@@ -74,7 +85,7 @@ module Optional_m
   ! Here's some  sample code
   ! use Optional_m, only: Exception_t, Pass_or_Catch
   ! . . .
-  ! type(Exception_t) :: Exception
+  ! type(Exception_t) :: Exception ! Could be a dummy arg
   ! call fragile ( args, Exception )
   ! if ( Exception%condition ) then ! You may not need this extra 'if'
   !    n = Pass_or_catch( Exception, names_we_catch )
@@ -86,12 +97,12 @@ module Optional_m
   !    .   .   .
   !    case default
   !      call clean_up
-  !      return ! Pass Exception to Caller
+  !      return ! Pass Exception to Caller if among the dummy args
   !    end select
   ! endif
-  ! ! Go on our merry way unless the handler cried 'stop'
+  ! ! Go on our merry way unless the handler_k cried 'stop'
   ! 
-  ! While the lack of elegance abaove is obvious even to the coarsest observer
+  ! While not elegant
   ! we've made a start at least.
   ! And, dammit Jim, this is Fortran, not Java.
   public :: Exception_t
@@ -120,6 +131,28 @@ module Optional_m
 !---------------------------------------------------------------------------
 
 contains
+
+  !-------------------------------------------  AddExceptionToDatabase  -----
+!          --- Warning ---  
+!    Uncommenting this function creates a circular depndency
+!   integer function AddExceptionToDatabase( Database, Item )
+! 
+!     ! This function adds an Exception data type to a database of said types,
+!     ! creating a new database if it doesn't exist.  The result value is
+!     ! the size -- where Exception is put.
+! 
+!     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+! 
+!     ! Dummy arguments
+!     type (Exception_t), dimension(:), pointer :: Database
+!     type (Exception_t), intent(in)            :: Item
+! 
+!     ! Local variables
+!     type (Exception_T), dimension(:), pointer :: TempDatabase
+!     include "addItemToDatabase.f9h" 
+! 
+!     AddExceptionToDatabase = newSize
+!   end function AddExceptionToDatabase
 
   function Default_Char ( Opt, Default, additional ) result ( R )
     ! The optional arg additional (if true) adds on the characters in
@@ -161,6 +194,56 @@ contains
     r = default
     if ( present(opt) ) r = opt
   end function Default_Single
+
+  ! -----------------------------------------------  Dump  -----
+  ! This dumps a table of the Exception type's components
+  subroutine DumpDatabase ( Database )
+    use HighOutput, only: StyledOutput
+    ! Args
+    type(Exception_t), dimension(:), intent(in)       :: Database
+    integer                                           :: i
+    call StyledOutput( 'Exceptions Database', options='-B' )
+    if ( size(Database) < 1 ) then
+      call StyledOutput ( '**** Exception Database empty ****' )
+      return
+    endif
+    do i = 1, size(Database)
+      call dump( database(i) )
+    end do
+  end subroutine DumpDatabase
+
+  ! This dumps a table of the Exception type's components
+  subroutine DumpException ( Exception, WhereAmI, Message )
+    use HighOutput, only: AddRow, AddRow_Divider, AddRow_Header, &
+      & OutputTable, StartTable
+    use Output_m, only: Output
+    ! Args
+    type(Exception_t), intent(in)          :: Exception
+    character(len=*), intent(in), optional :: WhereAmI ! Where are we dumping from?
+    character(len=*), intent(in), optional :: Message  ! Anything else to say?
+    ! Internal variables
+    ! Executable
+    call startTable
+    if ( present(WhereAmI) ) then
+      call addRow_header ( '(Exception Info) ' // trim(WhereAmI), 'c' )
+    else
+      call addRow_header ( 'Exception Info', 'c' )
+    endif
+    call addRow_divider ( '-' )
+    call addRow ( 'name        ', trim(Exception%Name)  )
+    call addRow ( 'where       ', trim(Exception%Where) )
+    call addRow ( 'id          ', Exception%id          )
+    call addRow_divider ( '-' )
+    call addRow ( 'condition   ', Exception%condition   )
+    call addRow ( 'try_number  ', Exception%try_number  )
+    call addRow ( 'severity    ', Exception%severity    )
+    call addRow ( 'verboseness ', Exception%verboseness )
+    call addRow ( 'int_result  ', Exception%int_result  )
+    call addRow ( 'sngl_result ', Exception%sngl_result )
+    call addRow ( 'char_result ', trim(Exception%char_result) )
+    call outputTable ( sep='|', border='-' )
+    if ( present(Message) ) call output( trim(Message), advance='yes' )
+  end subroutine DumpException
 
   ! --------------------------------------------------------------------
   ! One way to handle exceptions: does not use the Exception_t datatype
@@ -230,9 +313,9 @@ contains
     integer                                                   :: which
     ! Executable
     which = FindFirst( names, Exception%id )
-  ! if ( Exception%verboseness > 2 .or. &
-  !   & ( Exception%verboseness > 0 .and. which > 0 ) ) &
-  !   & call DumpException( exception )
+    if ( Exception%verboseness > 2 .or. &
+      & ( Exception%verboseness > 0 .and. which > 0 ) ) &
+      & call DumpException( exception )
   end function Pass_or_Catch_int
 
   function Pass_or_Catch_char ( exception, names ) result ( which )
@@ -242,9 +325,9 @@ contains
     integer                                                   :: which
     ! Executable
     which = FindFirst( names, Exception%name )
-  ! if ( Exception%verboseness > 2 .or. &
-  !   & ( Exception%verboseness > 0 .and. which > 0 ) ) &
-  !   & call DumpException( exception )
+    if ( Exception%verboseness > 2 .or. &
+      & ( Exception%verboseness > 0 .and. which > 0 ) ) &
+      & call DumpException( exception )
   end function Pass_or_Catch_char
 
   ! ------------------- Raise --------------------
@@ -290,6 +373,9 @@ contains
 end module Optional_m
 
 ! $Log$
+! Revision 2.5  2019/10/31 22:56:51  pwagner
+! Moved DumpException here from dump_1
+!
 ! Revision 2.4  2017/10/27 23:13:09  pwagner
 ! Default_Char can now taked optional arg additional
 !
