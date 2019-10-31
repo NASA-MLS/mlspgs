@@ -274,7 +274,8 @@ Fill, quantity=apriori.refGPH,$
     [ 147mb: 50ppbv, 100mb : 200ppbv ]
   Fill, quantity=aprioriPrecision.o2,  method=explicit, /spread, explicitValues= 20000.0 ppmv
   Fill, quantity=aprioriPrecision.o3,   method=profile, $
-    profileValues = [ 316mb : 500ppbv, 100mb:2ppmv, 46mb : 4 ppmv ]
+    profileValues = [ 316mb : 500ppbv, 100mb:2ppmv, 46mb : 4 ppmv, $
+     0.00046mb:10ppmv ]
   ;; 1 ppbv is too small for OH.  Better with a profile?
   Fill, quantity=aprioriPrecision.oh,   method=profile, $
     profileValues = [ 10mb : 0.1ppbv, 1mb : 1 ppbv, 0.1mb : 5 ppbv, 0.01mb : 10 ppbv ]
@@ -324,7 +325,8 @@ Fill, quantity=apriori.refGPH,$
   ;; Actually we'll take a looser precision for H2O
   Fill, quantity=aprioriPrecision.h2o_hr, method=profile, profileValues = $
     [ 1000mb: 10000ppmv, 464mb : 10000ppmv, 316mb : 1500ppmv, $
-      215mb : 300ppmv, 147mb : 20ppmv, 100mb : 6.0ppmv ]
+      215mb : 300ppmv, 147mb : 20ppmv, 100mb : 6.0ppmv, $
+      0.00464mb:6ppmv, 0.00215mb:7ppmv, 0.001mb:10ppmv  ]
 
   Fill, quantity=vReg.co_hr, method=profile, profileValues= $
     [ 10mb:15ppbv, 3.1mb:50ppbv,  1mb:150ppbv, 0.31mb: 0.5ppmv, 0.1mb:1.5ppmv, $
@@ -738,19 +740,19 @@ Fill, quantity=apriori.refGPH,$
   Fill, quantity=hReg.ch3coch3, method=profile, $
     profileValues= [  1mb:0.05ppbv, 0.68:0pptv ]
   Fill, quantity=hReg.co, method=profile, profileValues= $
-    [ 100mb:15ppbv,  46mb:5ppbv, 10mb:5ppbv,   3mb: 15ppbv, 1mb:50ppbv, 0.3mb: 150ppbv, 0.1mb:0.5ppmv, $
-      0.03mb: 1.5ppmv, 0.01mb:5ppmv, 0.003mb:15ppmv, 0.001mb: 50ppmv ]
+     [ 100mb:15ppbv,  46mb:5ppbv, 10mb:5ppbv,   3mb: 15ppbv, 1mb:50ppbv, 0.3mb:150ppbv, 0.1mb:0.5ppmv, $
+       0.03mb: 1.5ppmv, 0.01mb:3ppmv, 0.003mb:5ppmv, 0.001mb: 5ppmv ]
   Fill, quantity=hReg.co_hr, method=profile, profileValues= $
-    [ 100mb:15ppbv,  46mb:5ppbv, 10mb:5ppbv,  3mb: 15ppbv, 1mb:50ppbv, 0.3mb: 150ppbv, 0.1mb:0.5ppmv, $
-      0.03mb: 1.5ppmv, 0.01mb:5ppmv, 0.003mb:15ppmv, 0.001mb: 50ppmv ]
+     [ 100mb:15ppbv,  46mb:5ppbv, 10mb:5ppbv,   3mb: 15ppbv, 1mb:50ppbv, 0.3mb:150ppbv, 0.1mb:0.5ppmv, $
+       0.03mb: 1.5ppmv, 0.01mb:3ppmv, 0.003mb:5ppmv, 0.001mb: 5ppmv ]
 
   Fill, quantity=hReg.h2o, method=profile, $
      profileValues=[ 147mb:0ppmv, 121mb:2ppmv, 100mb:0.3ppmv, 10mb:0.3ppmv, 1mb:0.4ppmv, 0.1mb:3ppmv, $
-     0.046mb:0ppmv ], logSpace=false
+     0.00215mb:1ppmv, 0.001mb:0.5ppmv, 0.00046mb:0.5ppmv  ], logSpace=false
 
   Fill, quantity=hReg.h2o_HR, method=profile, $
      profileValues=[ 147mb:0ppmv, 121mb:2ppmv, 100mb:0.3ppmv, 10mb:0.3ppmv, 1mb:0.4ppmv, 0.1mb:3ppmv, $
-     0.046mb:0ppmv ], logSpace=false
+     0.00215mb:1ppmv, 0.001mb:0.5ppmv, 0.00046mb:0.5ppmv  ], logSpace=false
 ; values used for v3.3
   Fill, quantity=hReg.RHiVmr, method=profile, profileValues= [ $
         316mb:2.0, 68mb:2.0, 0.147mb:0.2,0.1mb:0.0]
@@ -771,11 +773,11 @@ Fill, quantity=apriori.refGPH,$
   Fill, quantity=hReg.n2o, method=profile, $
     profileValues= [ 1mb:10ppbv, 0.1mb:0ppbv ]
 
-  Fill, quantity=hReg.o3, method=profile, $
-    profileValues= [ 146mb:30ppbv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.046mb:0ppmv ]
-  Fill, quantity=hReg.o3_HR, method=profile, $
-    profileValues= [ 383mb:0ppmv, 316mb:0.03ppmv, 215mb:0.03ppmv, 147mb:0.01ppmv, $
-    10mb:0.03ppmv, 1mb:0.1ppmv, 0.68mb:0.3ppmv, 0.1mb:0.3ppmv, 0.046mb:0ppmv ]
+   Fill, quantity=hReg.o3, method=profile, $
+     profileValues= [ 146mb:30ppbv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.046mb:0ppmv ]
+   Fill, quantity=hReg.o3_HR, method=profile, $
+     profileValues= [ 383mb:0ppmv, 316mb:0.03ppmv, 215mb:0.03ppmv, 147mb:0.01ppmv, $
+     10mb:0.03ppmv, 1mb:0.1ppmv, 0.68mb:0.3ppmv, 0.1mb:0.3ppmv, 0.046mb:0.3ppmv, 0.01mb:1ppmv]
 
   Fill, quantity=hReg.oh, method=profile, $
     profileValues=[ 100mb:10pptv, 1mb:10ppbv ], /logSpace
@@ -796,9 +798,31 @@ begin Fill
     /interpolate, /ignoreTemplate
 end Fill
 
+; mjs and bill want different mesosphere values for o3 and co
+begin Fill
+  Fill, quantity=aprioriPrecision.co,   method=profile, $
+    profileValues= [ 100mb : 0.5ppmv, 50mb : 0.1ppmv, 31mb : 0.12ppmv, $
+    10mb : 0.2ppmv, 3.1mb : 0.35ppmv, 1mb : 0.7ppmv, 0.31mb : 2ppmv, $
+    0.1mb : 5ppmv, 0.01mb : 20ppmv,  0.001mb : 40ppmv ]
+  Fill, quantity=aprioriPrecision.co_hr,   method=profile, $
+    profileValues= [ 100mb : 0.5ppmv, 50mb : 0.1ppmv, 31mb : 0.12ppmv, $
+    10mb : 0.2ppmv, 3.1mb : 0.35ppmv, 1mb : 0.7ppmv, 0.31mb : 2ppmv, $
+    0.1mb : 5ppmv, 0.01mb : 20ppmv,  0.001mb : 40ppmv ]
+
+    Fill, quantity=aprioriPrecision.o3, method=profile, $
+      profileValues = [ 316mb : 500ppbv, 100mb:2ppmv, 46mb : 4 ppmv, $
+      0.1mb:4ppmv, 0.022mb:7ppmv, 0.00046mb:10ppmv  ] 
+    Fill, quantity=aprioriPrecision.o3_hr, method=profile, $
+      profileValues = [ 316mb : 500ppbv, 100mb:2ppmv, 46mb : 4 ppmv, $
+      0.1mb:4ppmv, 0.022mb:7ppmv, 0.00046mb:10ppmv  ] 
+end Fill
+
 !include(writeapriori.l2cf)
 !divert(-1)
 ;$Log$
+;Revision 1.165  2017/12/15 18:27:25  mmadatya
+;Added geoHeight as new quantity template
+;
 ;Revision 1.164  2016/01/05 00:42:25  pwagner
 ;MagneticFieldGrid may be defined
 ;
