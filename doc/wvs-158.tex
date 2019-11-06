@@ -1,0 +1,163 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.1in
+
+\newcommand{\docname}{wvs-158}
+\newcommand{\docdate}{5 November 2019}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+   
+\usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\renewcommand\d{\text{d}}
+\newcommand\T{\mathcal{T}}
+\newcommand{\M}{\mathcal{M}}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-12pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill Read\\
+Subject: \>``Correct'' $\vec{d}$ vector -- ATBD Equation (5.22)\\
+From: \>Van Snyder\\
+References: \>\h{wvs-146}, \h{wvs-154}\\
+\end{tabbing}
+
+\parindent 0pt \parskip 4pt
+
+\vspace*{-15pt}
+
+From the ATBD before Equation (5.11)
+
+\begin{equation}
+N(\phi) = \frac{a^2}{\sqrt{a^2 \cos^2 \phi + c^2 \sin^2 \phi}} \,.
+\end{equation}
+
+From ATBD Equation (5.10)
+
+\begin{equation}
+\vec{R}^\oplus =
+ N(\phi) \left[ \cos \phi, \frac{c^2}{a^2} \sin \phi \right]
+ = \left[ \frac{a^2 \cos \phi}
+                   {\sqrt{a^2 \cos^2 \phi + c^2 \sin^2 \phi}},
+              \frac{c^2 \sin \phi}
+                   {\sqrt{a^2 \cos^2 \phi + c^2 \sin^2 \phi}} \right]
+\end{equation}
+
+Tangent vector
+
+\begin{equation}
+\vec{T} = \frac{\d \vec{R}^\oplus}{\d \phi} =
+ \frac{a^2 c^2}{(a^2 \cos^2 \phi + c^2 \sin^2 \phi)^{\frac32}} \,
+ [\, -\sin \phi, \cos \phi \, ] \,.
+\end{equation}
+
+Inward gradient vector
+
+\begin{equation}
+\vec{G} = [ \vec{T}_2, -\vec{T}_1 ] \,.
+\end{equation}
+
+$\vec{d}$ vector
+
+\begin{equation}
+\vec{d} = \vec{R}^\oplus - \vec{G} =
+ N ( \phi ) \,
+ \left[ \left(1 - \frac{c^2}{a^2 \cos^2 \phi + c^2 \sin^2 \phi} \right)
+          \cos \phi,
+        \left( \frac{c^2}{a^2}
+          - \frac{c^2}{a^2 \cos^2 \phi + c^2 \sin^2 \phi} \right)
+          \sin \phi
+ \right] \,.
+\end{equation}
+
+From ATBD Equation (5.21)
+
+\begin{equation}
+R_\text{eq}^\oplus \equiv
+H_t^\oplus = N(\phi_t) \sqrt{ \sin^2 \phi_t + \frac{c^4}{a^4} \cos^2 \phi_t}
+ = \sqrt{ \frac{a^4 \sin^2 \phi_t + c^4 \cos^2 \phi_t}
+               {a^2 \cos^2 \phi_t + c^2 \sin^2 \phi_t}}
+\end{equation}
+
+From ATBD Equation (5.22)
+
+\begin{equation}\begin{split}
+\vec{d} = \,& \left[ \left( N(\phi_t) - H_t^\oplus \right) \cos \phi_t,
+                 \left( \frac{c^2}{a^2} 
+                        N(\phi_t) - H_t^\oplus \right) \sin \phi_t \right]
+        \\
+ = \,& N(\phi_t) \left[ \left( 1 -
+                    \sqrt{ \sin^2 \phi_t + \frac{c^4}{a^4} \cos^2 \phi_t}
+                    \right) \cos \phi_t,
+                    \left( \frac{c^2}{a^2} -
+                    \sqrt{ \sin^2 \phi_t + \frac{c^4}{a^4} \cos^2 \phi_t}
+                    \right) \sin \phi_t
+             \right] \\
+\end{split}\end{equation}
+
+\label{lastpage}
+\end{document}
+
+% $Id$
