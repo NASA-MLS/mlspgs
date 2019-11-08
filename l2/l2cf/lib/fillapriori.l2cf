@@ -247,14 +247,6 @@ Fill, quantity=apriori.refGPH,$
   Fill, quantity=aprioriPrecision.ch3coch3,method=explicit, /spread, explicitValues= 500 pptv
 
 
-  Fill, quantity=aprioriPrecision.co,   method=profile, $
-    profileValues= [ 100mb : 0.5ppmv, 50mb : 0.1ppmv, 31mb : 0.12ppmv, $
-    10mb : 0.2ppmv, 3.1mb : 0.35ppmv, 1mb : 0.7ppmv, 0.31mb : 2ppmv, $
-    0.1mb : 5ppmv, 0.01mb : 10ppmv,  0.001mb : 20ppmv ]
-  Fill, quantity=aprioriPrecision.co_hr,   method=profile, $
-    profileValues= [ 100mb : 0.5ppmv, 50mb : 0.1ppmv, 31mb : 0.12ppmv, $
-    10mb : 0.2ppmv, 3.1mb : 0.35ppmv, 1mb : 0.7ppmv, 0.31mb : 2ppmv, $
-    0.1mb : 5ppmv, 0.01mb : 10ppmv,  0.001mb : 20ppmv ]
   Fill, quantity=aprioriPrecision.h2o, method=profile, profileValues = $
     [ 1000mb: 10000ppmv, 464mb : 10000ppmv, 316mb : 1500ppmv, $
       215mb : 300ppmv, 147mb : 300ppmv, 100mb : 3.0ppmv ]
@@ -803,11 +795,11 @@ begin Fill
   Fill, quantity=aprioriPrecision.co,   method=profile, $
     profileValues= [ 100mb : 0.5ppmv, 50mb : 0.1ppmv, 31mb : 0.12ppmv, $
     10mb : 0.2ppmv, 3.1mb : 0.35ppmv, 1mb : 0.7ppmv, 0.31mb : 2ppmv, $
-    0.1mb : 5ppmv, 0.01mb : 20ppmv,  0.001mb : 40ppmv ]
+    0.1mb : 5ppmv, 0.01mb : 20ppmv,  0.001mb : 40ppmv, 0.00046mb : 50ppmv ]
   Fill, quantity=aprioriPrecision.co_hr,   method=profile, $
     profileValues= [ 100mb : 0.5ppmv, 50mb : 0.1ppmv, 31mb : 0.12ppmv, $
     10mb : 0.2ppmv, 3.1mb : 0.35ppmv, 1mb : 0.7ppmv, 0.31mb : 2ppmv, $
-    0.1mb : 5ppmv, 0.01mb : 20ppmv,  0.001mb : 40ppmv ]
+    0.1mb : 5ppmv, 0.01mb : 20ppmv,  0.001mb : 40ppmv, 0.00046mb : 50ppmv ]
 
     Fill, quantity=aprioriPrecision.o3, method=profile, $
       profileValues = [ 316mb : 500ppbv, 100mb:2ppmv, 46mb : 4 ppmv, $
@@ -820,6 +812,9 @@ end Fill
 !include(writeapriori.l2cf)
 !divert(-1)
 ;$Log$
+;Revision 1.166  2019/10/31 18:03:34  pwagner
+;Changed to satisfy requirements of v5.00 SA-01-102
+;
 ;Revision 1.165  2017/12/15 18:27:25  mmadatya
 ;Added geoHeight as new quantity template
 ;
