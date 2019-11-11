@@ -52,7 +52,7 @@ module MLSStringLists               ! Module to treat string lists
 !                     [ 100mb : 0.5ppmv, 50mb : 0.1ppmv, 31mb : 0.12ppmv ]
 ! CapitalizeArray    Capitalize each line of an array of lists
 ! CapitalizeList     Capitalize the 1st char in each element of a list
-! catLists           cats 2 string lists, taking care if either one is blank
+! CatLists           cats 2 string lists, taking care if either one is blank
 ! EvaluateFormula    Evaluates a string formula, substituting character values
 !                      for occurrences like ${3} with 3rd arg
 ! ExpandStringRange  Turns '1,2-5,7' into '1,2,3,4,5,7' or ints or logicals
@@ -94,9 +94,9 @@ module MLSStringLists               ! Module to treat string lists
 ! StringElement      Returns string element in string list at index number
 ! StringElementNum   Returns element number of test string in string list
 ! SwitchDetail       Returns detail level of switch in list of switches
-! unquote            Removes surrounding [quotes]
-! unwrap             Unwrap a multi-line string to a single line
-! wrap               Wrap a string to fit within prescribed width
+! Unquote            Removes surrounding [quotes]
+! Unwrap             Unwrap a multi-line string to a single line
+! Wrap               Wrap a string to fit within prescribed width
 !                      using separator as newline
 ! === (end of toc) ===
 
@@ -106,7 +106,7 @@ module MLSStringLists               ! Module to treat string lists
 ! log BooleanValue ( char* str, char* lkeys, log lvalues[:] )
 ! BuildHash (char* Constructor, char* values, &
 !   & [char* operator], [char separator], [char* options])
-! char* catLists (char* str1, char* str2)
+! char* CatLists (char* str1, char* str2)
 ! CapitalizeArray ( char* inArray(:), char* outArray(:), &
 !   & [char inseparator], [char* ignore] )
 ! char* CapitalizeList ( char* str, [char inseparator], [char* ignore] )
@@ -178,7 +178,8 @@ module MLSStringLists               ! Module to treat string lists
 ! char* unquote (char* str, [char* quotes], [char* cquotes], [char* options])
 ! char* unwrap ( char* str )
 ! wrap ( char* str, char* outstr, int width, [char inseparator], &
-!   & [char break], [char mode], [char* quotes], [int addedLines] )
+!   & [char break], [char mode], [char* quotes], [int addedLines], &
+!   & [log dontSqueeze] )
 
 ! in the above, a string list is a string of elements (usu. comma-separated)
 ! e.g., units='cm,m,in,ft'
@@ -291,8 +292,8 @@ module MLSStringLists               ! Module to treat string lists
     module procedure BooleanValue_log, BooleanValue_str
   end interface
 
-  interface catLists
-    module procedure catLists_str, catLists_int, catLists_intarray
+  interface CatLists
+    module procedure CatLists_str, CatLists_int, CatLists_intarray
   end interface
 
   interface EvaluateFormula
@@ -695,8 +696,8 @@ contains
     do i=1, NumStringElements( str, countEmpty, inseparator=trim(sep) )
       call GetStringElement( str, istr, i, countEmpty, inseparator=trim(sep) )
       if ( len_trim(istr) < 1 ) cycle
-      keys = catlists( keys, stringElement( istr, 1, countEmpty, inseparator=trim(op) ) )
-      values = catlists( values, stringElement( istr, 2, countEmpty, inseparator=trim(op) ) )
+      keys = CatLists( keys, stringElement( istr, 1, countEmpty, inseparator=trim(op) ) )
+      values = CatLists( values, stringElement( istr, 2, countEmpty, inseparator=trim(op) ) )
     enddo
   end subroutine BuildHash
 
@@ -768,20 +769,20 @@ contains
       elseif ( j > 0 ) then
         temp(j:j) = Capitalize(temp(j:j))
       endif
-      outstr = catLists( outstr, trim_safe(temp), inseparator=inseparator )
+      outstr = CatLists( outstr, trim_safe(temp), inseparator=inseparator )
     enddo
   end function CapitalizeList
 
-  ! -------------------------------------------------  catLists  -----
+  ! -------------------------------------------------  CatLists  -----
   ! This family lets you Build up a String List from scratch
   ! Typical usage
   ! List = ' ' ! Intialize String List
   ! do i = 1, n
-  !   List = catLists ( List, str(i) ) ! Cat str(i) ono List end
+  !   List = CatLists ( List, str(i) ) ! Cat str(i) ono List end
   ! enddo
   !
-  ! -------------------------------------------------  catLists_int  -----
-  function catLists_int (STR1, INT, inseparator) result (OUTSTR)
+  ! -------------------------------------------------  CatLists_int  -----
+  function CatLists_int (STR1, INT, inseparator) result (OUTSTR)
     ! appends an int onto end of a string list, taking care if it is blank
     ! E.g., given str1 = 'a,b,c' and int = 4
     ! returns 'a,b,c,4'
@@ -810,10 +811,10 @@ contains
     else
       outstr = trim(str1) // separator // trim(str2(1))
     endif
-  end function catLists_int
+  end function CatLists_int
 
-  ! ---------------------------------------------  catLists_intarray  -----
-  function catLists_intarray (STR1, INTS, inseparator) result (OUTSTR)
+  ! ---------------------------------------------  CatLists_intarray  -----
+  function CatLists_intarray (STR1, INTS, inseparator) result (OUTSTR)
     ! appends array of ints onto end of a string list, 
     ! taking care if it is blank
     ! E.g., given str1 = 'a,b,c' and ints = (/4,5,5,0/)
@@ -834,12 +835,12 @@ contains
     endif
     do i = 1, size(ints)
       tmpstr = outstr
-      outstr = catlists_int(tmpstr, ints(i))
+      outstr = CatLists_int(tmpstr, ints(i))
     enddo
-  end function catLists_intarray
+  end function CatLists_intarray
 
-  ! -------------------------------------------------  catLists_str  -----
-  function catLists_str (STR1, STR2, inseparator) result (OUTSTR)
+  ! -------------------------------------------------  CatLists_str  -----
+  function CatLists_str (STR1, STR2, inseparator) result (OUTSTR)
     ! cats 2 string lists, taking care if either is blank
     ! E.g., given str1 = 'a,b,c' and str2 = 'd,e,f'
     ! returns 'a,b,c,d,e,f'
@@ -867,7 +868,7 @@ contains
     else
       outstr = trim(str1) // separator // trim(str2)
     endif
-  end function catLists_str
+  end function CatLists_str
 
   ! -------------------------------------------------  EvaluateFormula  -----
   ! Evaluates a string formula, plugging in the nth value for
@@ -1152,7 +1153,7 @@ contains
             do t=n, m, s
               write(tChar, '(i16)') t
               ! print *, 'tChar: ', trim(tChar)
-              tempstr = catLists(trim(tempstr), adjustl(tChar))
+              tempstr = CatLists(trim(tempstr), adjustl(tChar))
             enddo
           endif
         else
@@ -1174,11 +1175,11 @@ contains
           do s=1, ns
             write(tChar, '(g10.3)') rn + (s-1)*rs
             ! print *, 'tChar: ', trim(tChar)
-            tempstr = catLists(trim(tempstr), adjustl(tChar))
+            tempstr = CatLists(trim(tempstr), adjustl(tChar))
           enddo
         endif
       endif
-      outstr = catLists(trim(outstr), adjustl(tempstr))
+      outstr = CatLists(trim(outstr), adjustl(tempstr))
     enddo
   end subroutine ExpandStringRange_str
 
@@ -2052,7 +2053,7 @@ contains
     do i=1, n1
       call GetStringElement( uniq1, elem, i, countEmpty )
       if ( IsInList( uniq2, trim(elem), options) ) &
-        & outstr = catLists( outstr, elem )
+        & outstr = CatLists( outstr, elem )
     enddo
 
   end function Intersection
@@ -2181,7 +2182,7 @@ contains
       if ( element == ' ' ) cycle
       itMatches = streq( trim(element), trim(string), options )
       if ( itMatches ) then
-        matches = catLists( matches, element )
+        matches = CatLists( matches, element )
       endif
     enddo
   end function listMatches
@@ -2738,7 +2739,7 @@ contains
     else
       ! key not found :: must add to keys, values
       N = NumStringElements( keys, countEmpty, inseparator )
-      keys = catlists( keys, key, inseparator )
+      keys = CatLists( keys, key, inseparator )
       values(N+1) = value
     endif
 
@@ -2768,7 +2769,7 @@ contains
     else
       ! key not found :: must add to keys, values
       N = NumStringElements( keys, countEmpty, inseparator )
-      keys = catlists( keys, key, inseparator )
+      keys = CatLists( keys, key, inseparator )
       values(N+1) = value
     endif
 
@@ -2799,8 +2800,8 @@ contains
       keys = keyList
       hash = hashList
     endif
-    keyList = catLists( keys, key, inseparator )
-    hashList = catLists( hash, elem, inseparator )
+    keyList = CatLists( keys, key, inseparator )
+    hashList = CatLists( hash, elem, inseparator )
 
   end subroutine PutHashElement_str
 
@@ -3144,7 +3145,7 @@ contains
       if ( i == nElement ) cycle
       call GetStringElement(inList, elem, i, &
         & myCountEmpty, inSeparator=inSeparator )
-      outList = catLists( outList, trim(elem), inseparator )
+      outList = CatLists( outList, trim(elem), inseparator )
     enddo
   end subroutine RemoveNumFromList
 
@@ -3238,7 +3239,7 @@ contains
       call GetStringElement( trim(inSwitches), aSwitch, i, countEmpty )
       call SplitDetails( aSwitch, bareSwitch, details )
       if ( .not. streq( Switch, bareSwitch, '-f' ) ) &
-        & outSwitches = catLists( outSwitches, aSwitch )
+        & outSwitches = CatLists( outSwitches, aSwitch )
     enddo
   end subroutine RemoveSwitchFromList
 
@@ -4339,7 +4340,6 @@ contains
     character (len=*), dimension(:), intent(in)   :: strings
     character (len=MAXSTRLISTLENGTH)              :: outstr
     ! Internal variables
-    logical, parameter                            :: countEmpty = .true.
     integer                                       :: i
     ! Executable
     outstr = ' '
@@ -4378,8 +4378,9 @@ contains
   ! break       --                                      ' '       
   ! mode        -- 'soft' or 'hard'                    'hard'
   ! mode        -- don't break within quoted strings   (none)     
+  ! dontsqueeze -- don't squeeze consecutive spaces    false (make it true?)  
   subroutine wrap_sca( str, outstr, width, &
-    & inseparator, break, mode, quotes, addedLines )
+    & inseparator, break, mode, quotes, addedLines, dontSqueeze )
     ! Args
     character (len=*), intent(in)                 :: str
     character (len=*), intent(out)                :: outstr
@@ -4389,6 +4390,7 @@ contains
     character (len=*), optional, intent(in)       :: mode ! if not 'hard'
     character (len=*), optional, intent(in)       :: quotes ! don't break quoted
     integer, optional, intent(out)                :: addedLines ! by wrapping
+    logical, optional, intent(in)                 :: dontSqueeze
     ! Internal variables
     logical, parameter         :: countEmpty = .true.
     logical, parameter         :: deebug = .false.
@@ -4406,7 +4408,8 @@ contains
     if ( len_trim(str) <= width ) return
     if ( .not. present(quotes) ) then
       call wrap_noQuotes( str, width, outstr, &
-        & inseparator=inseparator, break=break, mode=mode, addedLines=addedLines )
+        & inseparator=inseparator, break=break, mode=mode, &
+        & addedLines=addedLines, dontSqueeze=dontSqueeze )
     else
       ! We will assume that no more than one kind of quote will appear in a str
       ! if this assumption needs to be relaxed the following will be inadequate
@@ -4449,12 +4452,13 @@ contains
       ! How did we arrive here?
       if ( noQuotes ) &
         & call wrap_noQuotes( str, width, outstr, &
-          & inseparator=inseparator, break=break, mode=mode, addedLines=addedLines )
+        & inseparator=inseparator, break=break, mode=mode, &
+        & addedLines=addedLines, dontSqueeze=dontSqueeze )
     endif
   end subroutine wrap_sca
 
   subroutine wrap_array( str, outstrs, width, &
-    & inseparator, break, mode, quotes, addedLines )
+    & inseparator, break, mode, quotes, addedLines, dontSqueeze )
   ! Wrap str by putting each block in separate element of output array outstrs
   ! so no element exceeds width
     ! Args
@@ -4466,6 +4470,7 @@ contains
     character (len=*), optional, intent(in)       :: mode ! if not 'hard'
     character (len=*), optional, intent(in)       :: quotes ! don't break quoted
     integer, optional, intent(out)                :: addedLines ! by wrapping
+    logical, optional, intent(in)                 :: dontSqueeze
     ! Internal variables
     ! Executable
     if ( present(addedLines) ) addedLines = 0
@@ -4473,16 +4478,18 @@ contains
     if ( len_trim(str) <= width ) return
     if ( .not. present(quotes) ) then
       call wrap_noQuotes( str, width, outstrs=outstrs, &
-        & inseparator=inseparator, break=break, mode=mode, addedLines=addedLines )
+        & inseparator=inseparator, break=break, mode=mode, &
+        & addedLines=addedLines, dontSqueeze=dontSqueeze )
     else
       print *, 'We cant really wrap arrays with quotes yet'
       call wrap_noQuotes( str, width, outstrs=outstrs, &
-        & inseparator=inseparator, break=break, mode=mode, addedLines=addedLines )
+        & inseparator=inseparator, break=break, mode=mode, &
+        & addedLines=addedLines, dontSqueeze=dontSqueeze )
     endif
   end subroutine wrap_array
 
   subroutine wrap_noQuotes( str, width, outstr, outstrs, &
-    & inseparator, break, mode, offset, lastPos, addedLines )
+    & inseparator, break, mode, offset, lastPos, addedLines, dontSqueeze )
     ! Args
     character (len=*), intent(in)                 :: str
     integer, intent(in)                           :: width
@@ -4494,6 +4501,7 @@ contains
     integer, optional, intent(in)                 :: offset
     integer, optional, intent(out)                :: lastPos
     integer, optional, intent(inout)              :: addedLines ! by wrapping
+    logical, optional, intent(in)                 :: dontSqueeze
     ! Internal variables
     integer                                       :: dsnext    
     integer                                       :: dsp       
@@ -4505,7 +4513,7 @@ contains
     integer                                       :: myLastPos 
     integer                                       :: myOffset  
     integer                                       :: nextwidth 
-    logical, parameter                            :: NoConsecutiveSpaces = .true.
+    logical                                       :: NoConsecutiveSpaces
     integer                                       :: so        
     integer                                       :: sp        
     character(len=4)                              :: separator 
@@ -4524,6 +4532,12 @@ contains
     if ( present(outstr) ) outstr = str
     if ( present(outstrs) ) outstrs(1) = str
     if ( present(addedLines) ) addedLines = 0
+    NoConsecutiveSpaces = .true.
+    if ( present(dontSqueeze) ) NoConsecutiveSpaces = .not. dontSqueeze
+    ! print *, 'str ', trim(str)
+    ! print *, 'myMode ', myMode
+    ! print *, 'separator ', separator
+    ! print *, 'len_trim(separator) ', len_trim(separator)
     istr = 0
     if ( len_trim(str) <= width ) return
     so = 1 ! this is the current character number of str
@@ -4533,8 +4547,6 @@ contains
       ! how big is next width?
       nextwidth = min(width, len_trim(str) - so + 1)
       if ( so == 1 ) nextwidth = max( 1, nextwidth-myOffset )
-      ! print *, 'separator ', separator
-      ! print *, 'len_trim(separator) ', len_trim(separator)
       ! print *, 'nextwidth ', nextwidth
       if ( nextwidth < 1 ) exit
       ! does the rest of str fit within nextwidth? If so, copy it to outstr, and we're done
@@ -4655,6 +4667,11 @@ contains
       end select
     enddo
     ! Remove consecutive spaces?
+    ! print *, 'Leaving wrap_noQuotes'
+    ! print *, trim(outstr)
+    ! print *, 'NoConsecutiveSpaces ', NoConsecutiveSpaces
+    ! print *, 'dontSqueeze ', dontSqueeze
+    ! stop
     if ( len_trim(myBreak) == 0 .and. NoConsecutiveSpaces ) then
       if ( present(outstr) ) outstr = squeeze( outstr )
     endif
@@ -4713,6 +4730,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.85  2019/11/11 21:17:45  pwagner
+! subroutine wrap now takes optional arg dontSueeze
+!
 ! Revision 2.84  2019/10/22 18:50:27  pwagner
 ! Fixed bug confusing r and R options in SortArray
 !
@@ -4957,7 +4977,7 @@ end module MLSStringLists
 ! Move HHMMSS_value to MLSStrings
 !
 ! Revision 2.3  2004/09/16 00:16:46  pwagner
-! catLists may cat integers onto end of stringLists
+! CatLists may cat integers onto end of stringLists
 !
 ! Revision 2.2  2004/08/05 22:47:02  pwagner
 ! New interfaces to ExpandStringList for ints and logicals
