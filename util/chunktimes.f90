@@ -64,7 +64,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
     character(len=3)   :: convert= ' '              ! 's2h', 'h2s', ''
     character(len=255) :: details= ' '              ! prnt only detailed params
                                                     ! E.g., 'NumCompletedChunks'
-    character(len=255) :: phaseNames= ' '           ! E.g., 'core,core+r3,..'
+    character(len=512) :: phaseNames= ' '           ! E.g., 'core,core+r3,..'
     character(len=8)   :: tabulate = 'no'           ! tabulate
     integer            :: hdfVersion = HDFVERSION_5
     integer            :: finalPhase = 12           ! phase number ~ total
@@ -72,36 +72,36 @@ program chunktimes ! Reads chunk times from l2aux file(s)
     real(r4)           :: longChunks = 0._r4
   end type options_T
   
-  type ( options_T ) :: Options
-  type(Stat_T)       :: Statistic
+  type ( options_T )   :: Options
+  type(Stat_T)         :: Statistic
 
-  logical, parameter ::          COUNTEMPTY = .true.
-  logical, parameter ::          SHOWDATEANDTIME = .false.
-  integer, parameter ::          MAXFILES = 2000
-  integer, parameter ::          MAXPHASES = 50
-  integer, parameter ::          MAXCHUNKS = 3600
-  character(len=255) :: filename          ! input filename
-  character(len=4096):: longChunkList = ''
-  character(len=4096):: tempChunkList = ''
-  character(len=255), dimension(MAXFILES) :: filenames
-  integer            :: n_filenames
-  integer     ::  how_many, i, status, error ! Counting indices & Error flags
+  real(r4), parameter  :: Undefinedvalue = -999.99
+  logical, parameter   :: Countempty = .true.
+  logical, parameter   :: Showdateandtime = .false.
+  integer, parameter   :: Maxfiles = 2000
+  integer, parameter   :: Maxphases = 50
+  integer, parameter   :: Maxchunks = 3600
+  character(len=255)   :: filename          ! input filename
+  character(len=4096)  :: longChunkList = ''
+  character(len=4096)  :: tempChunkList = ''
+  integer              :: n_filenames
+  integer              :: how_many, i, status, error ! Counting indices & Error flags
+  integer              :: fileID
+  integer              :: fromgrpID
+  integer              :: fileAccess
+  logical              :: is_hdf5
+  ! logical              :: verbose = .false.
+  integer              :: numPhases
+  real                 :: t1
+  real                 :: t2
+  real                 :: tFile
+  logical              :: showTimings
+  real(r4), dimension(:,:), pointer   :: alltimings => NULL()
   integer(kind=hSize_t), dimension(3) :: dims, maxDims
-  integer     ::  fileID
-  integer     ::  fromgrpID
-  integer     ::  fileAccess
-  real(r4), dimension(:,:,:), pointer   :: l2auxValue => NULL()
+  character(len=255), dimension(MAXFILES) :: filenames
+  real(r4), dimension(:,:,:), pointer :: l2auxValue => NULL()
   real(r4), dimension(:), pointer     :: timings => NULL()
-  real(r4), dimension(:,:), pointer     :: alltimings => NULL()
-  logical     :: is_hdf5
-  ! logical     :: verbose = .false.
-  integer :: numPhases
-  real        :: t1
-  real        :: t2
-  real        :: tFile
-  real(r4), parameter :: UNDEFINEDVALUE = -999.99
-  integer, dimension(MAXCHUNKS) :: which
-  logical :: showTimings
+  integer, dimension(MAXCHUNKS)       :: which
   ! 
   call set_config ( useToolkit = .false., logFileUnit = -1 )
   outputoptions%nArrayElmntsPerLine = 40
@@ -810,6 +810,9 @@ end program chunktimes
 !==================
 
 ! $Log$
+! Revision 1.31  2018/10/19 01:16:55  pwagner
+! CamelCase use statements
+!
 ! Revision 1.30  2016/10/04 22:13:34  pwagner
 ! Builds properly with some Dumps moved to Dump_1
 !
