@@ -18,7 +18,7 @@ module HighOutput
   use Dates_Module, only: BuildCalendar, DaysInMonth, &
     & ReformatDate, ReformatTime, Utc_To_Yyyymmdd
   use Machine, only: Crash_Burn, Exit_With_Status, NeverCrash
-  use MLSCommon, only: MLSDebug, MLSVerbose
+  use MLSCommon, only: LineLen, MLSDebug, MLSVerbose
   use MLSFinds, only: FindFirst, FindNext
   use MLSStringLists, only: ExpandStringRange, GetStringElement, &
     & List2Array, NumStringElements, SwitchDetail, Wrap
@@ -73,6 +73,8 @@ module HighOutput
 ! Output_Date_And_Time     Print nicely formatted date and time
 ! OutputList               Output array as comma-separated list; e.g. '(1,2,..)'
 ! OutputNamedValue         Print nicely formatted name and value
+! OutputParagraph          Print text formatted as a paragraph with line breaks, 
+!                            indent, etc.
 ! OutputTable              Output 2-d array as cells in table,; or else
 !                          Output the 2d table of cells constucted by AddRow(s)
 ! ResetTabs                Restore tab stops to what was in effect at start
@@ -119,6 +121,8 @@ module HighOutput
 !          [char colon], [char fillChar], [char* Before], [char* After], 
 !          [integer tabn], [integer tabc], [integer taba], log dont_stamp],
 !          [char* options] )
+! OutputParagraph ( char* text, int ColumnRange(2), [char* alignment], &
+!          [int indent] )
 ! OutputTable ( [array(:,:)], [char sep], [char border], [int cellWidth],
 !          [char interior], [char headliner], [char alignment] )
 ! ResetTabs ( [int tabs(:)] )
@@ -161,7 +165,7 @@ module HighOutput
 !
 ! (see CellDatabase)
 !
-! The aligment arg in AlignToFit  can be explained best with an example,
+! The aligment arg in AlignToFit, etc.  can be explained best with an example,
 ! in fact 4 different examples (showing L, R, C, and J in that order)
 ! ------------------------------------------------------------------------------
 ! The first line                                                                
@@ -177,7 +181,7 @@ module HighOutput
     & Dump, DumpSize, DumpTabs, GetStamp, HeadLine, &
     & LetsDebug, NextColumn, NextTab, NumNeedsFormat, NumToChars, &
     & Output_Date_And_Time, OutputCalendar, OutputList, OutputTable, &
-    & OutputAnyNamedValue, OutputNamedValue, &
+    & OutputAnyNamedValue, OutputNamedValue, OutputParagraph, &
     & ResetTabs, RestoreSettings, &
     & SetStamp, SetTabs, StartTable, StyledOutput, Tab, TimeStamp
 
@@ -603,6 +607,8 @@ contains
     end if
     firstSpace = 0
     nc = max( len_trim(allchars), 1 )
+    ! Why was this necessary? Are there nulls?
+    ! if ( nc > 1 .and. allchars(nc:nc) == ' ' ) nc = nc - 1
     select case (lowercase(alignment))
     case ('l')
       char1    = 1
@@ -612,13 +618,13 @@ contains
     case ('r')
       char1    = max(1, nc-spaces+1)
       char2    = nc
-      padLeft  = spaces - (char2-char1+1)
+      padLeft  = spaces - (char2-char1)
       padRight = 0
     case ('j')
       ! print *, 'columnRange: ', columnRange
-      nc = abs(columnRange(2)-columnRange(1))
-      Justified = Justify( allChars, nc-1 )
-      call output_( Justified(1:nc-1) )
+      nc = abs(columnRange(2) - columnRange(1)) + 1
+      Justified = Justify( allChars, nc )
+      call output_( Justified(1:nc) )
       return
     case ('c')
     ! case ('c', 'j')
@@ -632,6 +638,8 @@ contains
     end select
     ! print *, 'char1, char2, padLeft, padRight, firstSpace ', &
     !   & char1, char2, padLeft, padRight, firstSpace
+    ! print *, 'nc, alignment, char(char2): ', &
+    !   & nc, lowercase(alignment), allChars(char2:char2)
     if ( firstSpace > 1 ) then
       call output_( allChars(char1:firstSpace-1) )
       call blanks( padRight+padLeft+1 )
@@ -2047,10 +2055,95 @@ contains
     include 'output_name_value_pair.f9h'
   end subroutine Output_Nvp_sngl_array
 
+  ! ----------------------------------------------  OutputParagraph  -----
+  ! Outputs text formatted as a paragraph where each line begins on
+  ! columnrange(1) and ends on columnrange(2).
+  ! Optionally, 
+  ! (1)  you may specify an alignment, one of L R C or J
+  ! (2)  you may specify an ident
+  !      (a) of the first line, if indent > 0
+  !      (b) of every line except the first
+  !          if indent < 0 and columnrange(1) > 1
+  subroutine OutputParagraph ( text, columnrange, alignment, indent )
+    ! Args
+    character(len=*), intent(in)                   :: text ! text to print
+    integer, dimension(2), intent(in)              :: columnrange ! left, right columns
+    character(len=1), optional, intent(in)         :: alignment ! L R C or J
+    integer, optional, intent(in)                  :: indent ! num of spaces
+    ! Internal variables
+    integer, parameter                             :: maxindent = 15
+    integer, parameter                             :: maxLines = 256
+    integer, parameter                             :: MaxStrElementLength = LineLen
+    character (len=MaxStrElementLength), dimension(:), allocatable    &
+      &                                            :: array
+    logical, parameter                             :: countEmpty = .true.
+    integer                                        :: i
+    logical                                        :: ignoreFirstIndent
+    character(len=maxindent+len(text))             :: intext ! indented text
+    character                                      :: firstAlignment
+    character                                      :: myAlignment
+    integer                                        :: nElems
+    character, parameter                           :: null = achar(0)
+    integer                                        :: status
+    character(len=maxindent+maxLines+len(text))    :: wrappedtext ! indented text
+    ! Executable
+    ! Reasonable choices of args?
+    if ( len_trim (text) < 1 ) return
+    if ( columnrange(2) <= columnrange(1) ) return
+    myAlignment = 'l'
+    if ( present(Alignment) ) myAlignment = Alignment
+    ignoreFirstIndent = .false.
+    FirstAlignment = myAlignment
+    if ( present(indent) ) then
+      if ( indent > 0 ) then
+        intext = repeat( ' ', indent ) // adjustl(text)
+        if ( Lowercase(myAlignment) == 'j' ) firstAlignment = 'r'
+      elseif ( indent < 0 ) then
+        ignoreFirstIndent = .true.
+        intext = adjustl(text)
+      else
+        intext = text
+      endif
+    else
+      intext = text
+    endif
+    ! print *, trim(inText)
+    call wrap( intext, wrappedText, columnrange(2)-columnrange(1)+1, &
+      & inseparator=null, dontSqueeze=.true. )
+    ! print *, trim(wrappedText)
+    ! call output( trim(wrappedText), advance='yes' )
+    nElems = NumStringElements( wrappedText, countEmpty, null )
+    ! print *, 'nElems: ', nElems
+    allocate ( Array(nElems), STAT=status )
+    ! call List2Array( trim(wrappedText), array, countEmpty, null )
+    call wrap( trim(wrappedText), array, columnrange(2)-columnrange(1)+1, &
+      & inseparator=null )
+    ! print *, 1, ' ', trim(array(1))
+    ! print *, 2, ' ', trim(array(2))
+    ! print *, NElems, ' ', trim(array(NElems))
+    do i=1, NElems
+    ! Convert every null into a space
+      array(i) = Replace( array(i), null, ' ' )
+      if ( i == 1 .and. ignoreFirstIndent ) then
+        call AlignToFit( array(i), (/ 1, ColumnRange(2) /) , Alignment )
+      elseif ( i == NElems .and. Lowercase(myAlignment) == 'j' ) then
+        ! We won't attempt to left-right justify the last line in the paragraph
+        call AlignToFit( array(i), ColumnRange, Alignment='l' )
+      elseif ( i == 1 ) then
+        ! We won't attempt to left-right justify the first line in the paragraph
+        ! if it's indented
+        call AlignToFit( array(i), ColumnRange, FirstAlignment )
+      else
+        call AlignToFit( array(i), ColumnRange, Alignment )
+      endif
+      call newLine
+    enddo
+  end subroutine OutputParagraph
+
   ! ----------------------------------------------  OutputTable  -----
   ! Outputs a 2d character array as a table
   ! Optionally, 
-  ! (1)  you may supply the arry; otherwise, dellDatabase will be used
+  ! (1)  you may supply the array; otherwise, cellDatabase will be used
   ! (2)  the table can have a character separating cells, and another 
   !      marking its outer borders
   ! (3)  the minimum cell width can be set; otherwise
@@ -2791,6 +2884,9 @@ contains
 end module HighOutput
 
 ! $Log$
+! Revision 2.36  2019/11/11 23:08:27  pwagner
+! Added OutputParagraph
+!
 ! Revision 2.35  2019/10/30 20:07:18  pwagner
 ! Banner and styledOutput may align output as one of {LRCJ}
 !
