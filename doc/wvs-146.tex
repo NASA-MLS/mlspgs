@@ -12,8 +12,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-146}
-\newcommand{\docdate}{12 October 2017}
+\newcommand{\docname}{wvs-146r1}
+\newcommand{\docdate}{11 November 2019}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -77,8 +77,11 @@
 To: \>Van\\
 Subject: \>Radii of curvature of an oblate spheroid\\
 From: \>Van Snyder\\
-%Reference: \\
+Reference: \>Harry Lass, {\bf Vector and Tensor Analysis}, McGraw-Hill
+           (1950), pp 71-78\\
 \end{tabbing}
+
+\renewcommand{\d}{\text{d}}
 
 \parindent 0pt \parskip 6pt
 \vspace{-20pt}
@@ -86,42 +89,157 @@ From: \>Van Snyder\\
 \section{Definitions}
 
 Let $a$ be the equatorial radius, and $c$ the polar radius of the Earth,
-an oblate spheroid.
+an oblate spheroid, and let
+%
+\begin{equation}
+\mathbf{r}(\lambda,\theta) = \left[ \begin{array}{l}
+x(\lambda,\theta) =  a \cos \theta \cos \lambda \\
+y(\lambda,\theta) = a \cos \theta \sin \lambda \\
+z(\lambda,\theta) = c \sin \theta \\
+\end{array}\right] \,,
+\end{equation}
 
-Let $\lambda$ be geocentric latitude.
+be the vector to a point on its surface, where $\lambda$ is longitude and
+$\theta$ is geocentric latitude.
 
-If a surface is cut by a plane that includes its normal at a point, there
-is a curve in that plane.  Assuming the surface is smooth, the curvature
-of the curve at the point of the normal is defined.
+Then
+
+\begin{equation}
+\begin{array}{lll}
+\frac{\partial \mathbf{r}}{\partial \lambda} =
+\left[ \begin{array}{l}
+-a \cos \theta \sin \lambda \\
+a \cos \theta \cos \lambda \\
+0
+\end{array} \right] &
+\frac{\partial \mathbf{r}}{\partial \theta} =
+\left[ \begin{array}{l}
+-a \sin \theta \cos \lambda \\
+-a \sin \theta \sin \lambda \\
+c\, \cos \theta \\
+\end{array}
+\right] & \\
+\frac{\partial^2 \mathbf{r}}{\partial \lambda^2} =
+\left[ \begin{array}{l}
+-a \cos \theta \cos \lambda \\
+-a \cos \theta  \sin \lambda\\
+0
+\end{array} \right] &
+\frac{\partial^2 \mathbf{r}}{\partial \lambda\, \partial \theta} =
+\left[ \begin{array}{l}
+a \sin \theta \sin \lambda \\
+-a \sin \theta  \sin \lambda\\
+0 \\
+\end{array} \right ] &
+\frac{\partial^2 \mathbf{r}}{\partial \theta^2} =
+\left[ \begin{array}{l}
+-a \cos \theta \cos \lambda \\
+-a \cos \theta \sin \lambda \\
+-c\, \sin \theta
+\end{array} \right] \,. \\
+\end{array}
+\end{equation}
+
+If a surface is cut by a plane that includes its normal at a point, the
+intersection of the surface and that plane is a curve in that plane. 
+Assuming the surface is smooth, the curvature of the curve at the point of
+the normal is defined.
 
 Among all the planes that include the normal, the curvature of the curve
 in one of the planes is maximum, and the curvature in another one is
-minimum.  These curvatures are the \emph{principal
-curvatures}\footnote{Harry Lass, {\bf Vector and Tensor Analysis},
-McGraw-Hill (1950) pp 71--78.}, denoted $\kappa_1$ and $\kappa_2$,
-respectively, which are roots of
+minimum.  These curvatures are the \emph{principal curvatures}, denoted
+$\kappa_1$ and $\kappa_2$, respectively, which are roots of
 
 \begin{equation}
 (E G - F^2)\, \kappa^2 - ( e G + g E - 2 f F )\, \kappa + ( e g - f^2 ) = 0
+\,,
 \end{equation}
 
-where $E$, $F$, and $G$ are coefficients of the first fundamental form for
-an oblate spheroid:
+(Equation (125) from {\bf Vector and Tensor Analysis}) where $E$, $F$, and
+$G$ are coefficients of the first fundamental form for a surface:
+
+\begin{equation}
+\text{d} s^2 = E\, \text{d} \lambda^2 +
+               2 F\, \text{d} \lambda\, \text{d} \theta +
+               G \, \text{d} \theta^2
+\end{equation}
+
+where, for an oblate spheroid,
 
 \begin{equation}\begin{split}
-E = \,& a^2 \sin^2 \lambda \\
-F = \,& 0 \\
-G = \,& a^2 \cos^2 \lambda + c^2 \sin^2 \lambda
+E = \,& \frac{\partial \mathbf{r}}{\partial \lambda} \cdot
+        \frac{\partial \mathbf{r}}{\partial \lambda}
+  = a^2 \cos^2 \theta \\
+F = \,& \frac{\partial \mathbf{r}}{\partial \lambda} \cdot
+        \frac{\partial \mathbf{r}}{\partial \theta} = 0 \\
+G = \,& \frac{\partial \mathbf{r}}{\partial \theta} \cdot
+        \frac{\partial \mathbf{r}}{\partial \theta}
+  = a^2 \sin^2 \theta + c^2 \cos^2 \theta
 \end{split}\end{equation}
 
 and $e$, $f$, and $g$ are coefficients of the second fundamental form:
 
+\begin{equation}
+2\, D = e\, \text{d} \lambda^2 +
+        2 f\, \text{d} \lambda\, \text{d} \theta +
+        g \, \text{d} \theta^2
+\end{equation}
+
+where
+
 \begin{equation}\begin{split}
-g = \,& \frac{a c}
-             {\sqrt{G}} \\
-f = \,& 0 \\
-e = \,& g \sin^2 \lambda\\
+g = \,& \mathbf{n} \cdot
+        \frac{\partial^2 \mathbf{r}}{\partial \theta^2}
+  = \frac{a c}{\sqrt{G}} \\
+f = \,& \mathbf{n} \cdot
+        \frac{\partial^2 \mathbf{r}}{\partial \lambda \partial \theta}
+  = 0 \\
+e = \,& \mathbf{n} \cdot
+        \frac{\partial^2 \mathbf{r}}{\partial \lambda^2}
+  = g \cos^2 \theta \,,\\
 \end{split}\end{equation}
+
+$\mathbf{n}$ is the unit normal to the surface at $(\lambda,\theta)$,
+$\d {\bf r} = {\bf r}(\lambda + \d \lambda, \theta + \d \theta) - {\bf
+r}(\lambda, \theta)$ and $D = \d {\bf r}\cdot {\bf n}$ is the distance
+from the point at ${\bf r} + \d \mathbf{r}$ to the tangent plane at
+$\bf{r}(\lambda,\theta)$. The vectors $\frac{\partial \mathbf{r}}{\partial
+\lambda}$ and $\frac{\partial \mathbf{r}}{\partial \theta}$ are tangent to
+the surface. Therefore, a vector normal to the surface at
+$\bf{r}(\lambda,\theta)$ is
+
+\begin{equation}
+\mathbf{N} = \frac{\partial \mathbf{r}}{\partial \lambda} \times
+             \frac{\partial \mathbf{r}}{\partial \theta}\,,
+           =
+           \left[ \begin{array}{l}
+             a\, c\, \cos \lambda \cos^2 \theta \\
+             a\, c\, \sin \lambda \cos^2 \theta \\
+             a^2\, \cos \lambda \sin \theta
+            \end{array} \right],\,
+\mathbf{n} = \frac{\mathbf{N}}{|\mathbf{N}|}
+= \frac{1}{\sqrt{G}} \left[ \begin{array}{l}
+  c \cos \theta \cos \lambda \\
+  c \cos \theta \sin \lambda \\
+  a \sin \theta \\
+  \end{array} \right],
+\text{ and }
+| \mathbf{N} | = a \cos\theta \sqrt{G}
+\,.
+\end{equation}
+
+\section{Principal curvatures}
+
+The principal curvatures are
+
+\begin{equation}\begin{split}
+\kappa_1 =\,& \frac{a c}{G^\frac32}
+ \, \text{ and} \\
+\kappa_2 =\,& \frac{c}{a \sqrt{G}} \\
+\end{split}\end{equation}
+
+The maximum and minimum radii of curvature are $R_1 = \frac1{\kappa_1}$
+and $R_2 = \frac1{\kappa_2}$.
 
 \section{Gaussian curvature of oblate spheroid}
 
@@ -157,10 +275,37 @@ radii of curvature is
 \neq \frac2{\kappa_1 + \kappa_2}\,.
 \end{equation}
 
+\section{Radius in prime vertical and meridional radius of curvature}
+
+The radius $R_N$ in the prime vertical is usually denoted $N$ for the
+distance from the surface to the polar axis in the direction normal to the
+surface.  It's not a radius of curvature.  Using $\phi$ for geodetic
+latitude ($c^2 \tan \phi = a^2 \tan \theta$),
+
+\begin{equation}
+R_N =
+N = \frac{a^2}{\sqrt{a^2 \cos^2 \phi + c^2 \sin^2 \phi}}
+  = a^2 \sqrt{\frac{a^4 \cos^2 \theta + c^4 sin^2 \theta}
+                   {a^6 \cos^2 \theta + c^6 sin^2 \theta}}
+\end{equation}
+
+The radius of curvature $R_M$ in the meridian is the radius of a circle
+that is tangent to the Earth surface and has the same radius of curvature
+as the ellipsoid in the meridional direction.  Using $\phi$ for geodetic
+latitude and eccentricity $e = 1 - \left(\frac{c}{a}\right)^2$,
+
+\begin{equation}
+R_M = \frac{a(1-e^2)}{(1 - e^2 \sin^2 \phi)^{\frac32}}
+    = \frac{(ac)^2}{(a^2 \cos^2 \phi + c^2 \sin^2 \phi)^{\frac32}}
+    = (a c)^2 \left( \frac{a^4 \cos^2 \theta + c^4 \sin^2 \theta}
+                           {a^6 \cos^2 \theta + c^6 \sin^2 \theta}
+               \right)^{\frac32}
+\end{equation}
+
 \section{Curvature of a sphere}
 
-For a sphere, $a = c = r$, $G = r^2$, $K = 1/r^2$, and $H = 1/r$, as
-exected.
+For a sphere, $a = c = r$, $G = r^2$, $K = 1/r^2$, $H = 1/r$, $\kappa_1 =
+1/r$, $\kappa_2 = 1/r$, and $N = r$, as expected.
 
 \label{lastpage}
 \vspace*{-0.1in} % Somehow, this causes lastpage to be defined
@@ -169,3 +314,6 @@ exected.
 % $Id$
 
 % $Log$
+% Revision 1.2  2017/10/13 19:10:51  vsnyder
+% Add CVS stuff
+%
