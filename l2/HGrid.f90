@@ -2118,6 +2118,7 @@ contains ! =====     Public Procedures     =============================
     integer :: nkeys
     integer :: nsections
     logical :: verbose
+    logical :: verboser
     real(rk), dimension(:), pointer :: MAFStartTimeTAI, OrbIncl, &
       & GeodAngle, GeodAlt, GeodLat, Lon, LosAngle, SolarTime, SolarZenith
     integer :: InstrumentModule
@@ -2126,8 +2127,10 @@ contains ! =====     Public Procedures     =============================
     computingOffsets = .true.
     deebug = LetsDebug ( 'hgrid', 1 )
     verbose = beVerbose ( 'hgrid', 1 )
+    verboser = beVerbose ( 'hgrid', 2 )
     call OutputnamedValue ( 'deebug', deebug )
     call OutputnamedValue ( 'verbose', verbose )
+    call OutputnamedValue ( 'verboser', verboser )
     call trace_begin ( me, "ComputeAllHGridOffsets", root, &
       & cond=toggle(gen) )
     if ( specialDumpFile /= ' ' ) &
@@ -2161,7 +2164,7 @@ contains ! =====     Public Procedures     =============================
         son = next_tree_node ( root, state1, start=first_section, traceLevel=4 )
         if ( son == 0 ) exit
         call trace_begin ( me, "ComputeAllHGridOffsets.loop", son, &
-          & cond=toggle(gen) .and. levels(gen) > 1 )
+          & cond=toggle(gen) .and. levels(gen) > 1 .and. verboser )
         select case ( decoration ( subtree ( 1, son ) ) )
         case ( z_construct )
           ! Now loop through the construct section and identify the hGrids
@@ -2265,7 +2268,7 @@ contains ! =====     Public Procedures     =============================
         case default
         end select
         call trace_end ( "ComputeAllHGridOffsets.loop", &
-          & cond=toggle(gen) .and. levels(gen) > 1 )
+          & cond=toggle(gen) .and. levels(gen) > 1 .and. verboser )
       end do sectionLoop
       if ( verbose ) then
         call outputNamedValue( 'number of keys', nKeys )
@@ -2754,6 +2757,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.155  2019/11/14 22:28:32  pwagner
+! Now requires more coaxing to trace sectionLoop in ComputeAllHGridOffsets
+!
 ! Revision 2.154  2019/07/09 22:26:19  pwagner
 ! Reduce unwanted Checks ForCorruptFileDatabase
 !
