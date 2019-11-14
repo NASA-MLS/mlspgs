@@ -80,10 +80,10 @@ GG
     * )
 echo "Please wait ...."
 ftp -n <<RRR>holder
-open maia.usno.navy.mil
+open cddis.gsfc.nasa.gov
 user anonymous EOSuser
 prompt
-cd ser7
+cd /pub/products/iers
 dir
 get finals.data
 bye
@@ -250,6 +250,9 @@ state=21
 
    exit $state
 # $Log$
+# Revision 1.2  2005/06/23 22:20:46  pwagner
+# Reworded Copyright statement
+#
 # Revision 1.1  2003/05/08 20:11:24  pwagner
 # First commit
 #
