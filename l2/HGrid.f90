@@ -17,6 +17,7 @@ module HGrid                    ! Horizontal grid information
     & L1BGeolocation, L1BSubsample
   use MLSCommon, only: MLSFile_T, NameLen, TAI93_Range_T
   use MLSFiles, only: HDFVersion_5, GetMLSFileByType
+  use MLSFinds, only: FindAll
   use MLSKinds, only: Rk => R8, R8
   use MLSSignals_M, only: GetModuleName
   
@@ -161,7 +162,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
     call trace_begin ( me, "CreateHGridFromMLSCFInfo", root, &
-      & cond=toggle(gen) .and. ( levels(gen) > 1 .or. .not. computingOffsets ) )
+      & cond=toggle(gen) .and. levels(gen) > 1 .and. .not. computingOffsets )
 
     nullify ( fullArray, TAI )
 
@@ -472,7 +473,7 @@ contains ! =====     Public Procedures     =============================
       & // 'CreateHGridFromMLSCFInfo', &
       & "See ***** above for error message" )
     call trace_end ( "CreateHGridFromMLSCFInfo", &
-      & cond=toggle(gen) .and. ( levels(gen) > 1 .or. .not. computingOffsets ) )
+      & cond=toggle(gen) .and. levels(gen) > 1 .and. .not. computingOffsets )
   end function CreateHGridFromMLSCFInfo
 
   ! ----------------------------------------  CreateExplicitHGrid  -----
@@ -542,7 +543,7 @@ contains ! =====     Public Procedures     =============================
 
     call trace_begin ( me, "CreateExplicitHGrid", key, &
       & cond=toggle(gen) .and. levels(gen) > 1 .and. .not. computingOffsets )
-    verbose = BeVerbose( 'hgrid', -1 ) .or. .true.
+    verbose = BeVerbose( 'hgrid', -1 )
 
     paramNode = [ &
       & geodAngleNode             , & ! PHIPARAM
@@ -2101,6 +2102,7 @@ contains ! =====     Public Procedures     =============================
     integer :: C                        ! Inner loop counter
     logical :: deeBug
     integer :: HGRID                    ! Loop counter
+    integer :: How_many
     integer :: Me = -1                  ! String index for trace
     integer :: NOHGRIDS                 ! Number of hGrids
     integer :: SON                      ! Tree node
@@ -2108,7 +2110,6 @@ contains ! =====     Public Procedures     =============================
     integer :: GSON                     ! son of son
     integer :: KEY                      ! Tree node
     integer :: KEYINDEX
-    ! integer, parameter :: MAXNUMChunks = 400
     type(HGrid_T) :: dummyHGrid         ! A temporary hGrid
     type(HGrid_T), dimension(size(chunks)) :: FirstHGrid     ! The "std" HGrid
     type(next_tree_node_state) :: State1 ! while hunting for Construct sections
@@ -2123,6 +2124,7 @@ contains ! =====     Public Procedures     =============================
       & GeodAngle, GeodAlt, GeodLat, Lon, LosAngle, SolarTime, SolarZenith
     integer :: InstrumentModule
     character (len=NameLen) :: InstrumentModuleName
+    integer, dimension(size(chunks)) :: ChunksWithoutProfiles
     ! Executable code
     computingOffsets = .true.
     deebug = LetsDebug ( 'hgrid', 1 )
@@ -2420,6 +2422,14 @@ contains ! =====     Public Procedures     =============================
       call deAllocate_Test ( SolarZenith    , 'GHz/SolarZenith', ModuleName )
     end if
 
+    ! Before destroying anything, 
+    ! let's reveal which any chunks have no profiles.
+    ! We might need this info if we later choose to run just a few, select chunks
+    if ( verboser ) call Dump( firstHGrid%noProfs, 'Num of Profiles in each chunk' )
+    if ( any(firstHGrid%noProfs == 0) ) then
+      call FindAll ( firstHGrid%noProfs, 0, ChunksWithoutProfiles, how_many )
+      call Dump( ChunksWithoutProfiles(1:How_many), 'Chunks with no profiles' )
+    endif
     do chunk = 1, size ( chunks )
       if ( verbose ) call Dump ( firstHGrid(chunk), Details=1 )
       call DestroyHGridContents ( firstHGrid(chunk) )
@@ -2757,6 +2767,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.156  2019/11/22 00:38:43  pwagner
+! Be less prone to printing lots; show which chunks have no profiles
+!
 ! Revision 2.155  2019/11/14 22:28:32  pwagner
 ! Now requires more coaxing to trace sectionLoop in ComputeAllHGridOffsets
 !
