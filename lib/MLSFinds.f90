@@ -63,8 +63,10 @@ module MLSFinds
 ! FindLongestLogical (log condition(:), int range(2))
 ! FindLongestSubString (char* set, char* probe, int range(2), [log reverse])
 ! FindLongestStretch( int which(:), int how_many, int range(2) )
-! FindUniqueCharacter (char* set(:), char* unique(:), [int nUnique], [int(:) counts])
-! FindUniqueCharacterSubString (char* set, char* unique, [int nUnique], [int(:) counts])
+! FindUniqueCharacter (char* set(:), char* unique(:), [int nUnique], &
+!    [int(:) counts])
+! FindUniqueCharacterSubString (char* set, char* unique, [int nUnique], &
+!    [int(:) counts])
 ! FindUniqueInteger (int set(:), int unique(:), [int nUnique], [int(:) counts])
 ! The optional argument reverse, which may be supplied to some of the functions
 ! causes the usual matching condition to be reversed; e.g. FindLast
@@ -73,8 +75,8 @@ module MLSFinds
 
 ! === (end of api) ===
 
-  public :: Findall, FindFirst, FindLast, Findlongestrange, &
-    & Findnext, Findunique, Findlongeststretch
+  public :: Findall, FindFirst, FindLast, FindLongestRange, &
+    & Findnext, FindUnique, FindLongeststretch
 
   interface FindFirst
     module procedure FindFirstInteger, FindFirstlogical
@@ -84,31 +86,31 @@ module MLSFinds
     module procedure FindFirstRun
   end interface
 
-  interface Findlast
-    module procedure FindLastinteger, FindLastlogical, FindLastcharacter
-    module procedure FindLastreal, FindLastdouble, FindLastlogical2d
-    module procedure FindLastsubstring
+  interface FindLast
+    module procedure FindLastInteger, FindLastlogical, FindLastcharacter
+    module procedure FindLastReal, FindLastdouble, FindLastlogical2d
+    module procedure FindLastSubstring
   end interface
 
-  interface FINDLONGESTRANGE
-    module procedure FINDLONGESTINTEGER, FINDLONGESTLOGICAL, FINDLONGESTCHARACTER
-    module procedure FINDLONGESTSUBSTRING
+  interface FindLongestRange
+    module procedure FindLongestInteger, FindLongestlogical, FindLongestcharacter
+    module procedure FindLongestSubstring
   end interface
 
-  interface FINDUNIQUE
-    module procedure FINDUNIQUEINTEGER, FINDUNIQUECHARACTER
-    module procedure FINDUNIQUECHARACTERSUBSTRING
-    module procedure FINDUNIQUEREAL, FINDUNIQUEDOUBLE
+  interface FindUnique
+    module procedure FindUniqueInteger, FindUniquecharacter
+    module procedure FindUniqueCharactersubstring
+    module procedure FindUniqueReal, FindUniquedouble
   end interface
 
-  interface FINDNEXT
-    module procedure FINDNEXTINTEGER, FINDNEXTLOGICAL, FINDNEXTCHARACTER
-    module procedure FINDNEXTSUBSTRING
+  interface FindNext
+    module procedure FindNextInteger, FindNextlogical, FindNextcharacter
+    module procedure FindNextSubstring
   end interface
 
-  interface FINDALL
-    module procedure FINDALLINTEGER, FINDALLLOGICAL, FINDALLCHARACTER
-    module procedure FINDALLSUBSTRING
+  interface FindAll
+    module procedure FindAllInteger, FindAlllogical, FindAllcharacter
+    module procedure FindAllSubstring
   end interface
 
 !---------------------------- RCS Ident Info -------------------------------
@@ -119,30 +121,34 @@ module MLSFinds
 
 contains ! =====     Public Procedures     =============================
 
-  ! ---------------------------------------------  FindAllCharacter  -----
-  subroutine FindAllCharacter ( SET, IT, WHICH, HOW_MANY, RE_MAINDER, WHICH_NOT )
-    ! Return which i of set[i] = it
-    ! (case-sensitive, ignores trailing blanks, but alert to leading blanks)
-    ! optionally, may return also:
-    ! how many of them do
-    ! which_not of them (which don't)
-    ! and the re_mainder of the set != it
-    ! e.g. given set = /(4, 3, 1, 2, 1, 3 )/ and it = 1
-    ! produces which = /(3, 5)/, 
-    !      which_not = /(1, 2, 4, 6)/, 
-    !       how_many = 2,
-    !     re_mainder = /(4, 3, 2, 3)/
-    
-    ! Note that which and which_not are arrays of array indices
-    ! while re_mainder is an array of array elements
-    
-    ! This may be useful,
-    ! e.g. in dump for reshaping an array to suppress any dims 
-    ! that are identically 1
-    
-    ! Maybe this should be rewritten to use fraternal functions findfirst
-    ! or findnext
+  ! ---------------------------------------------  FindAll  -----
+  ! This family of subroutines Finds all the matching elements
+  ! not just the first, next, or last
+  ! Return which i of set[i] = it
+  ! If character-valued,
+  !   (case-sensitive, ignores trailing blanks, but alert to leading blanks)
+  ! Optionally, may return also:
+  ! how_many    of them do
+  ! which_not   of them (which don't)
+  ! re_mainder  of them != it
+  ! e.g. given set = /(4, 3, 1, 2, 1, 3 )/ and it = 1
+  ! produces which = /(3, 5)/, 
+  !      which_not = /(1, 2, 4, 6)/, 
+  !       how_many = 2,
+  !     re_mainder = /(4, 3, 2, 3)/
 
+  ! Note that which and which_not are arrays of indices
+  ! while re_mainder is an array of elements
+
+  ! This may be useful,
+  ! e.g. in dump for reshaping an array to suppress any dims 
+  ! that are identically 1
+
+  ! Maybe this should be rewritten to use fraternal functions FindFirst
+  ! or FindNext
+
+  ! ---------------------------------------------  FindAllCharacter  -----
+  subroutine FindAllCharacter ( set, it, which, how_many, re_mainder, which_not )
     ! Formal arguments
     character(len=*), intent(in), dimension(:)   :: set
     character(len=*), intent(in)                 :: it
@@ -178,28 +184,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine FindAllCharacter
 
   ! ---------------------------------------------  FindAllInteger  -----
-  subroutine FindAllInteger ( SET, IT, WHICH, HOW_MANY, RE_MAINDER, WHICH_NOT )
-    ! Return which i of set[i] = it
-    ! optionally, may return also:
-    ! how many of them do
-    ! which_not of them (which don't)
-    ! and the re_mainder of the set != it
-    ! e.g. given set = /(4, 3, 1, 2, 1, 3 )/ and it = 1
-    ! produces which = /(3, 5)/, 
-    !      which_not = /(1, 2, 4, 6)/, 
-    !       how_many = 2,
-    !     re_mainder = /(4, 3, 2, 3)/
-    
-    ! Note that which and which_not are arrays of array indices
-    ! while re_mainder is an array of array elements
-    
-    ! This may be useful,
-    ! e.g. in dump for reshaping an array to suppress any dims 
-    ! that are identically 1
-    
-    ! Maybe this should be rewritten to use fraternal functions findfirst
-    ! or findnext
-
+  subroutine FindAllInteger ( set, it, which, how_many, re_mainder, which_not )
     ! Formal arguments
     integer, intent(in), dimension(:)  ::           set
     integer, intent(in)                ::           it
@@ -235,7 +220,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine FindAllInteger
 
   ! ---------------------------------------------  FindAllLogical  -----
-  subroutine FindAllLogical ( set, WHICH, HOW_MANY, WHICH_NOT )
+  subroutine FindAllLogical ( set, which, how_many, which_not )
     ! Return which i of set[i] = .true.
     ! optionally, may return also:
     ! how many of them do
@@ -276,7 +261,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine FindAllLogical
 
   ! ---------------------------------------------  FindAllSubString  -----
-  subroutine FindAllSubString ( SET, IT, WHICH, HOW_MANY, RE_MAINDER, WHICH_NOT )
+  subroutine FindAllSubString ( set, it, which, how_many, re_mainder, which_not )
     ! Return which substring i of set[i:i] = it
     ! Formal arguments
     character(len=*), intent(in)                 :: set
@@ -1295,6 +1280,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSFinds
 
 ! $Log$
+! Revision 2.7  2019/11/22 00:36:39  pwagner
+! Some timid housekeeping
+!
 ! Revision 2.6  2019/10/16 20:50:53  pwagner
 ! Added FindFirstInCharacter
 !
