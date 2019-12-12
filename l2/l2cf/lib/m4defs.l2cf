@@ -45,6 +45,23 @@ changesyntax({@!})
 ; argument to the macro
 !define({forall},{!$1($2)!ifelse($#,2,{},{!forall}($1,!shift(!shift($@))))})
 
+; ---------------------------- Macros for defining other macros conditionally
+; This macro defines a macro unless it's already been defined
+; It's used like this
+;    !defunlessdef(pfgFile,{!pfgPath/MLS-Aura_L2Cal-PFG_v3-0-0_0000d000.txt})
+!define({defunlessdef},{!dnl
+!ifdef($1, {}, {!dnl
+!define($1,{$2})!dnl
+})})
+
+; This macro defines a macro unless it's already defined and non-blank
+; It's used like this
+;    !defunlessnotblank(includecalpath,{!calpath})
+!define({defunlessdnotblank},{!dnl
+!ifelse($1, {},{!dnl
+!define($1,{$2})!dnl
+})})
+
 ; ------------------------------- Macros for list manipulation
 ; This macro makes a list separated by commas.  The items in the list
 ; are arguments 3 onwards, prefixed with argument 1, and postfixed
@@ -63,7 +80,7 @@ changesyntax({@!})
 
 ; Because m4 wants to interpret each ',' as separating args in calling
 ; esyscmd, we need lower macros for temporarily replacing ',' with a different
-; and hopefully innocuous character, "%". Therefore
+; and hopefully innocuous character, "%".
 ; Note: if for some reason "%" is unsuitable, simply replace pctChar below
 !define(pctChar,%)
 ;!define(sublist2pct,{%$1})
@@ -122,8 +139,8 @@ changesyntax({@!})
 )
 
 ; This macro gets values[key] where {keys,values} is an associative array
-; e.g., if keys is "p,q,r" and values is "jack,queen,king"
-;          key is "q"
+; e.g., if keys is "p,q,r" and values is "pawn,queen,rook"
+;        after defing  key to "q"
 ; !getItemByKey(!key) prints queen
 ; It can be called either with a single arg or with 3
 ; i.e., with a single arg, the macros keys and values 
@@ -143,6 +160,9 @@ changesyntax({@!})
 ; argument
 !define(TrimLastChar, {!substr($1,0,!eval(!len($1)-1))})
 
+; Sometimes, as with getNthItem, we must trim 2 newlines off the end
+!define(TrimLast2Chars, {!substr($1,0,!eval(!len($1)-2))})
+
 ; This macro is similar but trims the first and last character off,
 ; typically quotes.
 !define(TrimFirstLastChar, {!substr($1,1,!eval(!len($1)-2))})
@@ -150,6 +170,10 @@ changesyntax({@!})
 ; This macro trims the first character (often a newline) off its
 ; argument
 !define(TrimFirstChar, {!substr($1,1,!eval(!len($1)-1))})
+
+; This macro surrounds its
+; argument with singlequotes (')
+!define(Surround, {'$1'})
 
 ; This is just a newline. It is mainly used in macros that are destined
 ; to be called by forall macros.
@@ -161,6 +185,12 @@ changesyntax({@!})
 
 ; This macro trims the last 3 characters from the string (_HR probably)
 !define(TrimLast3,{!substr($1,0,!eval(!len($1)-3))})
+
+; The first char of its argument
+!define(FirstChar,{!substr(}$1{,0,1)})
+
+; This strips quotes but only if it finds them
+!define(Unquote,{!ifelse(!FirstChar($1),{'},{!TrimFirstLastChar($1)},{$1})})
 
 ; ----------------------------------------- Date etc. manipulation tools
 
@@ -245,6 +275,9 @@ changesyntax({@!})
 ;; (for things like flaggingBands)
 !define(nargs, {$#})
 ;$Log$
+;Revision 1.22  2017/03/09 01:50:19  mjschwar
+;*** empty log message ***
+;
 ;Revision 1.21  2014/02/11 23:26:32  pwagner
 ;Fixed various bugs in flattening lists
 ;
