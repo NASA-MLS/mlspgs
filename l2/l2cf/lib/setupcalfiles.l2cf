@@ -1,43 +1,47 @@
 !divert(-1)
 ;$Id$
 ;; master input paths
-!ifdef(calpath,{},{!define(calpath,!getdir(calpath))})
-!ifdef(includecalpath,{},{!define(includecalpath,!getdir(includecalpath))})
-!ifdef(pfaPath,{},{!define(pfaPath,!getdir(pfaPath))})
-!ifdef(inpathl1boa,{},{!define(inpathl1boa,!getdir(inpathl1boa))})
-!ifdef(inpathl1brad,{},{!define(inpathl1brad,!getdir(inpathl1brad))})
-!ifdef(inpathl2pc,{},{!define(inpathl2pc,!getdir(inpathl2pc))})
-!ifdef(inpathleapsec,{},{!define(inpathleapsec,!getdir(inpathleapsec))})
-!ifdef(inpathcore,{},{!define(inpathcore,!getdir(inpathcore))})
-!ifdef(inpathdao,{},{!define(inpathdao,!getdir(inpathdao))})
-!ifdef(inpathgeos5pd,{},{!define(inpathgeos5pd,!getdir(inpathgeos5pd))})
-!ifdef(inpathgeos5dd,{},{!define(inpathgeos5dd,!getdir(inpathgeos5dd))})
-!ifdef(inpathgeos5pn,{},{!define(inpathgeos5pn,!getdir(inpathgeos5pn))})
-!ifdef(inpathgeos5dn,{},{!define(inpathgeos5dn,!getdir(inpathgeos5dn))})
-!ifdef(inpathcoreptan,{},{!define(inpathcoreptan,!getdir(inpathcoreptan))})
-!ifdef(inpathtruthl2gp,{},{!define(inpathtruthl2gp,!getdir(inpathtruthl2gp))})
+;; Make extensive use of the handy !defunlessdef macro
+;; which protects an already-defined setting from being overridden
+;; but otherwise gives it a default value
+!defunlessdef(calpath,!getdir(calpath))
+!defunlessdef(includecalpath,!getdir(includecalpath))
+!defunlessdef(pfaPath,!getdir(pfaPath))
+!defunlessdef(inpathl1boa,!getdir(inpathl1boa))
+!defunlessdef(inpathl1brad,!getdir(inpathl1brad))
+!defunlessdef(inpathl2pc,!getdir(inpathl2pc))
+!defunlessdef(inpathleapsec,!getdir(inpathleapsec))
+!defunlessdef(inpathcore,!getdir(inpathcore))
+!defunlessdef(inpathdao,!getdir(inpathdao))
+!defunlessdef(inpathgeos5pd,!getdir(inpathgeos5pd))
+!defunlessdef(inpathgeos5dd,!getdir(inpathgeos5dd))
+!defunlessdef(inpathgeos5pn,!getdir(inpathgeos5pn))
+!defunlessdef(inpathgeos5dn,!getdir(inpathgeos5dn))
+!defunlessdef(inpathcoreptan,!getdir(inpathcoreptan))
+!defunlessdef(inpathtruthl2gp,!getdir(inpathtruthl2gp))
 
-; The first are l2cfs for an include, so unquoted
-!ifdef(signalsPath,{},{!define(signalsPath,!getdir(signalsPath))})
-!ifdef(spectroscopyPath,{},{!define(spectroscopyPath,!getdir(spectroscopyPath))})
-!ifdef(spectroscopyHDFPath,{},{!define(spectroscopyHDFPath,!getdir(spectroscopyHDFPath))})
-!ifdef(sidebandPath,{},{!define(sidebandPath,!getdir(sidebandPath))})
-!ifdef(fovdirPath,{},{!define(fovdirPath,!getdir(fovdirPath))})
-!ifdef(systempPath,{},{!define(systempPath,!getdir(systempPath))})
-!ifdef(nbwPath,{},{!define(nbwPath,!getdir(nbwPath))})
-!ifdef(antennaPath,{},{!define(antennaPath,!getdir(antennaPath))})
-!ifdef(climatologyPath,{},{!define(climatologyPath,!getdir(climatologyPath))})
-!ifdef(filterPath,{},{!define(filterPath,!getdir(filterPath))})
-!ifdef(pfaPath,{},{!define(pfaPath,!getdir(pfaPath))})
-!ifdef(pfgPath,{},{!define(pfgPath,!getdir(pfgPath))})
+!defunlessdef(signalsPath,!getdir(signalsPath))
+!defunlessdef(spectroscopyPath,!getdir(spectroscopyPath))
+!defunlessdef(spectroscopyHDFPath,!getdir(spectroscopyHDFPath))
+!defunlessdef(sidebandPath,!getdir(sidebandPath))
+!defunlessdef(fovdirPath,!getdir(fovdirPath))
+!defunlessdef(systempPath,!getdir(systempPath))
+!defunlessdef(nbwPath,!getdir(nbwPath))
+!defunlessdef(antennaPath,!getdir(antennaPath))
+!defunlessdef(climatologyPath,!getdir(climatologyPath))
+!defunlessdef(filterPath,!getdir(filterPath))
+!defunlessdef(pfaPath,!getdir(pfaPath))
+!defunlessdef(pfgPath,!getdir(pfgPath))
 
-; ! This may not always be the same as l2pcVersion
-!ifdef(pfaVersion,{},{!define(pfaVersion,!getdir(pfaVersion))})
+; These may sometimes escape definition
+!defunlessdef(pfaVersion,!getdir(pfaVersion))
 !ifelse(!pfaVersion, {}, {
 !define(pfaVersion,{ME-03})
 })
 
 ; Just in case the above paths were omitted from your overridepaths.sh file
+; Could we define a macro to help wih the following; e.g.
+; defunlessnotblank
 !ifelse(!includecalpath, {}, {
 !define(includecalpath,{!calpath})
 })
@@ -79,30 +83,14 @@
 })
 
 
-!ifdef(signalsL2cf, {}, {
-!define(signalsL2cf, {!signalsPath/MLS-Aura_L2Cal-Signals_v1-5-0_0000d000.l2cf})
-})
-!ifdef(spectroscopyL2cf, {}, {
-!define(spectroscopyL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-5_0000d000.l2cf})
-})
-!ifdef(spectroscopyFullL2cf, {}, {
-!define(spectroscopyFullL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-all_v3-0-5_0000d000.l2cf})
-})
-!ifdef(spectroscopyRtvlL2cf, {}, {
-!define(spectroscopyRtvlL2cf,{!spectroscopyL2cf})
-})
-!ifdef(sidebandL2cf, {}, {
-!define(sidebandL2cf, {!sidebandPath/MLS-Aura_L2Cal-SBFraction_v3-0-2_0000d000.l2cf})
-})
-!ifdef(fovdirL2cf, {}, {
-!define(fovdirL2cf, {!fovdirPath/MLS-Aura_L2Cal-FOV-Directions_v1-5-0_0000d000.l2cf})
-})
-!ifdef(systempL2cf, {}, {
-!define(systempL2cf, {!systempPath/MLS-Aura_L2Cal-Tsys_v2-0-0_0000d000.l2cf})
-})
-!ifdef(nbwL2cf, {}, {
-!define(nbwL2cf, {!nbwPath/MLS-Aura_L2Cal-NBW_v2-0-0_0000d000.l2cf})
-})
+!defunlessdef(signalsL2cf, {!signalsPath/MLS-Aura_L2Cal-Signals_v1-5-0_0000d000.l2cf})
+!defunlessdef(spectroscopyL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-5_0000d000.l2cf})
+!defunlessdef(spectroscopyFullL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-all_v3-0-5_0000d000.l2cf})
+!defunlessdef(spectroscopyRtvlL2cf,{!spectroscopyL2cf})
+!defunlessdef(sidebandL2cf, {!sidebandPath/MLS-Aura_L2Cal-SBFraction_v3-0-2_0000d000.l2cf})
+!defunlessdef(fovdirL2cf, {!fovdirPath/MLS-Aura_L2Cal-FOV-Directions_v1-5-0_0000d000.l2cf})
+!defunlessdef(systempL2cf, {!systempPath/MLS-Aura_L2Cal-Tsys_v2-0-0_0000d000.l2cf})
+!defunlessdef(nbwL2cf, {!nbwPath/MLS-Aura_L2Cal-NBW_v2-0-0_0000d000.l2cf})
 
 ; The next lot are arguments to forwardModelGlobal, so quoted.
 !ifdef(flagUsingPCF,{
@@ -131,26 +119,15 @@
   !define(spectroscopyFullHDF,{Spectroscopy})
   !define(spectroscopyRtvlHDF,{Spectroscopy})
 },{
-  !ifdef(antennaFile, {}, {
-  !define(antennaFile, {'!antennaPath/MLS-Aura_L2Cal-AAAP_v2-0-0_0000d000.txt'})
-  })
-  !ifdef(climatologyFile, {}, {
-  !define(climatologyFile, {'!climatologyPath/MLS-Aura_L2Cal-Climatologies_v1-7-8_0000d000.txt'})
-  })
-  !ifdef(filterFile, {}, {
-  !define(filterFile, {'!filterPath/MLS-Aura_L2Cal-Filters_v3-0-2_0000d000.txt'})
-  })
-  !ifdef(dacsFilterFile, {}, {
-  !define(dacsFilterFile, {'!filterPath/MLS-Aura_L2Cal-DACSFilters_v1-5-1_0000d000.txt'})
-  })
-  !ifdef(pfgFile, {}, {
-  !define(pfgFile, {'!pfgPath/MLS-Aura_L2Cal-PFG_v3-0-0_0000d000.txt'})
-  })
-  !ifdef(pfgRtvlFile, {}, {
-  !define(pfgRtvlFile,{!pfgFile})
-  })
-  !ifdef(pfaFiles, {}, {
-  !define(pfaFiles, 
+  !defunlessdef(climatologyVersion,{v1-7-8_0000d000})
+  !defunlessdef(pfgVersion,{v3-0-0_0000d000})
+  !defunlessdef(antennaFile, {'!antennaPath/MLS-Aura_L2Cal-AAAP_v2-0-0_0000d000.txt'})
+  !defunlessdef(climatologyFile, {'!climatologyPath/MLS-Aura_L2Cal-Climatologies_!climatologyVersion.txt'})
+  !defunlessdef(filterFile, {'!filterPath/MLS-Aura_L2Cal-Filters_v3-0-2_0000d000.txt'})
+  !defunlessdef(dacsFilterFile, {'!filterPath/MLS-Aura_L2Cal-DACSFilters_v1-5-1_0000d000.txt'})
+  !defunlessdef(pfgFile, {'!pfgPath/MLS-Aura_L2Cal-PFG_!pfgVersion.txt'})
+  !defunlessdef(pfgRtvlFile,{!pfgFile})
+  !defunlessdef(PFAFiles, 
   {['!pfaPath/PFA_R5V_!pfaVersion.h5', $
     '!pfaPath/PFA_R5H_!pfaVersion.h5', $
     '!pfaPath/PFA_R4_!pfaVersion.h5 ', $
@@ -159,28 +136,63 @@
     '!pfaPath/PFA_R1B_!pfaVersion.h5',$
     '!pfaPath/PFA_R1A_!pfaVersion.h5',$
     '!pfaPath/PFA_DACS_!pfaVersion.h5']})
-  })
+  !define(pfaFiles,{!PFAFiles})
   !define(ElevOffsetHDF,{!calpath/MLS-Aura_L2Cal-ElevOffsets_v3-0-5_0000d000.h5})
   !define(IsotopeRatioHDF,{!calpath/MLS-Aura_L2Cal-IsotopeRatios_v3-0-5_0000d000.h5})
-  !define(SBFractionHDF,{!calpath/MLS-Aura_L2Cal-SBFractions_v3-0-5_0000d000.h5})
+  !defunlessdef(SBFractionHDF,{!calpath/MLS-Aura_L2Cal-SBFractions_v3-0-5_0000d000.h5})
   !define(SystemTemperatureHDF,{!calpath/MLS-Aura_L2Cal-SystemTemperatures_v3-0-5_0000d000.h5})
   !define(NoiseBandwidthHDF,{!calpath/MLS-Aura_L2Cal-NoiseBandwidths_v3-0-5_0000d000.h5})
   !define(MiscHDF,{!calpath/MLS-Aura_L2Cal-Misc_v3-0-5_0000d000.h5})
-  !ifdef(spectroscopyHDF, {}, {
-  !define(spectroscopyHDF,{!spectroscopyHDFPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-5_0000d000.h5})
-  })
-  !ifdef(spectroscopyHDF, {}, {
-  !define(spectroscopyFullHDF,{!spectroscopyHDFPath/MLS-Aura_L2Cal-Spectroscopy-all_v3-0-5_0000d000.h5})
-  })
+  !defunlessdef(spectroscopyHDF,{!spectroscopyHDFPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-5_0000d000.h5})
+  !defunlessdef(spectroscopyFullHDF,{!spectroscopyHDFPath/MLS-Aura_L2Cal-Spectroscopy-all_v3-0-5_0000d000.h5})
   !define(spectroscopyRtvlHDF,{!spectroscopyHDF})
 })
 ;; output paths
-!ifdef(outpathl2gp,{},{!define(outpathl2gp,!getdir(outpathl2gp))})
-!ifdef(outpathl2aux,{},{!define(outpathl2aux,!getdir(outpathl2aux))})
-!ifdef(outpathl2fwm,{},{!define(outpathl2fwm,!getdir(outpathl2fwm))})
-!ifdef(outpathl1brad,{},{!define(outpathl1brad,!getdir(outpathl1brad))})
-!ifdef(outpathtmp,{},{!define(outpathtmp,!getdir(outpathtmp))})
+!defunlessdef(outpathl2gp,!getdir(outpathl2gp))
+!defunlessdef(outpathl2aux,!getdir(outpathl2aux))
+!defunlessdef(outpathl2fwm,!getdir(outpathl2fwm))
+!defunlessdef(outpathl1brad,!getdir(outpathl1brad))
+!defunlessdef(outpathtmp,!getdir(outpathtmp))
+;; Print debugging info if m4 called ith cmdline option -Ddee=bug
+!ifelse(!dee,{bug},{
+!divert!dnl
+calpath:             !calpath
+includecalpath:      !includecalpath
+inpathgeos5pd:       !inpathgeos5pd
+inpathgeos5dd:       !inpathgeos5dd
+inpathgeos5pn:       !inpathgeos5pn
+inpathgeos5dn:       !inpathgeos5dn
+
+signalsPath:         !signalsPath      
+spectroscopyPath:    !spectroscopyPath 
+spectroscopyHDFPath: !spectroscopyHDFPath
+sidebandPath:        !sidebandPath
+fovdirPath:          !fovdirPath
+systempPath:         !systempPath
+nbwPath:             !nbwPath
+antennaPath:         !antennaPath
+
+antennaFile:         !antennaFile  
+climatologyFile:     !climatologyFile  
+filterFile:          !filterFile  
+dacsFilterFile:      !dacsFilterFile  
+pfgFile:             !pfgFile  
+pfaFiles:            !pfaFiles 
+SBFractionHDF:       !SBFractionHDF  
+spectroscopyHDF:     !spectroscopyHDF  
+spectroscopyFullHDF: !spectroscopyFullHDF  
+
+outpathl2gp:         !outpathl2gp  
+outpathl2aux:        !outpathl2aux 
+outpathl2fwm:        !outpathl2fwm 
+outpathl1brad:       !outpathl1brad
+outpathtmp:          !outpathtmp   
+!divert(-1)
+})
 ;$Log$
+;Revision 1.49  2014/04/03 17:38:37  pwagner
+;May now predefine spectroscopyHDF
+;
 ;Revision 1.48  2014/03/06 18:39:34  pwagner
 ;Change default location for PFA files
 ;
