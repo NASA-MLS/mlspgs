@@ -22,13 +22,16 @@
 # Bugs and limitations
 # (1) It is assumed that all the l2cf fragments are included directly
 #      from the l2cf fragment; it will miss any that are included indirectly
+#      although we make a brave effort (see below)
 # (2) All the l2cf fragments must be found in the standard parts directory
 # (3) All the parts are included using syntax like
 #     !include(name.l2cf)..
 #     with possible exception of m4defs.l2cf
-# (4) l2cf-formatted calibration files (like MLS-Aura_L2Cal-Tsys_v2-0-0_0000d000.l2cf)
-#     are ignored (not explicitly, but because they are neither included by the
-#     syntax above, nor are they found in the standard parts directory)
+# (4) l2cf-formatted calibration files 
+#     (like MLS-Aura_L2Cal-Tsys_v2-0-0_0000d000.l2cf)
+#     are ignored (not explicitly, but because 
+#     (a) they don't obey the syntax above, nor 
+#     (b) they are not found in the standard parts directory
 # --------------- End identl2cf.sh help
 # Copyright 2009, by the California Institute of Technology. ALL
 # RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
@@ -132,6 +135,14 @@ fi
 incfiles=`grep '\!include' $template | sed -n 's/\(.*\)\!include(\(.*\.l2cf\))\(?*\)/\2/p' | sed 's/}.*//'`
 
 # Append any known to be missed by this syntax rule
+# ---------------------------------------------------------------
+# We can find some of these missed that are themselves !include-d
+# by their siblings in the standard parts directory by doing this:
+# grep '\!include' ${HOME}/mlspgs/l2/l2cf/lib/*.l2cf | \
+#   sed -n 's/\(.*\)\!include(\(.*\.l2cf\))\(?*\)/\2/p' | \
+#   sed 's/}.*//' | sort | uniq
+files="filllesserstate.l2cf writeapriori.l2cf constructstandardgrids.l2cf copystdprods.l2cf $files"
+# ---------------------------------------------------------------
 files="$incfiles $files"
 
 if [ "$debug" = 1 ]
@@ -154,6 +165,9 @@ do
 done
 exit
 # $Log$
+# Revision 1.2  2009/11/06 18:17:16  pwagner
+# Fixed bug in statement defining incfiles
+#
 # Revision 1.1  2009/06/16 22:35:53  pwagner
 # First commit
 #
