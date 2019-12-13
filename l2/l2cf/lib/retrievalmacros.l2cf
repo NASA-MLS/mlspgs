@@ -13,8 +13,7 @@
 ; ------------------------------------------------------- Instrument information
 
 ; Define some macros we need for various quantities
-!ifdef(allRadiometers, {},
-{!define(allRadiometers,{R1A,R1B,R2,R3,R4,R5H,R5V})})
+!defunlessdef(allRadiometers,{R1A,R1B,R2,R3,R4,R5H,R5V})
 !define(allDACS,{DACS22,DACS23,DACS24,DACS25,DACS26})
 !define(allMBs,{MB27,MB28,MB29,MB30,MB31})
 !define(allBands,{!forloop({i},1,33,{!i, })34}) ; 1,2,3..34
@@ -34,11 +33,17 @@
 !setMinRadsByBand(11=800,12=900,13=900,14=900,15=500,16=500,17=500,18=500,19=500,20=500)
 !setMinRadsByBand(21=500,22=5400,23=290,24=750,25=1000,26=500,27=325,28=500,29=400,30=500)
 !setMinRadsByBand(31=500,32=100,33=55,34=100)
+; each call to setMinRadsByBand may contain one or more args
+; each arg is of the form "band_number=min_radiances"
+; where band_number is any of 1..34, and min_radiances is an appropriate
+; threshold
+; Note that as the instrument ages we may have to relax some thresholds
+; to avoid too many failed statuses
 
 !define(getMinRadsByBand,{!MR$1})
 
 ; (2) If we compare max % valid radiances against a threshold pctMinRads
-!ifdef(pctMinRads,{},{!define(pctMinRads,60)})
+!defunlessdef(pctMinRads,60)
 
 ;; This macro is used in sids runs to get the band number part of a band
 ;; specifier (i.e. strip off the sideband if it is present)
@@ -71,33 +76,36 @@
 
 ; These macros define the MLS standard products
 ; IWC is somewhat special
-!define(allStandardProductsWithColumns,{BrO,CH3Cl,CH3CN,CH3OH,CH3COCH3,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,O3,O3_HR,OH,SO2})
-!define(allStandardProductsWithoutColumns,{Temperature,GPH,RHI,UTRHI})
+; Theses may be overridden in the usual way, but beware of side-effects
+; especially if they are inconsistent with constructstandardspecies.l2cf
+!defunlessdef(allStandardProductsWithColumns,{BrO,CH3Cl,CH3CN,CH3OH,CH3COCH3,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,O3,O3_HR,OH,SO2})
+!defunlessdef(allStandardProductsWithoutColumns,{Temperature,GPH,RHI,UTRHI})
 !define(allStandardProducts,{!tidyList(!allStandardProductsWithColumns, $
   !allStandardProductsWithoutColumns)})
-!define(allHiResProducts,{Temperature_HR,H2O_HR,RHI_HR,GPH_HR})
+!defunlessdef(allHiResProducts,{Temperature_HR,H2O_HR,RHI_HR,GPH_HR})
 
 ; ------------------------------------------------------- File IO information
 
 ;; These macros define the format of our output files
-!ifdef(hdfVersion,{},{!define(hdfVersion,5)})
+!defunlessdef(hdfVersion,5)
 
 ;; These macros define our standard output filenames
-!define(l2gpFileName, !dnl
-{!ifdef(flagUsingPCF,{L2GP-$1},!dnl
-{!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he!hdfVersion})})
-!define(DGGFileName, !dnl
-{!ifdef(flagUsingPCF,{DGG},!dnl
-{!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he!hdfVersion})})
-!define(l2auxFileName, !dnl
-{!ifdef(flagUsingPCF,{L2AUX-$1},!dnl
-{!outpathl2aux/MLS-Aura_L2AUX-$1_!l2version_!day.h!hdfVersion})})
-!define(DGMFileName, !dnl
-{!ifdef(flagUsingPCF,{L2AUX-DGM},!dnl
-{!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h!hdfVersion})})
-!define(CloudFilename, !dnl
-{!ifdef(flagUsingPCF,{L2AUX-Cloud},!dnl
-{!outpathl2aux/MLS-Aura_L2AUX-Cloud_!l2version_!day.h!hdfVersion})})
+;; They depend on whether mlsl2 is run using a PCF
+!ifdef(flagUsingPCF, {
+!define(l2gpFileName,{L2GP-$1})
+!define(DGGFileName,{DGG})
+!define(l2auxFileName,{L2AUX-$1})
+!define(DGMFileName,{L2AUX-DGM})
+!define(CloudFilename,{L2AUX-Cloud})
+!define(l2fwmFileName,{$1})
+},{
+!define(l2gpFileName,{!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he!hdfVersion})
+!define(DGGFileName,{!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he!hdfVersion})
+!define(l2auxFileName,{!outpathl2aux/MLS-Aura_L2AUX-$1_!l2version_!day.h!hdfVersion})
+!define(DGMFileName,{!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h!hdfVersion})
+!define(CloudFilename,{!outpathl2aux/MLS-Aura_L2AUX-Cloud_!l2version_!day.h!hdfVersion})
+!define(l2fwmFileName,{!outpathl2gp/MLS-Aura_L2FWM-$1_!l2version_!day.h!hdfVersion})
+})
 
 ;; DGG/DGM DirectWrite command may or may not include file name
 ;; depending on whether we set flag to automatically split sources
@@ -107,11 +115,6 @@
 !define(DirectWriteDGMCommand, !dnl
 {!ifdef(flagAutoSplitSources,{DirectWrite},!dnl
 {DirectWrite, file='!DGMFileName'})})
-
-;; Filename for forward model radiance output
-!define(l2fwmFileName, !dnl
-{!ifdef(flagUsingPCF,{$1},!dnl
-{!outpathl2gp/MLS-Aura_L2FWM-$1_!l2version_!day.h!hdfVersion})})
 
 ; -------------------------------------------------------- Phase related macros
 
@@ -1253,6 +1256,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.161  2019/10/16 21:01:17  pwagner
+; May SetPtanPrecPositive as part of each completePhase macro
+;
 ; Revision 1.160  2019/08/22 16:53:02  pwagner
 ; Add a new flagSkipGPHNeedsFancyThings
 ;
