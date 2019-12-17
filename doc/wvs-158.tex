@@ -12,8 +12,8 @@
 \topmargin -0.5in
 \textheight 9.1in
 
-\newcommand{\docname}{wvs-158}
-\newcommand{\docdate}{5 November 2019}
+\newcommand{\docname}{wvs-158r1}
+\newcommand{\docdate}{11 December 2019}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -81,67 +81,132 @@
 To: \>Bill Read\\
 Subject: \>``Correct'' $\vec{d}$ vector -- ATBD Equation (5.22)\\
 From: \>Van Snyder\\
-References: \>\h{wvs-146}, \h{wvs-154}\\
+References: \>\h{wvs-146} \\
 \end{tabbing}
 
 \parindent 0pt \parskip 4pt
 
 \vspace*{-15pt}
 
-From the ATBD before Equation (5.11)
+From the ATBD before Equation (5.11), the normal radius at orbit geodetic
+angle $\phi$, that is, the distance from the surface to the minor axis of
+the ellipse defined by the intersection of the surface of the Earth and
+the orbit plane, in the direction normal to the ellipse, is
 
 \begin{equation}
-N(\phi) = \frac{a^2}{\sqrt{a^2 \cos^2 \phi + c^2 \sin^2 \phi}} \,.
+N(\phi) = \frac{a^2}{\sqrt{a^2 \cos^2 \phi + c^2 \sin^2 \phi}} 
+ = \frac{a^2}{\sqrt{D}} = \frac{a}{\sqrt{1-e^2 \sin^2 \phi}} \,,
 \end{equation}
 
-From ATBD Equation (5.10)
+where $a$ is the Earth equatorial radius, $c$ is the semi-minor axis
+of the orbit-projected ellipse and
 
 \begin{equation}
-\vec{R}^\oplus =
+D = a^2 \cos^2 \phi + c^2 \sin^2 \phi = a^2(1-e^2 \sin^2 \phi) \,.
+\end{equation}
+
+From ATBD Equation (5.10), the geocentric sub-tangent point is:
+
+\begin{equation}\begin{split}\label{two}
+\vec{R}^\oplus = \,&
  N(\phi) \left[ \cos \phi, \frac{c^2}{a^2} \sin \phi \right]
- = \left[ \frac{a^2 \cos \phi}
-                   {\sqrt{a^2 \cos^2 \phi + c^2 \sin^2 \phi}},
-              \frac{c^2 \sin \phi}
-                   {\sqrt{a^2 \cos^2 \phi + c^2 \sin^2 \phi}} \right]
-\end{equation}
+ = \left[ \frac{a^2 \cos \phi}{\sqrt{D}},
+          \frac{c^2 \sin \phi}{\sqrt{D}} \right]
+ = \frac{a}{\sqrt{1-e^2 \sin^2 \phi}}
+   \, [ \cos \phi, (1-e^2) \sin \phi ]
+\text{ and } \\[5pt]
+|\vec{R}^\oplus|
+% = \sqrt{\frac{a^4 \cos^2 \phi + c^4 \sin^2 \phi}
+%                              {a^2 \cos^2 \phi + c^2 \sin^2 \phi}}
+ = \,&\sqrt{\frac{a^4 \cos^2 \phi + c^4 \sin^2 \phi}{D}}
+ = a \sqrt{ \frac{1+e^2 ( e^2-2) \sin^2 \phi}{1-e^2 \sin^2 \phi}} \,.
+\end{split}\end{equation}
 
-Tangent vector
+Tangent vector:
+
+\begin{equation}\begin{split}\label{three}
+\vec{T} = \,& \frac{\d \vec{R}^\oplus}{\d \phi} =
+ \frac{a^2 c^2}{D^\frac32} \, [\, -\sin \phi, \cos \phi \, ] =
+ g \, [\, -\sin \phi, \cos \phi \, ] =
+ a\,\frac{a^2(1-e^2)}{(1-e^2 \sin^2 \phi)^\frac32} \,
+  [\, -\sin \phi, \cos \phi \, ] \\
+ = \,& N(\phi) \frac{a^2(1-e^2)}{D} [\, -\sin \phi, \cos \phi \, ] \,,
+\end{split}\end{equation}
+
+where $g = \mathbf{n} \cdot \frac{\partial^2 \mathbf{r}}{\partial \phi^2}$
+is the third term in the second fundamental form for an ellipsoid.
+
+Inward normal vector:
 
 \begin{equation}
-\vec{T} = \frac{\d \vec{R}^\oplus}{\d \phi} =
- \frac{a^2 c^2}{(a^2 \cos^2 \phi + c^2 \sin^2 \phi)^{\frac32}} \,
- [\, -\sin \phi, \cos \phi \, ] \,.
+\vec{G} = [ \vec{T}_2, -\vec{T}_1 ]
+         = a\,\frac{a^2(1-e^2)}{(1-e^2 \sin^2 \phi)^\frac32} \,
+  [\, \cos \phi, \sin \phi \, ]
+ = N(\phi) \frac{a^2(1-e^2)}{D}  [\, \cos \phi, \sin \phi \, ] \,.
 \end{equation}
 
-Inward gradient vector
+Substituting $[x,y] = \vec{R}^\oplus$ from Equation (\ref{two}) into
 
 \begin{equation}
-\vec{G} = [ \vec{T}_2, -\vec{T}_1 ] \,.
+\nabla E = \nabla \left( \frac{x^2}{a^2} + \frac{y^2}{c^2} \right )
+         = \nabla \frac1{a^2} \left( x^2 + \frac{y^2}{1-e^2} \right)
+         = \frac2{a^2} \left[ x, \frac{y}{1-e^2} \right]
+         = \frac2{\sqrt{D}} \left[ \cos \phi, \sin \phi \right]\,,
 \end{equation}
 
-$\vec{d}$ vector
-
+results in
 \begin{equation}
-\vec{d} = \vec{R}^\oplus - \vec{G} =
+\frac{|\nabla E|}{|\vec{G}|} = 2\, \frac{1 - e^2 \sin^2 \phi}{a^2(1-e^2)}
+ = 2\,\frac{D}{a^4 ( 1-e^2 )} \,.
+\end{equation}
+
+$\vec{d}$ vector:
+
+\begin{equation}\begin{split}\label{d}
+\vec{d} = \vec{R}^\oplus - \vec{G} = \,&
  N ( \phi ) \,
- \left[ \left(1 - \frac{c^2}{a^2 \cos^2 \phi + c^2 \sin^2 \phi} \right)
-          \cos \phi,
-        \left( \frac{c^2}{a^2}
-          - \frac{c^2}{a^2 \cos^2 \phi + c^2 \sin^2 \phi} \right)
-          \sin \phi
- \right] \,.
+ \left[ \left(1 - \frac{c^2}D \right) \cos \phi,
+        \left( \frac{c^2}{a^2} - \frac{c^2}D \right) \sin \phi
+ \right] \\
+ = \,& a\frac{e^2}{(1-e^2 \sin^2 \phi)^\frac32}
+     [\, \cos^3 \phi, \, (1-e^2) \sin^3 \phi \, ] \\
+ =  \,& N(\phi) \frac{a^2\,e^2}{D}\, [\, \cos^3 \phi,\, (1-e^2) \sin^3 \phi\, ] \,.
+\end{split}\end{equation}
+
+ATBD Equation (5.21):
+
+\begin{equation}\label{5.21}
+R_\text{eq}^\oplus \equiv H_t^\oplus = | \vec{T} |
+ = N(\phi_t) \sqrt{ \sin^2 \phi_t + \frac{c^4}{a^4} \cos^2 \phi_t}
+ = \frac{\sqrt{a^4 \sin^2 \phi_t + c^4 \cos^2 \phi_t} }
+        {\sqrt{D}}
 \end{equation}
 
-From ATBD Equation (5.21)
+was developed from Equation (\ref{two}) using
 
 \begin{equation}
-R_\text{eq}^\oplus \equiv
-H_t^\oplus = N(\phi_t) \sqrt{ \sin^2 \phi_t + \frac{c^4}{a^4} \cos^2 \phi_t}
- = \sqrt{ \frac{a^4 \sin^2 \phi_t + c^4 \cos^2 \phi_t}
-               {a^2 \cos^2 \phi_t + c^2 \sin^2 \phi_t}}
+\vec{T} = \frac{\d \vec{R}^\oplus}{\d \phi}
+ = N(\phi) \frac{\d}{\d \phi}
+    \left[ \cos \phi, \frac{c^2}{a^2} \sin \phi \right] +
+   \frac{\d N(\phi)}{\d \phi}
+    \left[ \cos \phi, \frac{c^2}{a^2} \sin \phi \right] \,,
 \end{equation}
 
-From ATBD Equation (5.22)
+but the $\frac{\d N(\phi)}{\d \phi}$ term was neglected.  Equation
+(\ref{three}) is the correct equation for $\vec{T}$.  The correct equation
+for $R^\oplus_\text{eq} = | \vec{G} |$ is
+
+\begin{equation}
+R^\oplus_\text{eq} \equiv H_t^\oplus = | \vec{G} |
+ = N(\phi_t) \frac{a^2 ( 1-e^2 )}{D}
+ = a\, \frac{1-e^2}{(1-e^2 \sin^2 \phi_t)^\frac32}
+ = \frac{a^2 \,c^2}{(a^2 \cos^2 \phi_t + c^2 \sin^2 \phi_t)^\frac32} \,,
+\end{equation}
+
+which is the same as the meridional curvature of an oblate spheroid,
+derived in \h{wvs-146}.
+
+Using Equation (\ref{5.21}) results in ATBD Equation (5.22):
 
 \begin{equation}\begin{split}
 \vec{d} = \,& \left[ \left( N(\phi_t) - H_t^\oplus \right) \cos \phi_t,
@@ -156,6 +221,8 @@ From ATBD Equation (5.22)
                     \right) \sin \phi_t
              \right] \\
 \end{split}\end{equation}
+
+being different from Equation (\ref{d}), and also being incorrect.
 
 \label{lastpage}
 \end{document}
