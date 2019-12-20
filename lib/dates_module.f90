@@ -24,7 +24,6 @@ module dates_module
   ! No other module uses them currently.
 
   use IO_Stuff, only: PrintMessage
-  use Machine, only: Exit_With_Status
   use MLSCommon, only: NameLen, MLSMSG_Warning
   use MLSFinds, only: FindFirst
   use MLSStringlists, only: GetStringElement, NumStringElements
@@ -101,8 +100,7 @@ module dates_module
 !                    Revert to Jan 01 1993 for the tai starting date
 ! secondsbetween2utcs 
 !                    How many seconds between 2 date-times
-! secondsinday 
-!                    How many seconds since the start of the day
+! secondsinday       How many seconds since the start of the day
 ! splitDateTime      Splits dateTtime into date, time
 ! tai2ccsds          tai (days, not s) -> ccsds (in "B" format)
 ! tai93s2hid         tai (s, not days) -> hours-in-day
@@ -202,8 +200,8 @@ module dates_module
 !   "HH:mm   " => "5:30 pm"
 
 ! Special values of fromForm (either ' ' or '*') turn on an
-! "auto-recognize" features which automatically recognizes
-! all of the most common date formats
+! "automatic recognition" feature which automatically recognizes
+! any of the most common date formats
 
 ! time format codings are governed by the following rules
 !    key       is replaced by             
@@ -270,7 +268,7 @@ module dates_module
   ! Our implementation of leapseconds is not strictly accurate:
   ! (a) Our database includes dates prior to 1972, contrary to the usual definition
   ! (b) Our implementation assumes that each leapsecond adds exactly 1 second
-  !     the definition allows for possible negative leap seconds
+  !     the definition allows for possible negative leap seconds;
   !     early leap seconds were sometimes even fractional
 ! === (end of api) ===
 
@@ -281,7 +279,7 @@ module dates_module
 ! (2) We call eudtf an internal data format, and yet procedures
 !     to convert to and from it are public. Contradictory?
 ! (3) This module has grown rather long. Should we consider
-!     Splitting into two, and if so, what would be the criteria for
+!     Splitting it into two? If so, what would be the criteria for
 !     grouping procedures into a common module?
 
   ! Here are the functions this module provides
@@ -345,49 +343,53 @@ module dates_module
   integer, private, parameter :: Secondsinaday = 24*60*60
   
   ! Should we read the following from a file, like the Toolkit does?
-  character(len=*), dimension(41), parameter :: leapSecDates = (/ &
-    '1961 JAN 1', & 
-    '1961 AUG 1', & 
-    '1962 JAN 1', & 
-    '1963 NOV 1', & 
-    '1964 JAN 1', & 
-    '1964 APR 1', & 
-    '1964 SEP 1', & 
-    '1965 JAN 1', & 
-    '1965 MAR 1', & 
-    '1965 JUL 1', & 
-    '1965 SEP 1', & 
-    '1966 JAN 1', & 
-    '1968 FEB 1', & 
-    '1972 JAN 1', & 
-    '1972 JUL 1', & 
-    '1973 JAN 1', & 
-    '1974 JAN 1', & 
-    '1975 JAN 1', & 
-    '1976 JAN 1', & 
-    '1977 JAN 1', & 
-    '1978 JAN 1', & 
-    '1979 JAN 1', & 
-    '1980 JAN 1', & 
-    '1981 JUL 1', & 
-    '1982 JUL 1', & 
-    '1983 JUL 1', & 
-    '1985 JUL 1', & 
-    '1988 JAN 1', & 
-    '1990 JAN 1', & 
-    '1991 JAN 1', & 
-    '1992 JUL 1', & 
-    '1993 JUL 1', & 
-    '1994 JUL 1', & 
-    '1996 JAN 1', & 
-    '1997 JUL 1', & 
-    '1999 JAN 1', & 
-    '2006 JAN 1', & 
-    '2009 JAN 1', & 
-    '2012 JUL 1', & 
-    '2015 JUL 1', & 
-    '2017 JAN 1'  & 
-    /) 
+  ! Could we even automatically generate that include file from the
+  ! toolkit's leapsec.dat?
+  ! Let's give it a try.
+!  character(len=*), dimension(41), parameter :: leapSecDates = (/ &
+!     '1961 JAN 1', & 
+!     '1961 AUG 1', & 
+!     '1962 JAN 1', & 
+!     '1963 NOV 1', & 
+!     '1964 JAN 1', & 
+!     '1964 APR 1', & 
+!     '1964 SEP 1', & 
+!     '1965 JAN 1', & 
+!     '1965 MAR 1', & 
+!     '1965 JUL 1', & 
+!     '1965 SEP 1', & 
+!     '1966 JAN 1', & 
+!     '1968 FEB 1', & 
+!     '1972 JAN 1', & 
+!     '1972 JUL 1', & 
+!     '1973 JAN 1', & 
+!     '1974 JAN 1', & 
+!     '1975 JAN 1', & 
+!     '1976 JAN 1', & 
+!     '1977 JAN 1', & 
+!     '1978 JAN 1', & 
+!     '1979 JAN 1', & 
+!     '1980 JAN 1', & 
+!     '1981 JUL 1', & 
+!     '1982 JUL 1', & 
+!     '1983 JUL 1', & 
+!     '1985 JUL 1', & 
+!     '1988 JAN 1', & 
+!     '1990 JAN 1', & 
+!     '1991 JAN 1', & 
+!     '1992 JUL 1', & 
+!     '1993 JUL 1', & 
+!     '1994 JUL 1', & 
+!     '1996 JAN 1', & 
+!     '1997 JUL 1', & 
+!     '1999 JAN 1', & 
+!     '2006 JAN 1', & 
+!     '2009 JAN 1', & 
+!     '2012 JUL 1', & 
+!     '2015 JUL 1', & 
+!     '2017 JAN 1'  & 
+!    /) 
+  include 'LeapSecDates.f9h'
 
   ! These somewhat similar parameters are used in the separately-coded
   ! but redundant functions and procedures moved here from their
@@ -406,23 +408,12 @@ module dates_module
     & 365, 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 &
     & /)
 
-  ! This should be modified for internationalization; e.g. with
-  ! an include statement or suchlike
-  ! E.g., include 'EnglishMonthNames.f90'
-  character(len=*), dimension(12), parameter :: MonthName = (/ &
-    & 'January  ', 'February ', 'March    ', 'April    ', 'May      ', &
-    & 'June     ', 'July     ', 'August   ', 'September', 'October  ', &
-    & 'November ', 'December '/)
-
-  ! E.g., include 'EnglishDayNames.f90'
-  character(len=*), dimension(7), parameter :: DaysOfWeek = (/ &
-    & 'Sunday   ', 'Monday   ', 'Tuesday  ', 'Wednesday', 'Thursday ', &
-    & 'Friday   ', 'Saturday '/)
-
+  include 'DayMonthNames.f9h'
   ! This is the utc for the first (new) moon of 2001
   ! We assume that the moon's phase repeats perfectly; it would be 
   ! more accurate to use the toolkit's AA (Astronimcal Almanac) components
-  ! As it is we may be off by as much as one day
+  ! As it is we may be off by as much as one day.
+  ! Initializing
   character(len=*), parameter :: Firstnewmoon = &
     & '2001-024T13:07:00.0000Z'
   double precision, parameter :: Lunarperiod = 60.d0*(44 + 60.d0*( &
@@ -3026,6 +3017,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.46  2019/09/19 15:59:47  pwagner
+! daysInMonth returns 0 if month out of range
+!
 ! Revision 2.45  2019/07/09 23:12:55  pwagner
 ! Made MonthName public
 !
