@@ -17,6 +17,10 @@
 
 # "$Id$"
 
+# What is your preferred language?
+# Choose one of Eng, Es, Fr, De, It
+PREFERREDLANG=Eng
+
 # Oh, man do we really need this? Only if lit_names.txt has changed
 EVERY_MLSCONFG = $(shell ${REECHO} -d -dirn $(CONFDIR)/lib/machines -excl CVS -excl NAG.nogc)
 
@@ -222,6 +226,34 @@ ieee_arithmetic.mod: ieee_arithmetic.f90
 
 
 intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
+
+dates_module.o: $(S)/DayMonthNames.f9h $(S)/LeapSecDates.f9h
+
+$(S)/DayMonthNames.f9h: $(S)/DayMonthNames_${PREFERREDLANG}.f9h
+	cp -a $(S)/DayMonthNames_${PREFERREDLANG}.f9h $(S)/DayMonthNames.f9h
+
+$(S)/LeapSecDates.f9h: $(PGSTK)/../../database/common/TD/leapsec.dat
+# The first and last lines are merely Fortran boiler plate.
+# The long sequence beginning with 'sed' is the real meat of the sandwich.
+#
+# Bugs and Limitations
+# (1) If the format of the toolkit's leapsec.dat file ever changes
+#     it will break spectacularly.
+# (2) If the leapsec.dat file is merely checked, its log and
+#     modification dates are updated and so make must rebuild LeapSecDates.f9h
+#     We could ameliorate this shortcoming if we used the script
+#     $(UTILDIR)/newAifBdiff.sh
+	echo \
+	  'character(len=*), dimension(:), parameter :: LeapSecDates = (/ &' \
+	  > $(S)/LeapSecDates.f9h
+	sed -n '2,$$ p' $< | \
+	  awk '{print $$1, $$2, $$3}' | sed 's/^/    \"/' | \
+	  sed 's/$$/\", \&/' | \
+	  sed '$$ s/,//' \
+	  >> $(S)/LeapSecDates.f9h
+	echo \
+	  '    /) ' \
+	  >> $(S)/LeapSecDates.f9h
 
 endif # end short_name == lib
 
@@ -762,6 +794,9 @@ iy-006.bbl: yanovsky.bib iy-006.aux
 
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.45  2019/09/27 17:40:49  pwagner
+# Builds wvs-155.tex with new wvs-151-QTM-1 dependencies (why name it that?)
+#
 # Revision 1.44  2019/09/24 18:04:39  pwagner
 # Can now build wvs-155.tex
 #
