@@ -232,6 +232,8 @@ dates_module.o: $(S)/DayMonthNames.f9h $(S)/LeapSecDates.f9h
 $(S)/DayMonthNames.f9h: $(S)/DayMonthNames_${PREFERREDLANG}.f9h
 	cp -a $(S)/DayMonthNames_${PREFERREDLANG}.f9h $(S)/DayMonthNames.f9h
 
+NUMDATES := $(shell sed -n '2,$$ p' $(PGSTK)/../../database/common/TD/leapsec.dat | wc -l)
+
 $(S)/LeapSecDates.f9h: $(PGSTK)/../../database/common/TD/leapsec.dat
 # The first and last lines are merely Fortran boiler plate.
 # The long sequence beginning with 'sed' is the real meat of the sandwich.
@@ -244,7 +246,7 @@ $(S)/LeapSecDates.f9h: $(PGSTK)/../../database/common/TD/leapsec.dat
 #     We could ameliorate this shortcoming if we used the script
 #     $(UTILDIR)/newAifBdiff.sh
 	echo \
-	  'character(len=*), dimension(:), parameter :: LeapSecDates = (/ &' \
+	  'character(len=*), dimension($(NUMDATES)), parameter :: LeapSecDates = (/ &' \
 	  > $(S)/LeapSecDates.f9h
 	sed -n '2,$$ p' $< | \
 	  awk '{print $$1, $$2, $$3}' | sed 's/^/    \"/' | \
@@ -794,6 +796,9 @@ iy-006.bbl: yanovsky.bib iy-006.aux
 
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.46  2019/12/20 21:16:59  pwagner
+# Builds .f9h files for lib/dates_module.f90
+#
 # Revision 1.45  2019/09/27 17:40:49  pwagner
 # Builds wvs-155.tex with new wvs-151-QTM-1 dependencies (why name it that?)
 #
