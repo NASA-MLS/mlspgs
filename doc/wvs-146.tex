@@ -1,6 +1,15 @@
+% Making the graphics:
+% tgif -print -color -eps wvs-146-1.obj; epstopdf wvs-146-1.eps
+% tgif -print -color -eps wvs-146-2.obj; epstopdf wvs-146-2.eps
+% tgif -print -color -eps wvs-146-3.obj; epstopdf wvs-146-3.eps
+% tgif -print -color -jpeg wvs-146-1.obj
+% tgif -print -color -jpeg wvs-146-2.obj
+% tgif -print -color -jpeg wvs-146-3.obj
+
 \documentclass[11pt]{article}
 \usepackage{alltt}
-\usepackage[fleqn]{amsmath}
+\usepackage[fleqn]{empheq} % 
+\usepackage{amsmath}
 \usepackage{floatflt}
 \usepackage{graphicx}
 \usepackage{longtable}
@@ -12,8 +21,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-146r1}
-\newcommand{\docdate}{11 November 2019}
+\newcommand{\docname}{wvs-146r2}
+\newcommand{\docdate}{5 January 2020}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -78,7 +87,16 @@ To: \>Van\\
 Subject: \>Radii of curvature of an oblate spheroid\\
 From: \>Van Snyder\\
 Reference: \>Harry Lass, {\bf Vector and Tensor Analysis}, McGraw-Hill
-           (1950), pp 71-78\\
+             (1950), pp 71-78\\
+           \>R.~E.~Deaton, \emph{The Normal Section
+             Curve of an Ellipsoid}, November 2009,\\
+           \>{\tt http://www.mygeodesy.id.au/documents/NormalSection.pdf}\\
+           \>M. Ligas, \emph{Various parameterizations of ``latitude''
+                equation -- Cartesian to geodetic} \\
+           \>\emph{coordinates transformation}, {\bf Journal of Geodetic
+                Science 3}, 2 (2013) pp 87-94. \\ \>B. R. Bowring,
+           \emph{Notes on the curvature in the prime vertical section}, \\
+           \>{\bf Survey Review 29}:226 (October 1987) pp 195-196
 \end{tabbing}
 
 \renewcommand{\d}{\text{d}}
@@ -86,23 +104,52 @@ Reference: \>Harry Lass, {\bf Vector and Tensor Analysis}, McGraw-Hill
 \parindent 0pt \parskip 6pt
 \vspace{-20pt}
 
+%=========================================================================
 \section{Definitions}
 
 Let $a$ be the equatorial radius, and $c$ the polar radius of the Earth,
-an oblate spheroid, and let
+an oblate spheroid
 %
 \begin{equation}
-\mathbf{r}(\lambda,\theta) = \left[ \begin{array}{l}
-x(\lambda,\theta) =  a \cos \theta \cos \lambda \\
-y(\lambda,\theta) = a \cos \theta \sin \lambda \\
-z(\lambda,\theta) = c \sin \theta \\
-\end{array}\right] \,,
+\Sigma = \frac{x^2}{a^2} + \frac{y^2}{a^2} + \frac{z^2}{c^2} = 1
+\text{ or }
+x^2 +y^2 + \frac{z^2}{1-e^2} = a^2
 \end{equation}
+where eccentricity $e = 1-\frac{c^2}{a^2}$.
+
+\begin{centering}
+\includegraphics[scale=0.75]{wvs-146-3}\\[5pt]\label{latitudes}
+{\bf Latitude definitions} $\theta$: Reduced latitude;
+$\gamma$: Geocentric latitude; $\phi$: Geodetic latitude\\
+\end{centering}
+
+%=========================================================================
+\section{Curvatures in terms of reduced latitude $\theta$}
+Let
+%
+\begin{equation}\begin{split}\label{first}
+\mathbf{r}(\lambda,\theta) = \,& \left[ \begin{array}{l}
+x(\lambda,\theta) \\
+y(\lambda,\theta) \\
+z(\lambda,\theta) \\
+\end{array}\right] =
+\left[ \begin{array}{l}
+a \cos \theta \cos \lambda \\
+a \cos \theta \sin \lambda \\
+c \sin \theta \\
+\end{array}\right]
+=a \left[ \begin{array}{l}
+ \cos \theta \cos \lambda \\
+ \cos \theta \sin \lambda \\
+ \sqrt{1-e^2}\, \sin \theta \\
+ \end{array}\right] \text{ and } \\[5pt]
+\rho(\theta) = \,&
+ \sqrt{x(\lambda,\theta)^2 + y(\lambda,\theta)^2} = a \cos \theta
+\end{split}\end{equation}
 
 be the vector to a point on its surface, where $\lambda$ is longitude and
-$\theta$ is geocentric latitude.
-
-Then
+$\theta$ is the reduced latitude.\footnote{Called the \emph{eccentric
+anomaly} in astronomy.} Then
 
 \begin{equation}
 \begin{array}{lll}
@@ -119,6 +166,7 @@ a \cos \theta \cos \lambda \\
 c\, \cos \theta \\
 \end{array}
 \right] & \\
+ & & \\
 \frac{\partial^2 \mathbf{r}}{\partial \lambda^2} =
 \left[ \begin{array}{l}
 -a \cos \theta \cos \lambda \\
@@ -128,8 +176,8 @@ c\, \cos \theta \\
 \frac{\partial^2 \mathbf{r}}{\partial \lambda\, \partial \theta} =
 \left[ \begin{array}{l}
 a \sin \theta \sin \lambda \\
--a \sin \theta  \sin \lambda\\
-0 \\
+-a \sin \theta \cos \lambda\\
+0 \\[10pt]
 \end{array} \right ] &
 \frac{\partial^2 \mathbf{r}}{\partial \theta^2} =
 \left[ \begin{array}{l}
@@ -150,7 +198,7 @@ in one of the planes is maximum, and the curvature in another one is
 minimum.  These curvatures are the \emph{principal curvatures}, denoted
 $\kappa_1$ and $\kappa_2$, respectively, which are roots of
 
-\begin{equation}
+\begin{equation}\label{third}
 (E G - F^2)\, \kappa^2 - ( e G + g E - 2 f F )\, \kappa + ( e g - f^2 ) = 0
 \,,
 \end{equation}
@@ -161,10 +209,10 @@ $G$ are coefficients of the first fundamental form for a surface:
 \begin{equation}
 \text{d} s^2 = E\, \text{d} \lambda^2 +
                2 F\, \text{d} \lambda\, \text{d} \theta +
-               G \, \text{d} \theta^2
+               G \, \text{d} \theta^2 \,.
 \end{equation}
 
-where, for an oblate spheroid,
+For an oblate spheroid,
 
 \begin{equation}\begin{split}
 E = \,& \frac{\partial \mathbf{r}}{\partial \lambda} \cdot
@@ -174,74 +222,101 @@ F = \,& \frac{\partial \mathbf{r}}{\partial \lambda} \cdot
         \frac{\partial \mathbf{r}}{\partial \theta} = 0 \\
 G = \,& \frac{\partial \mathbf{r}}{\partial \theta} \cdot
         \frac{\partial \mathbf{r}}{\partial \theta}
-  = a^2 \sin^2 \theta + c^2 \cos^2 \theta
+  = a^2 \sin^2 \theta + c^2 \cos^2 \theta = a^2 ( 1 - e^2 \cos^2 \theta )
+\,.
 \end{split}\end{equation}
 
-and $e$, $f$, and $g$ are coefficients of the second fundamental form:
+$e$, $f$, and $g$ are coefficients of the second fundamental form:
 
 \begin{equation}
-2\, D = e\, \text{d} \lambda^2 +
+2\, d = e\, \text{d} \lambda^2 +
         2 f\, \text{d} \lambda\, \text{d} \theta +
         g \, \text{d} \theta^2
 \end{equation}
 
-where
+where $d = \d {\bf r}\cdot {\bf n}$ is the distance from the point at
+${\bf r} + \d \mathbf{r}$ to the tangent plane at
+$\bf{r}(\lambda,\theta)$, $\d {\bf r} = {\bf r}(\lambda + \d \lambda,
+\theta + \d \theta) - {\bf r}(\lambda, \theta)$, and $\mathbf{n}$ is the
+unit normal to the surface at $(\lambda,\theta)$.  The vectors
+$\frac{\partial \mathbf{r}}{\partial \lambda}$ and $\frac{\partial
+\mathbf{r}}{\partial \theta}$ are tangent to the surface.  Therefore, a
+vector normal to the surface at $\bf{r}(\lambda,\theta)$ is
 
+\begin{equation}\begin{split}
+\mathbf{N} =\,& \frac{\partial \mathbf{r}}{\partial \lambda} \times
+             \frac{\partial \mathbf{r}}{\partial \theta}\,
+           =
+           \left[ \begin{array}{l}
+             a\, c\, \cos \lambda \cos^2 \theta \\
+             a\, c\, \sin \lambda \cos^2 \theta \\
+             a^2\, \sin \theta \cos \theta
+            \end{array} \right]
+ = a^2 c\, \nabla \Sigma,\,
+\mathbf{n} = \frac{\mathbf{N}}{|\mathbf{N}|}
+= \frac{\nabla\Sigma}{|\nabla\Sigma|}
+= \frac{1}{\sqrt{G}} \left[ \begin{array}{l}
+  c \cos \theta \cos \lambda \\
+  c \cos \theta \sin \lambda \\
+  a \sin \theta \\
+  \end{array} \right],\, \\
+| \mathbf{N} | =\,& a \cos\theta \sqrt{G}
+\, \text{, and } \\
+\end{split}\end{equation}
+\vspace*{-0.3in}
 \begin{equation}\begin{split}
 g = \,& \mathbf{n} \cdot
         \frac{\partial^2 \mathbf{r}}{\partial \theta^2}
-  = \frac{a c}{\sqrt{G}} \\
+  = \frac{a\, c}{\sqrt{G}} \\
 f = \,& \mathbf{n} \cdot
         \frac{\partial^2 \mathbf{r}}{\partial \lambda \partial \theta}
   = 0 \\
 e = \,& \mathbf{n} \cdot
         \frac{\partial^2 \mathbf{r}}{\partial \lambda^2}
-  = g \cos^2 \theta \,,\\
+  = g \cos^2 \theta = \frac{a\, c \cos^2 \theta}{\sqrt{G}} \,.\\
 \end{split}\end{equation}
 
-$\mathbf{n}$ is the unit normal to the surface at $(\lambda,\theta)$,
-$\d {\bf r} = {\bf r}(\lambda + \d \lambda, \theta + \d \theta) - {\bf
-r}(\lambda, \theta)$ and $D = \d {\bf r}\cdot {\bf n}$ is the distance
-from the point at ${\bf r} + \d \mathbf{r}$ to the tangent plane at
-$\bf{r}(\lambda,\theta)$. The vectors $\frac{\partial \mathbf{r}}{\partial
-\lambda}$ and $\frac{\partial \mathbf{r}}{\partial \theta}$ are tangent to
-the surface. Therefore, a vector normal to the surface at
-$\bf{r}(\lambda,\theta)$ is
+% If the normal vector is computed in Cartesian co\"ordinates
+% 
+% {\renewcommand{\arraystretch}{1.1}
+% \begin{equation}
+% \mathbf{N}^\prime = \frac12 \nabla\left( \frac{x^2}{a^2} + \frac{y^2}{a^2} +
+%                                   \frac{z^2}{c^2} \right) =
+%  \left[\begin{array}{c} \frac{x}{a^2} \\ \frac{y}{a^2} \\ \frac{z}{c^2} \\
+%        \end{array} \right] =
+%  \left[\begin{array}{c} \frac1a \cos\theta \cos\lambda \\
+%                         \frac1a \cos\theta \sin\lambda \\
+%                         \frac1c \sin\theta \\
+%        \end{array} \right]
+% \text{ and } | \mathbf{N}^\prime | = \frac{\sqrt{G}}{a c},
+% \end{equation}
+% }
+% 
+% then $\mathbf{n}^\prime = \frac{\mathbf{N}^\prime}{|\mathbf{N}^\prime|} =
+% \mathbf{n}$, and
+% the coefficients of the second normal form are unchanged, as expected.
 
-\begin{equation}
-\mathbf{N} = \frac{\partial \mathbf{r}}{\partial \lambda} \times
-             \frac{\partial \mathbf{r}}{\partial \theta}\,,
-           =
-           \left[ \begin{array}{l}
-             a\, c\, \cos \lambda \cos^2 \theta \\
-             a\, c\, \sin \lambda \cos^2 \theta \\
-             a^2\, \cos \lambda \sin \theta
-            \end{array} \right],\,
-\mathbf{n} = \frac{\mathbf{N}}{|\mathbf{N}|}
-= \frac{1}{\sqrt{G}} \left[ \begin{array}{l}
-  c \cos \theta \cos \lambda \\
-  c \cos \theta \sin \lambda \\
-  a \sin \theta \\
-  \end{array} \right],
-\text{ and }
-| \mathbf{N} | = a \cos\theta \sqrt{G}
-\,.
-\end{equation}
+%=========================================================================
+\subsection{Principal curvatures}
 
-\section{Principal curvatures}
+With $F = f = 0$, the roots of Equation (\ref{third}) (the principal
+curvatures), are
 
-The principal curvatures are
-
-\begin{equation}\begin{split}
-\kappa_1 =\,& \frac{a c}{G^\frac32}
- \, \text{ and} \\
-\kappa_2 =\,& \frac{c}{a \sqrt{G}} \\
+\begin{equation}\begin{split}\label{principal-reduced}
+\kappa_1 =\,& \frac{g}G = \frac{a\, c}{G^\frac32}
+         = a^2 \frac{\sqrt{1-e^2}}{G^\frac32} \\[2pt]
+\kappa_2 =\,& \frac{e}E = \frac{c}{a \sqrt{G}}
+         = \sqrt{\frac{1-e^2}{G}} = \frac{G}{a^2}\,\kappa_1\\[2pt]
+\kappa_1 - \kappa_2
+         = \,& \frac{c( a^2 - c^2)}{a}\, \frac{\cos^2 \theta }
+                                              {G^{\frac32}}
+         = e^2 \cos^2 \theta\, \kappa_1 > 0 \,.\\
 \end{split}\end{equation}
 
-The maximum and minimum radii of curvature are $R_1 = \frac1{\kappa_1}$
+The minimum and maximum radii of curvature are $R_1 = \frac1{\kappa_1}$
 and $R_2 = \frac1{\kappa_2}$.
 
-\section{Gaussian curvature of oblate spheroid}
+\subsection{Gaussian curvature of oblate spheroid}
 
 The Gaussian curvature $K$ is the product of the principal curvatures:
 
@@ -255,7 +330,7 @@ K = \kappa_1 \kappa_2
 and the radius of Gaussian curvature $\sqrt{1/K} = \frac{G}c$ is the
 geometric mean of the principal radii of curvature.
 
-\section{Mean curvature of oblate spheroid}
+\subsection{Mean curvature of oblate spheroid}
 
 The mean curvature $H$ is the average of the principal curvatures:
 
@@ -270,42 +345,945 @@ radii of curvature is
 
 \begin{equation}
 \frac12 \left( \frac1{\kappa_1} + \frac1{\kappa_2} \right)
+= \frac12 \left( R_1 + R_2 \right)
 = \frac{H}{K}
 = \frac{(a^2+G) \sqrt{G}}{2\,a\,c}
 \neq \frac2{\kappa_1 + \kappa_2}\,.
 \end{equation}
 
-\section{Radius in prime vertical and meridional radius of curvature}
+%=========================================================================
+\section{Development of curvatures using geodetic latitude $\phi$}
 
-The radius $R_N$ in the prime vertical is usually denoted $N$ for the
-distance from the surface to the polar axis in the direction normal to the
-surface.  It's not a radius of curvature.  Using $\phi$ for geodetic
-latitude ($c^2 \tan \phi = a^2 \tan \theta$),
+Let $D = a^2 \cos^2 \phi + c^2 \sin^2 \phi = a^2 ( 1 - e^2 \sin^2 \phi )$
+and $N(\phi) = \frac{a^2}{\sqrt{D}}$.  Then the parametric equations of an
+oblate spheroid using longitude and geodetic latitude derived in Section
+\ref{Rel},\footnote{See also Ligas} are
 
-\begin{equation}
-R_N =
-N = \frac{a^2}{\sqrt{a^2 \cos^2 \phi + c^2 \sin^2 \phi}}
-  = a^2 \sqrt{\frac{a^4 \cos^2 \theta + c^4 sin^2 \theta}
-                   {a^6 \cos^2 \theta + c^6 sin^2 \theta}}
+\begin{equation}\begin{split}
+\mathbf{r}(\lambda,\phi) = \,&
+\left[ \begin{array}{l}
+x(\lambda,\phi) \\ y(\lambda,\phi) \\ z(\lambda,\phi) \\ \end{array} \right] =
+\frac1{\sqrt{D}}
+\left[ \begin{array}{l}
+ a^2\, \cos \phi \cos \lambda \\
+ a^2\, \cos \phi \sin \lambda \\
+ c^2\, \sin \phi \\
+\end{array} \right]
+= N(\phi) \left[ \begin{array}{l}
+ \cos \phi \cos \lambda \\
+ \cos \phi \sin \lambda \\
+ (1-e^2) \sin \phi \\
+\end{array} \right]
+ \text{ and } \\
+\rho(\phi) = \,& \sqrt{x(\lambda,\phi)^2 + y(\lambda,\phi)^2} = 
+ \frac{a^2}{\sqrt{D}} \cos \phi = N(\phi)\,\cos\phi\,. \\
+\end{split}\end{equation}
+
+The derivatives are
+
+\begin{equation}\begin{array}{ll}
+\frac{\partial \mathbf{r}}{\partial \lambda} =
+ \frac{a^2}{\sqrt{D}}
+ \left[ \begin{array}{l}
+  -\cos \phi \sin \lambda \\
+  \cos \phi \cos \lambda \\
+  0 \\
+ \end{array} \right]
+&
+\frac{\partial \mathbf{r}}{\partial \phi} =
+ \frac{a^2 c^2}{D^{\frac32}}
+ \left[ \begin{array}{l}
+  -\sin \phi \cos \lambda \\
+  -\sin \phi \sin \lambda\\
+  \cos \phi\\
+ \end{array} \right]\\[3pt]
+\\
+\frac{\partial^2 \mathbf{r}}{\partial \lambda^2} =
+ \frac{a^2}{\sqrt{D}}
+ \left[ \begin{array}{l}
+  -\cos \phi \cos \lambda \\
+  -\cos \phi \sin \lambda \\
+  0 \\
+ \end{array} \right]
+&
+\frac{\partial^2 \mathbf{r}}{\partial \lambda \partial \phi} =
+ \frac{a^2 c^2}{D^{\frac32}}
+ \left[ \begin{array}{l}
+ \sin \phi \sin \lambda \\
+ -\sin \phi \cos \lambda \\
+ 0 \\
+ \end{array} \right] \\
+&\\[-5pt]&
+\frac{\partial \mathbf{r}}{\partial \phi^2} =
+ \frac{a^2 c^2}{D^{\frac52}}
+ \left[ \begin{array}{l}
+ \cos \phi \cos \lambda ( 2 ( c^2 - a^2 ) \sin^2 \phi - a^2 ) \\
+ \cos \phi \sin \lambda ( 2 ( c^2 - a^2 ) \sin^2 \phi - a^2 ) \\
+ \sin \phi ( 2 ( a^2 - c^2 ) \cos^2 \phi - c^2 ) \\
+ \end{array} \right] \,. \\
+\end{array}
 \end{equation}
 
-The radius of curvature $R_M$ in the meridian is the radius of a circle
-that is tangent to the Earth surface and has the same radius of curvature
-as the ellipsoid in the meridional direction.  Using $\phi$ for geodetic
-latitude and eccentricity $e = 1 - \left(\frac{c}{a}\right)^2$,
+The normal vector is
 
 \begin{equation}
-R_M = \frac{a(1-e^2)}{(1 - e^2 \sin^2 \phi)^{\frac32}}
-    = \frac{(ac)^2}{(a^2 \cos^2 \phi + c^2 \sin^2 \phi)^{\frac32}}
-    = (a c)^2 \left( \frac{a^4 \cos^2 \theta + c^4 \sin^2 \theta}
-                           {a^6 \cos^2 \theta + c^6 \sin^2 \theta}
-               \right)^{\frac32}
+\mathbf{N} = \frac{\partial \mathbf{r}}{\partial \lambda} \times
+             \frac{\partial \mathbf{r}}{\partial \theta}\,
+           =
+           \frac{a^4 c^2}{D^2}
+           \left[ \begin{array}{l}
+             \cos^2 \phi \cos \lambda\\
+             \cos^2 \phi \sin \lambda\\
+             \cos \phi \sin \phi\\
+           \end{array} \right],\,
+\mathbf{n} = \frac{\mathbf{N}}{|\mathbf{N}|}
+= \left[ \begin{array}{l}
+  \cos \phi \cos \lambda \\
+  \cos \phi \sin \lambda \\
+  \sin \phi \\
+  \end{array} \right],
+\text{ and }
+| \mathbf{N} | = \frac{a^4 c^2 \cos\phi}{D^2}
+\,.
 \end{equation}
 
+The coefficients of the first fundamental form are
+%
+\begin{equation}\begin{split}
+E = \,& \frac{\partial \mathbf{r}}{\partial \lambda} \cdot
+        \frac{\partial \mathbf{r}}{\partial \lambda}
+  = \frac{a^4 \cos^2 \phi}{D} \\
+F = \,& \frac{\partial \mathbf{r}}{\partial \lambda} \cdot
+        \frac{\partial \mathbf{r}}{\partial \phi} = 0 \\
+G = \,& \frac{\partial \mathbf{r}}{\partial \phi} \cdot
+        \frac{\partial \mathbf{r}}{\partial \phi}
+  = \frac{a^4 c^4}{D^3} \,. \\
+\end{split}\end{equation}
+
+The coefficients of the second fundamental form are
+%
+\begin{equation}\begin{split}
+e = \,& \mathbf{n} \cdot
+        \frac{\partial^2 \mathbf{r}}{\partial \lambda^2}
+  = \frac{a^2 \cos^2 \phi}{\sqrt{D}} = \sqrt{E} \cos \phi \\
+f = \,& \mathbf{n} \cdot
+        \frac{\partial^2 \mathbf{r}}{\partial \lambda \partial \phi}
+  = 0 \\
+g = \,& \mathbf{n} \cdot
+        \frac{\partial^2 \mathbf{r}}{\partial \phi^2}
+  = \frac{a^2 c^2}{D^{\frac32}} = \sqrt{G} \,. \\
+\end{split}\end{equation}
+
+The principal curvatures are
+%
+\begin{equation}\begin{split}\label{principal-geod}
+\kappa_1 =\,& \frac{g}G = \frac{D^\frac32}{a^2 c^2}
+         = \frac1g = \frac1{\sqrt{G}}
+ \, \text{ and} \\[5pt]
+\kappa_2 =\,& \frac{e}E = \frac{\sqrt{D}}{a^2} \,, \\
+\end{split}\end{equation}
+
+which, upon substituting $a \tan \theta = c \tan \phi$ become the same as
+Equations (\ref{principal-reduced}).  The Gaussian curvature is
+%
+\begin{equation}
+K = \kappa_1 \kappa_2 = \frac{D^2}{a^4 c^2} \,.
+\end{equation}
+
+The radius of the Gaussian curvature = $\sqrt{1/K} = \frac{a^2 c}D$.
+
+The mean curvature $H$ is the average of the principal curvatures
+%
+\begin{equation}
+H = \frac12 ( \kappa_1 + \kappa_2 ) = \frac{\sqrt{D} ( D+c^2 )}
+                                           {2 a^2 c^2} \,.
+\end{equation}
+
+The average of the principal radii of curvature is
+%
+\begin{equation}
+\frac12 \left( \frac1{\kappa_1} + \frac1{\kappa_2} \right) =
+\frac12 ( R_1 + R_2 ) = \frac{a^2 ( D + c^2 )}{2 D^{\frac32}} \,.
+\end{equation}
+
+%=========================================================================
+\section{Development of curvatures using geocentric latitude $\gamma$}
+
+Using $\gamma$ for geocentric latitude,
+
+\begin{equation}
+r(\lambda,\gamma) = \left[ \begin{array}{l}
+x(\lambda,\gamma) =  R(\gamma) \cos \gamma \cos \lambda \\
+y(\lambda,\gamma) =  R(\gamma) \cos \gamma \sin \lambda \\
+z(\lambda,\gamma) =  R(\gamma) \sin \gamma
+\end{array} \right] \text{ and } \rho(\gamma) =
+\sqrt{x(\lambda,\gamma)^2 + y(\lambda,\gamma)^2} = R(\gamma) \cos \gamma\,.
+\end{equation}
+
+Substitute $r(\lambda,\gamma)$ into the equation for an oblate spheroid
+\begin{equation}\begin{split}\label{R}
+\frac{x^2}{a^2} + \frac{y^2}{a^2} + \frac{z^2}{c^2} = \,&
+R(\gamma)^2 \left( \frac{\cos^2 \gamma \cos^2 \lambda}{a^2} +
+           \frac{\cos^2 \gamma \sin^2 \lambda}{a^2} +
+           \frac{\sin^2 \gamma}{c^2} \right) \\
+        = \,& R(\gamma)^2
+           \left( \frac{\cos^2 \gamma}{a^2} +
+                  \frac{\sin^2 \gamma}{c^2} \right) =
+        R(\gamma)^2\, \frac{1-e^2 \cos^2 \gamma}{a^2 (1-e^2)}= 1 \\
+\end{split}\end{equation}
+
+from which
+%
+\begin{equation}
+R(\gamma) = \frac{ac}{\sqrt{a^2 \sin^2 \gamma + c^2 \cos^2 \gamma}}
+ = a \sqrt{\frac{1-e^2}{1-e^2 \cos^2 \gamma}} \,.
+\end{equation}
+
+The derivatives are
+%
+\begin{equation}
+\begin{array}{lll}
+\frac{\partial \mathbf{r}}{\partial \lambda} =
+R(\gamma) \left[ \begin{array}{l}
+- \cos \gamma \sin \lambda \\
+  \cos \gamma \cos \lambda \\
+  0
+\end{array} \right] &
+\frac{\partial \mathbf{r}}{\partial \gamma} =
+\frac{R(\gamma)^3}{c^2} \left[ \begin{array}{l}
+- \sin \gamma \cos \lambda \\
+- \sin \gamma \sin \lambda \\
+  \frac{c^2}{a^2} \cos \gamma \\
+\end{array}
+\right] & \\
+ & & \\
+\frac{\partial^2 \mathbf{r}}{\partial \lambda^2} =
+R(\gamma) \left[ \begin{array}{l}
+- \cos \gamma \cos \lambda \\
+- \cos \gamma  \sin \lambda\\
+0
+\end{array} \right] &
+\frac{\partial^2 \mathbf{r}}{\partial \lambda\, \partial \gamma} =
+\frac{R(\gamma)^3}{c^2} \left[ \begin{array}{l}
+ \sin \gamma \sin \lambda \\
+-\sin \gamma \cos \lambda\\
+0 \\
+\end{array} \right ] \\
+& \\[-3pt] &
+\frac{\partial^2 \mathbf{r}}{\partial \gamma^2} =
+2\,\frac{R(\gamma)^5}{a^2 c^2}
+\left[ \begin{array}{l}
+ \cos \gamma \cos \lambda \left( \frac{a^2}{R(\gamma)^2} - \frac32 \right) \\
+ \cos \gamma \sin \lambda \left( \frac{a^2}{R(\gamma)^2} - \frac32 \right) \\
+ \sin \gamma \left( \frac{c^2}{R(\gamma)^2} -\frac32 \right) \\
+\end{array} \right] \,. \\
+\end{array}
+\end{equation}
+
+Let $\Delta = a^4 \sin^2 \gamma + c^4 \cos^2 \gamma
+= a^4 \left( \sin^2\gamma + (1-e^2)^2 \cos^2\gamma \right)$. Then the normal
+vector is
+%
+\begin{equation}\begin{split}
+\mathbf{N} = \,& \frac{\partial \mathbf{r}}{\partial \lambda} \times
+                 \frac{\partial \mathbf{r}}{\partial \theta}\,
+           =
+           \frac{R(\gamma)^4 \cos \gamma}{a^2 c^2}
+           \left[ \begin{array}{l}
+             c^2 \cos \gamma \cos \lambda\\
+             c^2 \cos \gamma \sin \lambda\\
+             a^2 \sin \gamma\\
+           \end{array} \right],\,
+\mathbf{n} = \frac{\mathbf{N}}{|\mathbf{N}|}
+= \frac1{\sqrt{\Delta}}
+  \left[ \begin{array}{l}
+  c^2 \cos \gamma \cos \lambda \\
+  c^2 \cos \gamma \sin \lambda \\
+  a^2 \sin \gamma \\
+  \end{array} \right] \\
+| \mathbf{N} | = \,&
+ \frac{R(\gamma)^4 \cos \gamma\, \sqrt{\Delta}}
+      {a^2 c^2}
+\,.
+\end{split}\end{equation}
+
+The coefficients of the first fundamental form are
+%
+\begin{equation}\begin{split}
+E = \,& \frac{\partial \mathbf{r}}{\partial \lambda} \cdot
+        \frac{\partial \mathbf{r}}{\partial \lambda}
+  = R(\gamma)^2 \cos^2 \gamma \\
+F = \,& \frac{\partial \mathbf{r}}{\partial \lambda} \cdot
+        \frac{\partial \mathbf{r}}{\partial \gamma} =  0 \\
+G = \,& \frac{\partial \mathbf{r}}{\partial \gamma} \cdot
+        \frac{\partial \mathbf{r}}{\partial \gamma}
+  = \frac{R(\gamma)^6 \Delta}{a^4 c^4} \\
+\end{split}\end{equation}
+
+The coefficients of the second fundamental form are
+%
+\begin{equation}\begin{split}
+e = \,& \mathbf{n} \cdot
+        \frac{\partial^2 \mathbf{r}}{\partial \lambda^2}
+  = \frac{c^2 R(\gamma)\, \cos^2 \gamma}{\sqrt{\Delta}} \\
+f = \,& \mathbf{n} \cdot
+        \frac{\partial^2 \mathbf{r}}{\partial \lambda \partial \gamma}
+  = 0 \\
+g = \,& \mathbf{n} \cdot
+        \frac{\partial^2 \mathbf{r}}{\partial \gamma^2}
+  = \frac{R(\gamma)^3}{\sqrt{\Delta}} \,. \\
+\end{split}\end{equation}
+
+The principal curvatures are
+%
+\begin{equation}\begin{split}\label{principal-geoc}
+\kappa_1 =\,& \frac{g}G = \frac{a^4 c^4}{R(\gamma)^3 \Delta^{\frac32}}
+ \, \text{ and} \\[5pt]
+\kappa_2 =\,& \frac{e}E = \frac{c^2}{R(\gamma) \, \sqrt{\Delta}} \,, \\
+\end{split}\end{equation}
+%=========================================================================
+\section{Relationship of latitude definitions}
+%
+Reduced latitude $\theta$, geocentric latitude $\gamma$, and geodetic
+latitude $\phi$ are related by
+%
+\begin{empheq}[box=\fbox]{equation}\label{tangents}
+\begin{split}
+\frac{z(\lambda,\theta)}{\rho(\theta)} = \,&
+\frac{c}{a}\, \frac{\sin \theta}{\cos \theta} =
+\frac{c}{a} \tan \theta = \sqrt{1-e^2}\, \tan \theta\\
+\frac{z(\lambda,\gamma)}{\rho(\gamma)} = \,&
+\frac{\sin \gamma}{\cos \gamma} =
+\tan{\gamma}\\
+\frac{z(\lambda,\phi)}{\rho(\phi)} = \,&
+\frac{c^2}{a^2} \frac{\sin \phi}{\cos \phi} =
+\frac{c^2}{a^2} \tan \phi = (1-e^2)\, \tan \phi\\
+\end{split}
+\end{empheq}
+
+or
+%
+\begin{empheq}[box=\fbox]{equation}
+\begin{split}
+\tan \gamma = \,& \frac{c}{a} \tan \theta = \frac{c^2}{a^2} \tan \phi \\
+\tan \gamma = \,& \sqrt{1-e^2}\, \tan \theta = (1-e^2)\, \tan \phi \,.
+\end{split}
+\end{empheq}
+
+\section{Prime vertical and meridional radii of curvature}
+
+The prime vertical is the east-west plane that includes the zenith. The
+radius of curvature $R_N$ in the prime vertical is frequently denoted $N$.
+It is the distance from the surface to the polar axis in the direction
+normal to the surface.\footnote{B. R. Bowring, \emph{Notes on the curvature
+in the prime vertical section}, {\bf Survey Review 29}, 226 (October 1987)
+pp 195-196, reproduced in the appendix.}  Using $c \tan \phi = a \tan
+\theta$ and $c^2 \tan \phi = a^2 \tan \gamma$ from Equations
+(\ref{tangents}), the results derived in Section \ref{geometric} and
+Equations (\ref{principal-reduced}), (\ref{principal-geod}), and
+(\ref{principal-geoc}) are
+%
+\makeatletter
+\newlength{\negph@wd}
+\DeclareRobustCommand{\negphantom}[1]{%
+  \ifmmode
+    \mathpalette\negph@math{#1}%
+  \else
+    \negph@do{#1}%
+  \fi
+}
+\newcommand{\negph@math}[2]{\negph@do{$\m@th#1#2$}}
+\newcommand{\negph@do}[1]{%
+  \settowidth{\negph@wd}{#1}%
+  \hspace*{-\negph@wd}%
+}
+\makeatother
+%
+\begin{equation}\begin{split}
+R_N\,& =  \frac{a^2}{\sqrt{D}}
+       \negphantom{\frac{a^2}{\sqrt{D}}}
+       \phantom{\frac{R(\gamma) \sqrt{\Delta}}{c^2}}
+       =  \frac{a^2}{\sqrt{a^2 \cos^2 \phi + c^2 \sin^2 \phi}}
+       = \frac{a}{\sqrt{1-e^2 \sin^2 \phi}} \\
+   \,& =  \frac{a\sqrt{G}}{c}
+       \negphantom{\frac{a\sqrt{G}}{c}}
+       \phantom{\frac{R(\gamma) \sqrt{\Delta}}{c^2}}
+       =  \frac{a}{c} \sqrt{a^2 \sin^2 \theta + c^2 \cos^2 \theta}
+       = a \sqrt{\frac{1 - e^2 \cos^2 \theta}{1-e^2}} \\
+   \,& =  \frac{R(\gamma) \sqrt{\Delta}}{c^2}
+       =  \frac{a}{c}\, \sqrt{\frac{a^4 \sin^2 \gamma + c^4 \cos^2 \gamma}
+                                   {a^2 \sin^2 \gamma + c^2 \cos^2 \gamma}}
+       = a \sqrt{\frac{\sin^2\gamma + (1-e^2)^2 \cos^2 \gamma}
+                      {(1-e^2)(1 - e^2 \cos^2 \gamma)}} \\
+   \,& =  R_2 \, \text{, the maximum radius of curvature.} \\
+\end{split}\end{equation}
+
+The radius of curvature $R_M$ in the meridian is the radius of a circle in
+the plane of a meridian that is tangent to the Earth surface, and has the
+same radius of curvature as the ellipsoid in the meridional direction. 
+Using $c \tan \phi = a \tan \theta$ and $c^2 \tan \phi = a^2 \tan \gamma$
+from Equations (\ref{tangents}), the results derived in  Equations
+(\ref{principal-reduced}), (\ref{principal-geod}), and
+(\ref{principal-geoc}) are
+%
+\begin{equation}\begin{split}
+R_M\,& = \frac{1-e^2}{a^2} R_N^3 \\
+   \,& = \frac{(a c)^2}{D^{\frac32}}
+       \negphantom{\frac{(a c)^2}{D^{\frac32}}}
+       \phantom{\frac{R(\gamma)^3 \Delta^{\frac32}}{a^4 c^4}}
+       = \frac{(ac)^2}{(a^2 \cos^2 \phi + c^2 \sin^2 \phi)^{\frac32}}
+       = \frac{a(1-e^2)}{(1 - e^2 \sin^2 \phi )^\frac32} \\
+   \,& = \frac{G^{\frac32}}{ac}
+       \negphantom{\frac{G^{\frac32}}{ac}}
+       \phantom{\frac{R(\gamma)^3 \Delta^{\frac32}}{a^4 c^4}}
+       = \frac1{ac} \left( a^2 \sin^2 \theta + c^2 \cos^2 \theta \right)
+             ^{\frac32}
+       = \frac{a}{\sqrt{1-e^2}} ( 1 - e^2 \cos^2 \theta )^\frac32 \\
+   \,& = \frac{R(\gamma)^3 \Delta^{\frac32}}{a^4 c^4}
+       = \frac1{a\,c}
+           \left( \frac{a^4 \sin^2 \gamma + c^4 \cos^2 \gamma}
+                       {a^2 \sin^2 \gamma + c^2 \cos^2 \gamma} \right)^\frac32
+       = \frac{a}{\sqrt{1-e^2}}
+           \left( \frac{\sin^2\gamma + (1-e^2)^2 \cos^2 \gamma}
+                       {1 - e^2 \cos^2 \gamma} \right)^\frac32 \\
+   \,& = R_1 \,\text{, the minimum radius of curvature.}
+\end{split}\end{equation}
+
+%=========================================================================
 \section{Curvature of a sphere}
 
 For a sphere, $a = c = r$, $G = r^2$, $K = 1/r^2$, $H = 1/r$, $\kappa_1 =
-1/r$, $\kappa_2 = 1/r$, and $N = r$, as expected.
+\kappa_2 = 1/r$, and $R_N = R_M = r$.
+
+%=========================================================================
+\section{Geometric computation of prime vertical radius of curvature}
+\label{geometric}
+
+A line in the normal direction from the surface of an oblate spheroid
+
+\begin{equation}\label{one}
+\Sigma = \frac{x^2+y^2}{a^2} + \frac{z^2}{c^2}
+  = \frac{\rho^2}{a^2} + \frac{z^2}{c^2} = 1 \,.
+\end{equation}
+
+will intersect the polar axis. The gradient to the ellipse at a point $P =
+(x,y,z)$ is
+%
+\begin{equation}
+\vec{g} = \nabla \Sigma = \nabla \left( \frac{x^2 + y^2}{a^2} +
+                                   \frac{z^2}{c^2} \right) =
+[ \Sigma_x, \Sigma_y, \Sigma_z ]^T =
+\left[ \frac{2 \, x}{a^2}, \frac{2 \, y}{a^2}, \frac{2\, z}{c^2} \right]^T
+\text{ and } |\vec{g}| = 2 \sqrt{ \frac{\rho^2}{a^4} + \frac{z^2}{c^4}} \,.
+\end{equation}
+
+\begin{centering}
+\includegraphics{wvs-146-1}\\[5pt]\label{fig}
+\end{centering}
+
+Therefore, the slope of a line $\mathcal{L}$, normal to the ellipse at $P$
+and intersecting the minor axis at $Q = ( 0, -\zeta )$ is
+%
+\begin{equation}\label{four}
+%m = 
+\tan \phi = \frac{\Sigma_z}{\Sigma_{\rho}} = \frac{a^2}{c^2}\, \frac{z}{\rho}
+= \frac1{1-e^2} \frac{z}{\rho}
+\, \text{, where }
+\Sigma_\rho = \sqrt{\Sigma_x^2 + \Sigma_y^2} = \frac{2\, \rho}{a^2}\,.
+\end{equation}
+
+% From the equation for a line, $z = m\,x + \zeta$, we have $\zeta = z -
+% m\,x = z \left( 1 - \frac{a^2}{c^2} \right)$ and $z - \zeta = m\,x =
+% \frac{a^2}{c^2} z$.
+% 
+% The vector $\vec{R}$ in the direction from $Q$ to $P$ (i.e., parallel to the
+% gradient at $P$) with a length equal to the distance from $Q$ to $P$ is
+% %
+% \begin{equation}\label{five}
+% \vec{R} =
+% \left[ \begin{array}{c} x \\ z \end{array} \right] -
+% \left[ \begin{array}{c} 0 \\ \zeta \end{array} \right] =
+% \left[ \begin{array}{c} x \\ \frac{a^2}{c^2}\,z \end{array} \right]
+% \text{ and }
+% | \vec{R} | = \sqrt{x^2 + \frac{a^4}{c^4} \,z^2}
+% \end{equation}
+% 
+% Substituting \Sigmaquation (\ref{first}) with $\lambda=0$ into \Sigmaquation
+% (\ref{five}) we have
+% %
+% \begin{equation}
+% \vec{R} =
+% \left[ \begin{array}{c} a \cos \theta \\ \frac{a^2}{c} \sin \theta
+% \end{array} \right] \text{ and }
+% | \vec{R} | = \frac{a}{c} \sqrt{a^2 \sin^2 \theta + c^2 \cos^2 \theta}
+%  = \frac{a \, \sqrt{G}}c = \frac1{\kappa_2} = R_2 \,.
+% \end{equation}
+% 
+% In an alternative derivation
+%
+The line $\mathcal{L}$ from $P$ to $Q$ can be represented by the point $P$
+and some distance $s$ along the normal vector $\vec{g}$ in the direction
+from $P$ to $Q$, \emph{viz.}
+%
+\renewcommand{\arraystretch}{1.4}
+\begin{equation}\label{L}
+\mathcal{L} = -\vec{R} =
+\vec{P} + s \vec{g} = \vec{Q} \,\,\text{ or}
+\left[ \begin{array}{c} \rho \\ z \end{array} \right] +
+s \left[ \begin{array}{c} \frac{2 \rho}{a^2} \\ \frac{2 z}{c^2}
+ \end{array} \right] =
+\left[ \begin{array}{c} 0 \\ -\zeta \end{array} \right] \,,
+\end{equation}
+
+from which, solving for $s$ and $\zeta$ gives
+%
+\begin{equation}\begin{split}\label{zeta}
+s = \,& -\frac{a^2}2 \\
+| \mathcal{L} | = | \vec{R} | = \,& s | \vec{g} | =
+\frac{a^2}{\sqrt{a^2 \cos^2 \phi + c^2 \sin^2 \phi}} =
+\frac{a}{\sqrt{1-e^2 \sin^2 \phi}} =
+\frac{a^2}{\sqrt{D}} = \frac1{\kappa_2} = R_2 \text{ and} \\
+\zeta = \,& z \left( 1 - \frac{a^2}{c^2} \right)
+      = -z\,\frac{e^2}{1-e^2}
+      = -R_2\, e^2 \sin \phi
+\end{split}\end{equation}
+
+% \begin{equation}
+% \vec{R} =
+% \left[ \begin{array}{c} a \cos \theta \\ \frac{a^2}{c} \sin \theta
+% \end{array} \right] \text{ and }
+% | \vec{R} | = \frac{a}{c} \sqrt{a^2 \sin^2 \theta + c^2 \cos^2 \theta}
+%  = \frac{a \, \sqrt{G}}c = \frac1{\kappa_2} = R_2 \,.
+% \end{equation}
+
+% which is the same result as Equation (\ref{five}).
+
+% Similarly, solving for $s$ and $\xi$ in
+% 
+% \renewcommand{\arraystretch}{1.4}
+% \begin{equation}
+% \vec{P} + s \vec{g} = \vec{T} \,\,\text{ or}
+% \left[ \begin{array}{c} x \\ y \end{array} \right] +
+% s \left[ \begin{array}{c} \frac{2x}{a^2} \\ \frac{2y}{b^2}
+%  \end{array} \right] =
+% \left[ \begin{array}{c} \xi \\ 0 \end{array} \right] \,,
+% \end{equation}
+% 
+% gives
+% %
+% \begin{equation}\begin{split}
+% s = \,& -\frac{c^2}2 \\
+% \xi = \,& x \left( 1 - \frac{c^2}{a^2} \right) \text{ and }\\
+% | \vec{PT} | = \,& s | \vec{g} | = \frac{c \sqrt{G}}{a}
+% = \frac{c^2}{a^2} | \vec{R} | = \frac{c^2}{a^2} R_2\,, \\
+% \end{split}\end{equation}
+% 
+% which is the normal distance from $\mathbf{P}$ to the equatorial plane
+% (which might not be interesting).
+
+%=========================================================================
+\section{Parametric represention using geodetic latitude}\label{Rel}
+
+Solving for $\rho$ in terms of $z$, and vice-versa, in Equation (\ref{four})
+and substituting into Equation (\ref{one}) gives parametric equations in
+terms of the geodetic angle $\phi$:
+%
+\begin{equation}\begin{split}\label{nine}
+\rho = \,& z\, \frac{a^2}{c^2}\, \frac{\cos \phi}{\sin \phi}
+\Rightarrow \frac{z^2 a^4 \cos^2 \phi}{a^2 c^4 \sin^2 \phi} +
+ \frac{z^2}{c^2} = 1
+\Rightarrow z^2 \left( a^2 \cos^2 \phi + c^2 \sin^2 \phi \right)
+ = c^4 \sin^2 \phi\\
+z = \,& \rho\, \frac{c^2}{a^2}\, \frac{\sin \phi}{\cos \phi}
+\Rightarrow \frac{\rho^2}{a^2} +
+ \frac{\rho^2 c^4 \sin^2 \phi}{a^4 c^2 \cos^2 \phi} = 1
+\Rightarrow \rho^2 \left( a^2 \cos^2 \phi + c^2 \sin^2 \phi \right)
+ = a^4 \cos^2 \phi \\
+ \text{from } \,& \text{which} \\
+%
+\rho = \,& \frac{a^2 \cos \phi}{\sqrt{a^2 \cos^2 \phi + c^2 \sin^2 \phi}}
+     = \frac{a^2 \cos \phi}{\sqrt{D}} = N(\phi) \cos \phi
+     = \frac{a \cos \phi}{\sqrt{1-e^2\sin^2\phi}} \\
+z = \,& \frac{c^2 \sin \phi}{\sqrt{a^2 \cos^2 \phi + c^2 \sin^2 \phi}}
+     = \frac{c^2 \sin \phi}{\sqrt{D}} = \frac{c^2}{a^2} N(\phi) \sin \phi
+     = \frac{a ( 1-e^2 ) \sin \phi}{\sqrt{1-e^2\sin^2\phi}} \,. \\
+ \text{or, } \,& \text{for an ellipsoid} \\
+x = \,& \frac{a^2 \cos \phi \cos \lambda}
+             {\sqrt{a^2 \cos^2 \phi + c^2 \sin^2 \phi}}
+     = \frac{a^2 \cos \phi \cos \lambda}{\sqrt{D}}
+     = N(\phi) \cos \phi \cos \lambda = \rho \cos \lambda
+     = \frac{a \cos \phi \cos \lambda}{\sqrt{1-e^2\sin^2\phi}} \\
+y = \,& \frac{a^2 \cos \phi \sin \lambda}
+             {\sqrt{a^2 \cos^2 \phi + c^2 \sin^2 \phi}}
+     = \frac{a^2 \cos \phi \sin \lambda}{\sqrt{D}}
+     = N(\phi) \cos \phi \sin \lambda = \rho \sin \lambda
+     = \frac{a \cos \phi \sin \lambda}{\sqrt{1-e^2\sin^2\phi}} \\
+z = \,& \frac{c^2 \sin \phi}{\sqrt{a^2 \cos^2 \phi + c^2 \sin^2 \phi}}
+     = \frac{c^2 \sin \phi}{\sqrt{D}} = \frac{c^2}{a^2} N(\phi) \sin \phi
+     = (1-e^2) N(\phi) \sin \phi
+     = \frac{a ( 1-e^2 ) \sin \phi}{\sqrt{1-e^2\sin^2\phi}} \,. \\
+\end{split}\end{equation}
+
+%=========================================================================
+\section{Ellipse of rotated equatorial plane}
+
+If a plane initially in the equatorial plane is rotated through an angle
+$\beta$ about a line $y = x \tan \lambda$, its semi-major axis is $a$, and
+its semi-minor axis is given by Equation (\ref{R}):
+%
+\begin{equation}
+b = R(\beta) = \frac{a\,c}{\sqrt{a^2 \sin^2 \beta + c^2 \cos^2 \beta}}
+  = a\, \sqrt{\frac{1-e^2}{1-e^2 \cos^2 \beta}} \,.
+\end{equation}
+
+If a local two-dimensional co\"ordinate system is established with axes
+%
+\begin{equation}\begin{split}
+\xi = \,& [ \cos \lambda, \sin \lambda, 0 ]^T \\
+\eta = \,& [ \cos \gamma \cos\lambda, \cos \gamma \sin \lambda,
+              \sin \gamma ]^T \\
+\end{split}\end{equation}
+
+the equation for the ellipse in that plane is
+%
+\begin{equation}\label{E2}
+\frac{\xi^2}{a^2} + \frac{\eta^2}{b^2} = 1 \,.
+\end{equation}
+
+The parametric equations using the central angle are
+
+\begin{equation}\begin{split}
+\xi = \,& R(\gamma) \cos \gamma \\
+\eta = \,& R(\gamma) \sin \gamma \,. \\
+\end{split}\end{equation}
+
+Substituting in Equation (\ref{E2}) gives
+
+\begin{equation}
+R(\gamma)^2 \left( \frac{\cos^2 \gamma}{a^2} +
+                       \frac{\sin^2 \gamma}{b^2} \right) = 1
+ = R(\gamma)^2 \, \frac{1-e^{\prime 2} \cos^2 \beta}
+                       {a^2 ( 1-e^{\prime 2} )} \,,
+\end{equation}
+
+where $e^{\prime 2} = 1 - \frac{b^2}{a^2}$ is the eccentricity of the
+rotated ellipse, from which
+
+\begin{equation}
+R(\gamma) = \frac{a\,b}
+                     {\sqrt{a^2 \sin^2 \gamma + b^2 \cos^2 \gamma}}
+ = a \sqrt{ \frac{1-e^{\prime 2}}{1-e^{\prime 2} \cos^2 \beta}} \,.
+\end{equation}
+
+The curvature is
+
+\begin{equation}\begin{split}
+\kappa(\phi) = \,& \frac{(a^2 \cos^2 \phi + b^2 \sin^2 \phi)^\frac32}
+                        {(a\,b)^2}
+             = \frac{(1 - e^{\prime 2} \sin^2 \phi)^\frac32}{a(1-e^{\prime 2})} \\
+\kappa(\theta) = \,&
+  \frac{a\, b}
+       {(a^2 \sin^2 \theta + b^2 \cos^2 \theta)^\frac32}
+               = \frac{\sqrt{1-e^{\prime 2}}}{a(1-e^{\prime 2} \cos^2 \theta)^\frac32} \\
+\kappa(\gamma) = \,& a\,b\,
+                     \left( \frac{ a^2 \sin^2 \gamma + b^2 \cos^2 \gamma }
+                                 { a^4 \sin^2 \gamma + b^4 \cos^4 \gamma }
+                     \right)^\frac32
+               = \frac{\sqrt{1-e^{\prime 2} }}a
+                     \left( \frac{ 1 - e^{\prime 2} \cos^2 \gamma }
+                                 { 1 + ( e^4 - 2 e^{\prime 2} ) \cos^2 \gamma }
+                     \right)^\frac32 \,, \\
+\end{split}\end{equation}
+
+which is the same as the meridional curvature of an oblate spheroid with
+eccentricity $e'$.
+
+%=========================================================================
+%\newpage
+\section{Ellipse in a normal section}
+
+From Equations (40) and (43) in Deaton, the equation of the ellipse in a
+normal section at azimuth $\alpha$, in a local co\"ordinate system
+with its origin at $(\lambda,\phi)$, is
+%
+\begin{equation}\label{Normal}
+\xi^{\prime2} + \eta^{\prime2} + ( g\,\xi' + h \, \eta')^2
+ = (g^2+1) \xi^{\prime2} + 2 \xi' \eta' g h + (h^2+1)\eta^{\prime2}
+ = -2 N \xi' \text{ where}
+\end{equation}
+\vspace*{-0.2in}
+\begin{equation}
+g^2 = \frac{e^2}{1-e^2} \sin^2 \phi \text{ and } h = g \cos \alpha\,.
+\end{equation}
+
+Substituting $\xi' = x \cos \omega + y \sin \omega$ and
+$\eta' = -x \sin \omega + y \cos \omega$, the coefficient of the $xy$
+term, which we wish to remove, is $(h^2-g^2) \sin \omega \cos \omega +
+(\cos^2 \omega - \sin^2 \omega)\, g h$.
+
+Substituting $\omega = \tan^{-1} \frac{h}g = \tan^{-1} \cos\, \alpha$,
+Equation (\ref{Normal}) becomes
+%
+\begin{equation}\label{Normal-rot}
+(g^2+h^2+1) x^2 + y^2 = 2 N \frac{h y - g x}{\sqrt{g^2+h^2}}\,.
+\end{equation}
+
+Substituting $x = \xi - \xi_c$ and $y = \eta - \eta_c$, and solving for
+$\xi_c$ and $\eta_c$ to make the coefficients of the $\xi$ and $\eta$
+terms zero, Equation (\ref{Normal-rot}) becomes
+%
+\begin{equation}\label{Normal-rot-cent}
+(g^2+h^2+1) \xi^2 + \eta^2 = N^2\,\frac{h^2+1}{g^2+h^2+1}\,,
+\end{equation}
+
+from which the semi-axes are
+%
+\begin{equation}\begin{split}
+a^{\prime2} = \,& N^2\,\frac{h^2+1}{g^2+h^2+1}
+= a^2 \frac{1-e^2+e^2\sin^2\phi\cos^2\alpha}
+           {(1-e^2\sin^2\phi)(1-e^2\cos^2\phi+e^2\sin^2\phi\cos^2\alpha)}
+           \, \text{ and}\\
+b^{\prime2} = \,& N^2\,\frac{h^2+1}{(g^2+h^2+1)^2}
+= a^2 \frac{1-e^2+e^2\sin^2\phi\cos^2\alpha}
+           {(1-e^2\sin^2\phi)(1-e^2\cos^2\phi+e^2\sin^2\phi\cos^2\alpha)^2}
+           \\
+\end{split}\end{equation}
+
+and the eccentricity is
+%
+\begin{equation}
+\epsilon^2 = 1-\frac{b^{\prime2}}{a^{\prime2}} = \frac{g^2+h^2}{g^2+h^2+1}
+= \frac{e^2\sin^2\phi ( 1 + \cos^2\alpha )}
+       {1-e^2\cos^2\phi+e^2\sin^2\phi\cos^2\alpha} \,.
+\end{equation}
+
+The radius of curvature is
+%
+\begin{equation}
+R_M = a^\prime\, \frac{1-\epsilon^2}{(1-\epsilon^2 \sin^2 \psi)^\frac32} \,,
+\end{equation} 
+where $\psi$ is the geodetic angle with respect to the semi-major axis of
+the section.
+
+For the prime vertical section, $\alpha=\frac{\pi}2$, and therefore $h=0$.
+Equation (\ref{Normal-rot-cent}) becomes
+%
+\begin{equation}
+(g^2+1)\, \xi^2 + \eta^{\prime2} = \frac{N^2}{g^2+1}
+\end{equation}
+
+from which the semi-axes are
+%
+\begin{equation}\begin{split}\label{fifty-two}
+& a^{\prime2} = \frac{N^2}{g^2+1}
+             = a^2 \frac{1-e^2}
+                    {(1-e^2 \sin^2 \phi)(1-e^2 \cos^2 \phi)}
+ \text{ and} \\
+& b^{\prime2} = \frac{N^2}{(g^2+1)^2}
+             = a^2 \frac{(1-e^2)^2}
+                    {(1-e^2 \sin^2 \phi)(1-e^2 \cos^2 \phi)^2} \,,\\
+\end{split}\end{equation}
+
+and the eccentricity is
+%
+\begin{equation}
+\epsilon^2 = \frac{g^2}{g^2+1}
+           = \frac{e^2 \sin^2 \phi}{1-e^2 \cos^2 \phi} \,.
+\end{equation}
+
+For the prime vertical section, the center is at $[ x^\prime, y^\prime,
+z^\prime]^T$, where $x^\prime = (1-\delta)x = \frac{b^\prime \,e^2}{1-e^2}
+\sin^2\phi \cos \phi \cos \lambda$, $y^\prime = (1-\delta)y$ =
+$\frac{b^\prime \,e^2}{1-e^2} \sin^2\phi \cos \phi \sin \lambda$,
+$z^\prime = z - \delta(z+\zeta) = -b^\prime \,e^2 \sin \phi \cos^2 \phi$,
+$\delta = \frac{b^\prime}{N} = \frac1{1+g^2} = \sqrt{\frac{1-e^2}{1-e^2
+\cos^2 \phi}}$, and $\zeta$ is given in Equation (\ref{zeta}).
+
+Let $\vec{P}$, $\vec{g}$ and $\mathcal{L}$ be as in Equation (\ref{L}). 
+Then using the results from \h{wvs-131}, the point where the line
+$\mathcal{L}$ intersects the other side of the Earth is
+
+{\large\renewcommand{\arraystretch}{1.4}
+\begin{equation}
+\vec{v} =
+\left[ \begin{array}{l}
+-\frac{e^4 \cos^2 \theta - 2 e^2 + 1}{1 + (e^4-2 e^2) \cos^2 \theta}\, x \\
+-\frac{e^4 \cos^2 \theta - 2 e^2 + 1}{1 + (e^4-2 e^2) \cos^2 \theta}\, y \\
+-\frac{1 - e^4 \cos^2 \theta}{1 + (e^4-2 e^2) \cos^2 \theta}\, z \\
+\end{array} \right] \text{ and }
+|\vec{v} - \vec{P}|
+ = 2\,a\, \frac{\sqrt{1-e^2} ( 1 - e^2 \cos^2 \theta )^\frac32}
+          {1+(e^4 - 2 e^2)\cos^2 \theta}
+\end{equation}}
+%
+which, upon substituting $a \tan \theta = c \tan \phi$ becomes
+%
+\begin{equation}
+\vec{v} = \left[ \begin{array}{l}
+-\frac{e^2\cos^2\phi -2 e^2 + 1}{1-e^2 \cos^2 \phi} \,x \\
+-\frac{e^2\cos^2\phi -2 e^2 + 1}{1-e^2 \cos^2 \phi} \,y \\
+-\frac{1 + e^2 \cos^2 \phi}{1-e^2 \cos^2 \phi} \,z \\
+\end{array} \right] \text{ and }
+| \vec{v} - \vec{P}| =
+2\, a \frac{1-e^2}{(1-e^2 \cos^2 \phi)\sqrt{1-e^2 \sin^2 \phi}}
+ = 2\, b^\prime \,.
+\end{equation}
+
+This shows that the semi-minor axis of the prime vertical section is
+normal to the surface.  Therefore, for the prime vertical section,
+the radius of curvature at an angle $\psi$ from the semi-minor axis is
+%
+\begin{equation}
+R^\oplus_{\text{eq}} = a^\prime\,
+  \frac{1-\epsilon^2}{(1-\epsilon^2 \cos^2 \psi)^\frac32}\,.
+\end{equation}
+
+For the prime vertical section, $\psi=0$ and $R^\oplus_{\text{eq}} = N$. 
+At azimuth $\alpha$, $\psi=\omega=\tan^{-1} \cos\,\alpha$, and
+%
+\begin{equation}
+R^\oplus_{\text{eq}} = a^\prime\,
+   \frac{1-\epsilon^2}{(1-\epsilon^2 \cos^2 \psi)^\frac32}
+ =  a^\prime\, (1-\epsilon^2) \left(
+   \frac{1+\cos^2 \alpha}{1+\cos^2 \alpha-\epsilon^2} \right)^\frac32 \,.
+\end{equation}
+
+%=========================================================================
+\section{Azimuth of a normal section}
+
+In his Equation (11), Deaton shows that the ``East-North-Up'' or ``ENU''
+co\"ordinate system with its origin at $(x_1,y_1,z_1)$ is related to
+geocentric Cartesian ECR co\"ordinates $(x,y,z)$ by
+%
+\begin{equation}
+\left[ \begin{array}{c} U \\ E \\ N \\ \end{array} \right] =
+\mathbf{R}_{\phi\lambda}
+\left[ \begin{array}{c} x-x_1 \\ y-y_1 \\ z-z_1 \end{array} \right]
+\end{equation}
+
+where $\mathbf{R}_{\phi\lambda}$ is the product of two rotations
+%
+\begin{equation}\label{Rotations}
+\mathbf{R}_{\phi\lambda} = \mathbf{R}_\phi \mathbf{R}_\lambda =
+\left[ \begin{array}{ccc} \cos \phi_1 & 0 & \sin \phi_1 \\
+                               0      & 1 &      0      \\
+                         -\sin \phi_1 & 0 & \cos \phi_1 \\
+\end{array} \right] \,
+\left[ \begin{array}{ccc} \cos \lambda_1 & \sin \lambda_1 & 0 \\
+                         -\sin \lambda_1 & \cos \lambda_1 & 0 \\
+                               0         &      0         & 1 \\
+\end{array} \right] \,.
+\end{equation}
+
+The first rotation, $\mathbf{R}_\lambda$, a positive right-handed rotation
+about the $z$ axis that takes the $(x,y,z)$ axes to $(x',y',z')$. The $z'$
+axis is coincident with the $z$ axis and the $x'-y'$ plane is the
+equatorial plane.
+
+The second rotation, $\mathbf{R}_\phi$, is a rotation about the $y'$ axis
+by $\phi_1$ that takes the $(x',y',z')$ axes to the $(x'',y'',z'')$ axes. 
+The $x''$ axis is parallel to the $U$ axis, the $y''$ axis is parallel to
+the $E$ axis, and the $z''$ axis is parallel to the $N$ axis.
+
+Performing the multiplication in Equation (\ref{Rotations}) gives
+%
+\begin{equation}
+\mathbf{R}_{\phi\lambda}
+\left[ \begin{array}{ccc}
+  \cos \phi_1 \cos \lambda_1 &  \cos \phi_1 \sin \lambda_1 & \sin \phi_1 \\
+ -\sin \lambda_1             & \cos \lambda_1              & 0 \\
+ -\sin \phi_1 \cos \lambda_1 & -\sin \phi_1 \sin \lambda_1 & \cos \phi_1 \\
+\end{array} \right] \,.
+\end{equation}
+
+Re-ordering the rows of $\mathbf{R}_{\phi\lambda}$ gives the
+transformation in the more usual $(E,N,U)$ form
+%
+\begin{equation}
+\left[ \begin{array}{c} E \\ N \\ U \\ \end{array} \right] =
+\mathbf{R}
+\left[ \begin{array}{c} x-x_1 \\ y-y_1 \\ z-z_1 \end{array} \right]
+\text{ where }
+\mathbf{R}
+\left[ \begin{array}{ccc}
+ -\sin \lambda_1             & \cos \lambda_1              & 0 \\
+ -\sin \phi_1 \cos \lambda_1 & -\sin \phi_1 \sin \lambda_1 & \cos \phi_1 \\
+  \cos \phi_1 \cos \lambda_1 &  \cos \phi_1 \sin \lambda_1 & \sin \phi_1 \\
+\end{array} \right] \,.
+\end{equation}
+
+The co\"oordinate differences $(\Delta E = E_2-E_1, \Delta N = N_2-N_1,
+\Delta U = U_2 - U_1$) in the local geodetic horizon plane are given by
+%
+\begin{equation}\label{Delta-RNU}
+\left[ \begin{array}{c}
+ \Delta E \\ \Delta N \\ \Delta U \\ \end{array} \right] =
+\mathbf{R}
+\left[ \begin{array}{c}
+ \Delta x \\ \Delta y \\ \Delta z \end{array} \right] \,.
+\end{equation}
+
+From Equation (18) in Deaton (the ratio of the first two rows of Equation
+(\ref{Delta-RNU})), the azimuth of a normal section plane from
+$(\lambda_1,\phi_1)$ to $(\lambda_2,\phi_2)$ is
+%
+\begin{equation}
+\tan \alpha_{12} = \frac{\Delta E}{\Delta N}
+ = \frac{\Delta x \sin \lambda_1 - \Delta y \cos \lambda_1}
+        {  \sin \phi_1 ( \Delta x \cos \lambda_1 +
+                         \Delta y \sin \lambda_1 )
+         - \Delta z \cos \phi_1} \,.
+\end{equation}
+
+Replacing geocentric Cartesian ECR co\"ordinates with geodetic co\"ordinates,
+%
+\begin{equation}
+\tan \alpha_{12}
+ = \frac{N_2 \cos \phi_2 \sin(\lambda_1-\lambda_2)}
+        {N_2 ( \cos \phi_2 \sin \phi_1 \cos(\lambda_1-\lambda_2) -
+           (1-e^2) \cos \phi_1 \sin \phi_2 )
+         - N_1 e^2 \sin \phi_1 \cos \phi_1} \,,
+\end{equation}
+
+where
+%
+\begin{equation}
+N_1 = \frac{a}{\sqrt{1-e^2 \sin^2 \phi_1}} \text{ and }
+N_2 = \frac{a}{\sqrt{1-e^2 \sin^2 \phi_2}} \,.
+\end{equation}
+
+%=========================================================================
+\newpage
+\section*{Appendix: Bowring's proof of prime vertical radius of curvature}
+
+From \emph{Notes on the curvature in the prime vertical section}, {\bf
+Survey Review 29}, 226 (October 1987) pp 195-196.
+
+Let $P$ be a point on the reference ellipsoid and let $A$ and $B$ be two
+points on the prime vertical section through $P$ such that $A$ and $B$ are
+symmetrically placed about $P$ (see the figure below).  Let the normals to
+the ellipsoid at $A$ and $B$ intersect at $G$ on the minor axis.  (This is
+so because by symmetry about the meridian through $A$ the normal at $A$
+intersects the minor axis, and similarly for the normal at $B$. 
+Furthermore the points at $A$ and $B$ are at the same latitude and
+therefore the normals intersect the minor axis at the same point).
+
+Let the plane $ABG$ intersect the surface in the line $AP'B$.  Then AG is
+perpendicular to the line $AP'B$ at $A$ (because $AG$ is perpendicular to
+all surface lines through $A$), and similarly $BG$ is perpendicular to the
+line at $B$.  Let now $A$ and $B$ approach $P$ (on the prime vertical
+section) \emph{simultaneously} and \emph{symmetrically}.  Then $AP'B
+\rightarrow APB$, and at all times the normals at the ends intersect on
+the minor axis.  This is the geometrical evidence that the centre of
+curvature lies on the minor axis, and therefore the centre of curvature
+$C$ of the prime vertical section through $P$ lies on the intersection of
+the normal at $P$ (to the ellipsoid) with the minor axis, and the radius
+of curvature is equal to the length $CP$.
+
+\begin{centering}
+\includegraphics[scale=1.0]{wvs-146-2}\\
+\end{centering}
+
 
 \label{lastpage}
 \vspace*{-0.1in} % Somehow, this causes lastpage to be defined
@@ -314,6 +1292,9 @@ For a sphere, $a = c = r$, $G = r^2$, $K = 1/r^2$, $H = 1/r$, $\kappa_1 =
 % $Id$
 
 % $Log$
+% Revision 1.3  2019/11/13 01:33:03  vsnyder
+% Added a lot more material
+%
 % Revision 1.2  2017/10/13 19:10:51  vsnyder
 % Add CVS stuff
 %
