@@ -344,19 +344,22 @@ contains
 
   pure real(rp) elemental function Get_N ( Phi, Csq ) result ( N )
 
-  !{ Given the orbit geodetic longitude {\tt Phi} = $\phi$ in radians and
+  !{ Given the orbit geodetic angle {\tt Phi} = $\phi$ in radians and
   !  the square of the minor axis of the orbit plane projected Earth
   !  ellipse in meters {\tt Csq} = $R_c^2$ compute the function $N(\phi)$
-  !  defined immediately before Equation (5.11) in the 19 August 2004
-  !  ATBD JPL D-18130.
+  !  defined immediately before Equation (5.11) in the 19 August 2004 ATBD
+  !  JPL D-18130, in meters.  This would be the radius of curvature in the
+  !  prime vertical of the Earth reference ellipsoid if Csq were $R_{b}^2$.
   !%
   !  \begin{equation*}
   !  N(\phi) = \frac{R_a^2}
   !                   {\sqrt{R_a^2 \cos^2 \phi + R_c^2 \sin^2 \phi}}
   !          = \frac{R_a^2}
   !                 {\sqrt{(R_a^2 - R_c^2) \cos^2 \phi + R_c^2}}
+  !          = \frac{R_a}{\sqrt{1 - e^2 \sin^2 \phi}} \,,
   ! \end{equation*}
-  
+  ! where eccentricity $e = 1 - \frac{R_c^2}{R_a^2}$.
+
     real(rp), intent(in) :: Phi ! Radians
     real(rp), intent(in) :: Csq ! Meters
 
@@ -369,7 +372,7 @@ contains
   ! ---------------------------------------------------  Get_R_eq  -----
   pure real(rp) elemental function Get_R_Eq ( Phi, Csq ) result ( R_eq )
 
-  !{ Given the orbit geodetic longitude {\tt Phi} = $\phi$ in radians and the
+  !{ Given the orbit geodetic angle {\tt Phi} = $\phi$ in radians and the
   !  square of the minor axis of the orbit plane projected Earth ellipse in
   !  meters {\tt Csq} = $R_c^2$ compute the radius in kilometers of an
   !  equivalent circular Earth tangent to the elliptical Earth and having the
@@ -381,49 +384,69 @@ contains
   !        = \sqrt \frac{R_a^4 - (R_a^2+R_c^2)(R_a^2-R_c^2) \cos^2 \phi}
   !                       {R_c^2 +              (R_a^2-R_c^2) \cos^2 \phi} \\
   !        = \,& N(\phi) \sqrt{ \sin^2 \phi +
-  !                               \frac{R_c^4}{R_a^4} \cos^2 \phi} \\
+  !                               \frac{R_c^4}{R_a^4} \cos^2 \phi}
+  !        = N(\phi) \sqrt{ 1 + e^2 ( 1-2 e^2 ) \cos^2 \phi}\,, \\
   ! \end{split}\end{equation*}
   !%
-  ! This is Equation (5.21) in the 19 August 2004 ATBD JPL D-18130.
+  ! where eccentricity $e = 1 - \frac{R_c^2}{R_a^2}$,
+  ! and $N(\phi)$ is given above in function {\tt Get_N}.
+  ! This is Equation (5.21) in the 19 August 2004 ATBD JPL D-18130,
+  ! and
   !%
   ! \begin{equation*}
-  !  N(\phi) = \frac{R_a^2}
-  !                 {\sqrt{R_a^2 \cos^2 \phi + R_c^2 \sin^2 \phi}}
-  !          = \frac{R_a^2}
-  !                 {\sqrt{(R_a^2 - R_c^2) \cos^2 \phi + R_c^2}}
-  ! \end{equation*}
-  ! which appears before Equation (5.11) in the ATBD.
-  !%
-  ! \begin{equation*}
-  !  R_c^2 = \frac{a^2 b^2}{a^2 \sin^2 \beta + b^2 \cos^2 \beta}\,,
+  !  R_c^2 = \frac{R_a^2 R_b^2}{R_a^2 \sin^2 \beta + R_b^2 \cos^2 \beta}\,,
   ! \end{equation*}
   ! where $R_a$ is the Earth equatorial radius, and $R_b$ is the Earth polar
-  ! radius.
+  ! radius, which is Equation (5.3) in the ATBD.
+  !
+  ! This expression for $R_{eq}$ is incorrect.  In its derivation, the
+  ! d N(phi) / d phi term was neglected. The correct result is
+  !%
+  ! \begin{equation*}
+  ! R_{eq} = \frac{R_a^2 R_c^2}
+  !               {(R_a^2 \cos^2 \phi + R_c^2 \sin^2 \phi)^\frac32}
+  !        = \frac{R_a^2 R_c^2}
+  !               {((R_a^2-R_c^2) \cos^2 \phi + R_c^2)^\frac32}
+  !        = R_a \, \frac{1-e^2}{(1-e^2 \sin^2 \phi)^\frac32} \,.
+  ! \end{equation*}
 
     real(rp), intent(in) :: Phi ! Radians
     real(rp), intent(in) :: Csq ! Meters
 
-    real(rp), parameter :: Earthrada_sq = earthrada ** 2
-    real(rp), parameter :: Earthrada_4 = earthrada_sq ** 2
+    real(rp), parameter :: EarthRada_sq = earthRada ** 2
+    real(rp), parameter :: EarthRada_4 = earthRada_sq ** 2
+    real(rp) :: E2 ! Eccentricity**2 in the orbit plane
+    real(rp) :: AxisRatio_sq ! c^2/a^2
 
-    r_eq = (earthrada_sq - csq) * COS(phi)**2
-    ! Earthrad[abc] are in meters, but r_eq needs to be in km.
-    r_eq = 0.001_rp * sqrt( &
-      & ( earthrada_4 -(earthrada_sq + csq) * r_eq ) / &
-      & ( csq + r_eq ) )
+    logical, parameter :: Correct = .false.
+
+    if ( correct ) then
+      axisRatio_sq = Earthrada_sq / csq
+      e2 = 1.0 - axisRatio_sq
+      ! Earthrad[abc] are in meters, but r_eq needs to be in km.
+      r_eq = 0.001_rp * earthRada * axisRatio_sq / &
+                        sqrt( 1.0_rp - e2 * sin(phi)**2 )**3
+    else
+      r_eq = (earthrada_sq - csq) * cos(phi)**2
+      ! Earthrad[abc] are in meters, but r_eq needs to be in km.
+      r_eq = 0.001_rp * sqrt( &
+        & ( earthrada_4 -(earthrada_sq + csq) * r_eq ) / &
+        & ( csq + r_eq ) )
+    end if
 
   end function Get_R_Eq
 
   ! --------------------------------------------  Get_R_eq_Center  -----
   pure function Get_R_eq_Center ( Phi, Req, Csq ) result ( D )
 
-  !{ Given the orbit geodetic longitude {\tt Phi} = $\phi$ in radians, the
-  !  equivalent circular earth radius $R_{\text{eq}}^\oplus = H_t^\oplus$
-  !  in KILOMETERS(!), and the square of the minor axis of the orbit plane
-  !  projected Earth ellipse in meters {\tt Csq} = $R_c^2$ compute the
-  !  vector $d$, the vector from the center of the earth to the center of
-  !  the equivalent circular earth in the orbit plane, in KILOMETERS(!),
-  !  defined in Equation (5.22) in the 19 August 2004 ATBD JPL D-18130.
+  !{ Given the orbit geodetic angle {\tt Phi} = $\phi$ in radians, the
+  !  equivalent circular earth radius {\tt Req} = $R_{\text{eq}}^\oplus
+  !  = H_t^\oplus$ in KILOMETERS(!), and the square of the minor axis of
+  !  the orbit plane projected Earth ellipse {\tt Csq} = $R_c^2$ in
+  !  METERS$^2$ compute the vector $d$, the vector from the center of the
+  !  earth to the center of the equivalent circular earth in the orbit
+  !  plane, in KILOMETERS(!), defined in Equation (5.22) in the 19
+  !  August 2004 ATBD JPL D-18130.
   !%
   ! \begin{equation*}\begin{split}
   !  x = \,& ( N(\phi) - H_t^\oplus ) \cos \phi \\
@@ -438,13 +461,12 @@ contains
     real(rp) :: D(3)            ! Kilometers.
 
     real(rp), parameter :: Earthrada_sq = earthrada ** 2
-    real(rp) :: N, Req_M
+    real(rp) :: N
 
-    N = get_N ( phi, csq )
-    Req_M = 1000.0_rp * Req
-    d = 0.001_rp * [ ( N - req ) * cos(phi), &
-                   & ( csq/earthrada_sq * N  - req) * sin(phi), &
-                   & 0.0_rp ]
+    N = 0.001_rp * get_N ( phi, csq ) ! KILOMETERS!
+    d = [ ( N - req ) * cos(phi), &
+        & ( csq/earthrada_sq * N  - req) * sin(phi), &
+        & 0.0_rp ]
 
   end function Get_R_eq_Center
 
@@ -846,6 +868,11 @@ contains
 end module Geometry
 
 ! $Log$
+! Revision 2.36  2020/01/08 21:49:54  vsnyder
+! Added a "correct" method to compute equivalent-circular-eqrth radius,
+! under a named constant currently false.  Corrected and improved some
+! TeXnicalities.
+!
 ! Revision 2.35  2019/11/26 19:40:41  vsnyder
 ! Correct a typo in a comment
 !
