@@ -352,7 +352,7 @@ radii of curvature is
 \end{equation}
 
 %=========================================================================
-\section{Development of curvatures using geodetic latitude $\phi$}
+\section{Development of curvatures using geodetic latitude $\phi$}\label{Geod}
 
 Let $D = a^2 \cos^2 \phi + c^2 \sin^2 \phi = a^2 ( 1 - e^2 \sin^2 \phi )$
 and $N(\phi) = \frac{a^2}{\sqrt{D}}$.  Then the parametric equations of an
@@ -641,6 +641,7 @@ The principal curvatures are
  \, \text{ and} \\[5pt]
 \kappa_2 =\,& \frac{e}E = \frac{c^2}{R(\gamma) \, \sqrt{\Delta}} \,, \\
 \end{split}\end{equation}
+
 %=========================================================================
 \section{Relationship of latitude definitions}
 %
@@ -670,7 +671,8 @@ or
 \end{split}
 \end{empheq}
 
-\section{Prime vertical and meridional radii of curvature}
+%=========================================================================
+\section{Prime vertical and meridional radii of curvature}\label{Prime}
 
 The prime vertical is the east-west plane that includes the zenith. The
 radius of curvature $R_N$ in the prime vertical is frequently denoted $N$.
@@ -699,7 +701,7 @@ Equations (\ref{principal-reduced}), (\ref{principal-geod}), and
 }
 \makeatother
 %
-\begin{equation}\begin{split}
+\begin{equation}\begin{split}\label{RN}
 R_N\,& =  \frac{a^2}{\sqrt{D}}
        \negphantom{\frac{a^2}{\sqrt{D}}}
        \phantom{\frac{R(\gamma) \sqrt{\Delta}}{c^2}}
@@ -1000,7 +1002,7 @@ eccentricity $e'$.
 
 %=========================================================================
 %\newpage
-\section{Ellipse in a normal section}
+\section{Ellipse in a normal section}\label{Normal-Section}
 
 From Equations (40) and (43) in Deaton, the equation of the ellipse in a
 normal section at azimuth $\alpha$, in a local co\"ordinate system
@@ -1141,7 +1143,7 @@ R^\oplus_{\text{eq}} = a^\prime\,
 For the prime vertical section, $\psi=0$ and $R^\oplus_{\text{eq}} = N$. 
 At azimuth $\alpha$, $\psi=\omega=\tan^{-1} \cos\,\alpha$, and
 %
-\begin{equation}
+\begin{equation}\label{Req}
 R^\oplus_{\text{eq}} = a^\prime\,
    \frac{1-\epsilon^2}{(1-\epsilon^2 \cos^2 \psi)^\frac32}
  =  a^\prime\, (1-\epsilon^2) \left(
@@ -1292,6 +1294,9 @@ of curvature is equal to the length $CP$.
 % $Id$
 
 % $Log$
+% Revision 1.4  2020/01/06 21:20:17  vsnyder
+% Substantial revision and additions
+%
 % Revision 1.3  2019/11/13 01:33:03  vsnyder
 % Added a lot more material
 %
