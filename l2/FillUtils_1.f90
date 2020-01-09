@@ -4452,7 +4452,7 @@ contains ! =====     Public Procedures     =============================
         if ( .not. goofy ) & ! not MIF_TAI in HDF4
           & call GetModuleName( quantity%template%instrumentModule,nameString )
         nameString = AssembleL1BQtyName('ECR', L1BOAFile%HDFVersion, &
-          & finder(found)%tngt, trim(nameString))
+          & .false., trim(nameString))
         call ReadL1BData ( L1BOAFile, nameString, L1BData, noMAFs, flag, &
           & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
           & NeverFail=.false., dontPad=DONTPAD )
@@ -4467,7 +4467,7 @@ contains ! =====     Public Procedures     =============================
           if ( .not. goofy ) & ! not MIF_TAI in HDF4
             & call GetModuleName( quantity%template%instrumentModule,nameString )
           nameString = AssembleL1BQtyName('GeocLat', L1BOAFile%HDFVersion, &
-            & finder(found)%tngt, trim(nameString))
+            & .true., trim(nameString))
           call ReadL1BData ( L1BOAFile, nameString, L1BData, noMAFs, flag, &
             & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
             & NeverFail=.false., dontPad=DONTPAD )
@@ -4478,7 +4478,9 @@ contains ! =====     Public Procedures     =============================
           if ( .not. goofy ) & ! not MIF_TAI in HDF4
             & call GetModuleName( quantity%template%instrumentModule,nameString )
           nameString = AssembleL1BQtyName('GeodLat', L1BOAFile%HDFVersion, &
-            & finder(found)%tngt, trim(nameString))
+            & .true., trim(nameString))
+          ! print *, 'namestring: ', namestring
+          ! stop
           call ReadL1BData ( L1BOAFile, nameString, L1BData, noMAFs, flag, &
             & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
             & NeverFail=.false., dontPad=DONTPAD )
@@ -4489,7 +4491,7 @@ contains ! =====     Public Procedures     =============================
         if ( .not. goofy ) & ! not MIF_TAI in HDF4
           & call GetModuleName( quantity%template%instrumentModule,nameString )
         nameString = AssembleL1BQtyName('Lon', L1BOAFile%HDFVersion, &
-            & finder(found)%tngt, trim(nameString))
+            & .true., trim(nameString))
         call ReadL1BData ( L1BOAFile, nameString, L1BData, noMAFs, flag, &
           & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
           & NeverFail=.false., dontPad=DONTPAD )
@@ -7987,6 +7989,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.149  2020/01/09 22:25:41  pwagner
+! Extra steps to avoid munging sids-related DS names
+!
 ! Revision 2.148  2019/09/27 16:48:42  pwagner
 ! Removed faulty goto 999 from NamedQtyFromFile
 !
