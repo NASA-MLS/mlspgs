@@ -326,7 +326,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   function AssembleL1BQtyName ( name, hdfVersion, isTngtQty, &
     & InstrumentName, dont_compress_name) &
     & result(QtyName)
-    use MLSStrings, only: CompressString
+    use MLSStrings, only: CompressString, Lowercase
     ! Returns a QtyName to be found in the L1b file
     ! If given InstrumentName, name should be a fragment:
     ! e.g., name='VelECI' and InstrumentName='sc'
@@ -404,7 +404,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       else if ( the_rest(1:2) /= 'tp' ) then
         QtyName = '/' // trim(my_instrument) // &
           & '/' // trim(the_rest)
-      else if ( DROPTPSUBGROUP ) then
+      else if ( DROPTPSUBGROUP .and. HDFVersion /= HDFVersion_4 ) then
         QtyName = '/' // trim(my_instrument) // &
           & '/' // trim(the_rest(3:))
       else
@@ -419,7 +419,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       call restoreHDF4Dot ( QtyName )
       return
     end if
-    if ( isTngtQty ) then
+    if ( isTngtQty .and. Lowercase(my_Instrument) /= 'sc' ) then
       if ( DROPTPSUBGROUP .and. hdfVersion == HDFVERSION_5 ) then
         QtyName = trim(QtyName)
       else
@@ -428,7 +428,12 @@ contains ! ============================ MODULE PROCEDURES ======================
     end if
     QtyName = trim(QtyName) // trim(name)
     if ( compress ) QtyName = CompressString(QtyName)
+    if ( DEEBUG ) then
+      print *, 'Before restoring dot: ', trim(QtyName)
+    end if
     call restoreHDF4Dot ( QtyName )
+    ! No name should begin with a dot
+    if ( QtyName(1:1) == '.' ) QtyName = QtyName(2:)
     if ( DEEBUG ) then
       print *, 'more converted name: ', trim(QtyName)
     end if
@@ -3016,6 +3021,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.126  2020/01/09 22:24:05  pwagner
+! Extra steps so AssembleL1BQtyName wont munge sids-related DS names
+!
 ! Revision 2.125  2019/05/13 20:55:49  pwagner
 ! Prints less unless debugging
 !
