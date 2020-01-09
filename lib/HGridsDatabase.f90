@@ -19,8 +19,8 @@ module HGridsDatabase                   ! Horizontal grid information
   private
 
   public :: HGrid_T, HGrids_T, HGridGeolocations_T, HGridGeolocations
-  public :: AddHGridtodatabase, CopyHGrid, CreateEmptyHGrid, DestroyHGridContents, &
-    & DestroyHGridDatabase, Dump, FindClosestMatch, &
+  public :: AddHGridtodatabase, CopyHGrid, CreateEmptyHGrid, &
+    & DestroyHGridContents, DestroyHGridDatabase, Dump, FindClosestMatch, &
     & L1BGeoLocation, L1BSubsample, NullifyHGrid, &
     & TrimHGrid
 
@@ -216,18 +216,18 @@ contains ! =========== Public procedures ===================================
 
     use Allocate_Deallocate, only: Allocate_Test
     use Dump_0, only: Dump
-    use HighOutput, only: outputNamedValue
-    use L1BData, only: L1BData_t, &
-      & AssembleL1BQtyName, ConvertL1BData, deallocateL1BData, readL1BData
-    use MLSCommon, only: MLSFile_t
-    use MLSFiles, only: getMLSFileByType
-    use MLSFillValues, only: isFillValue, Monotonize
-    use MLSKinds, only: rk => r8
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning 
-    use MLSStrings, only: lowercase
-    use Output_m, only: output
+    use HighOutput, only: OutputNamedValue
+    use L1BData, only: L1BData_T, &
+      & AssembleL1BQtyName, ConvertL1BData, DeallocateL1BData, ReadL1BData
+    use MLSCommon, only: MLSFile_T
+    use MLSFiles, only: GetMLSFileByType
+    use MLSFillValues, only: IsFillValue, Monotonize
+    use MLSKinds, only: Rk => R8
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
+    use MLSStrings, only: Lowercase, StrEq
+    use Output_M, only: Output
     use Toggles, only: Gen, Levels, Toggle
-    use Trace_m, only: Trace_Begin, Trace_End
+    use Trace_M, only: Trace_Begin, Trace_End
     ! Args
     type (MLSFile_T), dimension(:), pointer     :: fileDatabase
     character(len=*), intent(in)                :: name
@@ -347,8 +347,8 @@ contains ! =========== Public procedures ===================================
       & dontpad=.true., neverFail=neverFail )
     if ( myNeverFail .and. status /= 0 ) go to 9
     if ( .not. associated(l1bField%dpField) ) call ConvertL1BData( l1bField )
-    if ( any(isFillValue(l1bField%dpField) ) .and. & 
-      & trim(readItemname) /= '/GHz/Lon') then 
+    if ( any(isFillValue(l1bField%dpField) ) .and. .not. & 
+      & any(StrEq( (/ '/GHz/Lon ', 'scOrbIncl' /), trim(readItemname) ) ) ) then 
       call output( 'Fill values among ' // trim(readItemName), advance='yes' ) 
       call MLSMessage ( MLSMSG_Warning, trim(ModuleName) // '%L1BGeoLocation', & 
         & 'Required monotonization' ) 
@@ -470,7 +470,7 @@ contains ! =========== Public procedures ===================================
     use Allocate_Deallocate, only: Allocate_Test
     use HighOutput, only: BeVerbose, OutputNamedValue
     use MLSCommon, only: MLSChunk_t
-    use MLSKinds, only: rk => r8
+    use MLSKinds, only: Rk => R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     ! Args
     type(MLSChunk_t), intent(in)                 :: chunk
@@ -804,6 +804,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.44  2020/01/09 22:22:08  pwagner
+! Now wont try to Monotonize sids l1boa scOrbIncl
+!
 ! Revision 2.43  2018/08/04 00:44:16  vsnyder
 ! Spiff a warning message
 !
