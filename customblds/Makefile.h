@@ -658,6 +658,21 @@ wvs-145-2.eps: wvs-145-2.obj
 
 wvs-145-2.pdf: wvs-145-2.obj
 
+wvs-146.dvi: wvs-146.tex wvs-146-1.eps wvs-146-2.eps wvs-146-3.eps
+
+wvs-146.pdf: wvs-146.tex wvs-146-1.pdf wvs-146-2.pdf wvs-146-3.pdf
+
+wvs-146-1.eps: wvs-146-1.obj
+
+wvs-146-1.pdf: wvs-146-1.obj
+
+wvs-146-2.eps: wvs-146-2.obj
+
+wvs-146-2.pdf: wvs-146-2.obj
+
+wvs-146-3.eps: wvs-146-3.obj
+
+wvs-146-3.pdf: wvs-146-3.obj
 
 wvs-147.dvi: wvs-147.tex \
              wvs-147-1.eps wvs-147-2.eps wvs-147-3.eps \
@@ -769,6 +784,14 @@ Barycentric.eps: Barycentric.obj
 
 Barycentric.pdf: Barycentric.obj
 
+wvs-157.dvi: wvs-157.tex wvs-157-circ.eps wvs-146.dvi
+
+wvs-157.pdf: wvs-157.tex wvs-157-circ.pdf wvs-146.pdf
+
+wvs-157-circ.eps: wvs-157-circ.obj
+
+wvs-157-circ.pdf: wvs-157-circ.obj
+
 wvs-151-QTM-1.eps: wvs-151-QTM-1.obj
 
 wvs-151-QTM-1.pdf: wvs-151-QTM-1.obj
@@ -796,6 +819,9 @@ iy-006.bbl: yanovsky.bib iy-006.aux
 
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.47  2019/12/23 18:09:34  pwagner
+# Intel hates deferring size of parameter arrays
+#
 # Revision 1.46  2019/12/20 21:16:59  pwagner
 # Builds .f9h files for lib/dates_module.f90
 #
