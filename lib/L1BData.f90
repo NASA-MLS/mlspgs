@@ -35,11 +35,12 @@ module L1BData
   use MLSFiles, only: FileNotFound, HDFVersion_4, HDFVersion_5, &
     & AddFileToDatabase, GetMLSFileByType, InitializeMLSfile, &
     & MLS_OpenFile, MLS_CloseFile
+  use MLSFinds, only: FindFirst
   use MLSHDF5, only: MaxNDSNames, GetAllHDF5DSNames, SaveAsHDF5DS
   use MLSKinds, only: R4, R8
   use MLSMessageModule, only: MLSMSG_Error, &
     & MLSMSG_L1BRead, MLSMSG_Warning, MLSMessage
-  use MLSStrings, only: Indexes, Streq
+  use MLSStrings, only: Indexes, Reverse, Streq
   use MLSStringLists, only: NumStringElements, ReplaceSubstring, SwitchDetail
   use Moretree, only: Get_Field_Id
   use Output_M, only: NewLine, Output
@@ -74,17 +75,20 @@ module L1BData
 
 !     (subroutines and functions)
 ! AssembleL1BQtyName              Returns Quantity Name depending on hdfVersion
-! contractL1BData                 Contract an l1bData to just a range of mafs
-! convertL1BData                  Convert an l1bData from integer-valued to d.p.
-! cpL1BData                       Duplicate an l1bData
+! ContractL1BData                 Contract an l1bData to just a range of mafs
+! ConvertL1BData                  Convert an l1bData from integer-valued to d.p.
+! ConvertL1BOADSNames             Convert L1BOA DS names between hdf versions
+! CpL1BData                       Duplicate an l1bData
 ! DeallocateL1BData               Called when an l1bData is finished with
-! dupL1BData                      Duplicate an l1bData
+! DupL1BData                      Duplicate an l1bData
 ! Diff                            Diff two l1b quantities
 ! Dump                            Print facts about l1brad quantity
-! findl1bdata                     Which file handle contains a given sd name
-! findMaxMAF                      What is the maximum MAF number in the file?
+! Findl1bdata                     Which file handle contains a given sd name
+! FindMaxMAF                      What is the maximum MAF number in the file?
 ! Getl1BFile                      Which MLSFile contains a given sd name
 !                                  (or attribute)
+! L1BOAHDF4DSName                 Convert L1BOA DS names from HDF5 to HDF4
+! L1BOAHDF4DSName                 Convert L1BOA DS names from HDF4 to HDF5
 ! L1BOASetup                      From l2cf, open, and save l1boa file info
 ! L1BRadSetup                     From l2cf, open, and save l1brad file info
 ! ReadL1BData                     Read all info concerning a l1brad quantity
@@ -107,9 +111,10 @@ module L1BData
 !   int firstMAF, int lastMAF, int firstChannel, int lastChannel,
 !   int firstMIF, int lastMIF )
 ! ConvertL1BData ( l1bData_T l1bData )
+! ConvertL1BOADSNames ( char* HDF4name, char* HDF5Name, char* direction )
 ! CpL1BData ( MLSFile_t L1BFile1, MLSFile_t L1BFile2, char QuantityName, &
 !    [char NewName], [log l2aux] )
-! dupL1BData ( l1bData_T l1bData1, l1bData_T l1bData2, int offsetMAF )
+! DupL1BData ( l1bData_T l1bData1, l1bData_T l1bData2, int offsetMAF )
 ! DeallocateL1BData (l1bData_T l1bData)
 ! Diff (l1bData_T l1bData1, l1bData_T l1bData2, int details, &
 !   [char options], [int numDiffs], [int mafStart], [int mafEnd])
@@ -117,6 +122,8 @@ module L1BData
 ! int FindL1BData (int files(:), char fieldName, [int hdfVersion])
 ! int FindMaxMAF (MLSFile_t file, [int minMAF])
 ! MLSFile_T GetL1BFile (MLSFile_t filedatabase(:), char fieldName, [char options])
+! char* L1BOAHDF4DSName ( char* HDF5Name )
+! char* L1BOAHDF5DSName ( char* HDF4Name )
 ! L1boaSetup (int root, MLSFile_t filedatabase(:), int f_file, [int hdfVersion])
 ! L1bradSetup (int root, MLSFile_t filedatabase(:), int f_file, [int hdfVersion])
 ! ReadL1BData (int L1FileHandle, char QuantityName, l1bData_T l1bData,
@@ -128,12 +135,13 @@ module L1BData
 
   private
 
-  public :: L1BData_T, nameLen, precisionSuffix, &
-    & allocateL1BData, AssembleL1BQtyName, &
-    & CheckForCorruptFileDatabase, ContractL1BData, ConvertL1BData, CpL1BData, &
-    & DeallocateL1BData, diff, dump, dupL1BData, &
-    & findL1BData, FindMaxMAF, GetL1BFile, &
-    & L1BRadSetup, L1BOASetup, PadL1BData, &
+  public :: L1BData_T, NameLen, PrecisionSuffix, &
+    & AllocateL1BData, AssembleL1BQtyName, &
+    & CheckForCorruptFileDatabase, ContractL1BData, &
+    & ConvertL1BData, ConvertL1BOADSNames, CpL1BData, &
+    & DeallocateL1BData, Diff, Dump, DupL1BData, &
+    & FindL1BData, FindMaxMAF, GetL1BFile, &
+    & L1BOAHDF4DSName, L1BOAHDF5DSName, L1BRadSetup, L1BOASetup, PadL1BData, &
     & ReadL1BAttribute, ReadL1BData
 
 !---------------------------- RCS Module Info ------------------------------
@@ -142,11 +150,11 @@ module L1BData
   private :: not_used_here
 !---------------------------------------------------------------------------
 
-  interface DIFF
+  interface Diff
     module procedure DiffL1BData
   end interface
 
-  interface DUMP
+  interface Dump
     module procedure DumpL1BData
   end interface
 
@@ -232,13 +240,19 @@ module L1BData
   integer, public, parameter :: CANTENDCOUNTERMAF =  UNKNOWNDATATYPE + 1
   integer, public, parameter :: CANTENDQUANTITY =    CANTENDCOUNTERMAF + 1
 
+  ! We plan to use this 2-d array to convert hdf5-formatted l1boa ds names
+  ! to the older hdf4 format.
+  include 'l1boa_dsnames.f9h'
 contains ! ============================ MODULE PROCEDURES =======================
 
   ! --------------------------------------------  AllocateL1BData  -----
   subroutine AllocateL1BData ( l1bData, &
     & indims, trueRank, datatype, &
     & L1bDataSibling )
-    ! Allocate arrays in l1bData type
+    ! Allocate arrays in l1bData type to match one of
+    !   indims(1:3)       explicit sizes
+    !   L1bDataSibling    L1bDataSibling%dims(1:3)
+    ! Their values will be initialized as undefined value or as ' '
     type( L1BData_T ), intent(out) :: L1bData
     integer, dimension(3), optional,  intent(in) :: indims
     integer, optional, intent(in) :: trueRank
@@ -333,6 +347,9 @@ contains ! ============================ MODULE PROCEDURES ======================
     ! Without InstrumentName, name should be complete (in hdf4-style)
     ! e.g., name='scVelECI' or name='R1A:118.B1F:PT.S0.FB25-1'
     ! and isTngtQty is simply ignored
+    !
+    ! This is flaky and difficult to maintain as currently written;
+    ! we should rewrite it using the L1BOADSNames array.
     character(len=*), intent(in) :: name        ! bare name; e.g. SolarZenith
     integer, intent(in)          :: hdfVersion  ! which QtyName must conform to
     logical, intent(in)          :: isTngtQty   ! T or F
@@ -585,6 +602,37 @@ contains ! ============================ MODULE PROCEDURES ======================
     call deallocate_test ( l1bData%intField, 'l1bData%intField', ModuleName )
   end subroutine ConvertL1BData
 
+  ! --------------------------------------------  ConvertL1BOADSNames  -----
+  subroutine ConvertL1BOADSNames ( HDF4name, HDF5Name, direction )
+    ! Convert an l1boa name from how it appears in an hdf5-formatted file
+    ! to the name we used in the older hdf4 format or vice versa.
+    ! Useful only in retrievals based on sids radiances
+    ! direction             conversion
+    ! ---------             ----------
+    !   5to4            HDF5Name -> HDF4Name
+    !   4to5            HDF4Name -> HDF5Name
+    character(len=*), intent(inout)     :: HDF5name
+    character(len=*), intent(inout)     :: HDF4name
+    character(len=*), intent(in)        :: direction ! '5to4' or '4to5'
+    ! Internal variables
+    character                           :: goal
+    integer                             :: i
+    ! Executable
+    goal = Reverse(trim(direction)) ! '4' or '5'
+    select case( goal )
+    case ( '4' )
+      HDF4Name = 'unknown'
+      i = FindFirst( L1BOADSNames(2,:), HDF5Name )
+      ! print *, 'HDF5Name, i', trim(HDF5Name), i
+      if ( i > 0 ) HDF4Name = L1BOADSNames(1,i)
+    case ( '5' )
+      HDF5Name = 'unknown'
+      i = FindFirst( L1BOADSNames(1,:), HDF4Name )
+      if ( i > 0 ) HDF5Name = L1BOADSNames(2,i)
+    case default
+    end select
+  end subroutine ConvertL1BOADSNames
+
   ! ----------------------------------------  CpL1BData  -----
   subroutine CpL1BData ( L1BFile1, L1BFile2, QuantityName, NewName, l2aux )
 
@@ -630,8 +678,8 @@ contains ! ============================ MODULE PROCEDURES ======================
       & cond=toggle(gen) .and. levels(gen) > 1 )
   end subroutine CpL1BData
 
-  ! --------------------------------------------------  dupL1BData  -----
-  subroutine dupL1BData ( l1bData1, l1bData2, offsetMAF )
+  ! --------------------------------------------------  DupL1BData  -----
+  subroutine DupL1BData ( l1bData1, l1bData2, offsetMAF )
     ! cp all components from l1bdata1 to l1bdata2
     ! increment counterMAF by offsetMAF (if present)
     type( L1BData_T ), intent(in)  :: L1bData1
@@ -652,7 +700,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     if ( associated(l1bdata1%charField) ) l1bdata2%charField=l1bdata1%charField
     if ( associated(l1bdata1%intField) ) l1bdata2%intField=l1bdata1%intField
     if ( associated(l1bdata1%dpField) ) l1bdata2%dpField=l1bdata1%dpField
-  end subroutine dupL1BData
+  end subroutine DupL1BData
 
   ! ------------------------------------------  DeallocateL1BData  -----
   subroutine DeallocateL1BData ( l1bData )
@@ -1419,6 +1467,32 @@ contains ! ============================ MODULE PROCEDURES ======================
       call outputNamedValue( 'First counterMAF gap found at MAF ', i )
     endif
   end subroutine showL1BGaps
+
+  !--------------------------------------------------  L1BOAHDF4DSName  -----
+  function L1BOAHDF4DSName ( HDF5Name ) result( HDF4Name )
+    ! Convert an l1boa ds name from hdf5 to hdf4
+
+    ! Dummy arguments
+    character(len=*), intent(in)      :: HDF5Name
+    character(len=128)                :: HDF4Name
+    character(len=128)                :: Name
+    ! Executable
+    Name = HDF5Name
+    call ConvertL1BOADSNames ( HDF4Name, Name, '5to4' )
+  end function L1BOAHDF4DSName
+
+  !--------------------------------------------------  L1BOAHDF5DSName  -----
+  function L1BOAHDF5DSName ( HDF4Name ) result( HDF5Name )
+    ! Convert an l1boa ds name from hdf4 to hdf5
+
+    ! Dummy arguments
+    character(len=*), intent(in)      :: HDF4Name
+    character(len=128)                :: HDF5Name
+    character(len=128)                :: Name
+    ! Executable
+    Name = HDF4Name
+    call ConvertL1BOADSNames ( Name, HDF5Name, '4to5' )
+  end function L1BOAHDF5DSName
 
   !--------------------------------------------------  L1BOASetup  -----
   subroutine L1boaSetup ( root, filedatabase, F_FILE, hdfVersion )
@@ -3021,6 +3095,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.127  2020/01/16 00:18:45  pwagner
+! Can now convert l1boa ds names between file hdf versions
+!
 ! Revision 2.126  2020/01/09 22:24:05  pwagner
 ! Extra steps so AssembleL1BQtyName wont munge sids-related DS names
 !
