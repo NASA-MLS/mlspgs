@@ -21,8 +21,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-146r2}
-\newcommand{\docdate}{5 January 2020}
+\newcommand{\docname}{wvs-146r3}
+\newcommand{\docdate}{19 January 2020}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -88,7 +88,7 @@ Subject: \>Radii of curvature of an oblate spheroid\\
 From: \>Van Snyder\\
 Reference: \>Harry Lass, {\bf Vector and Tensor Analysis}, McGraw-Hill
              (1950), pp 71-78\\
-           \>R.~E.~Deaton, \emph{The Normal Section
+           \>R.~E.~Deakin, \emph{The Normal Section
              Curve of an Ellipsoid}, November 2009,\\
            \>{\tt http://www.mygeodesy.id.au/documents/NormalSection.pdf}\\
            \>M. Ligas, \emph{Various parameterizations of ``latitude''
@@ -110,12 +110,12 @@ Reference: \>Harry Lass, {\bf Vector and Tensor Analysis}, McGraw-Hill
 Let $a$ be the equatorial radius, and $c$ the polar radius of the Earth,
 an oblate spheroid
 %
-\begin{equation}
+\begin{equation}\label{ellipsoid}
 \Sigma = \frac{x^2}{a^2} + \frac{y^2}{a^2} + \frac{z^2}{c^2} = 1
 \text{ or }
 x^2 +y^2 + \frac{z^2}{1-e^2} = a^2
 \end{equation}
-where eccentricity $e = 1-\frac{c^2}{a^2}$.
+where eccentricity $e^2 = 1-\frac{c^2}{a^2}$.
 
 \begin{centering}
 \includegraphics[scale=0.75]{wvs-146-3}\\[5pt]\label{latitudes}
@@ -196,15 +196,16 @@ the normal is defined.
 Among all the planes that include the normal, the curvature of the curve
 in one of the planes is maximum, and the curvature in another one is
 minimum.  These curvatures are the \emph{principal curvatures}, denoted
-$\kappa_1$ and $\kappa_2$, respectively, which are roots of
+$\kappa_1$ and $\kappa_2$, respectively, which are roots of Equation (125)
+from {\bf Vector and Tensor Analysis}:
 
 \begin{equation}\label{third}
 (E G - F^2)\, \kappa^2 - ( e G + g E - 2 f F )\, \kappa + ( e g - f^2 ) = 0
 \,,
 \end{equation}
 
-(Equation (125) from {\bf Vector and Tensor Analysis}) where $E$, $F$, and
-$G$ are coefficients of the first fundamental form for a surface:
+where $E$, $F$, and $G$ are coefficients of the first fundamental form for
+a surface:
 
 \begin{equation}
 \text{d} s^2 = E\, \text{d} \lambda^2 +
@@ -226,7 +227,9 @@ G = \,& \frac{\partial \mathbf{r}}{\partial \theta} \cdot
 \,.
 \end{split}\end{equation}
 
-$e$, $f$, and $g$ are coefficients of the second fundamental form:
+$e$, $f$, and $g$ are coefficients of the second fundamental
+form:\footnote{Within this section, section \ref{Gaussian}, and section
+\ref{Mean}, $e$ is not the eccentricity of the oblate spheroid.}
 
 \begin{equation}
 2\, d = e\, \text{d} \lambda^2 +
@@ -297,14 +300,15 @@ e = \,& \mathbf{n} \cdot
 % the coefficients of the second normal form are unchanged, as expected.
 
 %=========================================================================
-\subsection{Principal curvatures}
+\subsection{Principal curvatures}\label{Principal}
 
 With $F = f = 0$, the roots of Equation (\ref{third}) (the principal
 curvatures), are
 
 \begin{equation}\begin{split}\label{principal-reduced}
 \kappa_1 =\,& \frac{g}G = \frac{a\, c}{G^\frac32}
-         = a^2 \frac{\sqrt{1-e^2}}{G^\frac32} \\[2pt]
+         = a^2 \frac{\sqrt{1-e^2}}{G^\frac32}
+         \,\,(e \text{ is eccentricity}) \\[2pt]
 \kappa_2 =\,& \frac{e}E = \frac{c}{a \sqrt{G}}
          = \sqrt{\frac{1-e^2}{G}} = \frac{G}{a^2}\,\kappa_1\\[2pt]
 \kappa_1 - \kappa_2
@@ -316,7 +320,7 @@ curvatures), are
 The minimum and maximum radii of curvature are $R_1 = \frac1{\kappa_1}$
 and $R_2 = \frac1{\kappa_2}$.
 
-\subsection{Gaussian curvature of oblate spheroid}
+\subsection{Gaussian curvature of oblate spheroid}\label{Gaussian}
 
 The Gaussian curvature $K$ is the product of the principal curvatures:
 
@@ -327,10 +331,11 @@ K = \kappa_1 \kappa_2
 = \frac{c^2}{G^2}
 \end{equation}
 
-and the radius of Gaussian curvature $\sqrt{1/K} = \frac{G}c$ is the
-geometric mean of the principal radii of curvature.
+and the radius of Gaussian curvature $\sqrt{1/K} = \frac{G}c = a\, \frac{1
+- e^2 \cos^2\theta}{\sqrt{1-e^2}}$ is the geometric mean of the principal
+radii of curvature.
 
-\subsection{Mean curvature of oblate spheroid}
+\subsection{Mean curvature of oblate spheroid}\label{Mean}
 
 The mean curvature $H$ is the average of the principal curvatures:
 
@@ -677,12 +682,13 @@ or
 The prime vertical is the east-west plane that includes the zenith. The
 radius of curvature $R_N$ in the prime vertical is frequently denoted $N$.
 It is the distance from the surface to the polar axis in the direction
-normal to the surface.\footnote{B. R. Bowring, \emph{Notes on the curvature
-in the prime vertical section}, {\bf Survey Review 29}, 226 (October 1987)
-pp 195-196, reproduced in the appendix.}  Using $c \tan \phi = a \tan
-\theta$ and $c^2 \tan \phi = a^2 \tan \gamma$ from Equations
-(\ref{tangents}), the results derived in Section \ref{geometric} and
-Equations (\ref{principal-reduced}), (\ref{principal-geod}), and
+normal to the surface.\footnote{B. R. Bowring, \emph{Notes on the
+curvature in the prime vertical section}, {\bf Survey Review 29}, 226
+(October 1987) pp 195-196, reproduced in the appendix on page
+\pageref{appendix}.}  Using $c \tan \phi = a \tan \theta$ and $c^2 \tan
+\phi = a^2 \tan \gamma$ from Equations (\ref{tangents}), the results
+derived in Section \ref{geometric} and Equations
+(\ref{principal-reduced}), (\ref{principal-geod}), and
 (\ref{principal-geoc}) are
 %
 \makeatletter
@@ -908,7 +914,8 @@ z = \,& \rho\, \frac{c^2}{a^2}\, \frac{\sin \phi}{\cos \phi}
      = \frac{a \cos \phi}{\sqrt{1-e^2\sin^2\phi}} \\
 z = \,& \frac{c^2 \sin \phi}{\sqrt{a^2 \cos^2 \phi + c^2 \sin^2 \phi}}
      = \frac{c^2 \sin \phi}{\sqrt{D}} = \frac{c^2}{a^2} N(\phi) \sin \phi
-     = \frac{a ( 1-e^2 ) \sin \phi}{\sqrt{1-e^2\sin^2\phi}} \,. \\
+     = (1-e^2)N(\phi)\,\sin\phi
+     = \frac{a ( 1-e^2 ) \sin \phi}{\sqrt{1-e^2\sin^2\phi}} \\
  \text{or, } \,& \text{for an ellipsoid} \\
 x = \,& \frac{a^2 \cos \phi \cos \lambda}
              {\sqrt{a^2 \cos^2 \phi + c^2 \sin^2 \phi}}
@@ -1004,9 +1011,9 @@ eccentricity $e'$.
 %\newpage
 \section{Ellipse in a normal section}\label{Normal-Section}
 
-From Equations (40) and (43) in Deaton, the equation of the ellipse in a
-normal section at azimuth $\alpha$, in a local co\"ordinate system
-with its origin at $(\lambda,\phi)$, is
+From Equations (40) and (43) in Deakin, the equation of the ellipse in a
+normal section at azimuth $\alpha$, in a local $(\xi',\eta')$ co\"ordinate
+system with its origin at $(\lambda,\phi)$, is
 %
 \begin{equation}\label{Normal}
 \xi^{\prime2} + \eta^{\prime2} + ( g\,\xi' + h \, \eta')^2
@@ -1018,24 +1025,23 @@ with its origin at $(\lambda,\phi)$, is
 g^2 = \frac{e^2}{1-e^2} \sin^2 \phi \text{ and } h = g \cos \alpha\,.
 \end{equation}
 
-Substituting $\xi' = x \cos \omega + y \sin \omega$ and
-$\eta' = -x \sin \omega + y \cos \omega$, the coefficient of the $xy$
-term, which we wish to remove, is $(h^2-g^2) \sin \omega \cos \omega +
-(\cos^2 \omega - \sin^2 \omega)\, g h$.
-
-Substituting $\omega = \tan^{-1} \frac{h}g = \tan^{-1} \cos\, \alpha$,
-Equation (\ref{Normal}) becomes
+Substituting $\xi' = x \cos \omega + y \sin \omega$ and $\eta' = -x \sin
+\omega + y \cos \omega$ (a rotation), the coefficient of the $xy$ term,
+which we wish to remove, is $(h^2-g^2) \sin \omega \cos \omega + (\cos^2
+\omega - \sin^2 \omega)\, g h$, from which $\omega=\tan^{-1} \frac{h}g$.
+Using $\omega = \tan^{-1} \frac{h}g = \tan^{-1} \cos\, \alpha$ in this
+substitution, Equation (\ref{Normal}) becomes
 %
 \begin{equation}\label{Normal-rot}
 (g^2+h^2+1) x^2 + y^2 = 2 N \frac{h y - g x}{\sqrt{g^2+h^2}}\,.
 \end{equation}
 
-Substituting $x = \xi - \xi_c$ and $y = \eta - \eta_c$, and solving for
-$\xi_c$ and $\eta_c$ to make the coefficients of the $\xi$ and $\eta$
+Substituting $x = u - u_c$ and $y = v - v_c$, and solving for
+$u_c$ and $v_c$ to make the coefficients of the $u$ and $v$
 terms zero, Equation (\ref{Normal-rot}) becomes
 %
 \begin{equation}\label{Normal-rot-cent}
-(g^2+h^2+1) \xi^2 + \eta^2 = N^2\,\frac{h^2+1}{g^2+h^2+1}\,,
+(g^2+h^2+1) u^2 + v^2 = N^2\,\frac{h^2+1}{g^2+h^2+1}\,,
 \end{equation}
 
 from which the semi-axes are
@@ -1135,7 +1141,7 @@ This shows that the semi-minor axis of the prime vertical section is
 normal to the surface.  Therefore, for the prime vertical section,
 the radius of curvature at an angle $\psi$ from the semi-minor axis is
 %
-\begin{equation}
+\begin{equation}\label{psi-rot}
 R^\oplus_{\text{eq}} = a^\prime\,
   \frac{1-\epsilon^2}{(1-\epsilon^2 \cos^2 \psi)^\frac32}\,.
 \end{equation}
@@ -1153,7 +1159,7 @@ R^\oplus_{\text{eq}} = a^\prime\,
 %=========================================================================
 \section{Azimuth of a normal section}
 
-In his Equation (11), Deaton shows that the ``East-North-Up'' or ``ENU''
+In his Equation (11), Deakin shows that the ``East-North-Up'' or ``ENU''
 co\"ordinate system with its origin at $(x_1,y_1,z_1)$ is related to
 geocentric Cartesian ECR co\"ordinates $(x,y,z)$ by
 %
@@ -1225,38 +1231,185 @@ The co\"oordinate differences $(\Delta E = E_2-E_1, \Delta N = N_2-N_1,
  \Delta x \\ \Delta y \\ \Delta z \end{array} \right] \,.
 \end{equation}
 
-From Equation (18) in Deaton (the ratio of the first two rows of Equation
+From Equation (18) in Deakin (the ratio of the first two rows of Equation
 (\ref{Delta-RNU})), the azimuth of a normal section plane from
 $(\lambda_1,\phi_1)$ to $(\lambda_2,\phi_2)$ is
 %
-\begin{equation}
-\tan \alpha_{12} = \frac{\Delta E}{\Delta N}
+\begin{equation}\begin{split}
+\tan \alpha_{12} = \,& \frac{\Delta E}{\Delta N}
  = \frac{\Delta x \sin \lambda_1 - \Delta y \cos \lambda_1}
         {  \sin \phi_1 ( \Delta x \cos \lambda_1 +
                          \Delta y \sin \lambda_1 )
-         - \Delta z \cos \phi_1} \,.
-\end{equation}
-
-Replacing geocentric Cartesian ECR co\"ordinates with geodetic co\"ordinates,
-%
-\begin{equation}
-\tan \alpha_{12}
- = \frac{N_2 \cos \phi_2 \sin(\lambda_1-\lambda_2)}
-        {N_2 ( \cos \phi_2 \sin \phi_1 \cos(\lambda_1-\lambda_2) -
+         - \Delta z \cos \phi_1}
+   \text{, or, using Equation (\ref{tangents})} \\
+ = \,&
+   \frac{\sqrt{1-e^2 \cos^2 \theta_1}\,
+         ( \Delta x \sin \lambda_1 - \Delta y \cos \lambda_1)}
+        {(\Delta x \cos \lambda_1 + \Delta y \sin \lambda_1) \sin \theta_1
+         - \Delta z\, \sqrt{1-e^2} \cos \theta_1}
+   \text{, or, using Equation (\ref{first})} \\ 
+ = \,&
+   \frac{\sqrt{(1-e^2)(a^2-e^2 \rho_1^2)}\,(y_1 \Delta x) - x_1 \Delta y}
+        {z_1 (x_1 \Delta x + y_1 \Delta y) - \rho_1^2 ( 1-e^2) \Delta z}
+   \text{ where } \rho_1^2 = x_1^2+y_1^2 \\
+ = \,& 
+   \frac{N(\phi_2)\, \cos \phi_2 \sin(\lambda_1-\lambda_2)}
+        {N(\phi_2)\, ( \cos \phi_2 \sin \phi_1 \cos(\lambda_1-\lambda_2) -
            (1-e^2) \cos \phi_1 \sin \phi_2 )
-         - N_1 e^2 \sin \phi_1 \cos \phi_1} \,,
-\end{equation}
+         - N(\phi_1)\, e^2 \sin \phi_1 \cos \phi_1} \,. \\
+\end{split}\end{equation}
 
-where
+%=========================================================================
+\section{Ellipse in the normal section without explicit
+azimuth}\label{NoAz}
+
+Let $\vec{T} = [x_t,y_t,z_t]^T$ be the vector to the limb sub-tangent
+point, $\vec{G}$ be the outward gradient at the limb sub-tangent point,
+and $\vec{V}$ be a vector parallel to the line of sight from the
+instrument toward the limb tangent.  Then $\vec{N} = \vec{G} \times
+\vec{V}$ is normal to the plane containing the line of sight and the
+outward normal at the limb tangent point.  Let $\hat{n} =
+\frac{\vec{N}}{|\vec{N}|} = [ A, B, C ]^T$ be the unit normal to that
+plane.  Then the equation of the plane containing the line of sight, the
+outward normal at the limb tangent point, and the limb tangent point is %
+\begin{equation}\label{z-plane} A ( x - x_t ) + B ( y - y_t ) + C ( z -
+z_t ) = 0 \text{ or } A x + B y + C z = d \,\text{, where } d = \hat{n}
+\cdot \vec{T}\,. \end{equation}
+
+This plane is a normal section.  Substituting
 %
 \begin{equation}
-N_1 = \frac{a}{\sqrt{1-e^2 \sin^2 \phi_1}} \text{ and }
-N_2 = \frac{a}{\sqrt{1-e^2 \sin^2 \phi_2}} \,.
+z = \frac{d - A x - B y}C \,.
 \end{equation}
+
+from Equation (\ref{z-plane}), into Equation (\ref{ellipsoid}) gives an
+equation for the intersection of the plane with the ellipsoid, that is,
+the curve in the normal section,
+%
+\begin{equation}
+x^2 + y^2+ \frac{(A x + B y - d)^2}{F^2} = a^2 \,, \text{ where }
+F^2 = (1 - e^2 ) C^2 \,,
+\end{equation}
+
+which is clearly an ellipse.  Substituting $x = \xi \cos \omega + \eta
+\sin \omega$ and $y = -\xi \sin \omega + \eta \cos \omega$ ( a rotation)
+and solving for $\omega$ to eliminate the $\xi \eta$ term gives $\omega =
+\tan^{-1} \frac{A}B$.  Substituting this value of $\omega$, substituting
+$\xi=u-u_c$ and $\eta = v - v_c$, and solving for $u_c$ and $v_c$ to
+eliminate the linear terms, gives
+%
+\begin{equation}
+u^2 + \frac{W^2}{F^2} \, v^2
+ =  a^2 -\frac{d^2}{W^2} \, \text{ or }
+ \frac{u^2}{a^2-\frac{d^2}{W^2}} +
+ \frac{v^2}{\frac{F^2}{W^2} \left(a^2-\frac{d^2}{W^2} \right)} = 1\,,
+\end{equation}
+
+where $W^2 = A^2 + B^2 + F^2 = 1 - e^2 C^2$, from which the semi-major
+axis and eccentricity of the ellipse in the normal section are
+%
+\begin{equation}
+a'^2 = a^2-\frac{d^2}{W^2} \text{ and }
+\epsilon^2 = 1 - \frac{F^2}{W^2} = \frac{A^2+B^2}{W^2} \,.
+\end{equation}
+
+Substituting $\psi = \omega = \tan^{-1} \frac{A}B$ into Equation
+(\ref{psi-rot}) gives the radius of curvature at the sub-tangent point,
+%
+\begin{equation}\label{Req2}
+R^\oplus_{\text{eq}}
+ = a' \, (1-\epsilon^2)
+   \left( \frac{A^2+B^2}{A^2+(1-\epsilon^2)B^2} \right)^\frac32
+ = F^2 \sqrt{a^2 W^2 -d^2}
+    \left( \frac{A^2+B^2}{A^2 W^2 + B^2 F^2} \right) ^\frac32\,.
+\end{equation}
+
+From the figure in section \ref{geometric}, $d = \hat{n} \cdot \vec{T} =
+\zeta \cos \phi$ is the distance from the center to $\mathcal{L}$. 
+Substituting $\zeta = z_t \frac{e^2}{1-e^2}$ from Equation (\ref{zeta})
+and $z_t=a\,\frac{(1-e^2) \sin \phi}{\sqrt{1-e^2 \sin^2 \phi}}$ from
+Equation (\ref{nine}),
+%
+\begin{equation}
+d = \hat{n} \cdot \vec{T}
+  = a e^2 \, \frac{\sin\phi \cos\phi}{\sqrt{1-e^2 \sin^2 \phi}} \,.
+\end{equation}
+
+%=========================================================================
+\section{Relationship between gradient and position vectors}
+
+Let $\vec{V} = [ x, y, z ]^T$ be the position on an ellipsoid.  The
+gradient at that point is $\vec{G} = \nabla \Sigma = [ 2 x, 2 y,
+\frac{2z}{1-e^2} ]^T$.  Then using Equation (\ref{ellipsoid}),
+
+\begin{equation}
+\vec{V} \cdot \vec{G} = 2 \left( x^2 + y^2 + \frac{z^2}{1-e^2}\right)
+ = 2 a^2 \,.
+\end{equation}
+
+Using Equation (\ref{first}),
+
+\begin{equation}\label{VG}
+\frac{\vec{V} \cdot \vec{G}}{|\vec{V}| \, |\vec{G}|} =
+ \left( 1 + \frac{e^4 \sin^2 \theta \cos^2 \theta}{1-e^2}
+ \right)^{-\frac12}
+=
+ \left( 1 + \frac{e^4 \sin^2 2 \theta}{2(1-e^2)} \right)^{-\frac12}
+\,.
+\end{equation}
+
+Using $\rho^2 = x^2 + y^2$ and solving Equation (\ref{first}) for $\sin
+\theta = \frac{z}{a\sqrt{1-e^2}}$ and $\cos \theta = \frac{\rho}a$, this
+may be expressed in Cartesian co\"ordinates as
+
+\begin{equation}\begin{split}
+  \frac{\vec{V} \cdot \vec{G}}{|\vec{V}| \, |\vec{G}|}
+ = \,&
+  \left( 1 + \frac{e^4 \rho^2 z^2}{a^4(1-e^2)^2} \right)^{-\frac12}
+ = \left( 1 + \frac{e^4 \rho^2 z^2}{c^4} \right)^{-\frac12}
+% =  a^2 \frac{1-e^2}{\sqrt{a^4(1-e^2)^2 + e^4 \rho^2 z^2}}
+  \\
+ = \,&
+  \left( 1 + \frac{e^4 \rho^2 ( a^2 - \rho^2) }
+                  { a^4 ( 1-e^2 )} \right)^{-\frac12}
+ = \left( 1 + \frac{e^4 \rho^2 ( a^2 - \rho^2)}{a^2 c^2} \right)^{-\frac12}
+% =  a^2 \, \sqrt{\frac{1-e^2}{a^4(1-e^2) + e^4 \rho^2 ( a^2 - \rho^2 )}}
+  \,. \\
+\end{split}\end{equation}
+
+From the figure in section \ref{geometric}, $\angle(\vec{V},\vec{G}) =
+\phi - \gamma = \cos^{-1} \frac{\vec{V} \cdot \vec{G}}{|\vec{V}| \, |\vec{G}|}$.
+Then using Equation (\ref{tangents}),
+
+\begin{equation}\begin{split}
+\frac{\vec{V} \cdot \vec{G}}{|\vec{V}| \, |\vec{G}|} = \,&
+\cos(\phi - \gamma) = \cos \phi \cos \gamma + \sin \phi \sin \gamma \\
+ = \,& \frac{a^2 \cos^2 \phi + c^2 \sin^2 \phi}
+            {\sqrt{a^4 \cos^2 \phi + c^4 \sin^2 \phi}}
+ = \frac{1 - e^2 \sin^2 \phi}
+        {\sqrt{\cos^2 \phi + (1-e^2)^2 \sin^2 \phi}}
+ = \frac{1 - e^2 \sin^2 \phi}
+        {\sqrt{ 1 + e^2 ( e^2-2) \sin^2 \phi}} \\
+ = \,& \frac{a^2 \sin^2 \gamma + c^2 \cos^2 \gamma}
+            {\sqrt{a^4 \sin^2 \gamma} + c^4 \cos^2 \gamma}
+ = \frac{1 - e^2 \cos^2 \gamma}
+        {\sqrt{ \sin^2 \gamma + (1-e^2)^2 \cos^2 \gamma}}
+ = \frac{1 - e^2 \cos^2 \gamma}
+        {\sqrt{ 1 + e^2 ( e^2-2) \cos^2 \gamma}} \\
+ = \,& \frac{a\,c}
+            {\sqrt{(a^2 \cos^2 \theta + c^2 \sin^2 \theta)
+                   (c^2 \cos^2 \theta + a^2 \cos^2 \theta)}} \\
+ = \,& \sqrt{\frac{1-e^2}
+                  {( 1 - e^2 \sin^2 \theta )
+                   ( 1 - e^2 \cos^2 \theta )}}
+ = \left( 1 + \frac{e^4 \sin^2 2 \theta}{2(1-e^2)} \right)^{-\frac12}
+\,.
+\end{split}\end{equation}
 
 %=========================================================================
 \newpage
 \section*{Appendix: Bowring's proof of prime vertical radius of curvature}
+\label{appendix}
 
 From \emph{Notes on the curvature in the prime vertical section}, {\bf
 Survey Review 29}, 226 (October 1987) pp 195-196.
@@ -1286,7 +1439,6 @@ of curvature is equal to the length $CP$.
 \includegraphics[scale=1.0]{wvs-146-2}\\
 \end{centering}
 
-
 \label{lastpage}
 \vspace*{-0.1in} % Somehow, this causes lastpage to be defined
 \end{document}
@@ -1294,6 +1446,9 @@ of curvature is equal to the length $CP$.
 % $Id$
 
 % $Log$
+% Revision 1.5  2020/01/08 21:35:22  vsnyder
+% Add labels for reference in wvs-157
+%
 % Revision 1.4  2020/01/06 21:20:17  vsnyder
 % Substantial revision and additions
 %
