@@ -13,11 +13,18 @@ module PointingGrid_m
 
   ! Read the pointing grid file.  Make a database of pointing grids.
   ! Link them to and from the Signals database in MLSSignals_m
+  
+  ! ---------------------- TBD ----------------------------
+  
+  ! Should point to any relevant documentation on Pointing Grids
+  ! How are the files formatted?
+  ! How are they created?
+  ! ---------------------- TBD ----------------------------
 
-  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use MLSKINDS, only: R8
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
-  use MLSSIGNALS_M, only: DISPLAYSIGNALNAME, MAXSIGLEN, SIGNALS, SIGNAL_T
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use MLSKinds, only: R8
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MLSSignals_M, only: DisplaysignalName, Maxsiglen, Signals, Signal_T
 
   ! More USEs below in each procedure, if they're only used therein.
 
@@ -74,14 +81,16 @@ contains
   end subroutine Open_Pointing_Grid_File
 
   ! ------------------------------------  Read_Pointing_Grid_File  -----
+  ! Should document format of Pointing_Grid_File or else
+  ! point to location of file format.
   subroutine Read_Pointing_Grid_File ( Lun, Where )
     use Allocate_Deallocate, only: Test_Allocate
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
-    use MACHINE, only: IO_ERROR
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use PARSE_SIGNAL_M, only: PARSE_SIGNAL
-    use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use, Intrinsic :: Iso_C_Binding, only: C_Intptr_T, C_Loc
+    use Machine, only: Io_Error
+    use MLSStringlists, only: Switchdetail
+    use Parse_Signal_M, only: Parse_Signal
+    use Toggles, only: Gen, Levels, Switches, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
 
     integer, intent(in) :: Lun               ! Logical unit number to read it
     integer, intent(in) :: Where             ! In the L2CF tree, for tracing
@@ -318,14 +327,19 @@ outer2: do
   end subroutine Destroy_Pointing_Grid_Database
 
   ! --------------------------------  Dump_Pointing_Grid_Database  -----
-  subroutine Dump_Pointing_Grid_Database ( where )
-    use DUMP_0, only: DUMP
-    use MORETREE, only: STARTERRORMESSAGE
-    use OUTPUT_M, only: BLANKS, OUTPUT
+  subroutine Dump_Pointing_Grid_Database ( where, details )
+    use Dump_0, only: Dump
+    use Moretree, only: StarterrorMessage
+    use Output_M, only: Blanks, Output
 
     integer, intent(in), optional :: Where   ! Tree node index
+    integer, intent(in), optional :: Details ! Show heights, freqs if > 0
 
     integer :: I, J                     ! Subscripts, loop inductors
+    integer :: myDetails
+    ! Executable
+    myDetails = 0
+    if ( present(Details) ) myDetails = Details
     if ( associated(pointingGrids) ) then
       call output ( 'Pointing Grids: SIZE = ' )
       call output ( size(pointingGrids), advance='yes' )
@@ -336,6 +350,7 @@ outer2: do
           call blanks ( 6 )
           call DisplaySignalName ( pointingGrids(i)%signals(j), advance='yes' )
         end do ! j = 1, size(pointingGrids(i)%signals)
+        if ( myDetails < 1 ) cycle
         call output ( ' Center Frequency = ' )
         call output ( pointingGrids(i)%centerFrequency, advance='yes' )
         do j = 1, size(pointingGrids(i)%oneGrid)
@@ -365,6 +380,9 @@ outer2: do
 end module PointingGrid_m
 
 ! $Log$
+! Revision 2.17  2016/09/08 20:52:59  vsnyder
+! Make components allocatable instead of pointers
+!
 ! Revision 2.16  2015/03/28 02:00:28  vsnyder
 ! Added stuff to trace allocate/deallocate addresses
 !
