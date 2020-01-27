@@ -333,7 +333,12 @@ contains ! =========== Public procedures ===================================
       call outputNamedValue( 'readItemName to read', trim(readItemName) )
     elseif ( index( name, 'tp') > 0 ) then
       ! l1bItemName = AssembleL1BQtyName ( 'GHz.' // Name, hdfVersion, .false. )
-      readItemName = AssembleL1BQtyName ( Name, hdfVersion, .true., moduleStr )
+      if ( DeeBug ) then
+        call outputNamedValue( 'AssembleL1BQtyName Name:', trim(Name) )
+        call outputNamedValue( 'ModuleStr:', trim(ModuleStr) )
+        call outputNamedValue( 'hdfVersion:', hdfVersion )
+      endif
+      readItemName = AssembleL1BQtyName ( Name(3:), hdfVersion, .true., moduleStr )
     else
       readItemName = AssembleL1BQtyName ( Name, hdfVersion, .false. )
     endif
@@ -804,6 +809,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.45  2020/01/27 18:30:44  pwagner
+! Works wsith new AssembleL1BQtyName
+!
 ! Revision 2.44  2020/01/09 22:22:08  pwagner
 ! Now wont try to Monotonize sids l1boa scOrbIncl
 !
