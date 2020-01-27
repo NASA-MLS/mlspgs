@@ -630,6 +630,10 @@ contains ! ============= Public procedures ===================================
     MissingOK = BeVerbose( 'missOK', -1 )
 
     call GetModuleName( instrumentModule, instrumentModuleName )
+    ! Now due to some error deper than we wish to delve,
+    ! The s/c instrument module name is coming out as
+    ! 'SC', but the l1boa file thinks it's just 'sc'.
+    if ( instrumentModuleName == 'SC' ) instrumentModuleName = 'sc'
     if ( verbose ) then
       if ( qty%name > 0 ) then
         call output ( 'name: ', advance='no' )
@@ -799,17 +803,21 @@ contains ! ============= Public procedures ===================================
           call GetModuleName ( instrumentModule, l1bItemName )
           if ( IsModuleSpacecraft(instrumentModule) ) &
             & call GetModuleName ( instrumentModule+1, instrumentModuleName )
-          l1bItemName = trim(instrumentModuleName)//'.'//L1bItemsToRead(l1bItem)%name
-          if ( verboser ) call outputnamedValue ( 'before assembly', trim(l1bItemName) )
+          if ( instrumentModuleName == 'SC' ) instrumentModuleName = 'sc'
+          l1bItemName = &
+            & trim(instrumentModuleName)//'.'//L1bItemsToRead(l1bItem)%name
+          if ( verboser ) &
+            & call outputnamedValue ( 'before assembly', trim(l1bItemName) )
           l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
         elseif ( .not. isAnyModuleSpacecraft() ) then
           cycle
         else
           l1bItemName = L1bItemsToRead(l1bItem)%name
-          if ( verboser ) call outputnamedValue ( 'before assembly', trim(l1bItemName) )
+          if ( verboser ) &
+            & call outputnamedValue ( 'before assembly', trim(l1bItemName) )
           if ( l1bItemName(1:2) == 'sc' ) l1bItemName = l1bItemName(3:)
           l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false., &
-            & instrumentModuleName )
+            & InstrumentModuleName )
         end if
 
         ! Read it from the l1boa file
@@ -1608,6 +1616,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.208  2020/01/27 18:02:46  pwagner
+! Worked around the error that made instrumentModuleName allcaps
+!
 ! Revision 2.207  2018/04/11 17:47:05  pwagner
 ! Should work better with ASMLS mif geolocations
 !
