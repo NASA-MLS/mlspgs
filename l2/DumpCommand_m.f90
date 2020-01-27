@@ -2052,7 +2052,7 @@ contains
         do i = 2, nsons(son)
           what = decoration(decoration(subtree(i,son)))
           call output ( what, after=': ' )
-          call dump ( signals(what), details=details>0 )
+          call dump ( signals(what), details )
         end do
       case ( f_spectroscopy )
         do i = 2, nsons(son)
@@ -3256,6 +3256,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.148  2020/01/27 21:34:18  pwagner
+! Consistent with new api for Dump_Signals
+!
 ! Revision 2.147  2019/03/18 22:09:34  pwagner
 ! Ensure finishing messages are both printed and logged
 !
