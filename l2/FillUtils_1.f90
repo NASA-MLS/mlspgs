@@ -4206,6 +4206,12 @@ contains ! =====     Public Procedures     =============================
     ! If 5, they are divided among 3 groups: GHz, THz, and spacecraft
 
     ! radiances are named the same independent of hdf version
+    
+    ! Due to the insistence by mlsl2 in getting the module name from the
+    ! string table, which perversely stores 'sc' as 'SC', we must resort
+    ! to the inelegancies typified by
+    !   if ( NameString == 'SC' ) NameString = 'sc'
+    
     subroutine FromL1B ( Root, Quantity, Chunk, FileDatabase, &
       & IsPrecision, Suffix, Geolocation, PrecisionQuantity, BOMask, sdName )
       use BitStuff, only: NegativeIfBitPatternSet
@@ -4301,6 +4307,9 @@ contains ! =====     Public Procedures     =============================
             call GetModuleName ( quantity%template%instrumentModule, &
                                & moduleNameString )
           end if
+          if ( moduleNameString == 'SC' ) moduleNameString = 'sc'
+          ! print *, 'namestring: ', trim(nameString)
+          ! print *, 'module namestring: ', trim(moduleNameString)
           nameString = AssembleL1BQtyName ( trim(nameString), &
                      & L1BOAFile%HDFVersion, &
                      & finder(found)%tngt, trim(moduleNameString) )
@@ -4314,6 +4323,8 @@ contains ! =====     Public Procedures     =============================
         call GetModuleName ( quantity%template%instrumentModule, moduleNameString )
         moduleNameString = AssembleL1BQtyName('BO_stat', L1BOAFile%HDFVersion, .TRUE., &
           & trim(moduleNameString))
+          ! print *, 'Precision namestring: ', trim(nameString)
+          ! print *, 'module namestring: ', trim(moduleNameString)
         call ReadL1BData ( L1BOAFile, moduleNameString, BO_stat, noMAFs, &
           & flag=BO_error, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
           & NeverFail= .true., &
@@ -4451,6 +4462,7 @@ contains ! =====     Public Procedures     =============================
         ng = quantity%template%noSurfs * quantity%template%noCrossTrack
         if ( .not. goofy ) & ! not MIF_TAI in HDF4
           & call GetModuleName( quantity%template%instrumentModule,nameString )
+        if ( NameString == 'SC' ) NameString = 'sc'
         nameString = AssembleL1BQtyName('ECR', L1BOAFile%HDFVersion, &
           & .false., trim(nameString))
         call ReadL1BData ( L1BOAFile, nameString, L1BData, noMAFs, flag, &
@@ -4466,6 +4478,7 @@ contains ! =====     Public Procedures     =============================
         case ( l_geocentric )
           if ( .not. goofy ) & ! not MIF_TAI in HDF4
             & call GetModuleName( quantity%template%instrumentModule,nameString )
+          if ( NameString == 'SC' ) NameString = 'sc'
           nameString = AssembleL1BQtyName('GeocLat', L1BOAFile%HDFVersion, &
             & .true., trim(nameString))
           call ReadL1BData ( L1BOAFile, nameString, L1BData, noMAFs, flag, &
@@ -4477,6 +4490,7 @@ contains ! =====     Public Procedures     =============================
         case ( l_geodetic )
           if ( .not. goofy ) & ! not MIF_TAI in HDF4
             & call GetModuleName( quantity%template%instrumentModule,nameString )
+          if ( NameString == 'SC' ) NameString = 'sc'
           nameString = AssembleL1BQtyName('GeodLat', L1BOAFile%HDFVersion, &
             & .true., trim(nameString))
           ! print *, 'namestring: ', namestring
@@ -4490,6 +4504,7 @@ contains ! =====     Public Procedures     =============================
         end select
         if ( .not. goofy ) & ! not MIF_TAI in HDF4
           & call GetModuleName( quantity%template%instrumentModule,nameString )
+        if ( NameString == 'SC' ) NameString = 'sc'
         nameString = AssembleL1BQtyName('Lon', L1BOAFile%HDFVersion, &
             & .true., trim(nameString))
         call ReadL1BData ( L1BOAFile, nameString, L1BData, noMAFs, flag, &
@@ -7989,6 +8004,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.150  2020/01/27 18:03:13  pwagner
+! Worked around the error that made instrumentModuleName allcaps
+!
 ! Revision 2.149  2020/01/09 22:25:41  pwagner
 ! Extra steps to avoid munging sids-related DS names
 !
