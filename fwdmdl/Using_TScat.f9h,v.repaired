@@ -1,0 +1,46 @@
+          ! Determine the frequency subscript for the Mie tables.
+          Mie_frq_index = Mie_freq_index ( frq, fwdModelConf%frqTol )
+          ! Each Mie table applies to many frequencies, so don't interpolate
+          ! again if not needed.
+          if ( Mie_frq_index /= prev_Mie_frq_ind ) then
+            call interpolate_Mie ( Mie_frq_index, eta_T_IWC_path_c,       &
+              & atmos_der, temp_der, beta_c_e_path_c(:npc),               &
+              & beta_c_s_path_c(:npc), dBeta_c_a_dIWC_path_c(:npc),       &
+              & dBeta_c_s_dIWC_path_c(:npc), dBeta_c_a_dT_path_c(:npc),   &
+              & dBeta_c_s_dT_path_c(:npc) )
+            prev_Mie_frq_ind = Mie_frq_index
+          end if
+          ! Ignore contribution of PFA Alpha to w0.
+          w0_path_c = beta_c_s_path_c(:npc) / ( alpha_path_c + beta_c_e_path_c(:npc) )
+
+          call Get_TScat_Setup ( fwdModelConf, FwdModelIn, FwdModelExtra, &
+           &                     FwdModelOut, Sideband, Frq, MAF, phiTan, &
+           &                     L2PC, RadInL2PC, dX, TScat, Grids_TScat )
+
+          ! Get TScat and derivatives on the path from the L2PC model
+          phiWindowRadians = deg2rad * &
+            & ( maxval(phiTan%values(:,windowFinish)) - &
+            &   minval(phiTan%values(:,windowStart)) )
+          call Get_TScat ( fwdModelIn, fwdModelExtra,                          &
+            &              phiWindowRadians, MAF, phiTan,                      &
+            &              frq, z_coarse, phi_path_c, tan_pt_c, grids_f,       &
+            &              L2PC, dX, TScat, radInL2PC, grids_TScat, tt_path_c, &
+            &              atmos_der, temp_der, dTScat_df, dTScat_dT )
+
+          call Get_TScat_Teardown ( dX, TScat, Grids_TScat )
+
+          ! Get combined clear-sky and TScat Delta B (t_script)
+          ! Don't restrict this to (i_start:i_end) because the end points
+          ! at 1 and npc are special.
+          call two_d_t_script_cloud ( t_path_c(i_start:i_end),    &
+            & tt_path_c(i_start:i_end), w0_path_c(i_start:i_end), &
+            & spaceRadiance%values(1,1), frq, &
+            & t_script(i_start:i_end), &
+            & B(i_start:i_end) )
+
+! $Id$
+! $RCSFile: $
+! $Log$
+! Revision 2.1  2020/01/28 02:11:01  vsnyder
+! Moved out of FullForwardModel_m to reduce its size by about 700 lines.
+!
