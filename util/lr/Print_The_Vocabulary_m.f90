@@ -37,6 +37,7 @@ contains ! ====     Procedures     =====================================
     use Declaration_Table, only: Action, Declaration, Decls, Empty, Get_Decl, &
       & Nonterminal, Null_Decl, Terminal, Vocabulary
     use Output_m, only: Newline, Output
+    use Processor_Dependent, only: NewPage
     use String_Table, only: Get_String, How_Many_Strings, String_Length
     use Tables, only: First_Nonterminal, First_Terminal, Last_Nonterminal, &
       & NTerms, NVoc
@@ -98,6 +99,7 @@ contains ! ====     Procedures     =====================================
     end if
 
     ! Print terminals and nonterminals
+    call output ( newPage, dont_asciify=.true. )
     line(1:50) = '     T E R M I N A L S'
     line(51:) = 'N O N T E R M I N A L S'
     call output ( trim(line), advance='yes' )
@@ -311,6 +313,9 @@ contains ! ====     Procedures     =====================================
 end module Print_The_Vocabulary_m
 
 ! $Log$
+! Revision 1.2  2019/07/09 20:27:24  vsnyder
+! Compute number of nonterminals correctly if there is no vocabulary
+!
 ! Revision 1.1  2014/01/14 00:15:05  vsnyder
 ! Initial commit of new module for new LR
 !
