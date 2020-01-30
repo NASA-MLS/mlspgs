@@ -15,8 +15,8 @@ module GasAbsorption
 ! COMPUTE ATMOSPHERIC GASES ABSORPTION COEFFICIENTS
 ! -------------------------------------------------------------------------
 
-      use MLSCommon, only: r8 
-      IMPLICIT NONE
+      use MLSCommon, only: R8 
+      implicit none
       Private
       Public :: GET_BETA
 
@@ -26,7 +26,7 @@ module GasAbsorption
   private :: not_used_here 
 !---------------------------------------------------------------------------
       
-      REAL, private, parameter :: PI = 3.1415926
+      real, private, parameter :: pi = 3.1415926
 
 contains
 
@@ -87,7 +87,7 @@ contains
        REAL(r8) :: FF
 
 !------------------------------------------------------------------------
-
+      
       IF(RH .LT. 1._r8) THEN           ! RH IS WATER VAPOR MIXING RATIO
 
          VMR_H2O = RH                  
@@ -271,10 +271,15 @@ contains
 
 ! difference with Bill's FWM f15 Band2U~6K, B10L~1K
 
+! ---------------------------------------------------------------------
+! Based on Jonathan Jiang's instructions 2020 Jan 29
 ! case R1
-      if(abs(f-127.) .lt. 14.) CONT_1 = 7.53e-16     ! wu's version
+!      if(abs(f-127.) .lt. 14.) CONT_1 = 7.53e-16     ! wu's version
 ! case R2
-      if(abs(f-192.) .lt. 16.) CONT_1 = 7.53e-16/1.3 ! best fit to R2
+!      if(abs(f-192.) .lt. 16.) CONT_1 = 7.53e-16/1.3 ! best fit to R2
+! Must define CONT_1 no matter what the frequency or radiometer (paw)
+      CONT_1 = 7.53e-16/1.3 ! best fit to R2
+! ---------------------------------------------------------------------
       CONT_2 = 4.20
       CONT_3 = 0.00
       SC_CONST = CONT_1 * FF**2 * EXP(-CONT_3 * FF**2)
@@ -343,6 +348,9 @@ contains
 end module GasAbsorption
 
 ! $Log$
+! Revision 1.27  2009/06/23 18:26:19  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 1.26  2007/07/25 22:08:04  vsnyder
 ! Replace tabs by spaces because tabs are not standard
 !
