@@ -32,7 +32,7 @@ module PointingGrid_m
   ! Public procedures:
   public :: Open_Pointing_Grid_File, Read_Pointing_Grid_File
   public :: Close_Pointing_Grid_File, Destroy_Pointing_Grid_Database
-  public :: Dump_Pointing_Grid_Database
+  public :: Dump_Pointing_Grid_Database, Dump_Pointing_Grid
 
   type, public :: OneGrid_T
     real(r8) :: Height                            ! Zeta, actually
@@ -327,6 +327,8 @@ outer2: do
   end subroutine Destroy_Pointing_Grid_Database
 
   ! --------------------------------  Dump_Pointing_Grid_Database  -----
+  !
+  ! This family of routines Dumps all or just one pointing frequency grid
   subroutine Dump_Pointing_Grid_Database ( where, details )
     use Dump_0, only: Dump
     use Moretree, only: StarterrorMessage
@@ -346,26 +348,43 @@ outer2: do
       do i = 1, size(pointingGrids)
         call output ( i, 4 )
         call output ( ':    Signals =', advance='yes' )
-        do j = 1, size(pointingGrids(i)%signals)
-          call blanks ( 6 )
-          call DisplaySignalName ( pointingGrids(i)%signals(j), advance='yes' )
-        end do ! j = 1, size(pointingGrids(i)%signals)
-        if ( myDetails < 1 ) cycle
-        call output ( ' Center Frequency = ' )
-        call output ( pointingGrids(i)%centerFrequency, advance='yes' )
-        do j = 1, size(pointingGrids(i)%oneGrid)
-          call output ( j, 4 )
-          call output ( ':: Zeta = ' )
-          call output ( pointingGrids(i)%oneGrid(j)%height )
-          call dump ( pointingGrids(i)%oneGrid(j)%frequencies, &
-            & '    Frequencies =' )
-        end do ! j = 1, size(pointingGrids(i)%oneGrid)
+        call Dump_Pointing_Grid ( pointingGrids(i), Details )
       end do ! i
     else
       if ( present(where) ) call startErrorMessage ( where )
       call output ( 'No pointing grids database to dump.', advance='yes' )
     end if
   end subroutine Dump_Pointing_Grid_Database
+
+  ! --------------------------------  Dump_Pointing_Grid  -----
+  subroutine Dump_Pointing_Grid ( Grid, details )
+    use Dump_0, only: Dump
+    use Moretree, only: StarterrorMessage
+    use Output_M, only: Blanks, Output
+
+    type(PointingGrid_T), intent(in) :: Grid
+    integer, intent(in), optional    :: Details ! Show heights, freqs if > 0
+
+    integer :: J                     ! Subscripts, loop inductors
+    integer :: myDetails
+    ! Executable
+    myDetails = 0
+    if ( present(Details) ) myDetails = Details
+    do j = 1, size(Grid%signals)
+      call blanks ( 6 )
+      call DisplaySignalName ( Grid%signals(j), advance='yes' )
+    end do ! j = 1, size(Grid%signals)
+    if ( myDetails < 1 ) return
+    call output ( ' Center Frequency = ' )
+    call output ( Grid%centerFrequency, advance='yes' )
+    do j = 1, size(Grid%oneGrid)
+      call output ( j, 4 )
+      call output ( ':: Zeta = ' )
+      call output ( Grid%oneGrid(j)%height )
+      call dump ( Grid%oneGrid(j)%frequencies, &
+        & '    Frequencies =' )
+    end do ! j = 1, size(Grid%oneGrid)
+  end subroutine Dump_Pointing_Grid
 
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -380,6 +399,9 @@ outer2: do
 end module PointingGrid_m
 
 ! $Log$
+! Revision 2.18  2020/01/27 18:17:26  pwagner
+! Noted that docs are sorely needed; Dump_Pointing_Grid_Database now takes optional arg details
+!
 ! Revision 2.17  2016/09/08 20:52:59  vsnyder
 ! Make components allocatable instead of pointers
 !
