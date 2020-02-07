@@ -611,6 +611,7 @@ contains
     use Geometry, only: Get_R_EQ
     use Get_IEEE_NaN_m, only: Fill_IEEE_NaN
     use HessianModule_1, only: Hessian_T
+    use HighOutput, only: HeadLine, OutputNamedValue
     use Intrinsic, only: L_A, L_Radiance, L_TScat, L_VMR
     use Load_SPS_Data_M, only: DestroyGrids_T, Dump, Grids_T
     use MatrixModule_1, only: Matrix_T
@@ -618,7 +619,8 @@ contains
     use MLSKinds, only: R4, R8, RP, RV
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSNumerics, only: Hunt, InterpolateValues, PureHunt
-    use MLSSignals_M, only: AreSignalsSuperset, GetNameOfSignal, MatchSignal, &
+    use MLSSignals_M, only: AreSignalsSuperset, Dump, &
+      & GetNameOfSignal, MatchSignal, &
       & Radiometers, Signal_T
     use MLSStringLists, only: SwitchDetail
     use Molecules, only: L_H2O, L_N2O, L_O3
@@ -627,7 +629,8 @@ contains
     use Path_Contrib_M, only: Get_GL_Inds
     use Path_Representation_m, only: Facets_and_Vertices_t, Path_t
     use Physics, only: SpeedOfLight
-    use PointingGrid_M, only: PointingGrids, PointingGrid_T
+    use PointingGrid_M, only: PointingGrids, PointingGrid_T, &
+      & Dump_Pointing_Grid
     use Read_Mie_m, only: IWC_S, T_S
     use Slabs_sw_m, only: AllocateSLABS, DestroyCompleteSLABS, SLABS_Struct
     use Sparse_Eta_m, only: Sparse_Eta_t
@@ -2267,6 +2270,7 @@ contains
       real(rp) :: R1, R2           ! real variables for various uses
       integer :: Superset          ! Output from AreSignalsSuperset
       integer :: SV_Dim            ! Second dimension of K_*_FRQ, or zero
+      integer, parameter :: DumpingDetails = -1 ! Used in case of trouble
 
       nullify ( whichPointingGrid )
 
@@ -2281,8 +2285,20 @@ contains
             whichPointingGrid => pointingGrids(i)
           end if
         end do
-        if ( .not. associated(whichPointingGrid) ) call Announce_Error ( &
+        if ( .not. associated(whichPointingGrid) ) then
+          call HeadLine ( 'Trouble in FullForwardModel line-by-line' )
+          call output( 'ForwardModel signals', advance='yes' )
+          call Dump( fwdModelConf%signals, Details=DumpingDetails )
+          do i=1, size(pointingGrids)
+            call outputNamedValue ( 'ptg grid num', i )
+            call Dump_Pointing_Grid(  pointingGrids(i), Details=DumpingDetails )
+          enddo
+          call output( 'Consider the above carefully. You may consider', advance='yes' )
+          call output( '(a) Merging 2 or more pointing grids', advance='yes' )
+          call output( '(b) Splitting the fwdmdl signals among separate models', advance='yes' )
+          call Announce_Error ( &
                & "No matching pointing frequency grids." )
+        endif
 
         ! Now we've identified the pointing grids.  Locate the tangent grid
         ! within it.
@@ -4659,6 +4675,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.405  2019/10/07 20:05:53  vsnyder
+! Get WrongTrapezoidal from the config
+!
 ! Revision 2.404  2019/09/05 17:10:33  pwagner
 ! Dont try to deallocate F_and_V_MIF unless allocated already
 !
