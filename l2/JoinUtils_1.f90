@@ -21,7 +21,7 @@ module JoinUtils_1                     ! Direct write chunk by chunk
    use ForwardModelConfig, only: ForwardModelConfig_T
    use HDF, only: Dfacc_Create, Dfacc_Rdwr
    use HighOutput, only: BeVerbose, LetsDebug, OutputNamedValue
-   use Init_Tables_Module, only: L_Swath
+   use Init_Tables_Module, only: L_HDF, L_Swath
    use L2ParInfo, only: Parallel, FinishedDirectwrite
    use ManipulateVectorQuantities, only: DoHGridsMatch
    use MLSCommon, only: MLSFile_T, L2MetaData_T
@@ -40,8 +40,8 @@ module JoinUtils_1                     ! Direct write chunk by chunk
    use VectorsModule, only: Vector_T, VectorValue_T, &
      & GetVectorQtyByTemplateIndex
 
-  ! This module supplies utilities for the DirectWriteCommand as part
-  ! of the 'join' task in the MLS level 2 software.
+  ! This module mediates between the DirectWriteCommand and
+  ! the 'join' task in the MLS level 2 software.
 
   implicit none
   private
@@ -342,7 +342,7 @@ contains ! =====     Public Procedures     =============================
         call Deallocate_test ( nameBuffer, 'nameBuffer', ModuleName )
       end if
 
-        ! Don't forget to close file
+      ! Don't forget the metadata
       if ( createFileFlag .and. TOOLKIT .and. &
         & .not. distributingSources ) then
         call add_metadata ( node, thisDirect%fileNameBase, L2MetaData, &
@@ -390,7 +390,7 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(:), pointer :: precisionQuantities ! Indices
     type (DirectData_T), dimension(:), pointer :: DirectDatabase
     integer, dimension(:), pointer :: DIRECTFILES ! Indices
-    type(MLSFile_T), pointer :: directFile
+    type(MLSFile_T), pointer :: directFile ! What is the diff between these 2?
     type(DirectData_T), pointer  :: thisDirect ! => null()
     type (MLSChunk_T), dimension(:), intent(in) :: chunks
     type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
@@ -398,6 +398,7 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in)            :: L2Aux  ! Is the file an L2Aux type?
     
     ! Local variables
+    integer                       :: ErrorType
     character(len=1024)           :: HDFNAME      ! Output swath/sd name
     integer                       :: Handle
     integer                       :: HDFNameIndex
@@ -405,7 +406,7 @@ contains ! =====     Public Procedures     =============================
     integer                       :: NumPermitted
     integer                       :: Source
     real                          :: TimeSetUp, TimeWriting
-    ! Executable  
+    type(L2Metadata_T)            :: l2metaData
     ! Executable  
     DEEBUG = LetsDebug ( 'direct', 0 )
     verbose = BeVerbose( 'direct', -1 )
@@ -538,7 +539,18 @@ contains ! =====     Public Procedures     =============================
         end if
       end if
 
-        ! Don't forget to close file
+      ! Don't forget the metadata
+      if ( createFileFlag .and. TOOLKIT .and. &
+        & .not. distributingSources ) then
+        call OutputNamedValue ( 'HDF File name', thisDirect%fileNameBase )
+        call add_metadata ( node, DirectFile%Name, L2MetaData, &
+          & DirectFile%hdfVersion, l_hdf, errortype, NumPermitted, &
+          & thisDirect%sdNames )
+        if ( errortype /= 0 ) call MLSL2Message ( MLSMSG_Warning, ModuleName, &
+          & 'DirectWriteCommand unable to addmetadata to ' // &
+          & trim(DirectFile%Name), &
+          & MLSFile=directFile )
+      end if
   end subroutine DWHDF
 
   ! --------------------------------------------------  DWQty  -----
@@ -738,6 +750,9 @@ end module JoinUtils_1
 
 !
 ! $Log$
+! Revision 2.5  2020/02/07 01:13:14  pwagner
+! Restores writing metadata for Cloud file
+!
 ! Revision 2.4  2018/08/17 21:36:44  pwagner
 ! Initialize timeSetup in case there were no datasets
 !
