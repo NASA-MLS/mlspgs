@@ -69,11 +69,14 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
 
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-  ! Update these lines before delivery to sips
-  ! id to print out in response to "--version" command-line option    
+  ! We used to update these lines before delivery to sips
+  ! Now we prefer to use the --versId cmdline option or else implement it
+  ! versId=xxxxx in the optsfile
+  ! id to print out in response to "--version" command-line option  
+  ! If no toolkit, then also the PGEVersion saved as a Global Attribute  
   integer, parameter                        :: versIDLen = 32
   character(len=versIDLen), dimension(2)    :: current_version_id = (/ &
-    & 'v4.23 swdev team               ' , & 
+    & 'v5.00 swdev team               ' , & 
     & 'See license terms for copyright'/)
   character(len=32)    :: UniqueID                    = ' '
      
@@ -1554,6 +1557,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.131  2020/02/07 01:16:51  pwagner
+! Update versId string and how to re-set it at runtime
+!
 ! Revision 2.130  2019/08/01 23:48:13  pwagner
 ! Some light Housekeeping
 !
