@@ -611,8 +611,8 @@ contains
     integer :: NEXTFILE
     integer :: NOSOURCES                ! No. things to output
     character(len=16) :: OPTIONS
-    integer :: AscDescModeVECTOR
-    integer :: AscDescModeQTYINDX
+    ! integer :: AscDescModeVECTOR
+    ! integer :: AscDescModeQTYINDX
     logical :: noPCFid
     integer :: OUTPUTTYPE               ! l_l2gp, l_l2aux, l_l2fwm, l_l2dgg
     character(len=1024) :: PATH         ! path/file_base
@@ -645,7 +645,7 @@ contains
     type(VectorValue_T), pointer :: PRECQTY ! The quantities precision
     type(VectorValue_T), pointer :: QUALITYQTY ! The quantities quality
     type(VectorValue_T), pointer :: STATUSQTY ! The quantities status
-    type(VectorValue_T), pointer :: AscDescModeQTY ! The shared quantity AscDescMode
+    ! type(VectorValue_T), pointer :: AscDescModeQTY ! The shared quantity AscDescMode
     type(DirectData_T), pointer  :: thisDirect ! => null()
     real :: TimeIn, TimeToClose, TimeOut
 
@@ -707,8 +707,8 @@ contains
         gotsource = .true.
       case ( f_AscDescMode )
         gson = subtree(2,son)
-        AscDescModeVector = decoration(decoration(subtree(1,gson)))
-        AscDescModeQtyIndx = decoration(decoration(decoration(subtree(2,gson))))
+        ! AscDescModeVector = decoration(decoration(subtree(1,gson)))
+        ! AscDescModeQtyIndx = decoration(decoration(decoration(subtree(2,gson))))
       case ( f_precision )
         if ( .not. gotsource ) &
           & call Announce_Error ( son, no_error_code, &
@@ -881,9 +881,9 @@ contains
     if ( .not. checkpaths ) then
       ! Now go through and do some sanity checking
       ! On the way let's pick out Qty, PrecQty, .. to be written
-      nullify ( AscDescModeQty )
-      if ( got(f_AscDescMode) ) AscDescModeQty => GetVectorQtyByTemplateIndex ( vectors(AscDescModevector), &
-      & AscDescModeQtyIndx )
+      ! nullify ( AscDescModeQty )
+      ! if ( got(f_AscDescMode) ) AscDescModeQty => GetVectorQtyByTemplateIndex ( vectors(AscDescModevector), &
+      ! & AscDescModeQtyIndx )
       do source = 1, noSources
         if ( sourceQuantities(source) < 1 ) cycle
         qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
@@ -2167,6 +2167,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.189  2020/02/07 01:12:10  pwagner
+! Commented-out unused stuff
+!
 ! Revision 2.188  2019/02/13 19:15:46  pwagner
 ! Removed more unused stuff
 !
