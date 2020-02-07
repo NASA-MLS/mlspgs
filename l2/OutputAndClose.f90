@@ -764,9 +764,14 @@ contains ! =====     Public Procedures     =============================
        & MLSPCF_L2DGM_End, &
        & .true., returnStatus, Version, DEBUG, &
        & exactName=PhysicalFilename)
+     ! Some hdf-formatted product files lack metadata, e.g. fwm radiances
      if (returnStatus /= 0) then
-         call MLSL2Message ( MLSMSG_Error, ModuleName, &
+         metadata_error = returnStatus
+         call outputNamedValue ( 'fileName', trim(fileName) )
+         call outputNamedValue ( 'PCFIds', (/ MLSPCF_L2DGM_Start, MLSPCF_L2DGM_End /) )
+         call MLSL2Message ( MLSMSG_Warning, ModuleName, &
            &  "While adding metadata failed to GetPCFromRef for " // trim(fileName) )
+         return
      end if
      if ( present(quantityNamesInput) .and. present(numquantitiesperfileInput) ) then
        call allocate_test( quantityNames, size(quantityNamesInput), &
@@ -2318,6 +2323,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.207  2020/02/07 01:15:26  pwagner
+! Restores writing metadata for Cloud file
+!
 ! Revision 2.206  2018/07/27 23:19:53  pwagner
 ! Renamed level 2-savvy MLSMessage MLSL2Message
 !
