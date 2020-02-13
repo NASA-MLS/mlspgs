@@ -349,9 +349,11 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
      integer, pointer, dimension(:)    :: AscDescMode=>NULL()
      ! All the above dimensioned (nTimes)
 
-     ! These are the fill/missing values for all arrays except status
+     ! These are the fill/missing values for l2gpValue
+     real (rgp)                        :: MissingL2GP  = DefaultUndefinedValue
+     ! These are the fill/missing values for all other arrays except status
      real (rgp)                        :: MissingValue = DefaultUndefinedValue
-     integer                       :: MissingStatus = 513 ! 512 + 1
+     integer                           :: MissingStatus = 513 ! 512 + 1
     ! Vertical coordinate
     character(len=8) :: verticalCoordinate ! E.g. 'Pressure', or 'Theta'
     ! integer :: verticalCoordinate ! The vertical coordinate used.  These
@@ -1074,6 +1076,8 @@ contains ! =====     Public Procedures     =============================
         print *, 'l2gp%nLevels: ', l2gp%nLevels
         print *, 'l2gp%nTimes:  ', l2gp%nTimes
         print *, 'shape(l2gp%l2gpvalue):  ', shape(l2gp%l2gpvalue)
+        print *, 'l2gp%MissingL2GP:  ', l2gp%MissingL2GP
+        print *, 'l2gp%Missingvalue:  ', l2gp%Missingvalue
       endif
       ! call dump ( l2gp%chunkNumber, 'chunkNumber as Read' )
       ! chunk = FindFirst( l2gp%chunkNumber /= -999 )
@@ -1789,11 +1793,18 @@ contains ! =====     Public Procedures     =============================
       call doneHere
       return
     endif
+    if ( L2gp1%MissingL2GP /= L2gp2%MissingL2GP ) then
+      call output(' (1) MissingL2GP = ', advance='no')
+      call output(L2gp1%Missingl2GP, advance='yes')
+      call output(' (2) Missingl2GP = ', advance='no')
+      call output(L2gp2%MissingL2GP, advance='yes')
+      myNumDiffs = myNumDiffs + 1
+    endif
     if ( L2gp1%MissingValue /= L2gp2%MissingValue ) then
       call output(' (1) MissingValue = ', advance='no')
-      call output(L2gp1%nTimes, advance='yes')
+      call output(L2gp1%MissingValue, advance='yes')
       call output(' (2) MissingValue = ', advance='no')
-      call output(L2gp2%nTimes, advance='yes')
+      call output(L2gp2%MissingValue, advance='yes')
       myNumDiffs = myNumDiffs + 1
     endif
     if ( L2gp1%nTimes /= L2gp2%nTimes ) then
@@ -1839,9 +1850,9 @@ contains ! =====     Public Procedures     =============================
       & .or. &
       & any( mod ( l2gp2%status, 2 ) == 1 ) &
       & .or. &
-      & any( IsFillValue ( l2gp1%l2gpValue, l2gp1%MissingValue ) ) &
+      & any( IsFillValue ( l2gp1%l2gpValue, l2gp1%MissingL2GP ) ) &
       & .or. &
-      & any( IsFillValue ( l2gp2%l2gpValue, l2gp2%MissingValue ) ) &
+      & any( IsFillValue ( l2gp2%l2gpValue, l2gp2%MissingL2GP ) ) &
       & )
     ! OK, we'll try what you suggest
     call SetupNewL2GPRecord ( l2gp2Temp, proto=l2gp2 )
@@ -1859,8 +1870,12 @@ contains ! =====     Public Procedures     =============================
     badChunksDifferent = .false.
     if ( badChunks ) then
       do instance=1, L2gp1%nTimes
-        fillsInL2GP1 = any( IsFillValue ( l2gp1%l2gpValue(:,:,instance), l2gp1%MissingValue ) )
-        fillsInL2GP2 = any( IsFillValue ( l2gp2%l2gpValue(:,:,instance), l2gp2%MissingValue ) )
+        fillsInL2GP1 = any( &
+          & IsFillValue ( l2gp1%l2gpValue(:,:,instance), l2gp1%MissingL2GP ) &
+          & )
+        fillsInL2GP2 = any( &
+          & IsFillValue ( l2gp2%l2gpValue(:,:,instance), l2gp2%MissingL2GP ) &
+          & )
         if  ( l2gp2Temp%status(instance) < 0 &
           & .or. &
           & mod(l2gp1%status(instance), 2) == 1 &
@@ -1915,7 +1930,7 @@ contains ! =====     Public Procedures     =============================
       & SwitchDetail(lowercase(myFields), 'l2gpvalue', '-fc') > -1 ) then
       call diff ( l2gp1%l2gpValue, 'l2gp%l2gpValue', &
         &         l2gp2Temp%l2gpValue, ' ', &
-        & options=options, fillValue=l2gp1%MissingValue )
+        & options=options, fillValue=l2gp1%MissingL2GP )
       myNumDiffs = myNumDiffs + count( l2gp1%l2gpValue /= l2gp2Temp%l2gpValue )
     elseif ( all(l2gp1%l2gpValue == l2gp2Temp%l2gpValue) .and. &
       & SwitchDetail(lowercase(myFields), 'l2gpvalue', '-fc') > -1 .and. myVerbose ) then
@@ -2664,7 +2679,9 @@ contains ! =====     Public Procedures     =============================
       call output ( l2gp%nLevels, 3)
       call output ( '  nFreqs: ')
       call output ( l2gp%nFreqs, 3, advance='yes')
-      call output ( 'Fill/Missing Values: ')
+      call output ( 'Fill/Missing L2GP Values: ')
+      call output ( l2gp%MissingL2GP, advance='yes')
+      call output ( 'Fill/Missing Values (Others): ')
       call output ( l2gp%MissingValue, advance='yes')
       call output ( 'Fill/Missing Status Field: ')
       call output ( l2gp%MissingStatus, advance='yes')
@@ -2702,20 +2719,21 @@ contains ! =====     Public Procedures     =============================
       if ( showMe(myDetails > -1, myFields, 'time') ) then
         nullify( hoursInDay )
         call dump ( l2gp%time, 'Time:', FillValue=FillValue, &
-        & width=width, options=options )
-        call allocate_test ( hoursInDay, l2gp%nTimes, &
-          & 'hoursInDay', ModuleName )
-        hoursInDay = timeToHoursInDay ( l2gp%time )
+          & width=width, options=options )
+        call allocate_test ( hoursInDay, l2gp%nTimes, 'hoursInDay', ModuleName )
+        where ( l2gp%time /= FillValue )
+          hoursInDay = timeToHoursInDay ( l2gp%time )
+        elsewhere
+          hoursInDay = FillValueGP
+        end where
         call dump ( hoursInDay, 'Hours In Day:', FillValue=FillValueGP, &
-        & width=width, options=options )
-        call deallocate_test ( hoursInDay, &
-          & 'hoursInDay', ModuleName )
+          & width=width, options=options )
+        call deallocate_test ( hoursInDay, 'hoursInDay', ModuleName )
       endif
 
       if ( showMe(myDetails > -1, myFields, 'spacing') ) then
         nullify( spacing )
-        call allocate_test ( spacing, l2gp%nTimes-1, &
-          & 'spacing', ModuleName )
+        call allocate_test ( spacing, l2gp%nTimes-1, 'spacing', ModuleName )
         spacing = 0.
         do i=1, l2gp%nTimes - 1
           spacing(i) = EarthRadA * sqrt ( &
@@ -2729,7 +2747,7 @@ contains ! =====     Public Procedures     =============================
             & )
         enddo
         call dump ( spacing, 'spacing (in m):', FillValue=FillValueGP, &
-        & width=width, options=options )
+          & width=width, options=options )
         call deallocate_test ( spacing, &
           & 'spacing', ModuleName )
       endif
@@ -2747,11 +2765,11 @@ contains ! =====     Public Procedures     =============================
 
     if ( showMe(myDetails > 0, myFields, 'l2gpvalue') ) then
       if ( l2gp%nFreqs < 2 ) then
-        call dump ( real(l2gp%l2gpValue(1,:,:), r8), 'L2GPValue:', &
-          & FillValue=FillValue, options=options )
+        call dump ( l2gp%l2gpValue(1,:,:), 'L2GPValue:', &
+          & FillValue=l2gp%MissingL2GP, options=options )
       else
-        call dump ( real(l2gp%l2gpValue, r8), 'L2GPValue:', &
-          & FillValue=FillValue, options=options )
+        call dump ( l2gp%l2gpValue, 'L2GPValue:', &
+          & FillValue=l2gp%MissingL2GP, options=options )
       endif
     endif
       
@@ -2867,7 +2885,7 @@ contains ! =====     Public Procedures     =============================
     character(len=CHARATTRLEN) :: species_name
     character(len=CHARATTRLEN) :: abbr_uniq_fdef
     character(len=CHARATTRLEN) :: expnd_uniq_fdef
-    
+    real(rgp), dimension(1) :: MissingValue
     ! Begin
     if (present(swathName)) then
        name=swathName
@@ -2923,6 +2941,10 @@ contains ! =====     Public Procedures     =============================
     call dump ( pressures, 'Vertical coordinates:' )
     status = he5_swrdattr(swid, 'VerticalCoordinate', field_name)
     call dump_chars ( field_name, 'Vertical coordinates type:' )
+    status = he5_swrdlattr( swid, 'L2gpValue', 'MissingValue', MissingValue )
+    call dump ( MissingValue, 'MissingValues (L2GPValues only):' )
+    status = he5_swrdlattr( swid, 'L2gpPrecision', 'MissingValue', MissingValue )
+    call dump ( MissingValue, 'MissingValues (other fields):' )
     
     !   - -   G e o l o c a t i o n   A t t r i b u t e s   - -
     call output ( '(Geolocation Attributes) ', advance='yes')
@@ -3125,6 +3147,7 @@ contains ! =====     Public Procedures     =============================
     l2gp%name               = ol2gp%name    
     l2gp%nameIndex          = ol2gp%nameIndex    
     ! l2gp%quantitytype       = ol2gp%quantitytype 
+    l2gp%MissingL2GP        = ol2gp%MissingL2GP
     l2gp%MissingValue       = ol2gp%MissingValue 
     l2gp%MissingStatus      = ol2gp%MissingStatus
     l2gp%verticalCoordinate = ol2gp%verticalCoordinate    
@@ -3206,6 +3229,7 @@ contains ! =====     Public Procedures     =============================
     l2gp%name               = ol2gp%name    
     l2gp%nameIndex          = ol2gp%nameIndex    
     ! l2gp%quantitytype       = ol2gp%quantitytype 
+    l2gp%MissingL2GP        = ol2gp%MissingL2GP
     l2gp%MissingValue       = ol2gp%MissingValue 
     l2gp%MissingStatus      = ol2gp%MissingStatus
     l2gp%verticalCoordinate = ol2gp%verticalCoordinate    
@@ -3419,7 +3443,7 @@ contains ! =====     Public Procedures     =============================
       l2gp%geodAngle    = l2gp%MissingValue
       l2gp%time         = l2gp%MissingValue
       l2gp%chunkNumber  = UndefinedIntegerValue
-      l2gp%l2gpValue    = l2gp%MissingValue
+      l2gp%l2gpValue    = l2gp%MissingL2GP
       l2gp%l2gpPrecision= l2gp%MissingValue
       l2gp%status       = l2gp%MissingStatus ! l2gp%MissingValue
       l2gp%quality      = l2gp%MissingValue
@@ -3432,6 +3456,7 @@ contains ! =====     Public Procedures     =============================
       l2gp%nameIndex    = proto%nameIndex
       ! l2gp%QUANTITYTYPE = proto%QUANTITYTYPE
       l2gp%MissingStatus= proto%MissingStatus
+      l2gp%MissingL2GP  = proto%MissingL2GP
       l2gp%MissingValue = proto%MissingValue
       l2gp%pressures    = proto%pressures    
       l2gp%frequency    = proto%frequency
@@ -3874,6 +3899,7 @@ contains ! =====     Public Procedures     =============================
     & numProfs, firstProf, lastProf, ReadData)
   use HDFEOS, only: SWInqdims
   use HDFEOS5, only: HE5_SWInqdims, HE5_SWInqdflds, HE5_SWFldinfo
+  use HE5_SWAPI, only: HE5_SWRdlattr
   use MLSHDFEOS, only: MLS_SWAttach, MLS_SWDetach, MLS_SWDiminfo, MLS_SWRdfld
   use MLSStringLists, only: IsInList
   use HDF5, only: Size_T
@@ -3931,6 +3957,7 @@ contains ! =====     Public Procedures     =============================
     logical :: ReadingAscDescMode
     logical :: ReadingData
     logical :: deeBugHere
+    real(rgp), dimension(1) :: MissingValue
     ! Executable code
     call trace_begin ( me,  'ReadL2GPData_MF_hdf', cond=.false. )
     deeBugHere = DEEBUG ! .or. .true.
@@ -3954,16 +3981,25 @@ contains ! =====     Public Procedures     =============================
     
     select case (HMOT)
     case ('H')
-      swid = mls_SWattach(L2GPFile, 'HIRDLS')
+      swid = mls_SWattach( L2GPFile, 'HIRDLS' )
       DF_Name = TRIM(l2gp%Name)
       DF_Precision = TRIM(l2gp%Name) // 'Precision'
-      l2gp%MissingValue = -999.  ! This is a HIRDLS-specific setting
+      l2gp%MissingL2GP = -999.  ! This is a HIRDLS-specific setting
     case ('M')
-      swid = mls_SWattach(L2GPFile, l2gp%Name)
+      swid = mls_SWattach( L2GPFile, l2gp%Name )
       DF_Name = DATA_FIELD1
       DF_Precision = DATA_FIELD2
       if ( deeBugHere ) print *, 'DF_NAME: ',DF_NAME
       if ( deeBugHere ) print *, 'DF_Precision: ',DF_Precision
+      ! Here we read the Missing Value attribute
+      status = he5_swrdlattr( swid, 'L2gpValue', 'MissingValue', MissingValue )
+      if ( status /= 0 ) then
+        call MLSMessage( MLSMSG_Warning, ModuleName, &
+         &'Failed to read Missing Value attribute for ' &
+         & // trim(swathname), MLSFile=L2GPFile )
+      else
+        l2gp%MissingL2GP = MissingValue(1)
+      endif
     case default
     end select
     if (swid == -1) call MLSMessage(MLSMSG_Error, ModuleName, &
@@ -4360,6 +4396,8 @@ contains ! =====     Public Procedures     =============================
 
     if ( deebughere )  print *, 'About to sw_create ', TRIM(name)
     if ( deebughere )  print *, 'myNotUnlimited ', myNotUnlimited
+    if ( deebughere )  print *, 'l2gp%MissingL2GP ', l2gp%MissingL2GP
+    if ( deebughere )  print *, 'l2gp%MissingValue ', l2gp%MissingValue
     ! swid = mls_SWcreate(L2GPFile%FileID%f_id, trim(name), &
     swid = mls_SWcreate(L2GPFile, trim(name) )
     if ( swid == -1 ) then
@@ -4483,7 +4521,7 @@ contains ! =====     Public Procedures     =============================
       status = mls_dfldsetup(swid, 'L2gpValue', 'nFreqs,nLevels,nTimes', &
       & MYDIM123, &
       & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
-      & hdfVersion=hdfVersion, rFill=l2gp%MissingValue)
+      & hdfVersion=hdfVersion, rFill=l2gp%MissingL2GP)
 
       status = mls_dfldsetup(swid, 'L2gpPrecision', 'nFreqs,nLevels,nTimes', &
       & MYDIM123, &
@@ -4497,7 +4535,7 @@ contains ! =====     Public Procedures     =============================
       status = mls_dfldsetup(swid, 'L2gpValue', 'nLevels,nTimes', &
       & MYDIM12, &
       & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
-      & hdfVersion=hdfVersion, rFill=l2gp%MissingValue)
+      & hdfVersion=hdfVersion, rFill=l2gp%MissingL2GP)
 
       status = mls_dfldsetup(swid, 'L2gpPrecision', 'nLevels,nTimes', &
       & MYDIM12, &
@@ -4511,7 +4549,7 @@ contains ! =====     Public Procedures     =============================
       status = mls_dfldsetup(swid, 'L2gpValue', 'nTimes', &
       & MYDIM1, &
       & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
-      & hdfVersion=hdfVersion, rFill=l2gp%MissingValue)
+      & hdfVersion=hdfVersion, rFill=l2gp%MissingL2GP)
 
       status = mls_dfldsetup(swid, 'L2gpPrecision', 'nTimes', &
       & MYDIM1, &
@@ -4864,7 +4902,7 @@ contains ! =====     Public Procedures     =============================
     character (len=*), parameter :: SpUniqueFieldDefinition = &
       & 'HMT,M,M,MT,M,M,M,M,HMT,M,' // &
       & 'HMT,M,M,M,HM,M,M,HMT,M,M'   ! These are abbreviated values
-    ! logical, parameter :: DEEBUG = .false.
+    ! logical, parameter :: DEEBUG = .true.
 
     ! Variables
     character (len=132) :: name     ! Either swathName or l2gp%name
@@ -4915,9 +4953,11 @@ contains ! =====     Public Procedures     =============================
     field_name = l2gp%verticalCoordinate ! 'Pressure'
     status = mls_swwrattr(swid, 'VerticalCoordinate', MLS_CHARTYPE, 1, &
       & field_name)
+    if ( DeeBug ) print *, 'Missing L2GP: ', real(l2gp%MissingL2GP)
+    if ( DeeBug ) print *, 'Missing value: ', real(l2gp%MissingValue)
     if ( SWATHLEVELMISSINGVALUE ) &
       & status = he5_swwrattr(swid, 'MissingValue', rgp_type, hsize(1), &
-      & (/ real(l2gp%MissingValue, rgp) /) )
+      & (/ real(l2gp%MissingL2GP, rgp) /) )
     
     !   - -   G e o l o c a t i o n   A t t r i b u t e s   - -
     if ( DEEBUG ) print *, 'About to wr loc attrs to: ', trim(name)
@@ -5045,7 +5085,7 @@ contains ! =====     Public Procedures     =============================
     status = mls_swwrlattr(swid, 'L2gpValue', 'Units', &
       & MLS_CHARTYPE, 1, units_name)
     status = he5_swwrlattr(swid, 'L2gpValue', 'MissingValue', &
-      & rgp_type, hsize(1), (/ real(l2gp%MissingValue, rgp) /) )
+      & rgp_type, hsize(1), (/ real(l2gp%MissingL2GP, rgp) /) )
     if ( DEEBUG ) print *, 'Title ', trim(expnd_uniq_fdef)
     status = mls_swwrlattr(swid, 'L2gpValue', &
       & 'UniqueFieldDefinition', &
@@ -5273,7 +5313,7 @@ contains ! =====     Public Procedures     =============================
       call ReplaceFillValues ( l2gp1%frequency, l2gp1%MissingValue, l2gp2%frequency )
     endif
     if ( SwitchDetail(myFields, 'l2gpvalue', '-wfc') > -1 ) then
-      call ReplaceFillValues ( l2gp1%l2gpvalue, l2gp1%MissingValue, l2gp2%l2gpvalue )
+      call ReplaceFillValues ( l2gp1%l2gpvalue, l2gp1%MissingL2GP, l2gp2%l2gpvalue )
     endif
     if ( SwitchDetail(myFields, 'l2gpprecision', '-wfc') > -1 ) then
       call ReplaceFillValues ( l2gp1%l2gpprecision, l2gp1%MissingValue, l2gp2%l2gpprecision )
@@ -5588,6 +5628,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.242  2019/10/30 20:09:37  pwagner
+! Prevents an array bounds error caught by NAG
+!
 ! Revision 2.241  2019/10/21 23:20:14  pwagner
 ! Converts l2gp to quantity even if geolocations not associated
 !
