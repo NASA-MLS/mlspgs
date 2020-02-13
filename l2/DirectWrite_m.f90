@@ -1795,7 +1795,7 @@ contains ! ======================= Public Procedures =========================
     ! -999.99 is a possibly legitimate value
     if ( quantity%template%QuantityType == l_gph .or. &
       & index( lowercase(name), 'gph' ) > 0 ) &
-      & l2gp%MissingValue = L2Options%GPH_MissingValue
+      & l2gp%MissingL2GP = L2Options%GPH_MissingValue
     ! It inherits its quantity type from the quantity template
     ! l2gp%quantityType=quantity%template%quantityType
     ! Do something about frequency
@@ -1960,6 +1960,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.95  2020/02/13 21:27:45  pwagner
+! Fix errors relating to separate MissingValue for GPH
+!
 ! Revision 2.94  2019/02/13 18:58:42  pwagner
 ! New GPH_MissingValue field of L2Options can now be st to a value other than default -999.99
 !
