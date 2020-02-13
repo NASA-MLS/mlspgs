@@ -1813,7 +1813,7 @@ contains
       ! -999.99 is a possibly legitimate value
       if ( quantity%template%QuantityType == l_gph .or. &
         & index( lowercase(myNameString), 'gph' ) > 0 ) &
-        & newL2GP%MissingValue = L2Options%GPH_MissingValue
+        & newL2GP%MissingL2GP = L2Options%GPH_MissingValue
       ! Add it to the database of l2gp quantities
       Indx = AddL2GPToDatabase ( l2gpDatabase, newL2GP )
       ! Setup the pointer and index to be used later
@@ -2167,6 +2167,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.190  2020/02/13 21:28:04  pwagner
+! Fix errors relating to separate MissingValue for GPH
+!
 ! Revision 2.189  2020/02/07 01:12:10  pwagner
 ! Commented-out unused stuff
 !
