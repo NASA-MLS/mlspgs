@@ -163,6 +163,7 @@ molcm2 # mol/cm^2
 ms # m/s
 
 nameFragment
+netCDF4
 noiseBandwidth
 none
 
@@ -257,6 +258,9 @@ zonalavg
 temperature
 
 # $Log$
+# Revision 2.79  2020/02/21 21:08:24  pwagner
+# Added netCDF4 in anticipation
+#
 # Revision 2.78  2019/10/07 20:03:18  vsnyder
 # Add Correct and Wrong for trapezoidal quadrature in FullForwardModel
 #
