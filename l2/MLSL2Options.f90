@@ -22,7 +22,7 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   use Dump_1, only: Dump
   use HDF, only: Dfacc_Rdwr
   use HighOutput, only: Banner, OutputNamedValue, StyledOutput
-  use Intrinsic, only: L_Ascii, L_Hours, L_Minutes, L_Seconds
+  use Intrinsic, only: L_Ascii, L_HDFEOS, L_Hours, L_Minutes, L_NetCDF4, L_Seconds
   use, Intrinsic :: ISO_Fortran_Env, only: Error_Unit
   use MLSCommon, only: MLSFile_T, MLSNamesAreDebug, MLSNamesAreVerbose
   use MLSFiles, only: WildCardHDFVersion, HDFVersion_4, HDFVersion_5, Dump
@@ -69,9 +69,9 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
 
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-  ! We used to update these lines before delivery to sips
+  ! We used to update these lines before each new delivery to the sips
   ! Now we prefer to use the --versId cmdline option or else implement it
-  ! versId=xxxxx in the optsfile
+  ! by putting "versId=xxxxx" in the optsfile.
   ! id to print out in response to "--version" command-line option  
   ! If no toolkit, then also the PGEVersion saved as a Global Attribute  
   integer, parameter                        :: versIDLen = 32
@@ -98,14 +98,16 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   ! Assume HDF files w/o explicit HDFVersion field are this 
   ! 4 corresponds to HDF4, 5 to HDF5 in L2GP, L2AUX, etc.        
   integer            :: Default_HDFversion_write      = HDFversion_5
+  ! Assume std. product l2gp and dgg files are the following format
+  integer            :: Default_L2GPFormat_write      = L_HDFEOS ! l_netCDF4
   ! Set to WildcardHDFversion if you wish to autodetect such files  
   ! on input
   integer            :: Default_HDFversion_read       = WildcardHDFversion  
   integer            :: Level1_HDFversion             = WildcardHDFversion  
 
-  ! The following is FALSe only for runs that don't need orbit/attitude info
+  ! The following is false only for runs that don't need orbit/attitude info
   logical            :: Need_L1BFiles                 = .true.
-  ! The following is FALSe only for runs that use non-Aura satellite data
+  ! The following is false only for runs that use non-Aura satellite data
   logical            :: Aura_L1BFiles                 = .true.
   ! Set if run must not create file, instead just append to it
   logical            :: Patch                         = .false. 
@@ -292,6 +294,8 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
     ! BOTHPRUNIT     both stdout and Log file
     ! > 0            Fortran 'unit=OUTPUT_PRINT_UNIT')
     integer            :: Output_print_unit             = MSGLOGPRUNIT ! -2
+    ! This next will be used as Missing values for the L2GPValue field
+    ! in any l2gp types whose names or qty template inlude 'GPH'
     real               :: GPH_MissingValue              = -1.e15 ! -999.99
 
   end type SomeL2Options_T
@@ -1557,6 +1561,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.132  2020/02/21 21:46:47  pwagner
+! Added Default_L2GPFormat_write so we can choose NetCDF4 format
+!
 ! Revision 2.131  2020/02/07 01:16:51  pwagner
 ! Update versId string and how to re-set it at runtime
 !
