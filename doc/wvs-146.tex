@@ -1,10 +1,8 @@
-% Making the graphics:
+% Making some of the graphics:
 % tgif -print -color -eps wvs-146-1.obj; epstopdf wvs-146-1.eps
 % tgif -print -color -eps wvs-146-2.obj; epstopdf wvs-146-2.eps
 % tgif -print -color -eps wvs-146-3.obj; epstopdf wvs-146-3.eps
-% tgif -print -color -jpeg wvs-146-1.obj
-% tgif -print -color -jpeg wvs-146-2.obj
-% tgif -print -color -jpeg wvs-146-3.obj
+% Other graphics were made by maple; .eps and .pdf are checked in
 
 \documentclass[11pt]{article}
 \usepackage{alltt}
@@ -21,8 +19,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-146r5}
-\newcommand{\docdate}{12 February 2020}
+\newcommand{\docname}{wvs-146r6}
+\newcommand{\docdate}{2 March 2020}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -279,7 +277,7 @@ form:\footnote{Within this section, section \ref{Gaussian}, and section
 where $d = \d {\bf r}\cdot {\bf n}$ is the distance from the point at
 ${\bf r} + \d \mathbf{r}$ to the tangent plane at
 $\bf{r}(\lambda,\theta)$, $\d {\bf r} = {\bf r}(\lambda + \d \lambda,
-\theta + \d \theta) - {\bf r}(\lambda, \theta)$, and $\mathbf{n}$ is the
+\theta + \d \theta) - {\bf r}(\lambda, \theta)$, and $\mathbf{g}$ is the
 unit normal to the surface at $(\lambda,\theta)$.  The vectors
 $\frac{\partial \mathbf{r}}{\partial \lambda}$ and $\frac{\partial
 \mathbf{r}}{\partial \theta}$ are tangent to the surface.  Therefore, a
@@ -295,7 +293,7 @@ vector normal to the surface at $\bf{r}(\lambda,\theta)$ is
              a^2\, \sin \theta \cos \theta
             \end{array} \right]
  = a^2 c\, \nabla \Sigma,\,
-\mathbf{n} = \frac{\mathbf{N}}{|\mathbf{N}|}
+\mathbf{g} = \frac{\mathbf{N}}{|\mathbf{N}|}
 = \frac{\nabla\Sigma}{|\nabla\Sigma|}
 = \frac{1}{\sqrt{G}} \left[ \begin{array}{l}
   c \cos \theta \cos \lambda \\
@@ -307,13 +305,13 @@ vector normal to the surface at $\bf{r}(\lambda,\theta)$ is
 \end{split}\end{equation}
 \vspace*{-0.1in}
 \begin{equation}\begin{split}
-g = \,& \mathbf{n} \cdot
+g = \,& \mathbf{g} \cdot
         \frac{\partial^2 \mathbf{r}}{\partial \theta^2}
   = \frac{a\, c}{\sqrt{G}} \\
-f = \,& \mathbf{n} \cdot
+f = \,& \mathbf{g} \cdot
         \frac{\partial^2 \mathbf{r}}{\partial \lambda \partial \theta}
   = 0 \\
-e = \,& \mathbf{n} \cdot
+e = \,& \mathbf{g} \cdot
         \frac{\partial^2 \mathbf{r}}{\partial \lambda^2}
   = g \cos^2 \theta = \frac{a\, c \cos^2 \theta}{\sqrt{G}} \,.\\
 \end{split}\end{equation}
@@ -480,7 +478,7 @@ The normal vector is
              \cos^2 \phi \sin \lambda\\
              \cos \phi \sin \phi\\
            \end{array} \right],\,
-\mathbf{n} = \frac{\mathbf{N}}{|\mathbf{N}|}
+\mathbf{g} = \frac{\mathbf{N}}{|\mathbf{N}|}
 = \left[ \begin{array}{l}
   \cos \phi \cos \lambda \\
   \cos \phi \sin \lambda \\
@@ -507,13 +505,13 @@ G = \,& \frac{\partial \mathbf{r}}{\partial \phi} \cdot
 The coefficients of the second fundamental form are
 %
 \begin{equation}\begin{split}
-e = \,& \mathbf{n} \cdot
+e = \,& \mathbf{g} \cdot
         \frac{\partial^2 \mathbf{r}}{\partial \lambda^2}
   = \frac{a^2 \cos^2 \phi}{\sqrt{D}} = \sqrt{E} \cos \phi \\
-f = \,& \mathbf{n} \cdot
+f = \,& \mathbf{g} \cdot
         \frac{\partial^2 \mathbf{r}}{\partial \lambda \partial \phi}
   = 0 \\
-g = \,& \mathbf{n} \cdot
+g = \,& \mathbf{g} \cdot
         \frac{\partial^2 \mathbf{r}}{\partial \phi^2}
   = \frac{a^2 c^2}{D^{\frac32}} = \sqrt{G} \,. \\
 \end{split}\end{equation}
@@ -638,7 +636,7 @@ vector is
              c^2 \cos \gamma \sin \lambda\\
              a^2 \sin \gamma\\
            \end{array} \right],\,
-\mathbf{n} = \frac{\mathbf{N}}{|\mathbf{N}|}
+\mathbf{g} = \frac{\mathbf{N}}{|\mathbf{N}|}
 = \frac1{\sqrt{\Delta}}
   \left[ \begin{array}{l}
   c^2 \cos \gamma \cos \lambda \\
@@ -667,13 +665,13 @@ G = \,& \frac{\partial \mathbf{r}}{\partial \gamma} \cdot
 The coefficients of the second fundamental form are
 %
 \begin{equation}\begin{split}
-e = \,& \mathbf{n} \cdot
+e = \,& \mathbf{g} \cdot
         \frac{\partial^2 \mathbf{r}}{\partial \lambda^2}
   = \frac{c^2 R(\gamma)\, \cos^2 \gamma}{\sqrt{\Delta}} \\
-f = \,& \mathbf{n} \cdot
+f = \,& \mathbf{g} \cdot
         \frac{\partial^2 \mathbf{r}}{\partial \lambda \partial \gamma}
   = 0 \\
-g = \,& \mathbf{n} \cdot
+g = \,& \mathbf{g} \cdot
         \frac{\partial^2 \mathbf{r}}{\partial \gamma^2}
   = \frac{R(\gamma)^3}{\sqrt{\Delta}} \,. \\
 \end{split}\end{equation}
@@ -1391,10 +1389,9 @@ $3.352810667 \times 10^{-3} \, a$, at $\phi$~= 45\degs04810613, $\gamma$~=
 
 %=========================================================================
 \section{Relationship between gradient and position vectors}
-
 Let $\vec{V} = [ x, y, z ]^T$ be the position on an ellipsoid.  The
 gradient at that point is
-
+%
 \begin{equation}\label{grad3d}
 \vec{G} = \nabla \Sigma = \left[ 2 x, 2 y, \frac{2z}{1-e^2} \right]^T \,.
 \end{equation}
@@ -1402,16 +1399,15 @@ gradient at that point is
 Then using Equation (\ref{ellipsoid}),
 %
 \begin{equation}
-\vec{V} \cdot \vec{G} = 2 \left( x^2 + y^2 + \frac{z^2}{1-e^2}\right)
+\vec{G} \cdot \vec{V} = 2 \left( x^2 + y^2 + \frac{z^2}{1-e^2}\right)
  = 2 a^2 \,.
 \end{equation}
 
-The unit gradient $\frac{\vec{G}}{|\vec{G}|} = \mathbf{n}$, Equation
+The unit gradient $\frac{\vec{G}}{|\vec{G}|} = \mathbf{g}$, Equation
 (\ref{unit-gradient}), is particularly simple in geodetic co\"ordinates.
-
 Using geodetic co\"ordinates, the unit vector $\hat{V}$ parallel to the
 position vector becomes
-
+%
 \begin{equation}
 \hat{V} = \frac1{\sqrt{\cos^2\phi + (1-e^2)^2 \sin^2\phi}}
 \left[ \begin{array}{l}
@@ -1421,24 +1417,25 @@ position vector becomes
  \end{array} \right] \,.
 \end{equation}
 
-From the figure in section \ref{geometric}, $\angle(\vec{V},\vec{G}) =
-\phi - \gamma = \cos^{-1} (\hat{V} \cdot \mathbf{n})$.
+From the figure on page \pageref{geometric}, $\angle(\vec{V},\vec{G}) =
+\phi - \gamma = \cos^{-1} (\mathbf{g} \cdot \hat{V})$.
 
 Then (using Equations (\ref{tangents}))
 %
-\begin{equation}\begin{split}
+\begin{equation}\begin{split}\label{phi-gamma}
 \cos(\phi - \gamma) =\,& \cos \phi \cos \gamma + \sin \phi \sin \gamma =
-\mathbf{n} \cdot \hat{V} =
+\mathbf{g} \cdot \hat{V} =
 \frac{1-e^2 \sin^2 \phi}{\sqrt{\cos^2\phi + (1-e^2)^2 \sin^2\phi}}
 \text{ and} \\
 \tan(\phi - \gamma) =\,& \frac{e^2 \sin\phi \cos\phi}
-                              {1-e^2 \sin^2 \phi} \\
-                    = \,& \frac{e^2 \sin\gamma \cos \gamma}
-                               {1 - e^2 \cos^2 \gamma } \\
-                    = \,& \frac{e^2 \sin\theta \cos \theta}{\sqrt{1-e^2}}
-                    = \frac{a}c\, e^2 \sin\theta \cos \theta
-                    = \frac{a}{2c}\, e^2 \sin 2 \theta \,.\\
+                              {1-e^2 \sin^2 \phi}
+                    =  \frac{e^2 \sin\gamma \cos \gamma}
+                               {1 - e^2 \cos^2 \gamma }
+                    = \frac{e^2 \sin\theta \cos \theta}{\sqrt{1-e^2}}
+                    = \frac{e^2}{2\sqrt{1-e^2}}\, \sin 2 \theta \,,\\
 \end{split}\end{equation}
+
+which is obviously maximum for $\theta = \frac\pi4$.
 
 The angle $\phi-\gamma$ between the gradient and geocentric position
 vectors is the angle between a profile that is normal to the Earth surface
@@ -1446,16 +1443,36 @@ vectors is the angle between a profile that is normal to the Earth surface
 that is along a line of constant geocentric latitude.
 
 Using $e^2 = 6.69437999014\!\times\!10^{-3}$ from WGS84 Table 3.3, the
-maximum value of $\phi-\gamma$ is 0\degs1924243011 at $\phi$ =
-45\degs09621214, $\gamma$ = 44\degs90378783, $\theta$ = 44\degs99999998. 
-At that latitude and an altitude of 100 kilometers, the distance between
-points on the two profiles is 335.83562338 meters.
-
-\includegraphics[width=0.48\textwidth,keepaspectratio]{wvs-146-4}
-\includegraphics[width=0.48\textwidth,keepaspectratio]{wvs-146-5}
+largest value of $\phi-\gamma$ is 0\degs19242430116 at $\phi$ =
+45\degs0962121506, $\gamma$ = 44\degs9037878494, $\theta = \frac\pi4$ =
+45$^\circ$.  At that latitude and an altitude of 100 kilometers, the
+distance between points on the two profiles is 335.843603774 meters.
 
 The only normal sections that include the center of the Earth are
-meridional or equatorial.
+meridional or equatorial.  From the figure on page \pageref{geometric},
+the distance of a normal section from the center of the Earth is
+%
+\begin{equation}
+d = \frac{a e^2 \sin\phi \cos\phi}{\sqrt{1-e^2 \sin\phi}} \,.
+\end{equation}
+
+The maximum value of $d$ occurs for $\phi$ = 45\degs0340432888.
+Using a = 6378137.0 meters from WGS84 Table 3.3, the maximum value of $d$
+is 21399.5604406 meters.
+
+\begin{minipage}[t]{0.48\textwidth}
+\begin{centering}
+Value of $\phi-\gamma$, degrees\\[14pt]
+\includegraphics[width=0.98\textwidth,keepaspectratio]{wvs-146-4} \\
+\end{centering}
+\end{minipage}
+\begin{minipage}[t]{0.48\textwidth}
+\begin{centering}
+Distance $d$ of normal section\\
+from the center of the Earth\\[4pt]
+\includegraphics[width=0.98\textwidth,keepaspectratio]{wvs-146-5} \\
+\end{centering}
+\end{minipage}
 
 %=========================================================================
 \section{Relationship between 2-D and 3-D gradient vectors}
@@ -1481,6 +1498,8 @@ projected ellipse can be written
 
 \begin{equation}\label{orbit-plane-ellipse}
 \Sigma_p = \xi^2 + \frac{\eta^2}{1 - \epsilon^2} = a^2 \,,
+\text{ and its gradient } \nabla\Sigma_p = \vec{G}_p =
+2 \xi + \frac{2 \eta}{1-\epsilon^2},
 \end{equation}
 
 where
@@ -1499,8 +1518,9 @@ within the orbit plane to $\Sigma_p$.  Then the parametric equations for
 $\Sigma_p$, analogously to Equations (\ref{nine}), are
 
 \begin{equation}\begin{split}
-\xi =  \,& \frac{\cos\OP}{\sqrt{1-\epsilon^2\cos^2\OP}} \\
-\eta = \,& \frac{(1-\epsilon^2)\sin\OP}{\sqrt{1-\epsilon^2\cos^2\OP}} \,, \\
+\xi =  \,& \frac{a\, \cos\OP}{\sqrt{1-\epsilon^2\cos^2\OP}} \\
+\eta = \,& \frac{a\, (1-\epsilon^2)\sin\OP}
+                {\sqrt{1-\epsilon^2\cos^2\OP}} \,, \\
 \end{split}\end{equation}
 
 and the unit gradient within the orbit plane, analogously to the
@@ -1508,8 +1528,8 @@ definition of the unit gradient $\mathbf{n}$ to the Earth surface in
 Equation (\ref{unit-gradient}), is
 
 \begin{equation}
-\frac{\nabla\Sigma_p}{| \nabla\Sigma_p |} =
-\mathbf{n}_p =
+\frac{\vec{G}_p}{| \vec{G}_p |} =
+\mathbf{g}_p =
 \left[ \begin{array}{l} \cos\OP \\ \sin\OP \\ \end{array} \right]
 \text{; its three-dimensional components are }
 \left[ \begin{array}{l} \cos\OP \\
@@ -1517,122 +1537,136 @@ Equation (\ref{unit-gradient}), is
                         \sin\OP\sin\beta \\ \end{array} \right] \,.
 \end{equation}
 
-Then the angle $\Gamma$ between the gradients is give by
-
-\begin{equation}
+Then the angle $\Gamma$ between the gradients is given by
+%
+\begin{equation}\label{cosG}
 \cos\Gamma =
-\mathbf{n} \cdot \mathbf{n}_p =
+\mathbf{n} \cdot \mathbf{g}_p =
 \cos\phi ( \cos\lambda \cos\OP +
-           \sin\lambda \cos\beta\, \sin\OP ) +
-\sin\phi \sin\beta \, \sin\OP \,.
+           \sin\lambda \sin\OP\, \cos\beta ) +
+\sin\phi \sin\OP \, \sin\beta \,.
 \end{equation}
 
 To reduce this to a relationship involving only $\OP$ and $\beta$, use
 Equations (\ref{nine}) to compute
-
+%
 \begin{equation}\begin{split}
 \tan\lambda = \,& \frac{y}x \\
 \tan\phi = \,& \frac{z}{(1-e^2)\rho} = \frac{z}{(1-e^2)\sqrt{x^2+y^2}}
 \,.
 \end{split}\end{equation}
 
-Using Equations (\ref{xyz}) this becomes
-
+Using Equations (\ref{xyz}) and
+%
+\begin{equation}\begin{split}
+G = \,& 1-e^2,\, H = 1-e^2\cos^2\beta,\, E = 1 - \epsilon^2 = \frac{G}H \\
+S^2 = \,& E^2 \cos^2\beta\,\sin^2\OP + \cos^2\OP
+    = \frac{G^2}{H^2} \cos^2\beta\,\sin^2\OP + \cos^2\OP \\
+T^2 = \,& S^2\,H^2 + \sin^2\beta\,\sin^2\OP
+    = G^2 \cos^2\beta\,\sin^2\OP + H^2 \cos^2\OP + \sin^2\beta\,\sin^2\OP
+    \,, \\
+\end{split}\end{equation}
+this becomes
 \begin{equation}\begin{split}
 \tan\lambda = \,& \frac{\eta\cos\beta}{\xi}
-            = (1-\epsilon^2)\cos\beta\, \tan\OP
-            = \frac{(1-e^2)\cos\beta}{1-e^2\cos^2\beta} \, \tan\OP\\
-\tan\phi = \,& \frac{z}{(1-\epsilon^2)\sqrt{x^2+y^2}}
-         = \frac{\eta\sin\beta}
-                {(1-\epsilon^2)\sqrt{\xi^2 + \eta^2\cos^2\beta}}
-         = \frac{\sin\beta \, \sin\OP}
-                {\sqrt{\cos^2 \OP +
-                            (1-\epsilon^2)^2 \cos^2\beta\sin^2 \OP}} \\[3pt]
-         = \,& \frac{( 1-e^2 \cos^2\beta)\, \sin\beta\, \sin\OP}
-                    {\sqrt{(1-e^2\cos^2\beta)^2 \cos^2\OP +
-                           (1-e^2)^2\cos^2\beta \sin^2\OP}} \,.
+            = E \cos\beta\, \tan\OP
+            = \frac{G \cos\beta\, \tan\OP}H \\
+\cos\lambda = \,& \frac{\cos\OP}S \\
+\sin\lambda = \,& \frac{\sqrt{S^2-\cos^2\OP}}S
+            = \frac{E \cos\beta\, \sin\OP}S
+            = \frac{G \, \cos\beta\, \sin\OP}{SH} \\
+\tan\phi = \,& \frac{\eta\sin\beta}
+                {G\sqrt{\xi^2 + \eta^2\cos^2\beta}}
+         = \frac{\sin\beta\,\sin\OP}{SH} \\
+\cos\phi = \,& \frac{S H}T \\
+\sin\phi = \,& \frac{\sin\beta\,\sin\OP}T\,. \\
 \end{split}\end{equation}
 
-Then
-
+Substituting into Equation (\ref{cosG}), we have
+%
 \begin{equation}\begin{split}
-\sin\phi = \,&
- \frac{( 1-e^2 \cos^2\beta)\, \sin\beta\, \sin\OP}
-      {\sqrt{(1-e^2\cos^2\beta)^2 (\sin^2\beta\sin^2\OP + \cos^2\OP) +
-             (1-e^2)^2 \cos^2\beta \sin^2\OP}} \\[3pt]
-\cos\phi = \,&
- \sqrt{\frac{(1-e^2\cos^2\beta)^2 \cos^2\OP +
-             (1-e^2)^2\cos^2\beta \sin^2\OP}
-            {(1-e^2\cos^2\beta)^2 (\sin^2\beta\sin^2\OP + \cos^2\OP) +
-             (1-e^2)^2 \cos^2\beta \sin^2\OP}} \\[3pt]
-\sin\lambda =\,&
- \frac{(1-e^2) \cos\beta \tan\OP}
-      {\sqrt{(1-e^2\cos^2\beta)^2 +
-             (1-e^2)^2\cos^2\beta \tan^2\OP}} \\[3pt]
-\cos\lambda =\,&
- \frac{1-e^2 \cos^2 \beta}
-      {\sqrt{(1-e^2\cos^2\beta)^2 +
-             (1-e^2)^2\cos^2\beta \tan^2\OP}} \\
+\cos\Gamma = \,& \frac{H}T \\
+\frac{\partial \cos\Gamma}{\partial p} = \,&
+\frac{\partial \cos\Gamma}{\partial \beta} = 0
+\text{ when }
+\OP = \frac\pi2 \text{ and } \beta = \tan^{-1} \sqrt{1-e^2}
+ = \cos^{-1}\frac1{\sqrt{2-e^2}}
+\text{, giving} \\
+\cos\Gamma =\,& \frac{2\sqrt{1-e^2}}{2-e^2} \text{ or }
+\tan\Gamma = \frac{e^2}{2\sqrt{1-e^2}}\,,
 \end{split}\end{equation}
 
-The maximum value of $\Gamma$ occurs for $p = \frac{\pi}2$, for which
+the same result as Equation (\ref{phi-gamma}). Using $e^2 =
+6.69437999014\!\times\!10^{-3}$ from WGS84 Table 3.3, $\beta_0 =$
+44\degs9037878494 $\approx \frac{\pi}{4.0086}$ radians and
+$\left.\Gamma\right|_{\beta_0} = $0\degs19242430116.  At an altitude of
+100 kilometers, the horizontal positions on the two gradients are
+different by 200000 $\sin\left(\frac12\Gamma\right)$ = 335.843603774
+meters.
 
-\begin{equation}\begin{split}
-\cos\Gamma = \,& \frac{1 - e^2 \cos^2\beta ( 2 - \cos^2\beta )}
-                      {\sqrt{(1-e^2)^2 \cos^2\beta +
-                             (1-e^2 \cos^2\beta) \sin^2\beta)}} \\[3pt]
-\frac{\d\cos\Gamma}{\d\beta} = \,&
-\frac{e^4(1-e^2\cos^2\beta(4-(2+\cos^2\beta))\cos\beta \sin^5\beta}
-     {\left((1-e^2)^2 \cos^2\beta +
-            (1-e^2 \cos^2\beta) \sin^2\beta)\right)^\frac32} \text{
-            and}\\[3pt]
-\frac{\d\cos\Gamma}{\d\beta} = \,& 0 \text{ for }
-\beta = \sqrt{\frac{2-2e^2-\sqrt{(1-e^2)(4-e^2)}}
-                   {2-e^2-\sqrt{(1-e^2)(4-e^2)}}} \,.
-\end{split}\end{equation}
+\newcommand*{\mydprime}{^{\prime\prime}\mkern-1.2mu}
+\newcommand{\secs}{$\stackrel{\hspace*{-0.5pt}\mydprime}{\vspace*{-2pt}.}$}
 
-Using $e^2 = 6.69437999014\!\times\!10^{-3}$ from WGS84 Table 3.3,
-$\frac{\d\cos\Gamma}{\d\beta}=0$ for $\beta =$ 59\degs9374951991 $\approx
-\frac{\pi}{3.003}$ radians.  At that value of $\beta$,
-$\Gamma=$0\degs124930964769.  At an altitude of 100 kilometers, the horizontal
-positions on the two gradients are different by 218.045494513 meters.
+The projection of $\mathbf{g}$ into the orbit plane is parallel to
+$\mathbf{g}_p$.  This can be verified by noting that
+$\mathbf{n}_p \cdot ( \mathbf{g} \times \mathbf{g}_p ) = 0$, where
+%
+\begin{equation}
+\mathbf{n}_p = \left[ \begin{array}{c} 0 \\ -\sin\beta \\ \cos\beta
+\end{array} \right]
+\text{ is the normal to the plane and }
+\frac{\mathbf{g} \times \mathbf{g}_p}
+     {| \mathbf{g} \times \mathbf{g}_p |} =
+\left[ \begin{array}{c}
+ -\sin\OP \\ \cos\beta\cos\OP \\ \sin\beta\cos\OP \end{array} \right]\,.
+\end{equation}
+
+Therefore, $\Gamma = \sin^{-1} ( \mathbf{g} \cdot \mathbf{n}_p ) =
+\sin^{-1} | \mathbf{g} \times \mathbf{g}_p |$.  For $p=\frac\pi2$,
+
+\begin{equation}
+| \mathbf{g} \times \mathbf{g}_p | =
+ \frac{e^2 \cos\beta\sin\beta}{1-e^2\cos^2\beta} \text{ and }
+\frac{\d | \mathbf{g} \times \mathbf{g}_p |}{\d \beta} =
+-\frac{e^2(1-(2-e^2)\cos^2\beta}{(1-e^2\cos^2\beta)^2} = 0 \text{ for }
+\beta=\cos^{-1} \frac1{\sqrt{2-e^2}} \,.
+\end{equation}
 
 \begin{minipage}[t]{0.42\textwidth} Angle $\Gamma$ in degrees between
-$\vec{G}$ and $\vec{G}_p$ for EOS AURA, which is in an orbit plane
+$\mathbf{g}$ and $\mathbf{g}_p$ for EOS AURA, which is in an orbit plane
 inclined at 98\degs14.  The maximum value of $\Gamma$ is
-0\degs0526981133094, and the maximum distance between points on the two
-profiles at an altitude of 100 kilometers is 91.9755457161 meters.\\[3pt]
+0\degs0537688556, and the maximum distance between points on the two
+profiles at an altitude of 100 kilometers is 93.8443530812 meters.\\[3pt]
 \begin{centering}
 \includegraphics[width=0.95\textwidth,keepaspectratio]{wvs-146-6} \\
 \end{centering}
 \end{minipage}
+%
 \begin{minipage}[t]{0.55\textwidth}
 \begin{centering}
-Angle $\Gamma$ in degrees between $\vec{G}$ and $\vec{G}_p$ for\\
-$0 \leq \phi \leq \beta \leq \frac{Pi}2$.\\[3pt]
+Angle $\Gamma$ in degrees between $\mathbf{g}$ and $\mathbf{g}_p$ for\\
+$0 \leq \OP \leq \frac\pi2$ and $0 \leq \beta \leq \frac\pi2$.\\[6pt]
 
 \ifnum \pdfoutput>0 \vspace*{0.1in} \fi
-\includegraphics[width=0.95\textwidth,keepaspectratio]{wvs-146-7} \\
+\includegraphics[width=1.2\textwidth,keepaspectratio,clip]{wvs-146-7} \\
+%\includegraphics[scale=0.6]{wvs-146-7} \\
 \end{centering}
 \end{minipage}
 
 \begin{minipage}[t]{0.5\textwidth}
-Angle $\Gamma$ in degrees between $\vec{G}$ and $\vec{G}_p$ for
+Angle $\Gamma$ in degrees between $\mathbf{g}$ and $\mathbf{g}_p$ for
 $p=\frac{\pi}2$.\\[3pt]
 \begin{centering}
 \includegraphics[width=0.95\textwidth,keepaspectratio]{wvs-146-8} \\
 \end{centering}
 \end{minipage}
 \begin{minipage}[t]{0.45\textwidth}
-Angle $\Gamma$ in degrees between $\vec{G}$ and $\vec{G}_p$ for
-$\beta =$ 59\degs9374951991.\\[3pt]
+Angle $\Gamma$ in degrees between $\mathbf{g}$ and $\mathbf{g}_p$ for
+$\beta =$ 44\degs9037878494.\\[3pt]
 \begin{centering}
 \includegraphics[width=0.95\textwidth,keepaspectratio]{wvs-146-9} \\
 \end{centering}
 \end{minipage}
-
-\newcommand*{\mydprime}{^{\prime\prime}\mkern-1.2mu}
-\newcommand{\secs}{$\stackrel{\hspace*{-0.5pt}\mydprime}{\vspace*{-2pt}.}$}
 
 %=========================================================================
 \newpage \section*{Appendix: Bowring's proof of prime vertical radius of
@@ -1670,9 +1704,100 @@ of curvature is equal to the length $CP$.
 \vspace*{-0.1in} % Somehow, this causes lastpage to be defined
 \end{document}
 
+\newpage
+\begin{equation}\begin{split}
+G = \,& \, 1-e^2 \\
+%
+H = \,& 1 -e^2 \cos^2\beta \\
+%
+\frac{\d H}{\d\beta} = \,& 2\,e^2 \cos\beta\,\sin\beta \\
+%
+\epsilon^2 = \,& \frac{e^2 \sin^2\beta}{1-e^2\cos^2\beta} =
+             \frac{(1-G)\sin^2\beta}H;\,
+             1-\epsilon^2 = \frac{G}H \\
+%
+\xi = \,& \frac{\cos\OP}{\sqrt{1-\epsilon^2\cos^2\OP}} =
+      \frac{\sqrt{H} \, \cos\OP}{\sqrt{H-e^2\cos^2\OP\,\sin^2\beta}} \\
+%
+\eta = \,& \frac{G \sqrt{H}\sin\OP}
+                {\sqrt{H - e^2\cos^2\OP\,\sin^2\beta )}} = G\, \xi \tan\OP \\
+%
+\tan\lambda = \,& \frac{y}x = \frac{\eta \cos\beta}{\xi} =
+              \frac{G \sin\OP\, \cos\beta}{\cos\OP} =
+              G \cos\beta\, \tan\OP \\
+%
+S^2 = \,& G^2 \sin^2\OP\, \cos^2\beta + \cos^2\OP \\
+%
+\frac{\partial S}{\partial \OP} = \,&
+-\frac{(1-G^2\cos^2\beta)\cos\OP\sin\OP}S \\
+%
+\frac{\partial S}{\partial\beta} = \,&
+ \frac{G^2 \sin^2\OP\, \cos\beta\sin\beta}S \\
+%
+\sin\lambda = \,& \frac{G \sin\OP\,\cos\beta}S \\
+%
+\cos\lambda = \,& \frac{\cos\OP}S \\
+%
+\tan\phi = \,& \frac{z}{G \rho} = \frac{Z}{G\sqrt{x^2+y^2}} =
+           \frac{\eta\sin\beta}{G\sqrt{\xi^2+\eta^2\cos^2\beta}} =
+           \frac{\sin\OP\sin\beta}S \\
+%
+T^2 = \,& S^2 + \sin^2\OP\, \sin^2\beta =
+          1 - (1-G^2) \cos^2\beta\,\sin^2\OP \\
+%
+\frac{\partial T}{\partial \OP} = \,&
+ \frac{\sin\OP\cos\OP\sin^2\beta + S\,\frac{\partial S}{\partial \OP}}T =
+ \frac{(1-G^2) \cos^2\beta\,\cos\OP\sin\OP}T\\
+%
+\frac{\partial T}{\partial\beta} = \,&
+ \frac{\sin^2\OP\,\cos\beta\sin\beta +
+       S\, \frac{\partial S}{\partial\beta}}T =
+ \frac{(1-G^2)\cos\beta\,\sin\beta\,\sin^2\OP}T
+ \\
+%
+\sin\phi = \,& \frac{\sin\OP\sin\beta}T \\
+%
+\cos\phi = \,& \frac{S}T \\
+%
+\cos\Gamma = \,& \frac{1-e^2\cos^2\beta\,\sin^2\OP}T =
+                 \frac{1-e^2\cos^2\beta\,\sin^2\OP}
+                      {\sqrt{1 - (1-G^2) \cos^2\beta\,\sin^2\OP}} \\
+%
+\frac{\partial \cos\Gamma}{\partial \OP} = \,&
+        -\frac{2 e^2 \cos^2\beta\,\cos\OP\sin\OP}T -
+        \frac{1-e^2\cos^2\beta\,\sin^2\OP}{T^2} \,
+        \frac{\partial T}{\partial \OP} =
+     2 \cot\OP \left( \cos\Gamma-\frac1T\right) -
+      \frac{\cos\Gamma}T\, \frac{\partial T}{\partial \OP} \\
+%
+\frac{\partial \cos\Gamma}{\partial \beta} = \,&
+  \frac{2 \, e^2 \cos\beta \sin\beta\,\sin^2\OP}T -
+   \frac{1-e^2\cos^2\beta\,\sin^2\OP}{T^2}
+   \frac{\partial T}{\partial \beta} =
+  -2\tan\beta \left(\cos\Gamma-\frac1T\right) -
+   \frac{\cos\Gamma}T\, \frac{\partial T}{\partial \beta} \\
+%
+\end{split}\end{equation}
+
+\begin{equation}\begin{split}
+\frac{\partial \cos\Gamma}{\partial \OP} = \,&
+\frac{\partial \cos\Gamma}{\partial \beta} = 0 \text{ when }
+\sin\OP = \frac1{\sqrt{2-e^2}\cos\beta} \text{, for which} \\
+\cos\Gamma =\,& \frac{2\sqrt{1-e^2}}{2-e^2} \\
+\end{split}\end{equation}
+
+Using $e^2 = 6.69437999014\!\times\!10^{-3}$ from WGS84 Table 3.3,
+$\beta_0 =$ 44\degs9037878558 $\approx \frac{\pi}{4.0086}$ radians and
+$\left.\Gamma\right|_{\beta_0} = $0\degs192424295874.  At an altitude of
+100 kilometers, the horizontal positions on the two gradients are
+different by 200000 $\sin(\frac12\Gamma)$ = 335.843594550 meters.
+
 % $Id$
 
 % $Log$
+% Revision 1.8  2020/02/13 02:49:04  vsnyder
+% Repair a typo
+%
 % Revision 1.7  2020/02/13 02:06:29  vsnyder
 % Significant update.  Added 2D-vs-3D gradient angle calculation
 %
