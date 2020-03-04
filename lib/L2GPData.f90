@@ -53,14 +53,14 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   implicit none
 
   private
-  public :: L2GPdata_t
-  public :: L2GPnamelen
+  public :: L2GPData_T
   public :: AddL2GPToDatabase, AppendL2GPData, &
     & CompactL2GPRecord, ContractL2GPRecord, ConvertL2GPToQuantity, &
     & CpHE5GlobalAttrs, CpL2GPData, CpL2GPDataToAttribute, &
     & DestroyL2GPContents, DestroyL2GPDatabase, &
     & Diff, DiffRange, Dump, DumpRange, &
-    & ExpandL2GPDataInPlace, ExtractL2GPRecord, IsL2GPSetup, &
+    & ExpandL2GPDataInPlace, ExtractL2GPRecord, FilterL2GP, &
+    & IsL2GPSetup, OutputL2GP_Attributes, &
     & ReadL2GPData, RepairL2GP, SetupNewL2GPRecord, WriteL2GPData
 
 !---------------------------- RCS Module Info ------------------------------
@@ -115,10 +115,14 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     module procedure AppendL2GPData_MLSFile
   end interface
 
-  interface cpL2GPData
+  interface CpL2GPData
     module procedure CpL2GPData_fileID
     module procedure CpL2GPData_fileName
     module procedure CpL2GPData_MLSFile
+  end interface
+  
+  interface OutputL2GP_Attributes
+    module procedure OutputL2GP_Attributes_MF
   end interface
 
   interface RepairL2GP
@@ -126,7 +130,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     module procedure RepairL2GP_HGrid
   end interface
 
-  interface writeL2GPData
+  interface WriteL2GPData
     module procedure WriteL2GPData_fileID
     module procedure WriteL2GPData_MLSFile
   end interface
@@ -134,6 +138,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   ! This module defines datatypes and gives basic routines for storing and
   ! manipulating L2GP data.
   ! It is prepared to handle io for both file versions: hdfeos2 and hdfeos5
+  ! For NetCDF4 interfaces, see NCL2GP.f90
 
 !     c o n t e n t s
 !     - - - - - - - -
@@ -146,9 +151,9 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 !                           to just the non-Fill instances
 ! ContractL2GPRecord      Subsample an existing L2GP using geolocation ranges
 ! ConvertL2GPToQuantity   Convert an L2GP data type into a Vector Quantity
-! cpHE5GlobalAttrs        Copies global attributes from one l2gp file to another
-! cpL2GPData              Copies swaths from one l2gp file to another
-! cpL2GPDataToAttribute   Copies swathvalues from one l2gp file to another's
+! CpHE5GlobalAttrs        Copies global attributes from one l2gp file to another
+! CpL2GPData              Copies swaths from one l2gp file to another
+! CpL2GPDataToAttribute   Copies swathvalues from one l2gp file to another's
 !                           file-level attributes
 ! DestroyL2GPContents     Deallocates all the arrays allocated for an L2GP
 ! DestroyL2GPDatabase     Destroys an L2GP database
@@ -157,7 +162,10 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 !                            to any desired level of detail
 ! ExpandL2GPDataInPlace   Adds more profiles to an existing L2GP
 ! ExtractL2GPRecord       Subsample an existing L2GP using index ranges
-! isL2GPSetUp             Returns TRUE if all L2GP arrays allocated
+! FilterL2GP              Set Status to Crash wherever Geolocations contain
+!                            FillValues
+! IsL2GPSetUp             Returns TRUE if all L2GP arrays allocated
+! OutputL2GP_Attributes   Write all attributes relevant to an L2GP Data type
 ! ReadL2GPData            Reads L2GP from existing swath file
 ! RepairL2GP              Replaces fillValues in one L2GP with either
 !                         (1) corresponding values from another L2GP; or
@@ -180,13 +188,13 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 !       v              verbose
   ! Assume L2GP files w/o explicit hdfVersion field are this
   ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc. 
-  integer, parameter :: L2GPDEFAULT_HDFVERSION = HDFVERSION_5
-  integer, parameter :: DANGERWILLROBINSON = 513 ! status for a crashed profile
+  integer, parameter :: L2GPDefault_HDFVersion = HDFVersion_5
+  integer, parameter :: DangerWillRobinson = 513 ! status for a crashed profile
 
   ! r4 corresponds to sing. prec. :: same as stored in files
   integer, public, parameter :: rgp = r4
 
-  integer, private, parameter :: MAXCHUNKTIMES = 120
+  integer, public, parameter :: MAXCHUNKTIMES = 120
   integer, public, parameter :: MAXNUMSWATHPERFILE = 300
   ! How long may the list of swath names grow (~80 x max num. of swaths/file)
   integer, public, parameter :: MAXSWATHNAMESBUFSIZE = 80*MAXNUMSWATHPERFILE
@@ -196,71 +204,71 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   logical, public            :: MUSTGUARDAGIANSTHDFEOSBUG  = .false.
   logical, public            :: WRITEMASTERSFILEATTRIBUTES = .true.
 
-  integer, parameter :: CHARATTRLEN = 255   ! was GA_VALUE_LENGTH
-  integer, parameter :: L2GPNameLen = 80
-  integer, parameter :: NumDataFields = 5
-  integer, parameter :: NumGeolocFields = 10
-  integer, parameter :: MAXFNFIELDS = NumGeolocFields + NumDataFields + 4
-  integer, parameter :: MAXNLEVELS = 100
-  integer, parameter :: MAXNUMTIMES = 10000
+  integer, parameter, public :: CHARATTRLEN = 255   ! was GA_VALUE_LENGTH
+  integer, parameter, public :: L2GPNameLen = 80
+  integer, parameter, public :: NumDataFields = 5
+  integer, parameter, public :: NumGeolocFields = 10
+  integer, parameter, public :: MAXFNFIELDS = NumGeolocFields + NumDataFields + 4
+  integer, parameter, public :: MAXNLEVELS = 100
+  integer, parameter, public :: MAXNUMTIMES = 10000
 
    ! The following are the current data fields
-   character (len=*), parameter :: DATA_FIELD1 = 'L2gpValue'
-   character (len=*), parameter :: DATA_FIELD2 = 'L2gpPrecision'
-   ! character (len=*), parameter :: DATA_FIELD3 = 'Status'
-   ! character (len=*), parameter :: DATA_FIELD4 = 'Quality'
-   ! character (len=*), parameter :: DATA_FIELD5 = 'Convergence'
-   character (len=*), parameter :: DATA_FIELDS = &
+   character (len=*), parameter, public :: DATA_FIELD1 = 'L2gpValue'
+   character (len=*), parameter, public :: DATA_FIELD2 = 'L2gpPrecision'
+   ! character (len=*), parameter, public :: DATA_FIELD3 = 'Status'
+   ! character (len=*), parameter, public :: DATA_FIELD4 = 'Quality'
+   ! character (len=*), parameter, public :: DATA_FIELD5 = 'Convergence'
+   character (len=*), parameter, public :: DATA_FIELDS = &
      & 'L2gpValue,L2gpPrecision,Quality,Status,Convergence'
 
    ! The following are the current geolocation fields
-   ! character (len=*), parameter :: GEO_FIELD1 = 'Latitude'
-   ! character (len=*), parameter :: GEO_FIELD2 = 'Longitude'
-   ! character (len=*), parameter :: GEO_FIELD3 = 'Time'
-   ! character (len=*), parameter :: GEO_FIELD4 = 'LocalSolarTime'
-   ! character (len=*), parameter :: GEO_FIELD5 = 'SolarZenithAngle'
-   ! character (len=*), parameter :: GEO_FIELD6 = 'LineOfSightAngle'
-   ! character (len=*), parameter :: GEO_FIELD7 = 'OrbitGeodeticAngle'
-   ! character (len=*), parameter :: GEO_FIELD8 = 'ChunkNumber'
-   ! character (len=*), parameter :: GEO_FIELD9 = 'Pressure'
-   ! character (len=*), parameter :: GEO_FIELD10= 'Frequency'
-   character (len=*), parameter :: GEO_FIELDS = &
+   ! character (len=*), parameter, public :: GEO_FIELD1 = 'Latitude'
+   ! character (len=*), parameter, public :: GEO_FIELD2 = 'Longitude'
+   ! character (len=*), parameter, public :: GEO_FIELD3 = 'Time'
+   ! character (len=*), parameter, public :: GEO_FIELD4 = 'LocalSolarTime'
+   ! character (len=*), parameter, public :: GEO_FIELD5 = 'SolarZenithAngle'
+   ! character (len=*), parameter, public :: GEO_FIELD6 = 'LineOfSightAngle'
+   ! character (len=*), parameter, public :: GEO_FIELD7 = 'OrbitGeodeticAngle'
+   ! character (len=*), parameter, public :: GEO_FIELD8 = 'ChunkNumber'
+   ! character (len=*), parameter, public :: GEO_FIELD9 = 'Pressure'
+   ! character (len=*), parameter, public :: GEO_FIELD10= 'Frequency'
+   character (len=*), parameter, public :: GEO_FIELDS = &
      & 'Latitude,Longitude,LocalSolarTime,SolarZenithAngle,LineOfSightAngle' // &
      & ',OrbitGeodeticAngle,Pressure,Time,Frequency,ChunkNumber'
    ! The following are HIRDLS geolocation fields
-   ! character (len=*), parameter :: HGEO_FIELDS = &
+   ! character (len=*), parameter, public :: HGEO_FIELDS = &
    !  & 'Latitude,Longitude,LocalSolarTime,SolarZenithAngle,LineOfSightAngle' // &
    !  & ',OrbitGeodeticAngle,Time'
 
    ! The following are the dimension names according to the mls spec
-   character (len=*), parameter :: DIM_NAME1 = 'nTimes'
-   ! character (len=*), parameter :: DIM_NAME2 = 'nLevels'
-   ! character (len=*), parameter :: DIM_NAME3 = 'nFreqs'
+   character (len=*), parameter, public :: DIM_NAME1 = 'nTimes'
+   ! character (len=*), parameter, public :: DIM_NAME2 = 'nLevels'
+   ! character (len=*), parameter, public :: DIM_NAME3 = 'nFreqs'
    ! An alternate name for DIM_NAME3 used by HIRDLS
-   ! character (len=*), parameter :: HRD_DIM_NAME3 = 'nChans'
-   character (len=*), parameter :: DIM_NAME12 = 'nLevels,nTimes'
-   character (len=*), parameter :: DIM_NAME123 = 'nFreqs,nLevels,nTimes'
+   ! character (len=*), parameter, public :: HRD_DIM_NAME3 = 'nChans'
+   character (len=*), parameter, public :: DIM_NAME12 = 'nLevels,nTimes'
+   character (len=*), parameter, public :: DIM_NAME123 = 'nFreqs,nLevels,nTimes'
    ! These are for the new max_dimlist parameter added to  SWdefgfld.
    ! this one is for non-extendible dimensions
-   character (len=*), parameter :: MAX_DIML = ' '
-   character (len=*), parameter :: UNLIM = 'Unlim'
+   character (len=*), parameter, public :: MAX_DIML = ' '
+   character (len=*), parameter, public :: UNLIM = 'Unlim'
    ! This is for cases where the time dimension is extendible
-   character (len=*), parameter :: MAX_DIML1 = UNLIM
-   character (len=*), parameter :: MAX_DIML12 = 'nLevels,Unlim'
-   character (len=*), parameter :: MAX_DIML123 = 'nFreqs,nLevels,Unlim'
+   character (len=*), parameter, public :: MAX_DIML1 = UNLIM
+   character (len=*), parameter, public :: MAX_DIML12 = 'nLevels,Unlim'
+   character (len=*), parameter, public :: MAX_DIML123 = 'nFreqs,nLevels,Unlim'
 
 !   INTEGER,PARAMETER::CHUNKFREQS=13,CHUNKLEVELS=17,CHUNKTIMES=9,CHUNK4=1
    
-   ! character (len=*), parameter :: DEFAULTMAXDIM = UNLIM
-   ! integer, parameter :: DEFAULT_CHUNKRANK = 1
-   ! integer, dimension(7), parameter :: DEFAULT_CHUNKDIMS = (/ 1,1,1,1,1,1,1 /)
-   integer, parameter :: HDFE_NOMERGE = 0       ! don't merge
+   ! character (len=*), parameter, public :: DEFAULTMAXDIM = UNLIM
+   ! integer, parameter, public :: DEFAULT_CHUNKRANK = 1
+   ! integer, dimension(7), parameter, public :: DEFAULT_CHUNKDIMS = (/ 1,1,1,1,1,1,1 /)
+   integer, parameter, public :: HDFE_NOMERGE = 0       ! don't merge
   
   ! So far, the nameIndex component of the main data type is never set
-  logical, parameter :: NAMEINDEXEVERSET = .false.  
+  logical, parameter, public :: NAMEINDEXEVERSET = .false.  
   
   ! Do you want to write file and swath attributes when you append values
-  logical, parameter :: APPENDSWRITEATTRIBUTES = .true.  
+  logical, parameter, public :: APPENDSWRITEATTRIBUTES = .true.  
   
   ! In what range of orbit angles do we set the mode to "descending"
   type(interval_T), public, parameter :: DescendingRange = interval_T( 90._rt, 270._rt )
@@ -340,7 +348,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
      ! dimensioned (nFreqs, nLevels, nTimes)
 
      ! Now we've changed our minds: status will be a 4-byte integer
-     integer, pointer, dimension(:) :: status=>NULL()
+     integer, pointer, dimension(:)    :: status=>NULL()
      !                (status is a reserved word in F90)
      real (rgp), pointer, dimension(:) :: quality=>NULL()
      real (rgp), pointer, dimension(:) :: convergence=>NULL()
@@ -353,7 +361,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
      real (rgp)                        :: MissingL2GP  = DefaultUndefinedValue
      ! These are the fill/missing values for all other arrays except status
      real (rgp)                        :: MissingValue = DefaultUndefinedValue
-     integer                           :: MissingStatus = 513 ! 512 + 1
+     integer                           :: MissingStatus = DangerWillRobinson
     ! Vertical coordinate
     character(len=8) :: verticalCoordinate ! E.g. 'Pressure', or 'Theta'
     ! integer :: verticalCoordinate ! The vertical coordinate used.  These
@@ -637,7 +645,7 @@ contains ! =====     Public Procedures     =============================
       case ( HDFVERSION_4 )
       case ( HDFVERSION_5 )
         if ( .not. swath_exists .and. APPENDSWRITEATTRIBUTES) then
-          call OutputL2GP_attributes_MF (l2gp, l2GPFile, swathName)
+          call OutputL2GP_Attributes_MF (l2gp, l2GPFile, swathName)
           call SetL2GP_aliases_MF (l2gp, l2GPFile, swathName)
           if ( timing ) then
             call sayTime( 'Writing attributes', tFile, t2 )
@@ -990,7 +998,7 @@ contains ! =====     Public Procedures     =============================
     ! This routine copies swathList from 1 to 2
     ! and, depending on options, makes some repairs or applies a sanity filter
     ! which guarantees that any profiles with Fill values among the
-    ! geolocations are marked with DANGERWILLROBINSON status
+    ! geolocations are marked with MissingStatus status
 
     use HGridsDatabase, only: HGrid_T
     ! Arguments
@@ -5194,47 +5202,47 @@ contains ! =====     Public Procedures     =============================
 
     if ( SwitchDetail(myFields, 'latitude', '-wfc') > -1 ) then
       where ( isFillValue(l2gp%latitude) )
-         l2gp%status = DANGERWILLROBINSON
+         l2gp%status = l2gp%MissingStatus  !DANGERWILLROBINSON
       endwhere
     endif
     if ( SwitchDetail(myFields, 'longitude', '-wfc') > -1 ) then
       where ( isFillValue(l2gp%longitude) )
-         l2gp%status = DANGERWILLROBINSON
+         l2gp%status = l2gp%MissingStatus  !DANGERWILLROBINSON
       endwhere
     endif
     if ( SwitchDetail(myFields, 'solartime', '-wfc') > -1 ) then
       where ( isFillValue(l2gp%solartime) )
-         l2gp%status = DANGERWILLROBINSON
+         l2gp%status = l2gp%MissingStatus  !DANGERWILLROBINSON
       endwhere
     endif
     if ( SwitchDetail(myFields, 'solarzenith', '-wfc') > -1 ) then
       where ( isFillValue(l2gp%solarzenith) )
-         l2gp%status = DANGERWILLROBINSON
+         l2gp%status = l2gp%MissingStatus  !DANGERWILLROBINSON
       endwhere
     endif
     if ( SwitchDetail(myFields, 'losangle', '-wfc') > -1 ) then
       where ( isFillValue(l2gp%losangle) )
-         l2gp%status = DANGERWILLROBINSON
+         l2gp%status = l2gp%MissingStatus  !DANGERWILLROBINSON
       endwhere
     endif
     if ( SwitchDetail(myFields, 'geodangle', '-wfc') > -1 ) then
       where ( isFillValue(l2gp%geodangle) )
-         l2gp%status = DANGERWILLROBINSON
+         l2gp%status = l2gp%MissingStatus  !DANGERWILLROBINSON
       endwhere
     endif
     if ( SwitchDetail(myFields, 'time', '-wfc') > -1 ) then
       where ( isFillValue(l2gp%time) )
-         l2gp%status = DANGERWILLROBINSON
+         l2gp%status = l2gp%MissingStatus  !DANGERWILLROBINSON
       endwhere
     endif
     if ( SwitchDetail(myFields, 'l2gpvalue', '-wfc') > -1 ) then
       where ( isFillValue(l2gp%l2gpvalue(1,1,:)) )
-         l2gp%status = DANGERWILLROBINSON
+         l2gp%status = l2gp%MissingStatus  !DANGERWILLROBINSON
       endwhere
     endif
     if ( SwitchDetail(myFields, 'l2gpprecision', '-wfc') > -1 ) then
       where ( isFillValue(l2gp%l2gpprecision(1,1,:)) )
-         l2gp%status = DANGERWILLROBINSON
+         l2gp%status = l2gp%MissingStatus  !DANGERWILLROBINSON
       endwhere
     endif
 
@@ -5628,6 +5636,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.243  2020/02/13 21:27:08  pwagner
+! Fix errors relating to separate MissingValue for GPH
+!
 ! Revision 2.242  2019/10/30 20:09:37  pwagner
 ! Prevents an array bounds error caught by NAG
 !
