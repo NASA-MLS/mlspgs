@@ -1774,7 +1774,8 @@ contains ! ======================= Public Procedures =========================
     endif
     nProfiles = useLastInstance - useFirstInstance + 1
     lastProfile = firstProfile - 1 + nProfiles
-    if ( DEEBUG ) print *, 'noFreqsInL2GP, noSurfsInL2GP, lastProfile: ', noFreqsInL2GP, noSurfsInL2GP, lastProfile
+    if ( DEEBUG ) print *, 'noFreqsInL2GP, noSurfsInL2GP, lastProfile: ', &
+      & noFreqsInL2GP, noSurfsInL2GP, lastProfile
     call SetupNewl2gpRecord ( l2gp, noFreqsInL2GP, noSurfsInL2GP, lastProfile )
     ! Setup the standard stuff, only pressure as it turns out.
     select case ( quantity%template%verticalCoordinate )
@@ -1783,10 +1784,14 @@ contains ! ======================= Public Procedures =========================
     case ( l_Zeta ) 
       l2gp%pressures = 10.0**(-quantity%template%surfs(:,1))
     case default
-      call get_string( lit_indices(quantity%template%verticalCoordinate ), l2gp%verticalCoordinate, strip=.true. )      
+      call get_string( lit_indices(quantity%template%verticalCoordinate ), &
+        & l2gp%verticalCoordinate, strip=.true. )      
       if ( noSurfsInL2GP > 0 ) l2gp%pressures = quantity%template%surfs(:,1)
-      call MLSL2Message( MLSMSG_Warning, ModuleName, &
-        & 'Converting qty with non-pressure vertical coordinate ' // l2gp%verticalCoordinate )
+      ! Don't warn about quantities with no vertically-resolved levels,
+      ! e.g. Column amounts
+      if ( noSurfsInL2GP > 1 ) call MLSL2Message( MLSMSG_Warning, ModuleName, &
+        & 'Converting qty with non-pressure vertical coordinate ' // &
+        & l2gp%verticalCoordinate )
       if ( verbose ) call dump( l2gp%pressures, 'vertical coordinates' )
       if ( deebug  ) call dump( quantity%template )
     end select
@@ -1960,6 +1965,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.96  2020/03/04 21:27:32  pwagner
+! Skip Warnings about Column amounts: already know they lack vertical coords
+!
 ! Revision 2.95  2020/02/13 21:27:45  pwagner
 ! Fix errors relating to separate MissingValue for GPH
 !
