@@ -46,8 +46,8 @@ module PCFHdr
     & H5_ReadGlobalAttr, H5_ReadMLSFileAttr, He5_ReadMLSFileAttr, &
     & H5_WriteGlobalAttr, He5_WriteglobalAttr, He5_ReadGlobalAttr, &
     & H5_WriteMLSFileAttr, He5_WriteMLSFileAttr, &
-    & InputInputPointer, WriteInputPointer, &
-    & SomeToGlobalAttributes, &
+    & InputInputPointer, ProcessLevelFun, SomeToGlobalAttributes, &
+    & WriteInputPointer, &
     & WriteLeapSecHDFEOSAttr, WriteLeapSecHDF5DS, WritePCF2Hdr, &
     & WriteUTCPoleHDFEOSAttr, WriteUTCPoleHDF5DS
    private
@@ -79,6 +79,7 @@ module PCFHdr
 ! He5_writeglobalattr      Writes the global attributes to an hdfeos5-formatted file
 ! He5_readglobalattr       Reads the global attributes from an hdfeos5-formatted file
 ! InputInputpointer        Prepare Input for WriteInputpointer
+! ProcessLevelFun          Return the Current ProcessLevel (Default: 'L2')
 ! SomeToGlobalAttributes   Copy some of the attributes read into the global ones
 ! Sw_writeglobalattr       Writes the global attributes for an hdfeos5 swath
 ! WriteInputpointer        Write Inputpointer metadata
@@ -1912,6 +1913,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.77  2020/03/04 21:22:20  pwagner
+!# Make ProcessLevelFun public
+!#
 !# Revision 2.76  2019/10/30 20:08:40  pwagner
 !# Dumping Misc Notes spans lines properly
 !#
