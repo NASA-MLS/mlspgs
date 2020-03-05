@@ -19,8 +19,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-146r7}
-\newcommand{\docdate}{2 March 2020}
+\newcommand{\docname}{wvs-146r8}
+\newcommand{\docdate}{4 March 2020}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -1550,7 +1550,7 @@ Then the angle $\Gamma$ between the gradients is given by
 To reduce this to a relationship involving only $\OP$ and $\beta$, use
 Equations (\ref{nine}) to compute
 %
-\begin{equation}\begin{split}
+\begin{equation}\begin{split}\label{lambdaphi}
 \tan\lambda = \,& \frac{y}x \\
 \tan\phi = \,& \frac{z}{(1-e^2)\rho} = \frac{z}{(1-e^2)\sqrt{x^2+y^2}}
 \,.
@@ -1558,15 +1558,18 @@ Equations (\ref{nine}) to compute
 
 Using Equations (\ref{xyz}) and
 %
-\begin{equation}\begin{split}
-G = \,& 1-e^2,\, H = 1-e^2\cos^2\beta,\, E = 1 - \epsilon^2 = \frac{G}H \\
+\begin{equation}\begin{split}\label{aux}
+G = \,& 1-e^2,\, W=1-G^2 = e^2(2-e^2),\, H = 1-e^2\cos^2\beta,\,
+        E = 1 - \epsilon^2 = \frac{G}H \\
 S^2 = \,& E^2 \cos^2\beta\,\sin^2\OP + \cos^2\OP
     = \frac{G^2}{H^2} \cos^2\beta\,\sin^2\OP + \cos^2\OP \\
-T^2 = \,& S^2\,H^2 + \sin^2\beta\,\sin^2\OP
-    = G^2 \cos^2\beta\,\sin^2\OP + H^2 \cos^2\OP + \sin^2\beta\,\sin^2\OP
+T   = \,& S^2\,H^2 + \sin^2\beta\,\sin^2\OP
+    = (1-W\cos^2\beta)(1-W\cos^2\beta\,\cos^2\OP)
+\\
+    = \,& (1-e^2(2-e^2)\cos^2\beta)(1-e^2(2-e^2)\cos^2\beta\,\cos^2\OP)
     \,, \\
 \end{split}\end{equation}
-this becomes
+Equations (\ref{lambdaphi}) become
 \begin{equation}\begin{split}
 \tan\lambda = \,& \frac{\eta\cos\beta}{\xi}
             = E \cos\beta\, \tan\OP
@@ -1578,27 +1581,54 @@ this becomes
 \tan\phi = \,& \frac{\eta\sin\beta}
                 {G\sqrt{\xi^2 + \eta^2\cos^2\beta}}
          = \frac{\sin\beta\,\sin\OP}{SH} \\
-\cos\phi = \,& \frac{S H}T \\
-\sin\phi = \,& \frac{\sin\beta\,\sin\OP}T\,. \\
+\cos\phi = \,& \frac{S H}{\sqrt{T}} \\
+\sin\phi = \,& \frac{\sin\beta\,\sin\OP}{\sqrt{T}}\,. \\
 \end{split}\end{equation}
 
 Substituting into Equation (\ref{cosG}), we have
 %
 \begin{equation}\begin{split}
-\cos\Gamma = \,& \frac{H}T \\
-\frac{\partial \cos\Gamma}{\partial p} = \,&
-\frac{\partial \cos\Gamma}{\partial \beta} = 0
-\text{ when }
-\OP = \frac\pi2 \text{ and } \beta = \tan^{-1} \sqrt{1-e^2}
- = \cos^{-1}\frac1{\sqrt{2-e^2}}
-\text{, giving} \\
-\cos\Gamma =\,& \frac{2\sqrt{1-e^2}}{2-e^2} \text{ or }
-\tan\Gamma = \frac{e^2}{2\sqrt{1-e^2}}\,,
+\cos\Gamma = \,& \frac{H}{\sqrt{T}} ,\,
+\frac{\partial \cos\Gamma}{\partial \OP}
+ = -\frac{H}{2 T^\frac32} \frac{\partial T}{\partial \OP} \,\text{, and }
+\frac{\partial \cos\Gamma}{\partial \beta}
+ = \frac1{2 T^\frac32}
+ \left[ 2 T \frac{\partial H}{\partial \beta} -
+        H \frac{\partial T}{\partial \beta} \right] \,.
+ \\
 \end{split}\end{equation}
 
-the same result as Equation (\ref{phi-gamma}). Using $e^2 =
-6.69437999014\!\times\!10^{-3}$ from WGS84 Table 3.3, $\beta_0 =$
-44\degs9037878494 $\approx \frac{\pi}{4.0086}$ radians and
+From Equations (\ref{aux}) we have
+\begin{equation}\begin{split}
+\frac{\partial T}{\partial \OP}
+ = \,& 2 W ( 1 - W \cos^2\beta ) \cos^2\beta \, \cos\OP\, \sin\OP
+ = \frac{2WT\cos^2\beta \, \cos\OP\, \sin\OP}
+        {1-W\cos^2\beta\,\cos^2\OP}\,,  \\
+\frac{\partial T}{\partial \beta}
+ = \,& 2\, W \cos\beta \,\sin\beta
+       ( 1 + ( 1 - 2\, W \cos^2\beta ) \cos^2\OP)\,, \\
+\frac{\partial H}{\partial \OP} = \,& 0 \,\text{, and }
+\frac{\partial H}{\partial \beta}
+ = 2 e^2 \cos\beta\,\sin\beta \,. \\
+\end{split}\end{equation}
+
+$\frac{\partial \cos\Gamma}{\partial \OP}=0$ for $\beta=\frac\pi2$, $p=0$,
+and $p=\frac\pi2$.  For $\beta=0$, $\beta=\frac\pi2$, or $\OP=0$,
+$\Gamma=0$.  For $\OP=\frac\pi2$, $T = 1 - W \cos^2\!\beta$ and
+%
+\begin{equation}\begin{split}\label{solution}
+\,& \frac{\partial \cos\Gamma}{\partial \beta} =
+\frac{\cos\beta\,\sin\beta\,(W+e^2\,(2-W\,\cos^2\!\beta))}{T^\frac32}
+= 0 \text{ when }
+\cos^2\!\beta = \frac2W - \frac1{e^2} = \frac1{2-e^2}\,,
+ \\
+\,&\text{giving } \cos\Gamma = \frac{2\sqrt{1-e^2}}{2-e^2} \text{ or }
+\tan\Gamma = \frac{e^2}{2\sqrt{1-e^2}}\,
+\text{, the same result as Equation (\ref{phi-gamma}).}
+\end{split}\end{equation}
+
+Using $e^2 = 6.69437999014\!\times\!10^{-3}$ from WGS84 Table 3.3,
+$\beta_0 =$ 44\degs9037878494 $\approx \frac{\pi}{4.0086}$ radians and
 $\left.\Gamma\right|_{\beta_0} = $0\degs19242430116.  At an altitude of
 100 kilometers, the horizontal positions on the two gradients are
 different by 200000 $\sin\left(\frac12\Gamma\right)$ = 335.843603774
@@ -1606,31 +1636,6 @@ meters.
 
 \newcommand*{\mydprime}{^{\prime\prime}\mkern-1.2mu}
 \newcommand{\secs}{$\stackrel{\hspace*{-0.5pt}\mydprime}{\vspace*{-2pt}.}$}
-
-The projection of $\mathbf{g}$ into the orbit plane is parallel to
-$\mathbf{g}_p$.  This can be verified by noting that
-$\mathbf{n}_p \cdot ( \mathbf{g} \times \mathbf{g}_p ) = 0$, where
-%
-\begin{equation}
-\mathbf{n}_p = \left[ \begin{array}{c} 0 \\ -\sin\beta \\ \cos\beta
-\end{array} \right]
-\text{ is the normal to the plane and }
-\frac{\mathbf{g} \times \mathbf{g}_p}
-     {| \mathbf{g} \times \mathbf{g}_p |} =
-\left[ \begin{array}{c}
- -\sin\OP \\ \cos\beta\cos\OP \\ \sin\beta\cos\OP \end{array} \right]\,.
-\end{equation}
-
-Therefore, $\Gamma = \sin^{-1} ( \mathbf{g} \cdot \mathbf{n}_p ) =
-\sin^{-1} | \mathbf{g} \times \mathbf{g}_p |$.  For $p=\frac\pi2$,
-
-\begin{equation}
-| \mathbf{g} \times \mathbf{g}_p | =
- \frac{e^2 \cos\beta\sin\beta}{1-e^2\cos^2\beta} \text{ and }
-\frac{\d | \mathbf{g} \times \mathbf{g}_p |}{\d \beta} =
--\frac{e^2(1-(2-e^2)\cos^2\beta}{(1-e^2\cos^2\beta)^2} = 0 \text{ for }
-\beta=\cos^{-1} \frac1{\sqrt{2-e^2}} \,.
-\end{equation}
 
 \begin{minipage}[t]{0.42\textwidth} Angle $\Gamma$ in degrees between
 $\mathbf{g}$ and $\mathbf{g}_p$ for EOS AURA, which is in an orbit plane
@@ -1668,6 +1673,33 @@ $\beta =$ 44\degs9037878494.\\[3pt]
 \end{centering}
 \end{minipage}
 
+\newpage
+The projection of $\mathbf{g}$ into the orbit plane is parallel to
+$\mathbf{g}_p$.  This can be verified by noting that
+$\mathbf{n}_p \cdot ( \mathbf{g} \times \mathbf{g}_p ) = 0$, where
+%
+\begin{equation}
+\mathbf{n}_p = \left[ \begin{array}{c} 0 \\ -\sin\beta \\ \cos\beta
+\end{array} \right]
+\text{ is the normal to the plane and }
+\frac{\mathbf{g} \times \mathbf{g}_p}
+     {| \mathbf{g} \times \mathbf{g}_p |} =
+\left[ \begin{array}{c}
+ -\sin\OP \\ \cos\beta\cos\OP \\ \sin\beta\cos\OP \end{array} \right]\,.
+\end{equation}
+
+Therefore, $\Gamma = \sin^{-1} ( \mathbf{g} \cdot \mathbf{n}_p ) =
+\sin^{-1} | \mathbf{g} \times \mathbf{g}_p |$.  For $p=\frac\pi2$,
+
+\begin{equation}
+| \mathbf{g} \times \mathbf{g}_p | =
+ \frac{e^2 \cos\beta\sin\beta}{1-e^2\cos^2\beta} \text{ and }
+\frac{\d | \mathbf{g} \times \mathbf{g}_p |}{\d \beta} =
+-\frac{e^2(1-(2-e^2)\cos^2\beta)}{(1-e^2\cos^2\beta)^2} = 0 \text{ for }
+\beta=\cos^{-1} \frac1{\sqrt{2-e^2}} \,,
+\end{equation}
+
+which is the same as Equations (\ref{phi-gamma}) and (\ref{solution}).
 %=========================================================================
 \newpage \section*{Appendix: Bowring's proof of prime vertical radius of
 curvature} \label{appendix}
@@ -1795,6 +1827,9 @@ different by 200000 $\sin(\frac12\Gamma)$ = 335.843594550 meters.
 % $Id$
 
 % $Log$
+% Revision 1.10  2020/03/03 02:27:38  vsnyder
+% Correct typos before Equation (84) and in Equation (85)
+%
 % Revision 1.9  2020/03/03 01:41:24  vsnyder
 % I think it's finally correct
 %
