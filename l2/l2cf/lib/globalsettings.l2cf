@@ -115,11 +115,20 @@ begin GlobalSettings
 
     ;; Read antenna patterns
     ForwardModelGlobal, $
-      antennaPatterns=!antennaFile, $
-      filterShapes=!filterFile, $
-      DACSFiltershapes=!dacsFilterFile, $
-      pointingGrids=!pfgFile, $
-      pfaFiles=!pfaFiles
+      antennaPatterns='!antennaFile', $
+      filterShapes='!filterFile', $
+      DACSFiltershapes='!dacsFilterFile', $
+      pointingGrids='!pfgFile', $
+      pfaFiles= [$
+        '!PFAFile(1)', $
+        '!PFAFile(2)', $
+        '!PFAFile(3)', $
+        '!PFAFile(4)', $
+        '!PFAFile(5)', $
+        '!PFAFile(6)', $
+        '!PFAFile(7)', $
+        '!PFAFile(8)'  $
+      ]
     
 !forall(readStandardL2PC,!standardBands)
 
@@ -148,6 +157,9 @@ begin GlobalSettings
 end GlobalSettings
 !divert(-1)
 ; $Log$
+; Revision 1.7  2019/12/12 00:58:33  pwagner
+; Makes use of new macros; prints if dee=bug
+;
 ; Revision 1.6  2018/03/13 23:20:36  pwagner
 ; Removed unused iterations field
 ;
