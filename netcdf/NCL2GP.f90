@@ -17,10 +17,7 @@ module NCL2GP
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use Dump_1, only: Dump
   use NetCDF ! Everything
-  use HDF, only: Dfacc_Rdonly, Dfacc_Read, Dfacc_Create, Dfacc_Rdwr, &
-    & Dfnt_Float32, Dfnt_Int32, Dfnt_Float64
-  use HDFEOS5, only: HE5T_Native_Int, &
-    & HE5T_Native_Double, HE5T_Native_Real, MLS_CharType
+  use HDF, only: Dfacc_Rdonly, Dfacc_Read, Dfacc_Create, Dfacc_Rdwr
   use HighOutput, only: BeVerbose, OutputNamedValue, StyledOutput
   use Intrinsic ! "units" Type Literals, Beginning With L
   use L2GPData, only: CharAttrLen, Col_Species_Keys, Col_Species_Hash, &
@@ -32,7 +29,7 @@ module NCL2GP
     & WriteMastersFileAttributes
   use MLSCommon, only: L2MetaData_T, &
     & R4, R8, MLSFile_T, UndefinedIntegerValue
-  use MLSFiles, only: InitializeMLSFile, MLS_CloseFile, MLS_OpenFile
+  use MLSFiles, only: Dump, InitializeMLSFile, MLS_CloseFile, MLS_OpenFile
   use MLSMessagemodule, only: MLSMSG_Error, MLSMSG_Warning, MLSMessage
   use MLSStats1, only: MLSMin
   use MLSStringlists, only: ExtractSubstring, GetHashElement, GetStringElement, &
@@ -460,8 +457,9 @@ contains ! ======================= Public Procedures =========================
         call output( 'After reading global attributes', advance='yes' )
         call outputNamedValue( 'StartUTC', trim(GlobalAttributes%StartUTC) )
       endif
-      ! Unfortunately, WriteNCGlobalAttr writes class-level data
-      ! so must save original version so can copy new data into it 
+      ! Unfortunately, WriteNCGlobalAttr writes GlobalAttributes, not 
+      ! what we just read
+      ! So we must save the original version before we copy new data into it 
       gAttributes%HostName = GlobalAttributes%HostName
       gAttributes%ProductionLoc = GlobalAttributes%ProductionLoc
       gAttributesOriginal = GlobalAttributes
@@ -525,7 +523,6 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(7) :: DimIDs
     integer :: CHUNK_RANK
     integer :: CHUNKTIMES, CHUNKFREQS, CHUNKLEVELS
-    integer :: hdfVersion
 
     integer :: SWID, STATUS
     logical :: myNotUnlimited
@@ -536,7 +533,7 @@ contains ! ======================= Public Procedures =========================
     integer :: y_dimId       ! NetCDF dimension identifier for nLevels
     integer :: z_dimId       ! NetCDF dimension identifier for nTimesTotal
     ! Executable
-    deebughere = DEEBUG ! .or. .TRUE.
+    deebughere = DEEBUG  .or. .TRUE.
     if (present(swathName)) then
        name=swathName
     else
@@ -546,7 +543,9 @@ contains ! ======================= Public Procedures =========================
     if ( present ( notUnlimited ) ) myNotUnlimited = notUnlimited
     mycompressTimes = .false.
     if ( present (compressTimes ) ) mycompressTimes = compressTimes
-    hdfVersion = L2GPFile%hdfVersion
+    ! swid = mls_SWcreate(L2GPFile%FileID%f_id, trim(name), &
+    swid = mls_SWcreate( L2GPFile, trim(name) )
+    L2GPFile%fileID%sd_id = swid
     
     ! Work out the chunking
     if ( myNotUnlimited ) then
@@ -584,8 +583,6 @@ contains ! ======================= Public Procedures =========================
     if ( deebughere )  print *, 'myNotUnlimited ', myNotUnlimited
     if ( deebughere )  print *, 'l2gp%MissingL2GP ', l2gp%MissingL2GP
     if ( deebughere )  print *, 'l2gp%MissingValue ', l2gp%MissingValue
-    ! swid = mls_SWcreate(L2GPFile%FileID%f_id, trim(name), &
-    swid = mls_SWcreate( L2GPFile, trim(name) )
     if ( swid == -1 ) then
        call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'Failed to create swath ' // TRIM(name) &
@@ -617,35 +614,35 @@ contains ! ======================= Public Procedures =========================
     chunk_dims(1)=CHUNKTIMES
     if ( deebughere )  print *, 'chunk_dims ', chunk_dims(1:chunk_rank)
     status = mls_gfldsetup(swid, 'Latitude', 'nTimes', MYDIM1, &
-      & DFNT_FLOAT32, chunk_rank, chunk_dims, (/x_DimID /), &
+      & nf90_real, chunk_rank, chunk_dims, (/x_DimID /), &
       & rFill=l2gp%MissingValue)
 
     status = mls_gfldsetup(swid, 'Longitude', 'nTimes', MYDIM1, &
-      & DFNT_FLOAT32, chunk_rank, chunk_dims, (/x_DimID /), &
+      & nf90_real, chunk_rank, chunk_dims, (/x_DimID /), &
       & rFill=l2gp%MissingValue)
 
     status = mls_gfldsetup(swid, 'Time', 'nTimes', MYDIM1, &
-      & DFNT_FLOAT64, chunk_rank, chunk_dims, (/x_DimID /), &
+      & nf90_double, chunk_rank, chunk_dims, (/x_DimID /), &
       & dFill=real(l2gp%MissingValue, r8))
 
     status = mls_gfldsetup(swid, 'LocalSolarTime', 'nTimes', MYDIM1, &
-      & DFNT_FLOAT32, chunk_rank, chunk_dims, (/x_DimID /), &
+      & nf90_real, chunk_rank, chunk_dims, (/x_DimID /), &
       & rFill=l2gp%MissingValue)
 
     status = mls_gfldsetup(swid, 'SolarZenithAngle', 'nTimes', MYDIM1, &
-      & DFNT_FLOAT32, chunk_rank, chunk_dims, (/x_DimID /), &
+      & nf90_real, chunk_rank, chunk_dims, (/x_DimID /), &
       & rFill=l2gp%MissingValue)
 
     status = mls_gfldsetup(swid, 'LineOfSightAngle', 'nTimes', MYDIM1, &
-      & DFNT_FLOAT32, chunk_rank, chunk_dims, (/x_DimID /), &
+      & nf90_real, chunk_rank, chunk_dims, (/x_DimID /), &
       & rFill=l2gp%MissingValue)
 
     status = mls_gfldsetup(swid, 'OrbitGeodeticAngle', 'nTimes', MYDIM1, &
-      & DFNT_FLOAT32, chunk_rank, chunk_dims, (/x_DimID /), &
+      & nf90_real, chunk_rank, chunk_dims, (/x_DimID /), &
       & rFill=l2gp%MissingValue)
 
     status = mls_gfldsetup(swid, 'ChunkNumber', 'nTimes', MYDIM1, &
-      & DFNT_INT32, chunk_rank, chunk_dims, (/x_DimID /), &
+      & nf90_int, chunk_rank, chunk_dims, (/x_DimID /), &
       & iFill=UndefinedIntegerValue)
 
     if ( l2gp%nLevels > 0 ) then
@@ -653,7 +650,7 @@ contains ! ======================= Public Procedures =========================
       chunk_rank=1
       chunk_dims(1)=CHUNKLEVELS
       status = mls_gfldsetup(swid, 'Pressure', 'nLevels', MAX_DIML, &
-      & DFNT_FLOAT32, chunk_rank, chunk_dims, (/y_DimID /), &
+      & nf90_real, chunk_rank, chunk_dims, (/y_DimID /), &
       & rFill=l2gp%MissingValue)
     end if
 
@@ -662,7 +659,7 @@ contains ! ======================= Public Procedures =========================
       chunk_rank=1
       chunk_dims(1)=CHUNKFREQS
       status = mls_gfldsetup(swid, 'Frequency', 'nFreqs', MAX_DIML, &
-      & DFNT_FLOAT32, chunk_rank, chunk_dims, (/f_DimID /), &
+      & nf90_real, chunk_rank, chunk_dims, (/f_DimID /), &
       & rFill=l2gp%MissingValue)
     end if
 
@@ -671,31 +668,31 @@ contains ! ======================= Public Procedures =========================
     if ( (l2gp%nFreqs > 0) .and. (l2gp%nLevels > 0) ) then
        chunk_rank=3
        chunk_dims(1:3)=(/ CHUNKFREQS,CHUNKLEVELS,CHUNKTIMES /)
-       dimids(1:chunk_rank) =  (/ f_dimid, z_dimid, x_dimid /)
+       dimids(1:chunk_rank) =  (/ f_dimid, y_dimid, x_dimid /)
 
       status = mls_dfldsetup(swid, 'L2gpValue', 'nFreqs,nLevels,nTimes', &
       & MYDIM123, &
-      & DFNT_FLOAT32, chunk_rank, chunk_dims, dimids(1:chunk_rank), &
+      & nf90_real, chunk_rank, chunk_dims, dimids(1:chunk_rank), &
       & rFill=l2gp%MissingL2GP)
 
       status = mls_dfldsetup(swid, 'L2gpPrecision', 'nFreqs,nLevels,nTimes', &
       & MYDIM123, &
-      & DFNT_FLOAT32, chunk_rank, chunk_dims, dimids(1:chunk_rank), &
+      & nf90_real, chunk_rank, chunk_dims, dimids(1:chunk_rank), &
       & rFill=l2gp%MissingValue)
 
     else if ( l2gp%nLevels > 0 ) then
        chunk_rank=2
        chunk_dims(1:7)=(/ CHUNKLEVELS,CHUNKTIMES,37,38,39,47,49/)
-       dimids(1:chunk_rank) =  (/ z_dimid, x_dimid /)
+       dimids(1:chunk_rank) =  (/ y_dimid, x_dimid /)
 
       status = mls_dfldsetup(swid, 'L2gpValue', 'nLevels,nTimes', &
       & MYDIM12, &
-      & DFNT_FLOAT32, chunk_rank, chunk_dims, dimids(1:chunk_rank), &
+      & nf90_real, chunk_rank, chunk_dims, dimids(1:chunk_rank), &
       & rFill=l2gp%MissingL2GP)
 
       status = mls_dfldsetup(swid, 'L2gpPrecision', 'nLevels,nTimes', &
       & MYDIM12, &
-      & DFNT_FLOAT32, chunk_rank, chunk_dims, dimids(1:chunk_rank), &
+      & nf90_real, chunk_rank, chunk_dims, dimids(1:chunk_rank), &
       & rFill=l2gp%MissingValue)
 
     else
@@ -705,12 +702,12 @@ contains ! ======================= Public Procedures =========================
 
       status = mls_dfldsetup(swid, 'L2gpValue', 'nTimes', &
       & MYDIM1, &
-      & DFNT_FLOAT32, chunk_rank, chunk_dims, dimids(1:chunk_rank), &
+      & nf90_real, chunk_rank, chunk_dims, dimids(1:chunk_rank), &
       & rFill=l2gp%MissingL2GP)
 
       status = mls_dfldsetup(swid, 'L2gpPrecision', 'nTimes', &
       & MYDIM1, &
-      & DFNT_FLOAT32, chunk_rank, chunk_dims, dimids(1:chunk_rank), &
+      & nf90_real, chunk_rank, chunk_dims, dimids(1:chunk_rank), &
       & rFill=l2gp%MissingValue)
 
     end if
@@ -722,7 +719,7 @@ contains ! ======================= Public Procedures =========================
     if ( deebughere )  print *, 'chunk_dims ', chunk_dims(1:chunk_rank)
     status = mls_dfldsetup(swid, 'Status', 'nTimes', &
     & MYDIM1, &
-    & DFNT_INT32, chunk_rank, chunk_dims, dimids(1:chunk_rank), &
+    & nf90_int, chunk_rank, chunk_dims, dimids(1:chunk_rank), &
     & iFill=l2gp%MissingStatus)
 
     chunk_rank=1
@@ -730,14 +727,14 @@ contains ! ======================= Public Procedures =========================
     if ( deebughere )  print *, 'chunk_dims ', chunk_dims(1:chunk_rank)
     status = mls_dfldsetup(swid, 'Quality', 'nTimes', &
     & MYDIM1, &
-    & DFNT_FLOAT32, chunk_rank, chunk_dims, dimids(1:chunk_rank), &
+    & nf90_real, chunk_rank, chunk_dims, dimids(1:chunk_rank), &
     & rFill=l2gp%MissingValue)
 
     chunk_rank=1
     chunk_dims(1)=CHUNKTIMES
     status = mls_dfldsetup(swid, 'Convergence', 'nTimes', &
     & MYDIM1, &
-    & DFNT_FLOAT32, chunk_rank, chunk_dims, dimids(1:chunk_rank), &
+    & nf90_real, chunk_rank, chunk_dims, dimids(1:chunk_rank), &
     & rFill=l2gp%MissingValue)
 
     ! Detach from the HE5_SWath interface.This stores the swath info within the
@@ -872,9 +869,6 @@ contains ! ======================= Public Procedures =========================
 
   subroutine ReadNCL2GPData_MF_NC4( L2GPFile, swathname, l2gp, &
     & numProfs, firstProf, lastProf, ReadData )
-  ! use HDFEOS, only: SWInqdims
-  ! use HDFEOS5, only: HE5_SWInqdims, HE5_SWInqdflds, HE5_SWFldinfo
-  ! use HE5_SWAPI, only: HE5_SWRdlattr
   use MLSNetCDF4, only: MLS_SWAttach, MLS_SWDetach, MLS_SWDiminfo, &
     & MLS_SwrdAttr, MLS_SWRdLAttr, MLS_SWRdfld
   use MLSStringLists, only: IsInList
@@ -977,7 +971,7 @@ contains ! ======================= Public Procedures =========================
     if ( deeBugHere ) print *, 'DF_Precision: ',DF_Precision
     ! Here we read the Missing Value attribute
     status = MLS_SWRdLAttr( swid, 'L2gpValue', 'MissingValue', &
-      & HE5T_Native_Real, RealBuffer=MissingValue )
+      & nf90_real, RealBuffer=MissingValue )
     if ( status /= 0 ) then
       call MLSMessage( MLSMSG_Warning, ModuleName, &
        &'Failed to read Missing Value attribute for ' &
@@ -1249,7 +1243,7 @@ contains ! ======================= Public Procedures =========================
 ! Should eventually be moved to PCFHdr module
     use MLSNetCDF4, only: MLS_SwRdattr, MLS_IsGlAtt
 ! Brief description of subroutine
-! This subroutine writes the global attributes for a NetCDF4 file
+! This subroutine reads the global attributes for a NetCDF4 file
 
 ! Arguments
 
@@ -1267,66 +1261,66 @@ contains ! ======================= Public Procedures =========================
       logical :: my_skip
 ! Executable
       status = MLS_SwRdattr(fileID, &
-       & 'identifier_product_doi', MLS_CHARTYPE, 1, &
+       & 'identifier_product_doi', nf90_char, 1, &
        &  gAttributes%DOI)
       status = MLS_SwRdattr(fileID, &
-       & 'ProductionLocation', MLS_CHARTYPE, 1, &
+       & 'ProductionLocation', nf90_char, 1, &
        &  gAttributes%productionLoc)
       status = MLS_SwRdattr(fileID, &
-            & 'OrbitNumber', HE5T_NATIVE_INT, max_orbits, &
+            & 'OrbitNumber', nf90_int, max_orbits, &
             &  intbuffer=gAttributes%OrbNum)
       status = MLS_SwRdattr(fileID, &
-            & 'OrbitPeriod', HE5T_NATIVE_DOUBLE, max_orbits, &
+            & 'OrbitPeriod', nf90_double, max_orbits, &
             &  Doublebuffer=gAttributes%OrbPeriod)
       status = MLS_SwRdattr(fileID, &
-       & 'InstrumentName', MLS_CHARTYPE, 1, &
+       & 'InstrumentName', nf90_char, 1, &
        &  gAttributes%InstrumentName)
       status = MLS_SwRdattr(fileID, &
-         & 'HostName', MLS_CHARTYPE, 1, &
+         & 'HostName', nf90_char, 1, &
          &  gAttributes%HostName)
       status = MLS_SwRdattr(fileID, &
-       & 'ProcessLevel', MLS_CHARTYPE, 1, &
+       & 'ProcessLevel', nf90_char, 1, &
        &  ProcessLevel)
       status = MLS_SwRdattr(fileID, &
-       & 'PGEVersion', MLS_CHARTYPE, 1, &
+       & 'PGEVersion', nf90_char, 1, &
        &  gAttributes%PGEVersion)
       status = MLS_SwRdattr(fileID, &
-       & 'StartUTC', MLS_CHARTYPE, 1, &
+       & 'StartUTC', nf90_char, 1, &
        &  gAttributes%StartUTC)
       status = MLS_SwRdattr(fileID, &
-       & 'EndUTC', MLS_CHARTYPE, 1, &
+       & 'EndUTC', nf90_char, 1, &
        &  gAttributes%EndUTC)
 
       status = MLS_SwRdattr(fileID, &
-       & 'GranuleDayOfYear', HE5T_NATIVE_INT, 1, &
+       & 'GranuleDayOfYear', nf90_int, 1, &
        &  intBuffer=ibuf )
       DayOfYear=ibuf(1)
       status = MLS_SwRdattr(fileID, &
-       & 'GranuleDay', HE5T_NATIVE_INT, 1, &
+       & 'GranuleDay', nf90_int, 1, &
        &  int=gAttributes%GranuleDay )
       status = MLS_SwRdattr(fileID, &
-       & 'GranuleMonth', HE5T_NATIVE_INT, 1, &
+       & 'GranuleMonth', nf90_int, 1, &
        &  int=gAttributes%GranuleMonth )
       status = MLS_SwRdattr(fileID, &
-       & 'GranuleYear', HE5T_NATIVE_INT, 1, &
+       & 'GranuleYear', nf90_int, 1, &
        &  int=gAttributes%GranuleYear )
 
       status = MLS_SwRdattr(fileID, &
-       & 'TAI93At0zOfGranule', HE5T_NATIVE_DOUBLE, 1, &
+       & 'TAI93At0zOfGranule', nf90_double, 1, &
        &  Doublesca= gAttributes%TAI93At0zOfGranule )
       if ( lowercase(ProcessLevel(1:2)) == 'l2' ) then
         status = MLS_SwRdattr(fileID, &
-         & 'FirstMAF', HE5T_NATIVE_INT, 1, &
+         & 'FirstMAF', nf90_int, 1, &
          &  int=gAttributes%FirstMAFCtr )
         status = MLS_SwRdattr(fileID, &
-         & 'LastMAF', HE5T_NATIVE_INT, 1, &
+         & 'LastMAF', nf90_int, 1, &
          &  int=gAttributes%LastMAFCtr )
       endif
       ! if ( DEBUG ) call outputNamedValue( 'gAttributes%MiscNotes: ', gAttributes%MiscNotes )
       ! We don't write these here (the master would insert an erroneous value)
       ! Instead we write them during DirectWrite operations
       ! status = MLS_SwRdattr(fileID, &
-      ! & 'MiscNotes', MLS_CHARTYPE, 1, &
+      ! & 'MiscNotes', nf90_char, 1, &
       !  &  gAttributes%MiscNotes)
       if ( deebug ) then
         call output( 'Reading global attributes', advance='yes' )
@@ -1340,7 +1334,6 @@ contains ! ======================= Public Procedures =========================
    subroutine WriteNCFileAttr ( MLSFile )
 !------------------------------------------------------------
 
-   use HDFeos5, only: He5t_Native_Int, MLS_Chartype
    use MLSNetCDF4, only: MLS_SwWrattr
 ! Brief description of subroutine
 ! This subroutine writes the components of an MLSFile_t 
@@ -1359,43 +1352,43 @@ contains ! ======================= Public Procedures =========================
       endif
       fileID = MLSFile%FileID%f_id
       status = MLS_SwWrattr ( fileID, &
-       & 'content', MLS_CHARTYPE, 1, &
+       & 'content', nf90_char, 1, &
        &  charBuffer=MLSFile%content )
       status = MLS_SwWrattr ( fileID, &
-       & 'lastOperation', MLS_CHARTYPE, 1, &
+       & 'lastOperation', nf90_char, 1, &
        &  charBuffer=MLSFile%lastOperation )
       status = MLS_SwWrattr ( fileID, &
-       & 'name', MLS_CHARTYPE, 1, &
+       & 'name', nf90_char, 1, &
        &  charBuffer=MLSFile%name )
       status = MLS_SwWrattr ( fileID, &
-       & 'ShortName', MLS_CHARTYPE, 1, &
+       & 'ShortName', nf90_char, 1, &
        &  charBuffer=MLSFile%ShortName )
       status = MLS_SwWrattr ( fileID, &
-       & 'typeStr', MLS_CHARTYPE, 1, &
+       & 'typeStr', nf90_char, 1, &
        &  charBuffer=MLSFile%typeStr )
       status = MLS_SwWrattr (fileID, &
-       & 'type', HE5T_NATIVE_INT, 1, &
+       & 'type', nf90_int, 1, &
        &  intbuffer=(/ MLSFile%type /) )
       status = MLS_SwWrattr (fileID, &
-       & 'access', HE5T_NATIVE_INT, 1, &
+       & 'access', nf90_int, 1, &
        &  int= MLSFile%access  )
       status = MLS_SwWrattr ( fileID, &
-       & 'HDFVersion', HE5T_NATIVE_INT, 1, &
+       & 'HDFVersion', nf90_int, 1, &
        &  intbuffer=(/ MLSFile%HDFVersion /) )
       status = MLS_SwWrattr ( fileID, &
-       & 'PCFID', HE5T_NATIVE_INT, 1, &
+       & 'PCFID', nf90_int, 1, &
        &  int= MLSFile%PCFId  )
       status = MLS_SwWrattr ( fileID, &
-       & 'recordlength', HE5T_NATIVE_INT, 1, &
+       & 'recordlength', nf90_int, 1, &
        &  int= MLSFile%recordlength  )
       status = MLS_SwWrattr ( fileID, &
-       & 'errorCode', HE5T_NATIVE_INT, 1, &
+       & 'errorCode', nf90_int, 1, &
        &  int=MLSFile%errorCode )
       status = MLS_SwWrattr ( fileID, &
-       & 'PCFIDRange', HE5T_NATIVE_INT, 2, &
+       & 'PCFIDRange', nf90_int, 2, &
        &  intBuffer=(/ MLSFile%PCFIDRange%Bottom, MLSFile%PCFIDRange%Top /) )
       status = MLS_SwWrattr ( fileID, &
-       & 'FileID', HE5T_NATIVE_INT, 3, &
+       & 'FileID', nf90_int, 3, &
        &  intBuffer=(/MLSFile%FileID%f_id, MLSFile%FileID%grp_id, MLSFile%FileID%sd_id/) )
 
 !------------------------------------------------------------
@@ -1445,20 +1438,24 @@ contains ! ======================= Public Procedures =========================
     logical :: alreadyOpen
     integer :: Me = -1                  ! String index for trace cacheing
     integer :: status
+    logical, parameter :: DEEBUG = .true.
     ! Executable code
 
     call trace_begin ( me, 'WriteNCL2GPData_MLSFile', cond=.false. )
     status = 0
     alreadyOpen = L2GPFile%stillOpen
     if ( .not. alreadyOpen ) then
+      print *, 'Opening ' // trim(L2GPFile%Name)
       call mls_openFile(L2GPFile, Status)
       if ( Status /= 0 ) &
         call MLSMessage(MLSMSG_Error, ModuleName, &
         & 'Unable to open l2gp file', MLSFile=L2GPFile)
     endif
+    call Dump ( L2GPFile )
     if ( L2GPFile%access == DFACC_RDONLY )  &
       & call MLSMessage(MLSMSG_Error, ModuleName, &
       & 'l2gp file is rdonly', MLSFile=L2GPFile)
+    print *, 'About to OutputNCL2GP_createFile_MF'
     call OutputNCL2GP_createFile_MF (l2gp, L2GPFile, &
       & swathName, notUnlimited=notUnlimited)
     call OutputNCL2GP_writeGeo_MF (l2gp, L2GPFile, &
@@ -1477,45 +1474,52 @@ contains ! ======================= Public Procedures =========================
   end subroutine WriteNCL2GPData_MLSFile
   
 !------------------------------------------------------------
-   subroutine WriteNCGlobalAttr_FileID ( fileID, dayNum, DOI, &
+   subroutine WriteNCGlobalAttr_FileID ( fileID, dayNum, DOI, MiscNotes, &
      & skip_if_already_there )
 !------------------------------------------------------------
 ! Should eventually be moved to PCFHdr module
-    use HDFEOS5, only: HE5T_Native_Int, &
-      & HE5T_Native_Double, MLS_CharType
     use MLSNetCDF4, only: MLS_SwwrAttr, MLS_IsGlAtt
-    use PCFHdr, only: GranuleDayOfYear, GranuleDay, GranuleMonth, ProcessLevelFun
+    use PCFHdr, only: GranuleDayOfYear, GranuleDay, GranuleMonth, &
+      & ProcessLevelFun
 ! Brief description of subroutine
 ! This subroutine writes the global attributes for a NetCDF4 file
 
 ! Arguments
 
       integer, intent(in) :: fileID
-      integer, intent(in), optional :: dayNum
-      logical, intent(in), optional :: doi
-      logical, intent(in), optional :: skip_if_already_there
-      double precision              :: TAI93At0zOfGranule
+      integer, intent(in), optional :: DayNum
+      logical, intent(in), optional :: Doi          ! Write DOI
+      logical, intent(in), optional :: MiscNotes    ! Write MiscNotes
+      logical, intent(in), optional :: Skip_if_already_there
+      double precision              :: TAI93At0zOfGranule ! Correct value to write
 ! Internal variables
       integer :: status
       logical :: myDOI
-      logical, parameter :: DeeBug = .false.
+      logical :: myMiscNotes
+      logical, parameter :: DeeBug = .true.
       logical :: my_skip
 ! Executable
       myDOI = .false.
       if ( present(DOI) ) myDOI=DOI
+      myMiscNotes = .false.
+      if ( present(MiscNotes) ) myMiscNotes=MiscNotes
       my_skip = .false.
       if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
       if ( deebug ) then
         call output( 'Writing global attributes', advance='yes' )
+        call OutputNamedValue ( 'myDOI', myDOI )
+        call OutputNamedValue ( 'DOI', GlobalAttributes%DOI )
+        call OutputNamedValue ( 'ProductionLocation', &
+          & GlobalAttributes%productionLoc )
         call dumpGlobalAttributes
       endif
       if ( len_trim(GlobalAttributes%DOI) > 0 .and. myDOI ) &
        & status = MLS_Swwrattr(fileID, &
-       & 'identifier_product_doi', MLS_CHARTYPE, 1, &
+       & 'identifier_product_doi', nf90_char, 1, &
        &  charBuffer=GlobalAttributes%DOI)
       if ( len_trim(GlobalAttributes%productionLoc) > 0 .and. myDOI ) &
        & status = MLS_Swwrattr(fileID, &
-       & 'ProductionLocation', MLS_CHARTYPE, 1, &
+       & 'ProductionLocation', nf90_char, 1, &
        &  charBuffer=GlobalAttributes%productionLoc)
       if ( my_skip ) then
         if ( MLS_IsGlAtt ( fileID, 'OrbitNumber' ) ) &
@@ -1523,75 +1527,76 @@ contains ! ======================= Public Procedures =========================
       endif
       if (present(dayNum)) then
          status = MLS_Swwrattr(fileID, &
-            & 'OrbitNumber', HE5T_NATIVE_INT, max_orbits, &
+            & 'OrbitNumber', nf90_int, max_orbits, &
             &  intBuffer=GlobalAttributes%OrbNumDays(:,dayNum))
          status = MLS_Swwrattr(fileID, &
-            & 'OrbitPeriod', HE5T_NATIVE_DOUBLE, max_orbits, &
+            & 'OrbitPeriod', nf90_double, max_orbits, &
             &  DoubleBuffer=GlobalAttributes%OrbPeriodDays(:,dayNum))
       else
          status = MLS_Swwrattr(fileID, &
-            & 'OrbitNumber', HE5T_NATIVE_INT, max_orbits, &
+            & 'OrbitNumber', nf90_int, max_orbits, &
             &  intBuffer=GlobalAttributes%OrbNum)
          status = MLS_Swwrattr(fileID, &
-            & 'OrbitPeriod', HE5T_NATIVE_DOUBLE, max_orbits, &
+            & 'OrbitPeriod', nf90_double, max_orbits, &
             &  DoubleBuffer=GlobalAttributes%OrbPeriod)
       end if
       status = MLS_Swwrattr(fileID, &
-       & 'InstrumentName', MLS_CHARTYPE, 1, &
+       & 'InstrumentName', nf90_char, 1, &
        &  charBuffer=GlobalAttributes%InstrumentName)
       if ( len_trim(GlobalAttributes%HostName) > 0 ) then
         status = MLS_Swwrattr(fileID, &
-         & 'HostName', MLS_CHARTYPE, 1, &
+         & 'HostName', nf90_char, 1, &
          &  charBuffer=GlobalAttributes%HostName)
       else
         status = MLS_Swwrattr(fileID, &
-         & 'HostName', MLS_CHARTYPE, 1, &
+         & 'HostName', nf90_char, 1, &
          &  charBuffer=GlobalAttributes%ProductionLoc)
       endif
       status = MLS_Swwrattr(fileID, &
-       & 'ProcessLevel', MLS_CHARTYPE, 1, &
+       & 'ProcessLevel', nf90_char, 1, &
        &  charBuffer=ProcessLevelFun())
       status = MLS_Swwrattr(fileID, &
-       & 'PGEVersion', MLS_CHARTYPE, 1, &
+       & 'PGEVersion', nf90_char, 1, &
        &  charBuffer=GlobalAttributes%PGEVersion)
       status = MLS_Swwrattr(fileID, &
-       & 'StartUTC', MLS_CHARTYPE, 1, &
+       & 'StartUTC', nf90_char, 1, &
        &  charBuffer=GlobalAttributes%StartUTC)
       status = MLS_Swwrattr(fileID, &
-       & 'EndUTC', MLS_CHARTYPE, 1, &
+       & 'EndUTC', nf90_char, 1, &
        &  charBuffer=GlobalAttributes%EndUTC)
       ! if ( GlobalAttributes%GranuleDay == ' ') return
       ! if ( GlobalAttributes%GranuleMonth == ' ') &
       if ( GlobalAttributes%GranuleDay < 1 ) return
       status = MLS_Swwrattr(fileID, &
-       & 'GranuleMonth', HE5T_NATIVE_INT, 1, &
+       & 'GranuleMonth', nf90_int, 1, &
        &  intBuffer=(/ GranuleMonth() /) )
       status = MLS_Swwrattr(fileID, &
-       & 'GranuleDay', HE5T_NATIVE_INT, 1, &
+       & 'GranuleDay', nf90_int, 1, &
        &  intBuffer=(/ GranuleDay() /) )
       status = MLS_Swwrattr(fileID, &
-       & 'GranuleDayOfYear', HE5T_NATIVE_INT, 1, &
+       & 'GranuleDayOfYear', nf90_int, 1, &
        &  intBuffer=(/ GranuleDayOfYear() /) )
       status = MLS_Swwrattr(fileID, &
-       & 'GranuleYear', HE5T_NATIVE_INT, 1, &
+       & 'GranuleYear', nf90_int, 1, &
        &  int= GlobalAttributes%GranuleYear )
       status = MLS_Swwrattr(fileID, &
-       & 'TAI93At0zOfGranule', HE5T_NATIVE_DOUBLE, 1, &
+       & 'TAI93At0zOfGranule', nf90_double, 1, &
        &  Doublesca= GlobalAttributes%TAI93At0zOfGranule )
       if ( index(lowercase(ProcessLevelFun()), 'l2') > 0 ) then
         status = MLS_Swwrattr(fileID, &
-         & 'FirstMAF', HE5T_NATIVE_INT, 1, &
+         & 'FirstMAF', nf90_int, 1, &
          &  int= GlobalAttributes%FirstMAFCtr  )
         status = MLS_Swwrattr(fileID, &
-         & 'LastMAF', HE5T_NATIVE_INT, 1, &
+         & 'LastMAF', nf90_int, 1, &
          &  int= GlobalAttributes%LastMAFCtr )
       endif
       ! if ( DEBUG ) call outputNamedValue( 'GlobalAttributes%MiscNotes: ', GlobalAttributes%MiscNotes )
       ! We don't write these here (the master would insert an erroneous value)
       ! Instead we write them during DirectWrite operations
-      ! status = MLS_Swwrattr(fileID, &
-      ! & 'MiscNotes', MLS_CHARTYPE, 1, &
-      !  &  GlobalAttributes%MiscNotes)
+      if ( .not. myMiscNotes ) return
+      status = MLS_Swwrattr(fileID, &
+      & 'MiscNotes', nf90_char, 1, &
+      &  GlobalAttributes%MiscNotes)
 !------------------------------------------------------------
    end subroutine WriteNCGlobalAttr_FileID
 !------------------------------------------------------------
@@ -1628,8 +1633,6 @@ contains ! ======================= Public Procedures =========================
   !----------------------------------------  OutputNCL2GP_attributes_MF  -----
   subroutine OutputNCL2GP_attributes_MF( l2gp, L2GPFile, swathName )
 
-  use HDFEOS5, only: HE5T_Native_Int, HE5T_Native_Real, HE5T_Native_Double, &
-    & MLS_Chartype
   use MLSNetCDF4, only: MLS_ISGlatt, &
     & MLS_SWAttach, MLS_SWDetach, MLS_SWWrattr, MLS_SWWrlattr
     ! Brief description of subroutine
@@ -1698,9 +1701,9 @@ contains ! ======================= Public Procedures =========================
     endif
     if ( DEEBUG ) print *, 'About to wr attrs to: ', trim(name)
     if ( rgp == r4 ) then
-      rgp_type = HE5T_NATIVE_REAL
+      rgp_type = nf90_real
     elseif ( rgp == r8 ) then
-      rgp_type = HE5T_NATIVE_DOUBLE
+      rgp_type = nf90_double
     else
       call MLSMessage ( MLSMSG_Error, ModuleName, & 
         & 'Attributes have unrecognized numeric data type; should be r4 or r8', &
@@ -1711,8 +1714,10 @@ contains ! ======================= Public Procedures =========================
 
     ! - -   G l o b a l   A t t r i b u t e s   - -
     if ( WRITEMASTERSFILEATTRIBUTES .and. &
-      & .not. MLS_ISGLATT(L2GPFile%fileID%f_id, 'StartUTC') ) &
-      & call WriteNCGlobalAttr( L2GPFile%fileID%f_id )
+      & .not. MLS_ISGLATT(L2GPFile%fileID%f_id, 'StartUTC') ) then
+      print *, 'Writing Global attributes; e.g., StartUTC'
+      call WriteNCGlobalAttr( L2GPFile%fileID%f_id )
+    endif
 
     swid = mls_SWattach (L2GPFile, name)
     
@@ -1721,7 +1726,7 @@ contains ! ======================= Public Procedures =========================
       & rgp_type, size(l2gp%pressures), &
       & realbuffer=l2gp%pressures )
     field_name = l2gp%verticalCoordinate ! 'Pressure'
-    status = mls_swwrattr(swid, 'VerticalCoordinate', MLS_CHARTYPE, 1, &
+    status = mls_swwrattr(swid, 'VerticalCoordinate', nf90_char, 1, &
       & charBuffer=field_name)
     if ( DeeBug ) print *, 'Missing L2GP: ', real(l2gp%MissingL2GP)
     if ( DeeBug ) print *, 'Missing value: ', real(l2gp%MissingValue)
@@ -1748,19 +1753,19 @@ contains ! ======================= Public Procedures =========================
           & expnd_uniq_fdef, .false.)
         if ( DEEBUG ) print *, 'Field Title ', trim(theTitles(field))
         status = mls_swwrlattr(swid, trim(theTitles(field)), 'Title', &
-          & MLS_CHARTYPE, 1, charBuffer=theTitles(field))
+          & nf90_char, 1, charBuffer=theTitles(field))
         if ( DEEBUG ) print *, 'Units ', trim(theUnits(field))
         status = mls_swwrlattr(swid, trim(theTitles(field)), 'Units', &
-          & MLS_CHARTYPE, 1, charBuffer=theUnits(field))
+          & nf90_char, 1, charBuffer=theUnits(field))
 
         if ( trim(theTitles(field)) == 'Time' ) then
           status = mls_swwrlattr(swid, trim(theTitles(field)), &
             & 'MissingValue', &
-            & HE5T_NATIVE_DOUBLE, 1, DoubleSca= real(l2gp%MissingValue, r8) )
+            & nf90_double, 1, DoubleSca= real(l2gp%MissingValue, r8) )
         elseif ( trim(theTitles(field)) == 'ChunkNumber' ) then
           status = mls_swwrlattr(swid, trim(theTitles(field)), &
             & 'MissingValue', &
-            & HE5T_NATIVE_INT, 1, int= UndefinedIntegerValue )
+            & nf90_int, 1, int= UndefinedIntegerValue )
         else
           status = mls_swwrlattr(swid, trim(theTitles(field)), &
             & 'MissingValue', &
@@ -1771,7 +1776,7 @@ contains ! ======================= Public Procedures =========================
         if ( DEEBUG ) print *, 'Uniquefielddef ', trim(expnd_uniq_fdef)
         status = mls_swwrlattr(swid, trim(theTitles(field)), &
           & 'UniqueFieldDefinition', &
-          & MLS_CHARTYPE, 1, charBuffer=expnd_uniq_fdef)
+          & nf90_char, 1, charBuffer=expnd_uniq_fdef)
         ! print *, 'status : ', status
         if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
          & "Unable to write local attribute to " // trim(theTitles(field)) )
@@ -1847,56 +1852,56 @@ contains ! ======================= Public Procedures =========================
     if ( isTPPressure ) units_name = 'hPa'
     if ( DEEBUG ) print *, 'Title ', trim(field_name)
     status = mls_swwrlattr(swid, 'L2gpValue', 'Title', &
-      & MLS_CHARTYPE, 1, charBuffer=field_name)
+      & nf90_char, 1, charBuffer=field_name)
     if ( DEEBUG ) print *, 'Units ', trim(units_name)
     status = mls_swwrlattr(swid, 'L2gpValue', 'Units', &
-      & MLS_CHARTYPE, 1, charBuffer=units_name)
+      & nf90_char, 1, charBuffer=units_name)
     status = mls_swwrlattr(swid, 'L2gpValue', 'MissingValue', &
       & rgp_type, 1, realsca= real(l2gp%MissingL2GP, rgp) )
     if ( DEEBUG ) print *, 'Title ', trim(expnd_uniq_fdef)
     status = mls_swwrlattr(swid, 'L2gpValue', &
       & 'UniqueFieldDefinition', &
-      & MLS_CHARTYPE, 1, charBuffer=expnd_uniq_fdef)
+      & nf90_char, 1, charBuffer=expnd_uniq_fdef)
     status = mls_swwrlattr(swid, 'L2gpPrecision', 'Title', &
-      & MLS_CHARTYPE, 1, charBuffer=trim(field_name)//'Precision')
+      & nf90_char, 1, charBuffer=trim(field_name)//'Precision')
     status = mls_swwrlattr(swid, 'L2gpPrecision', 'Units', &
-      & MLS_CHARTYPE, 1, charBuffer=units_name)
+      & nf90_char, 1, charBuffer=units_name)
     status = mls_swwrlattr(swid, 'L2gpPrecision', 'MissingValue', &
       & rgp_type, 1, realsca= real(l2gp%MissingValue, rgp) )
     status = mls_swwrlattr(swid, 'L2gpPrecision', &
       & 'UniqueFieldDefinition', &
-      & MLS_CHARTYPE, 1, charBuffer=expnd_uniq_fdef)
+      & nf90_char, 1, charBuffer=expnd_uniq_fdef)
 
     ! ('Status' data field newly written)
     status = mls_swwrlattr(swid, 'Status', 'Title', &
-      & MLS_CHARTYPE, 1, charBuffer=trim(field_name)//'Status')
+      & nf90_char, 1, charBuffer=trim(field_name)//'Status')
     status = mls_swwrlattr(swid, 'Status', 'Units', &
-      & MLS_CHARTYPE, 1, NOUNITS)
+      & nf90_char, 1, NOUNITS)
     status = mls_swwrlattr(swid, 'Status', 'MissingValue', &
-      & HE5T_NATIVE_INT, 1, int=l2gp%MissingStatus )
+      & nf90_int, 1, int=l2gp%MissingStatus )
     status = mls_swwrlattr(swid, 'Status', &
       & 'UniqueFieldDefinition', &
-      & MLS_CHARTYPE, 1, charBuffer='MLS-Specific')
+      & nf90_char, 1, charBuffer='MLS-Specific')
     
     status = mls_swwrlattr(swid, 'Quality', 'Title', &
-      & MLS_CHARTYPE, 1, charBuffer=trim(field_name)//'Quality')
+      & nf90_char, 1, charBuffer=trim(field_name)//'Quality')
     status = mls_swwrlattr(swid, 'Quality', 'Units', &
-      & MLS_CHARTYPE, 1, charBuffer=NOUNITS)
+      & nf90_char, 1, charBuffer=NOUNITS)
     status = mls_swwrlattr(swid, 'Quality', 'MissingValue', &
       & rgp_type, 1, realsca=real(l2gp%MissingValue, rgp) )
     status = mls_swwrlattr(swid, 'Quality', &
       & 'UniqueFieldDefinition', &
-      & MLS_CHARTYPE, 1, charBuffer='MLS-Specific')
+      & nf90_char, 1, charBuffer='MLS-Specific')
     
     status = mls_swwrlattr(swid, 'Convergence', 'Title', &
-      & MLS_CHARTYPE, 1, charBuffer=trim(field_name)//'Convergence')
+      & nf90_char, 1, charBuffer=trim(field_name)//'Convergence')
     status = mls_swwrlattr(swid, 'Convergence', 'Units', &
-      & MLS_CHARTYPE, 1, charBuffer=NOUNITS)
+      & nf90_char, 1, charBuffer=NOUNITS)
     status = mls_swwrlattr(swid, 'Convergence', 'MissingValue', &
       & rgp_type, 1, realsca=real(l2gp%MissingValue, rgp) )
     status = mls_swwrlattr(swid, 'Convergence', &
       & 'UniqueFieldDefinition', &
-      & MLS_CHARTYPE, 1, charBuffer='MLS-Specific')
+      & nf90_char, 1, charBuffer='MLS-Specific')
     
     status = mls_SWdetach( swid )
     if ( status == -1 ) then
@@ -1930,6 +1935,7 @@ contains ! ======================= Public Procedures =========================
 !     integer :: chunk
     integer :: status, swid,myOffset
     integer :: start(2), stride(2), edge(2)
+    logical, parameter:: DEEBUG = .true.
 
     ! Begin
     if (present(offset)) then
@@ -1949,7 +1955,7 @@ contains ! ======================= Public Procedures =========================
     ! Write data to the fields
     edge = 0
     stride = 1
-    start = myOffset ! Please do not set to zero
+    start = 1 + myOffset ! Please do not set to zero
     edge(1) = l2gp%nTimes
 
     if (DEEBUG) then
@@ -1985,14 +1991,14 @@ contains ! ======================= Public Procedures =========================
 
     if ( l2gp%nLevels > 0 ) then
        edge(1) = l2gp%nLevels
-       start(1)=0 ! needed because offset may have made this /=0
+       start(1) = 1 ! needed because offset may have made this /=0
        status = mls_SWwrfld(swid, 'Pressure', start(1:1), stride(1:1), edge(1:1), &
             real(l2gp%pressures))
     end if
 
     if ( l2gp%nFreqs > 0 ) then
        edge(1) = l2gp%nFreqs
-       start(1)=0 ! needed because offset may have made this /=0
+       start(1) = 1 ! needed because offset may have made this /=0
        status = mls_SWwrfld(swid, 'Frequency', start, stride, edge, &
             real(l2gp%frequency))
     end if
@@ -2050,9 +2056,9 @@ contains ! ======================= Public Procedures =========================
        name=l2gp%name
     endif
 
-    start = 0
+    start = 1
     stride = 1
-    start(3)= myOffset ! Please do not set to zero
+    start(3) = 1 + myOffset ! Please do not set to zero
     edge(1) = l2gp%nFreqs
     edge(2) = l2gp%nLevels
     edge(3) = l2gp%nTimes
@@ -2160,3 +2166,6 @@ contains ! ======================= Public Procedures =========================
 end module NCL2GP
 
 ! $Log$
+! Revision 1.1  2020/03/06 00:24:19  pwagner
+! First commit
+!
