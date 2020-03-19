@@ -1898,6 +1898,7 @@ contains
    else
       debug = .false.
    endif
+   ! debug = .true.
 
    PRINT_EVERY_OPEN = DEFAULT_PRINT_EVERY_OPEN .or. debug
    returnStatus = 0           ! In case using Toolkit but supplied FileName
@@ -1970,7 +1971,7 @@ contains
    ! if (the_eff_mode == 'pg' .or. the_eff_mode == 'op' ) then
    myhdfVersion = WRONGHDFVERSION
    if ( present(hdfVersion) ) myHdfVersion = hdfVersion
-   if ( any( the_eff_mode == (/l_tkgen, l_open, l_ascii/) ) ) then
+   if ( any( the_eff_mode == (/l_tkgen, l_open, l_ascii, l_netcdf4/) ) ) then
      myhdfVersion = WILDCARDHDFVERSION
    elseif ( .not. any( myhdfVersion == (/HDFVERSION_4, HDFVERSION_5/) ) ) then
      if ( debug ) then
@@ -1982,6 +1983,7 @@ contains
        call outputnamedValue( 'l_tkgen', l_tkgen )
        call outputnamedValue( 'l_open', l_open )
        call outputnamedValue( 'l_ascii', l_ascii )
+       call outputnamedValue( 'l_netcdf4', l_netcdf4 )
        if ( present(hdfVersion) ) then
        call output( 'hdfVersion: ', advance='no' )
        call output( hdfVersion, advance='yes' )
@@ -2006,6 +2008,9 @@ contains
        call output('l_ascii: ', advance='no')
        call blanks(2)
        call output(l_ascii, advance='yes')
+       call output('l_netcdf4: ', advance='no')
+       call blanks(2)
+       call output(l_netcdf4, advance='yes')
        call output('l_open: ', advance='no')
        call blanks(2)
        call output(l_open, advance='yes')
@@ -2279,6 +2284,7 @@ contains
 
     ! case('netcdf4')
     case(l_netcdf4)
+      call output( 'NetCDF4 opening file ' // trim(myName), advance='yes')
       theFileHandle = -1   ! This is the error value expected by hdf4/5
       if ( any( FileAccessType == (/ DFACC_RDONLY, Dfacc_Read /) ) ) then
         ErrType = nf90_open( myName, NF90_NoWrite, theFileHandle )
@@ -2289,6 +2295,7 @@ contains
       else
         ErrType = UNKNOWNFILEACCESSTYPE
       endif
+      call output( (/ErrType, theFileHandle/), advance='yes')
 
     case default
       ErrType = UNKNOWNTOOLBOXMODE
@@ -2329,6 +2336,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 1.1  2020/03/06 00:24:19  pwagner
+! First commit
+!
 ! Revision 2.114  2019/10/22 18:51:18  pwagner
 ! Fixed bug confusing r and R options in call to SortArray
 !
