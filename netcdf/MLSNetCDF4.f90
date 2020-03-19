@@ -224,8 +224,9 @@ contains ! ======================= Public Procedures =========================
     integer                       :: Status
     logical, parameter            :: DEEBUG = .false.
     ! Executable code
+    print *, 'Checking for global attribute: ', trim(Attrname)
     call check ( nf90_inquire_attribute( FileID, nf90_global, AttrName), &
-      & 'MLS_IsGlatt_fid' // trim(Attrname), FailureOK=.true. )
+      & 'MLS_IsGlatt_fid' // trim(Attrname), FailureOK=.true., silent=.true. )
     isThere = (NCError == nf90_noerr)
   end function MLS_IsGlatt_fid
 
@@ -394,7 +395,7 @@ contains ! ======================= Public Procedures =========================
     ! Must get grpid for 'Data Fields'
     call check( nf90_inq_ncid( swathId, 'Data Fields', grpId ), &
       & 'MLS_dfldsetup Data Fields group' )
-    call check( nf90_def_var(grpid, Fieldname, DATATYPE, dimids, MLS_dfldsetup), &
+    call check( nf90_def_var(grpid, Fieldname, DATATYPE, dimids, varID), &
       & 'MLS_dfldsetup' // trim(Fieldname) )
     ! Chunked?
     call check( nf90_def_var_chunking(grpId, varid, NF90_CHUNKED, chunksizes), &
@@ -410,6 +411,7 @@ contains ! ======================= Public Procedures =========================
       call check( nf90_def_var_fill(grpId, varid, 0, DFill), &
       & 'MLS_dfldsetup DFill' )
     endif
+    MLS_dfldsetup = nf90_noErr
     call trace_end ( cond=.false. )
 
   end function MLS_dfldsetup
@@ -741,31 +743,31 @@ contains ! ======================= Public Procedures =========================
         & nf90_inq_ncid( swathId, trim(SWGroupNames(which_group)), grpId ), &
         & 'MLS_dfldsetup Data Fields group' )
       ! Try to find varId
-      call check( nf90_inq_varid(grpid, Fieldname, varid), &
+      call check( nf90_inq_varid( grpid, Fieldname, varid), &
         & 'MLS_Swwrlattr:' // trim(Fieldname) )
       if ( present(CharBuffer) ) then
         if ( len_trim(CharBuffer) > 0 ) then
-          call check( nf90_put_att(grpid, varid, AttrName, CharBuffer), &
+          call check( nf90_put_att( grpid, varid, AttrName, CharBuffer), &
           & 'MLS_Swwrlattr:' // trim(Fieldname) )
         else
-          call check( nf90_put_att(grpid, varid, AttrName, Blank), &
+          call check( nf90_put_att( grpid, varid, AttrName, Blank), &
           & 'MLS_Swwrlattr:' // trim(Fieldname) )
         endif
       elseif ( present(IntBuffer) ) then
-        call check( nf90_put_att( swathid, varID, AttrName, IntBuffer ), &
-        & 'MLS_Swwlrattr' // trim(FieldName) )
+        call check( nf90_put_att( grpid, varid, AttrName, IntBuffer ), &
+        & 'MLS_Swwrlattr' // trim(FieldName) )
       elseif ( present(RealSca) ) then
-        call check( nf90_put_att( swathid, varID, AttrName, RealSca ), &
-        & 'MLS_Swwlrattr' // trim(FieldName) )
+        call check( nf90_put_att( grpid, varid, AttrName, RealSca ), &
+        & 'MLS_Swwrlattr' // trim(FieldName) )
       elseif ( present(RealBuffer) ) then
-        call check( nf90_put_att( swathid, varID, AttrName, RealBuffer ), &
-        & 'MLS_Swwlrattr' // trim(FieldName) )
+        call check( nf90_put_att( grpid, varid, AttrName, RealBuffer ), &
+        & 'MLS_Swwrlattr' // trim(FieldName) )
       elseif ( present(DoubleBuffer) ) then
-        call check( nf90_put_att( swathid, varID, AttrName, DoubleBuffer ), &
-        & 'MLS_Swwlrattr' // trim(FieldName) )
+        call check( nf90_put_att( grpid, varid, AttrName, DoubleBuffer ), &
+        & 'MLS_Swwrlattr' // trim(FieldName) )
       elseif ( present(DoubleSca) ) then
-        call check( nf90_put_att( swathid, varID, AttrName, DoubleSca ), &
-        & 'MLS_Swwlrattr' // trim(FieldName) )
+        call check( nf90_put_att( grpid, varid, AttrName, DoubleSca ), &
+        & 'MLS_Swwrlattr' // trim(FieldName) )
       endif
       MLS_Swwrlattr = nf90_NoErr
     endif
@@ -1036,3 +1038,6 @@ contains ! ======================= Public Procedures =========================
 end module MLSNetCDF4
 
 ! $Log$
+! Revision 1.1  2020/03/06 00:24:19  pwagner
+! First commit
+!
