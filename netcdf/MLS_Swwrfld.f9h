@@ -28,7 +28,12 @@
     integer :: grpid
     integer :: varid
     integer :: which_group
+    logical, parameter :: DEEBUG = .false.
     ! Executable code
+    if ( DEEBUG ) then
+      print *, 'shape(values) ', shape(values)
+      print *, start, stride, count
+    endif
     call trace_begin ( me, ProcName , cond=.false. )
     returnStatus = -1
     if ( Is_datafield_in_swath(swathId, fieldname, which_group) ) then
@@ -46,3 +51,6 @@
 
 !   end subroutine MLS_Swwrfld_1D_DOUBLE
 ! $Log$
+! Revision 1.1  2020/03/06 00:24:19  pwagner
+! First commit
+!
