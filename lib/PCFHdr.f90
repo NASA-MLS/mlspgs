@@ -195,7 +195,7 @@ module PCFHdr
     integer                        :: LastMAFCtr                    = 0
     character(len=GA_VALUE_LENGTH) :: PhaseNames                    = ' '
     character(len=GA_VALUE_LENGTH) :: ForwardModelNames             = ''
-    character(len=GA_VALUE_LENGTH) :: ProductionLocation            = ''
+    ! character(len=GA_VALUE_LENGTH) :: ProductionLocation            = ''
     integer                        :: NumCompletedChunks            = 0
     integer                        :: NumFailedChunks               = 0
     character(len=GA_VALUE_LENGTH) :: FailedChunks                  = ''
@@ -344,13 +344,14 @@ contains
      call addRow ('FileAttributesCopiedFrom     ', trim( GlobalAttributes%FileAttributesCopiedFrom ) )
      call addRow ('Equator crossing time (tai93)', GlobalAttributes%TAI93At0zOfGranule )
      call addRow ('ProductionLocation           ', trim( GlobalAttributes%productionLoc ))
-     call addRow ('HostName                     ', trim( GlobalAttributes%HostName  ))
+     call addRow ('HostName                     ', trim( GlobalAttributes%HostName        ))
      call addRow ('InstrumentName               ', trim( GlobalAttributes%InstrumentName  ) )
      call addRow ('Process level                ', trim( GlobalAttributes%ProcessLevel    ) )
      call addRow ('PGE version                  ', trim( GlobalAttributes%PGEVersion      ) )
-     call addRow ('Misc Notes                   ', trim( GlobalAttributes%MiscNotes      ), &
+     call addRow ('DOI                          ', trim( GlobalAttributes%DOI             ) )
+     call addRow ('Misc Notes                   ', trim( GlobalAttributes%MiscNotes       ), &
        & BlocLen=38, options='-w', wrappingChar=',' )
-     call addRow ('DOI                          ', trim( GlobalAttributes%DOI          ))
+     call addRow ('DOI                          ', trim( GlobalAttributes%DOI             ))
      call outputTable ( sep='|', border='-' )
      call outputNamedValue('Orbit numbers       ', GlobalAttributes%orbNum)
      call outputNamedValue('Orbit Periods       ', GlobalAttributes%orbPeriod)
@@ -697,7 +698,7 @@ contains
       call GetHDF5Attribute( MLSFile, 'PGEVersion            ', GlobalAttributes%PGEVersion            )
       call GetHDF5Attribute( MLSFile, 'StartUTC              ', GlobalAttributes%StartUTC              )
       call GetHDF5Attribute( MLSFile, 'EndUTC                ', GlobalAttributes%EndUTC                )
-      call GetHDF5Attribute( MLSFile, 'productionLoc         ', GlobalAttributes%productionLoc         )
+      call GetHDF5Attribute( MLSFile, 'ProductionLoc         ', GlobalAttributes%productionLoc         )
       call GetHDF5Attribute( MLSFile, 'GranuleMonth          ', GlobalAttributes%GranuleMonth          )
       call GetHDF5Attribute( MLSFile, 'GranuleDay            ', GlobalAttributes%GranuleDay            )
       call GetHDF5Attribute( MLSFile, 'GranuleYear           ', GlobalAttributes%GranuleYear           )
@@ -708,7 +709,7 @@ contains
       call GetHDF5Attribute( MLSFile, 'ForwardModelNames     ', GlobalAttributes%ForwardModelNames     )
       call GetHDF5Attribute( MLSFile, 'MiscNotes             ', GlobalAttributes%MiscNotes             )
       call GetHDF5Attribute( MLSFile, 'identifier_product_doi', GlobalAttributes%DOI                   )
-      call GetHDF5Attribute( MLSFile, 'ProductionLocation    ', GlobalAttributes%ProductionLocation    )
+!      call GetHDF5Attribute( MLSFile, 'ProductionLocation    ', GlobalAttributes%ProductionLocation    )
       call GetHDF5Attribute( MLSFile, 'NumCompletedChunks    ', GlobalAttributes%NumCompletedChunks    )
       call GetHDF5Attribute( MLSFile, 'NumFailedChunks       ', GlobalAttributes%NumFailedChunks       )
       call GetHDF5Attribute( MLSFile, 'FailedChunks          ', GlobalAttributes%FailedChunks          )
@@ -1145,8 +1146,9 @@ contains
 !------------------------------------------------------------
 
 !------------------------------------------------------------
-   subroutine he5_readglobalattr (fileID, gAttributes, &
-     & ProcessLevel, DayofYear, TAI93At0zOfGranule, returnStatus)
+   subroutine he5_readglobalattr ( fileID, gAttributes, &
+     & ProcessLevel, DayofYear, TAI93At0zOfGranule, &
+     & HostName, MiscNotes, DOI, returnStatus )
 !------------------------------------------------------------
 
      use MLSHDFeos, only: Maxdlistlength, He5_Ehrdglatt, MLS_IsGlatt
@@ -1160,6 +1162,9 @@ contains
       character(len=*), intent(out), optional  :: ProcessLevel
       integer, intent(out), optional           :: DayofYear
       double precision, optional, intent(out)  :: TAI93At0zOfGranule
+      character(len=*), intent(out), optional  :: HostName
+      character(len=*), intent(out), optional  :: MiscNotes
+      character(len=*), intent(out), optional  :: DOI
       integer, optional, intent(out)           :: returnStatus
 ! Internal variables
       integer :: status
@@ -1187,9 +1192,11 @@ contains
       status = he5_EHrdglatt(fileID, &
        & 'InstrumentName', &
        &  gAttributes%InstrumentName)
-      ! status = he5_EHrdglatt(fileID, &
-      !  & 'HostName', &
-      !  &  gAttributes%HostName)
+      if ( present(HostName) ) then
+       status = he5_EHrdglatt(fileID, &
+        & 'HostName', &
+        &  HostName)
+      endif
       status = he5_EHrdglatt(fileID, &
        & 'ProcessLevel', &
        &  gattributes%ProcessLevel)
@@ -1197,10 +1204,12 @@ contains
       status = he5_EHrdglatt(fileID, &
        & 'PGEVersion', &
        &  gAttributes%PGEVersion)
-      ! status = he5_EHrdglatt(fileID, &
-      ! & 'MiscNotes', &
-      ! &  gAttributes%MiscNotes)
-      ! if ( DEBUG ) call outputNamedValue('Misc Notes (read) ', trim(gAttributes%MiscNotes) )
+      if ( present(MiscNotes) ) then
+       status = he5_EHrdglatt(fileID, &
+       & 'MiscNotes', &
+       &  MiscNotes)
+       if ( DEBUG ) call outputNamedValue('Misc Notes (read) ', trim(MiscNotes) )
+      endif
       status = he5_EHrdglatt(fileID, &
        & 'StartUTC', &
        &  gAttributes%StartUTC)
@@ -1238,10 +1247,12 @@ contains
          &  ibuf  )
         gAttributes%LastMAFCtr = ibuf(1)
       endif
-      ! status = he5_EHrdglatt(fileID, &
-      ! & 'identifier_product_doi', &
-      ! &  gAttributes%DOI)
-      ! if ( DEBUG ) call outputNamedValue('identifier_product_doi ', trim(gAttributes%DOI) )
+      if ( present(DOI) ) then
+       status = he5_EHrdglatt(fileID, &
+       & 'identifier_product_doi', &
+       &  DOI)
+       if ( DEBUG ) call outputNamedValue('identifier_product_doi ', trim(DOI) )
+      endif
       ! if ( present(returnStatus) ) returnStatus = status
       if ( DEBUG ) call dumpGlobalAttributes
       if ( present(returnStatus) ) returnStatus = 0
@@ -1913,6 +1924,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.78  2020/03/20 23:02:10  pwagner
+!# Attempt to relieve confusion between ProductionLocation and ProductionLoc; may optionally read DOI, etc.
+!#
 !# Revision 2.77  2020/03/04 21:22:20  pwagner
 !# Make ProcessLevelFun public
 !#
