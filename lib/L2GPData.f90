@@ -959,7 +959,7 @@ contains ! =====     Public Procedures     =============================
       call outputNamedValue( 'StartUTC', trim(GlobalAttributes%StartUTC) )
     endif
     call he5_readglobalattr ( File1Handle, gAttributes, &
-      & ProcessLevel, DayofYear, TAI93At0zOfGranule, status )
+      & ProcessLevel, DayofYear, TAI93At0zOfGranule, returnStatus=status )
     if ( status == 0 ) then
       if ( DEEBUG ) then
         call output ( '(Global Attributes read) ', advance='yes')
@@ -2912,7 +2912,7 @@ contains ! =====     Public Procedures     =============================
     ! - -   G l o b a l   A t t r i b u t e s   - -
     call output ( '(Global Attributes) ', advance='yes' )
     call he5_readglobalattr( l2FileHandle, gAttributes, &
-     & ProcessLevel, DayofYear, TAI93At0zOfGranule, status )
+     & ProcessLevel, DayofYear, TAI93At0zOfGranule, returnStatus=status )
     if ( status /= 0 ) then
       call output ('No global attributes found in file', advance='yes')
     else
@@ -5636,6 +5636,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.244  2020/03/04 21:24:48  pwagner
+! Make stuff public needed by NCL2GPData; preFill status with l2gp%MissingStatus
+!
 ! Revision 2.243  2020/02/13 21:27:08  pwagner
 ! Fix errors relating to separate MissingValue for GPH
 !
