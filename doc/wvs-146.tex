@@ -19,11 +19,23 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-146r8}
-\newcommand{\docdate}{4 March 2020}
+\newcommand{\docname}{wvs-146r9}
+\newcommand{\docdate}{17 March 2020}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
+\fi
+\ifnum\pdfoutput>0
+
+  \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+  \hypersetup{%
+    hypertexnames=false,%
+    colorlinks=true,%
+    linktocpage=true,%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{pdftex}
+\else
   \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
   \hypersetup{%
     hypertexnames=false%
@@ -31,26 +43,6 @@
   % Specify the driver for the color package
   \ExecuteOptions{dvips}
   %\ExecuteOptions{xdvi}
-\else
-  \ifnum\pdfoutput>0
-   
-\usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
-    \hypersetup{%
-      hypertexnames=false,%
-      colorlinks=true,%
-      linktocpage=true,%
-    }
-    % Specify the driver for the color package
-    \ExecuteOptions{pdftex}
-  \else
-    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
-    \hypersetup{%
-      hypertexnames=false%
-    }
-    % Specify the driver for the color package
-    \ExecuteOptions{dvips}
-    %\ExecuteOptions{xdvi}
-  \fi
 \fi
 
 \hyperbaseurl{}
@@ -117,9 +109,10 @@ Let $a$ be the equatorial radius, and $c$ the polar radius of the Earth,
 an oblate spheroid
 %
 \begin{equation}\label{ellipsoid}
-\Sigma = \frac{x^2}{a^2} + \frac{y^2}{a^2} + \frac{z^2}{c^2} = 1
+\Sigma = \frac{x^2}{a^2} + \frac{y^2}{a^2} + \frac{z^2}{c^2} =
+ \frac{\rho^2}{a^2} + \frac{z^2}{c^2} = 1
 \text{ or }
-x^2 +y^2 + \frac{z^2}{1-e^2} = a^2
+x^2 + y^2 + \frac{z^2}{1-e^2} = \rho^2 + \frac{z^2}{1-e^2} = a^2
 \end{equation}
 where eccentricity $e^2 = 1-\frac{c^2}{a^2}$.
 
@@ -128,6 +121,84 @@ where eccentricity $e^2 = 1-\frac{c^2}{a^2}$.
 {\bf Latitude definitions} $\theta$: Reduced latitude;
 $\gamma$: Geocentric latitude; $\phi$: Geodetic latitude\\
 \end{centering}
+
+%=========================================================================
+\section{Topics from differential geometry}
+
+Let $\mathbf{r} = [x,y,z]^T$ be a 3-dimensional vector in Cartesian
+co\"ordinates to a point on the surface, and let $\mathbf{w}$ be a
+2-dimensional vector giving the same point using local curvilinear
+co\"ordinates $(w^1,w^2)$ within the surface.  The local co\"ordinates
+used here are longitude and reduce latitude $(\lambda,\theta)$, longitude
+and geodetic latitude $(\lambda,\phi)$, and longitude and geocentric
+latitude $(\lambda,\gamma)$.  Let $\mathbf{g}$ be the unit normal to the
+surface at $\mathbf{r}$, with components $n_\nu$ in Cartesian
+co\"ordinates.
+
+The incremental arc length $\d s$ on a surface is given by the first
+fundamental form for a surface, defined by Equation (1) on page 242 of
+{\bf The Absolute Differential Calculus}, or Equation (112) on page 71 of
+{\bf Vector and Tensor Analysis}, \emph{viz}.
+%
+\begin{equation}
+\text{d} s^2 = \sum_{ij} a_{ij} \text{d}w^i \text{d}w^j \,,
+\end{equation}
+%
+where $a_{ij}$ are components of the metric tensor $\mathbf{A}$ defined by
+Equation (35) on page 122 of {\bf The Absolute Differential Calculus},
+\emph{viz}.
+%
+\begin{equation}
+a_{ij} = \sum_\nu
+\frac{\partial r^\nu}{\partial w^i} \frac{\partial r^\nu}{\partial w^j} \,,\,
+\mathbf{A}
+ = \left[ \begin{array}{cc} E & F \\ F & G \\ \end{array} \right] \!
+ = \left[ \begin{array}{cc} a_{11} & a_{12} \\
+                            a_{21} & a_{22} \\ \end{array} \right] \!
+\text{, and }
+EG-F^2 = \det \mathbf{A} \,.
+\end{equation}
+%
+The distance $d = \d\mathbf{r} \cdot \mathbf{g}$ from a surface at a point
+$\mathbf{r} + \d\mathbf{r}$ to the tangent plane at $\mathbf{r}$ is given
+by the second fundamental form for a surface, defined by Equation (14$'$)
+on page 252 of {\bf The Absolute Differential Calculus}, \emph{viz}.
+%
+\begin{equation}
+2\, d = \sum_k b_{ij} \d w^i \d w^j\,,
+\end{equation}
+%
+where $b_{ij}$ are components of the tensor $\mathbf{B}$ defined by
+Equation (15$'$) on page 252 of {\bf The Absolute Differential Calculus},
+\emph{viz}.
+%
+\begin{equation}
+b_{ij} = \sum_\nu n_\nu \frac{\partial^2 r^\nu}{\partial w^i \partial w^j}
+\,, \mathbf{B}
+ = \left[ \begin{array}{cc} e & f \\ f & g \\ \end{array} \right]\!
+ = \left[ \begin{array}{cc} b_{11} & b_{12} \\
+                            b_{21} & b_{22} \\ \end{array} \right]\!
+\text{, and } e g - f^2 = \det \mathbf{B}.
+\end{equation}
+
+If a surface is cut by a plane that includes the normal $\mathbf{g}$ at
+$\mathbf{r}$, the intersection of the surface and that plane is a curve in
+that plane.  Assuming the surface is smooth, the curvature of the curve at
+$\mathbf{r}$ is defined.
+
+Among all the planes that include $\mathbf{g}$, the curvature of the curve
+in one of the planes is maximum, and the curvature in another one is
+minimum.  These curvatures are the \emph{principal curvatures}, denoted
+$\kappa_1$ and $\kappa_2$, respectively, which are eigenvalues of $\mathbf{A}^{-1}
+\mathbf{B}$ and roots of Equation (125)
+from {\bf Vector and Tensor Analysis}, \emph{viz}.
+%
+\begin{equation}\label{third}
+(E G - F^2)\, \kappa^2 - ( e G + g E - 2 f F )\, \kappa + ( e g - f^2 )
+ = \det ( \mathbf{B} - \kappa \mathbf{A} )
+ = 0
+\,.
+\end{equation}
 
 %=========================================================================
 \section{Curvatures in terms of reduced latitude $\theta$}
@@ -153,10 +224,13 @@ c \sin \theta \\
  \sqrt{x(\lambda,\theta)^2 + y(\lambda,\theta)^2} = a \cos \theta
 \end{split}\end{equation}
 
-be the vector to a point on its surface, where $\lambda$ is longitude and
-$\theta$ is the reduced latitude.\footnote{Called the \emph{eccentric
-anomaly} in astronomy.} Then
-
+be the vector to a point on its surface, where $\lambda$ is longitude,
+$\theta$ is reduced latitude,\footnote{Called the \emph{eccentric anomaly}
+in astronomy.} and $e$ is the eccentricity of the oblate
+spheroid.\footnote{The eccentricity $e$ is not to be confused with
+$e=b_{11}$ in discussions using coefficients of the second fundamental
+form.} Then
+%
 \begin{equation}
 \begin{array}{lll}
 \frac{\partial \mathbf{r}}{\partial \lambda} =
@@ -190,47 +264,10 @@ a \sin \theta \sin \lambda \\
 -a \cos \theta \cos \lambda \\
 -a \cos \theta \sin \lambda \\
 -c\, \sin \theta
-\end{array} \right] \,. \\
+\end{array} \right] \text{, and} \\
 \end{array}
 \end{equation}
-
-If a surface is cut by a plane that includes its normal at a point, the
-intersection of the surface and that plane is a curve in that plane. 
-Assuming the surface is smooth, the curvature of the curve at the point of
-the normal is defined.
-
-Among all the planes that include the normal, the curvature of the curve
-in one of the planes is maximum, and the curvature in another one is
-minimum.  These curvatures are the \emph{principal curvatures}, denoted
-$\kappa_1$ and $\kappa_2$, respectively, which are roots of Equation (125)
-from {\bf Vector and Tensor Analysis}:
-
-\begin{equation}\label{third}
-(E G - F^2)\, \kappa^2 - ( e G + g E - 2 f F )\, \kappa + ( e g - f^2 ) = 0
-\,,
-\end{equation}
-
-where $E$, $F$, and $G$ are coefficients of the first fundamental form for
-a surface:
-
-\begin{equation}
-\text{d} s^2 = E\, \text{d} \lambda^2 +
-               2 F\, \text{d} \lambda\, \text{d} \theta +
-               G \, \text{d} \theta^2
-             = \sum_{ij} g_{ij} \text{d}x^i \text{d}x^j \,.
-\end{equation}
-
-where $g_{ij}$ is the metric tensor defined by Equation (35) on page 122
-of {\bf The Absolute Differential Calculus}, \emph{viz}.
-
-\begin{equation}
-g_{ij} = \sum_n
-\frac{\partial y_n}{\partial x^i} \frac{\partial y_n}{\partial x^j} \,.
-\end{equation}
-
-For an oblate spheroid using reduced latitude $\theta$, where $\mathbf{y}
-= \mathbf{r}$ and $\{x_1,x_2\} = \{\lambda, \theta\}$,
-
+%
 \begin{equation}\begin{split}
 E = \,& \frac{\partial \mathbf{r}}{\partial \lambda} \cdot
         \frac{\partial \mathbf{r}}{\partial \lambda}
@@ -243,45 +280,9 @@ G = \,& \frac{\partial \mathbf{r}}{\partial \theta} \cdot
 \,.
 \end{split}\end{equation}
 
-% \begin{equation}\begin{split}
-% g = \,& \left[ \begin{array}{ll} E & F \\[6pt] F & G \\ \end{array}\right]
-%   = \left[ \begin{array}{ll}
-%         \frac{\partial \mathbf{r}}{\partial \lambda} \cdot
-%         \frac{\partial \mathbf{r}}{\partial \lambda} &
-%         \frac{\partial \mathbf{r}}{\partial \lambda} \cdot
-%         \frac{\partial \mathbf{r}}{\partial \theta} \\[6pt]
-%         \frac{\partial \mathbf{r}}{\partial \lambda} \cdot
-%         \frac{\partial \mathbf{r}}{\partial \theta}  &
-%         \frac{\partial \mathbf{r}}{\partial \theta} \cdot
-%         \frac{\partial \mathbf{r}}{\partial \theta} \\
-%     \end{array} \right]
-%   = \left[ \begin{array}{ll} a^2 \cos^2 \theta & 0 \\[6pt]
-%                              0 & a^2 \sin^2 \theta + c^2 \cos^2 \theta
-%     \end{array} \right] \\[6pt]
-%   = \,&
-%     \left[ \begin{array}{ll} a^2 \cos^2 \theta & 0 \\[6pt]
-%                              0 & a^2 ( 1-e^2 \cos^2 \theta
-%     \end{array} \right] \,.
-% \end{split}\end{equation}
-
-$e$, $f$, and $g$ are coefficients of the second fundamental
-form:\footnote{Within this section, section \ref{Gaussian}, and section
-\ref{Mean}, $e$ is not the eccentricity of the oblate spheroid.}
-%
-\begin{equation}
-2\, d = e\, \text{d} \lambda^2 +
-        2 f\, \text{d} \lambda\, \text{d} \theta +
-        g \, \text{d} \theta^2
-\end{equation}
-
-where $d = \d {\bf r}\cdot {\bf n}$ is the distance from the point at
-${\bf r} + \d \mathbf{r}$ to the tangent plane at
-$\bf{r}(\lambda,\theta)$, $\d {\bf r} = {\bf r}(\lambda + \d \lambda,
-\theta + \d \theta) - {\bf r}(\lambda, \theta)$, and $\mathbf{g}$ is the
-unit normal to the surface at $(\lambda,\theta)$.  The vectors
-$\frac{\partial \mathbf{r}}{\partial \lambda}$ and $\frac{\partial
-\mathbf{r}}{\partial \theta}$ are tangent to the surface.  Therefore, a
-vector normal to the surface at $\bf{r}(\lambda,\theta)$ is
+The vectors $\frac{\partial \mathbf{r}}{\partial \lambda}$ and
+$\frac{\partial \mathbf{r}}{\partial \theta}$ are tangent to the surface. 
+Therefore, a vector normal to the surface at $\bf{r}(\lambda,\theta)$ is
 %
 \begin{equation}\begin{split}
 \mathbf{N} =\,& \frac{\partial \mathbf{r}}{\partial \lambda} \times
@@ -347,11 +348,16 @@ curvatures), are
          = a^2 \frac{\sqrt{1-e^2}}{G^\frac32}
          \,\,(e \text{ is eccentricity}) \\[2pt]
 \kappa_2 =\,& \frac{e}E = \frac{c}{a \sqrt{G}}
-         = \sqrt{\frac{1-e^2}{G}} = \frac{G}{a^2}\,\kappa_1\\[2pt]
+         = \sqrt{\frac{1-e^2}{G}} = \frac{G}{a^2}\,\kappa_1
+         \,\,(e \text{ in } \frac{e}E \text{ is } b_{11}; \,e
+                \text{ under the square root is eccentricity})
+         \\[2pt]
 \kappa_1 - \kappa_2
          = \,& \frac{c( a^2 - c^2)}{a}\, \frac{\cos^2 \theta }
                                               {G^{\frac32}}
-         = e^2 \cos^2 \theta\, \kappa_1 > 0 \,.\\
+         = e^2 \cos^2 \theta\, \kappa_1 > 0
+         \,\,(e \text{ is eccentricity}) \,.
+         \\
 \end{split}\end{equation}
 
 The minimum and maximum radii of curvature are $R_1 = \frac1{\kappa_1}$
@@ -363,14 +369,16 @@ The Gaussian curvature $K$ is the product of the principal curvatures:
 
 \begin{equation}
 K = \kappa_1 \kappa_2
+= \frac{\det \mathbf{B}}{\det \mathbf{A}}
 = \frac{ e g - f^2 }{ E G -F^2}
 = \frac{ e g }{ E G }
 = \frac{c^2}{G^2}
 \end{equation}
 
 and the radius of Gaussian curvature $\sqrt{1/K} = \frac{G}c = a\, \frac{1
-- e^2 \cos^2\theta}{\sqrt{1-e^2}}$ is the geometric mean of the principal
-radii of curvature.
+- e^2 \cos^2\theta}{\sqrt{1-e^2}}$, where $e$ is eccentricity, is the
+geometric mean of the principal radii of curvature. (This is the same as
+Equation (33$'$) on page 260 of {\bf The Absolute Differential Calculus}.)
 
 \subsection{Mean curvature of oblate spheroid}\label{Mean}
 
@@ -397,9 +405,10 @@ radii of curvature is
 \section{Development of curvatures using geodetic latitude $\phi$}\label{Geod}
 
 Let $D = a^2 \cos^2 \phi + c^2 \sin^2 \phi = a^2 ( 1 - e^2 \sin^2 \phi )$
-and $N(\phi) = \frac{a^2}{\sqrt{D}}$.  Then the parametric equations of an
-oblate spheroid using longitude and geodetic latitude derived in Section
-\ref{Rel},\footnote{See also Ligas} are
+and $N(\phi) = \frac{a^2}{\sqrt{D}} = \frac{a}{\sqrt{1-e^2\sin^2\phi}}$. 
+Then the parametric equations of an oblate spheroid using longitude and
+geodetic latitude derived in Section \ref{Rel},\footnote{See also Ligas}
+are
 
 \begin{equation}\begin{split}
 \mathbf{r}(\lambda,\phi) = \,&
@@ -554,7 +563,7 @@ The average of the principal radii of curvature is
 Using $\gamma$ for geocentric latitude,
 
 \begin{equation}
-r(\lambda,\gamma) = \left[ \begin{array}{l}
+\mathbf{r}(\lambda,\gamma) = \left[ \begin{array}{l}
 x(\lambda,\gamma) =  R(\gamma) \cos \gamma \cos \lambda \\
 y(\lambda,\gamma) =  R(\gamma) \cos \gamma \sin \lambda \\
 z(\lambda,\gamma) =  R(\gamma) \sin \gamma
@@ -562,8 +571,10 @@ z(\lambda,\gamma) =  R(\gamma) \sin \gamma
 \sqrt{x(\lambda,\gamma)^2 + y(\lambda,\gamma)^2} = R(\gamma) \cos \gamma\,.
 \end{equation}
 
-Substitute $r(\lambda,\gamma)$ into the equation for an oblate spheroid
-\begin{equation}\begin{split}\label{R}
+Substitute $\mathbf{r}(\lambda,\gamma)$ into the equation for an oblate
+spheroid
+%
+\begin{equation}\begin{split}
 \frac{x^2}{a^2} + \frac{y^2}{a^2} + \frac{z^2}{c^2} = \,&
 R(\gamma)^2 \left( \frac{\cos^2 \gamma \cos^2 \lambda}{a^2} +
            \frac{\cos^2 \gamma \sin^2 \lambda}{a^2} +
@@ -576,7 +587,7 @@ R(\gamma)^2 \left( \frac{\cos^2 \gamma \cos^2 \lambda}{a^2} +
 
 from which
 %
-\begin{equation}
+\begin{equation}\label{R}
 R(\gamma) = \frac{ac}{\sqrt{a^2 \sin^2 \gamma + c^2 \cos^2 \gamma}}
  = a \sqrt{\frac{1-e^2}{1-e^2 \cos^2 \gamma}} \,.
 \end{equation}
@@ -716,18 +727,20 @@ or
 %=========================================================================
 \section{Prime vertical and meridional radii of curvature}\label{Prime}
 
-The prime vertical is the east-west plane that includes the zenith. The
-radius of curvature $R_N$ in the prime vertical is frequently denoted $N$.
-It is the distance from the surface to the polar axis in the direction
-normal to the surface.\footnote{B. R. Bowring, \emph{Notes on the
-curvature in the prime vertical section}, {\bf Survey Review 29}, 226
-(October 1987) pp 195-196, reproduced in the appendix on page
-\pageref{appendix}.}  Using $c \tan \phi = a \tan \theta$ and $c^2 \tan
-\phi = a^2 \tan \gamma$ from Equations (\ref{tangents}), the results
-derived in Section \ref{geometric} and Equations
+The prime vertical is the east-west plane that includes the zenith,
+$\mathbf{g}$ at a point $P$. Points on the curve that is the intersection
+of that plane with the Earth surface and that are equidistant from $P$ are
+at the same latitude.  The radius of curvature $R_N$ in the prime vertical
+is frequently denoted $N$. It is the distance from the surface at $P$ to
+the polar axis in the direction normal to the surface.\footnote{B. R.
+Bowring, \emph{Notes on the curvature in the prime vertical section}, {\bf
+Survey Review 29}, 226 (October 1987) pp 195-196, reproduced in the
+appendix on page \pageref{appendix}.}  Using $c \tan \phi = a \tan \theta$
+and $c^2 \tan \phi = a^2 \tan \gamma$ from Equations (\ref{tangents}), the
+results derived in Section \ref{geometric} and Equations
 (\ref{principal-reduced}), (\ref{principal-geod}), and
 (\ref{principal-geoc}) are
-%
+
 \makeatletter
 \newlength{\negph@wd}
 \DeclareRobustCommand{\negphantom}[1]{%
@@ -764,11 +777,11 @@ R_N\,& =  \frac{a^2}{\sqrt{D}}
 \end{split}\end{equation}
 
 The radius of curvature $R_M$ in the meridian is the radius of a circle in
-the plane of a meridian that is tangent to the Earth surface, and has the
-same radius of curvature as the ellipsoid in the meridional direction. 
-Using $c \tan \phi = a \tan \theta$ and $c^2 \tan \phi = a^2 \tan \gamma$
-from Equations (\ref{tangents}), the results derived in  Equations
-(\ref{principal-reduced}), (\ref{principal-geod}), and
+the plane of a meridian, the circle being tangent to the Earth surface,
+that has the same radius of curvature as the ellipsoid in the meridional
+direction.  Using $c \tan \phi = a \tan \theta$ and $c^2 \tan \phi = a^2
+\tan \gamma$ from Equations (\ref{tangents}), the results derived in 
+Equations (\ref{principal-reduced}), (\ref{principal-geod}), and
 (\ref{principal-geoc}) are
 %
 \begin{equation}\begin{split}
@@ -801,138 +814,11 @@ For a sphere, $a = c = r$, $G = r^2$, $K = 1/r^2$, $H = 1/r$, $\kappa_1 =
 \kappa_2 = 1/r$, and $R_N = R_M = r$.
 
 %=========================================================================
-\section{Geometric computation of prime vertical radius of curvature}
-\label{geometric}
-
-A line in the normal direction from the surface of an oblate spheroid
-
-\begin{equation}\label{one}
-\Sigma = \frac{x^2+y^2}{a^2} + \frac{z^2}{c^2}
-  = \frac{\rho^2}{a^2} + \frac{z^2}{c^2} = 1 \,.
-\end{equation}
-
-will intersect the polar axis. The gradient to the ellipsoid at a point $P
-= (x,y,z)$ is
-%
-\begin{equation}
-\vec{g} = \nabla \Sigma = \nabla \left( \frac{x^2 + y^2}{a^2} +
-                                   \frac{z^2}{c^2} \right) =
-[ \Sigma_x, \Sigma_y, \Sigma_z ]^T =
-\left[ \frac{2 \, x}{a^2}, \frac{2 \, y}{a^2}, \frac{2\, z}{c^2} \right]^T
-\text{ and } |\vec{g}| = 2 \sqrt{ \frac{\rho^2}{a^4} + \frac{z^2}{c^4}} \,.
-\end{equation}
-
-\begin{centering}
-\includegraphics{wvs-146-1}\\[5pt]\label{fig}
-\end{centering}
-
-Therefore, the slope of a line $\mathcal{L}$, normal to the ellipse in a
-meridional plane at $P$ and intersecting the minor axis at $Q = ( 0,
--\zeta )$ is
-%
-\begin{equation}\label{four}
-%m = 
-\tan \phi = \frac{\Sigma_z}{\Sigma_{\rho}} = \frac{a^2}{c^2}\, \frac{z}{\rho}
-= \frac1{1-e^2} \frac{z}{\rho}
-\, \text{, where }
-\Sigma_\rho = \sqrt{\Sigma_x^2 + \Sigma_y^2} = \frac{2\, \rho}{a^2}\,.
-\end{equation}
-
-% From the equation for a line, $z = m\,x + \zeta$, we have $\zeta = z -
-% m\,x = z \left( 1 - \frac{a^2}{c^2} \right)$ and $z - \zeta = m\,x =
-% \frac{a^2}{c^2} z$.
-% 
-% The vector $\vec{R}$ in the direction from $Q$ to $P$ (i.e., parallel to the
-% gradient at $P$) with a length equal to the distance from $Q$ to $P$ is
-% %
-% \begin{equation}\label{five}
-% \vec{R} =
-% \left[ \begin{array}{c} x \\ z \end{array} \right] -
-% \left[ \begin{array}{c} 0 \\ \zeta \end{array} \right] =
-% \left[ \begin{array}{c} x \\ \frac{a^2}{c^2}\,z \end{array} \right]
-% \text{ and }
-% | \vec{R} | = \sqrt{x^2 + \frac{a^4}{c^4} \,z^2}
-% \end{equation}
-% 
-% Substituting \Sigmaquation (\ref{first}) with $\lambda=0$ into \Sigmaquation
-% (\ref{five}) we have
-% %
-% \begin{equation}
-% \vec{R} =
-% \left[ \begin{array}{c} a \cos \theta \\ \frac{a^2}{c} \sin \theta
-% \end{array} \right] \text{ and }
-% | \vec{R} | = \frac{a}{c} \sqrt{a^2 \sin^2 \theta + c^2 \cos^2 \theta}
-%  = \frac{a \, \sqrt{G}}c = \frac1{\kappa_2} = R_2 \,.
-% \end{equation}
-% 
-% In an alternative derivation
-%
-The line $\mathcal{L}$ from $P$ to $Q$ can be represented by the point $P$
-and some distance $s$ along the normal vector $\vec{g}$ in the direction
-from $P$ to $Q$, \emph{viz.}
-%
-\renewcommand{\arraystretch}{1.4}
-\begin{equation}\label{L}
-\mathcal{L} = -\vec{R} =
-\vec{P} + s \vec{g} = \vec{Q} \,\,\text{ or}
-\left[ \begin{array}{c} \rho \\ z \end{array} \right] +
-s \left[ \begin{array}{c} \frac{2 \rho}{a^2} \\ \frac{2 z}{c^2}
- \end{array} \right] =
-\left[ \begin{array}{c} 0 \\ -\zeta \end{array} \right] \,,
-\end{equation}
-
-from which, solving for $s$ and $\zeta$ gives
-%
-\begin{equation}\begin{split}\label{zeta}
-s = \,& -\frac{a^2}2 \\
-| \mathcal{L} | = | \vec{R} | = \,& s | \vec{g} | =
-\frac{a^2}{\sqrt{a^2 \cos^2 \phi + c^2 \sin^2 \phi}} =
-\frac{a}{\sqrt{1-e^2 \sin^2 \phi}} =
-\frac{a^2}{\sqrt{D}} = \frac1{\kappa_2} = R_2 \text{ and} \\
-\zeta = \,& z \left( 1 - \frac{a^2}{c^2} \right)
-      = -z\,\frac{e^2}{1-e^2}
-      = -R_2\, e^2 \sin \phi
-\end{split}\end{equation}
-
-% \begin{equation}
-% \vec{R} =
-% \left[ \begin{array}{c} a \cos \theta \\ \frac{a^2}{c} \sin \theta
-% \end{array} \right] \text{ and }
-% | \vec{R} | = \frac{a}{c} \sqrt{a^2 \sin^2 \theta + c^2 \cos^2 \theta}
-%  = \frac{a \, \sqrt{G}}c = \frac1{\kappa_2} = R_2 \,.
-% \end{equation}
-
-% which is the same result as Equation (\ref{five}).
-
-% Similarly, solving for $s$ and $\xi$ in
-% 
-% \renewcommand{\arraystretch}{1.4}
-% \begin{equation}
-% \vec{P} + s \vec{g} = \vec{T} \,\,\text{ or}
-% \left[ \begin{array}{c} x \\ y \end{array} \right] +
-% s \left[ \begin{array}{c} \frac{2x}{a^2} \\ \frac{2y}{b^2}
-%  \end{array} \right] =
-% \left[ \begin{array}{c} \xi \\ 0 \end{array} \right] \,,
-% \end{equation}
-% 
-% gives
-% %
-% \begin{equation}\begin{split}
-% s = \,& -\frac{c^2}2 \\
-% \xi = \,& x \left( 1 - \frac{c^2}{a^2} \right) \text{ and }\\
-% | \vec{PT} | = \,& s | \vec{g} | = \frac{c \sqrt{G}}{a}
-% = \frac{c^2}{a^2} | \vec{R} | = \frac{c^2}{a^2} R_2\,, \\
-% \end{split}\end{equation}
-% 
-% which is the normal distance from $\mathbf{P}$ to the equatorial plane
-% (which might not be interesting).
-
-%=========================================================================
 \section{Parametric represention using geodetic latitude}\label{Rel}
 
-Solving for $\rho$ in terms of $z$, and vice-versa, in Equation (\ref{four})
-and substituting into Equation (\ref{one}) gives parametric equations in
-terms of the geodetic angle $\phi$:
+Solving for $\rho$ in terms of $z$, and vice-versa, in Equation
+(\ref{four}) and substituting into Equation (\ref{ellipsoid}) gives
+parametric equations in terms of the geodetic latitude $\phi$:
 %
 \begin{equation}\begin{split}\label{nine}
 \rho = \,& z\, \frac{a^2}{c^2}\, \frac{\cos \phi}{\sin \phi}
@@ -972,11 +858,108 @@ z = \,& \frac{c^2 \sin \phi}{\sqrt{a^2 \cos^2 \phi + c^2 \sin^2 \phi}}
 \end{split}\end{equation}
 
 %=========================================================================
+\section{Geometric computation of prime vertical radius of curvature}
+\label{geometric}
+
+%\begin{centering}
+\begin{floatingfigure}{3.4in}
+\label{geometric-figure}
+\includegraphics[keepaspectratio]{wvs-146-1}\\[5pt]
+\end{floatingfigure}
+%\end{centering}
+
+A line in the normal direction from the surface of an oblate spheroid
+given by Equation (\ref{ellipsoid}) will intersect the polar axis. In
+Cartesian co\"ordinates, the gradient to the ellipsoid at a point $P =
+(x,y,z)$ is
+%
+\begin{equation}\begin{split}
+\mathbf{N} = \,& \nabla \Sigma = \nabla \left( \frac{x^2 + y^2}{a^2} +
+                                   \frac{z^2}{c^2} \right) \\
+ = \,&
+[ \Sigma_x, \Sigma_y, \Sigma_z ]^T =
+\left[ \frac{2 \, x}{a^2}, \frac{2 \, y}{a^2}, \frac{2\, z}{c^2} \right]^T
+\\
+\text{ and } \,& |\mathbf{N}| = 2 \sqrt{ \frac{\rho^2}{a^4} + \frac{z^2}{c^4}} \,.
+\end{split}\end{equation}
+
+Therefore, the slope of a line $\mathcal{L}$, normal to the ellipse in a
+meridional plane at $P$ and intersecting the minor axis at $Q = ( 0,
+-\zeta )$ is
+%
+\begin{equation}\label{four}
+%m = 
+\tan \phi = \frac{\Sigma_z}{\Sigma_{\rho}} = \frac{a^2}{c^2}\, \frac{z}{\rho}
+= \frac1{1-e^2} \frac{z}{\rho}
+\, \text{, where }
+\Sigma_\rho = \sqrt{\Sigma_x^2 + \Sigma_y^2} = \frac{2\, \rho}{a^2}\,.
+\end{equation}
+
+The line $\mathcal{L}$ from $P$ to $Q$ can be represented by the point $P$
+and some distance $s$ along the normal vector $\mathbf{N}$ in the direction
+from $P$ to $Q$, \emph{viz.}
+%
+\renewcommand{\arraystretch}{1.4}
+\begin{equation}\label{L}
+%\begin{array}{l}
+\mathcal{L} = -\vec{R} =
+\vec{P} + s \mathbf{N} = \vec{Q} \,\,% \\
+\text{or }\left[ \begin{array}{c} \rho \\ z \end{array} \right] +
+s \left[ \begin{array}{c} \frac{2 \rho}{a^2} \\ \frac{2 z}{c^2}
+ \end{array} \right] =
+\left[ \begin{array}{c} 0 \\ -\zeta \end{array} \right] \,,
+%\end{array}
+\end{equation}
+
+from which, solving for $s$ and $\zeta$ gives
+%
+\begin{equation}\begin{split}\label{zeta}
+s = \,& -\frac{a^2}2 \\
+| \mathcal{L} | = \,& | \vec{R} | = s | \mathbf{N} | =
+\frac{a^2}{\sqrt{a^2 \cos^2 \phi + c^2 \sin^2 \phi}}% \\
+= %\,&
+\frac{a}{\sqrt{1-e^2 \sin^2 \phi}} =
+\frac{a^2}{\sqrt{D}} = \frac1{\kappa_2} = R_2 \text{ and} \\
+\zeta = \,& z \left( 1 - \frac{a^2}{c^2} \right)
+      = -z\,\frac{e^2}{1-e^2}
+      = -R_2\, e^2 \sin \phi \,.
+\end{split}\end{equation}
+
+\begin{floatingfigure}[l]{3.08in}
+\begin{centering}Distance $d$ of normal section from \\
+the center of the Earth, meters \\[4pt]
+\end{centering}
+\includegraphics[width=3.08in,keepaspectratio]{wvs-146-5}
+\end{floatingfigure}
+
+The only normal sections that include the center of the Earth are
+mer\-id\-ion\-al or equatorial.  From the figure on page
+\pageref{geometric-figure}, $d = \hat{n} \cdot \vec{P} = \zeta \cos \phi$
+is the distance from the center to $\mathcal{L}$.  Substituting $\zeta =
+z_t \frac{e^2}{1-e^2}$ from Equation (\ref{zeta}) and
+$z_t=a\,\frac{(1-e^2) \sin \phi}{\sqrt{1-e^2 \sin^2 \phi}}$ from Equation
+(\ref{nine}),
+
+\begin{equation}\label{d}
+d = \hat{n} \cdot \vec{P} = a \,
+    \frac{ e^2 \sin\phi\cos\phi}{\sqrt{1-e^2 \sin^2 \phi}} \,.
+\end{equation}
+
+The maximum value is $a-c$ when $\phi = \tan^{-1} \sqrt{\frac{a}c}$.
+
+With $e^2 = 6.69437999014\!\times\!10^{-3}$ and $a$ = 6378137.0 meters 
+from WGS84 Table 3.3, the maximum distance $d$ of the prime vertical
+section from the center of the Earth is 21.38468577 kilometers, or
+$3.352810667\!\times 10^{-3} \, a$, at $\phi$~= 45\degs04810613, $\gamma$~=
+44\degs85568210, $\theta$~= 44\degs95189384.
+
+%=========================================================================
 \section{Ellipse of rotated equatorial plane}
 
 If a plane initially in the equatorial plane is rotated through an angle
-$\beta$ about a line $y = x \tan \lambda$, its semi-major axis is $a$, and
-its semi-minor axis is given by Equation (\ref{R}):
+$\beta$ about a line $y = x \tan \lambda$, its intersection with the Earth
+surface is an ellipse with semi-major axis is $a$, and semi-minor axis
+given by Equation (\ref{R}):
 %
 \begin{equation}\label{b2}
 b = R(\beta) = \frac{a\,c}{\sqrt{a^2 \sin^2 \beta + c^2 \cos^2 \beta}}
@@ -1022,7 +1005,8 @@ R(\gamma) = \frac{a\,b}
  = a \sqrt{ \frac{1-e^{\prime 2}}{1-e^{\prime 2} \cos^2 \beta}} \,.
 \end{equation}
 
-The curvature is
+Denoting the geodetic angle of the ellipse by $\phi$, the reduced
+angle by $\theta$, and the central angle by $\gamma$, the curvature is
 
 \begin{equation}\begin{split}
 \kappa(\phi) = \,& \frac{(a^2 \cos^2 \phi + b^2 \sin^2 \phi)^\frac32}
@@ -1074,9 +1058,9 @@ substitution, Equation (\ref{Normal}) becomes
 (g^2+h^2+1) x^2 + y^2 = 2 N \frac{h y - g x}{\sqrt{g^2+h^2}}\,.
 \end{equation}
 
-Substituting $x = u - u_c$ and $y = v - v_c$, and solving for
-$u_c$ and $v_c$ to make the coefficients of the $u$ and $v$
-terms zero, Equation (\ref{Normal-rot}) becomes
+Substituting $x = u - u_c$ and $y = v - v_c$, and solving for $u_c$ and
+$v_c$ to make the coefficients of the terms linear in $u$ and $v$ zero,
+Equation (\ref{Normal-rot}) becomes
 %
 \begin{equation}\label{Normal-rot-cent}
 (g^2+h^2+1) u^2 + v^2 = N^2\,\frac{h^2+1}{g^2+h^2+1}\,,
@@ -1145,7 +1129,7 @@ $z^\prime = z - \delta(z+\zeta) = -b^\prime \,e^2 \sin \phi \cos^2 \phi$,
 $\delta = \frac{b^\prime}{N} = \frac1{1+g^2} = \sqrt{\frac{1-e^2}{1-e^2
 \cos^2 \phi}}$, and $\zeta$ is given in Equation (\ref{zeta}).
 
-Let $\vec{P}$, $\vec{g}$ and $\mathcal{L}$ be as in Equation (\ref{L}). 
+Let $\vec{P}$, $\mathbf{N}$ and $\mathcal{L}$ be as in Equation (\ref{L}). 
 Then using the results from \h{wvs-131}, the point where the line
 $\mathcal{L}$ intersects the other side of the Earth is
 
@@ -1159,7 +1143,7 @@ $\mathcal{L}$ intersects the other side of the Earth is
 \end{array} \right] \text{ and }
 |\vec{v} - \vec{P}|
  = 2\,a\, \frac{\sqrt{1-e^2} ( 1 - e^2 \cos^2 \theta )^\frac32}
-          {1+(e^4 - 2 e^2)\cos^2 \theta}
+          {1+(e^4 - 2 e^2)\cos^2 \theta}\,,
 \end{equation}}
 %
 which, upon substituting $a \tan \theta = c \tan \phi$ becomes
@@ -1221,10 +1205,10 @@ where $\mathbf{R}_{\phi\lambda}$ is the product of two rotations
 \end{array} \right] \,.
 \end{equation}
 
-The first rotation, $\mathbf{R}_\lambda$, a positive right-handed rotation
-about the $z$ axis that takes the $(x,y,z)$ axes to $(x',y',z')$. The $z'$
-axis is coincident with the $z$ axis and the $x'-y'$ plane is the
-equatorial plane.
+The first rotation, $\mathbf{R}_\lambda$, is a positive right-handed
+rotation about the $z$ axis by $\lambda_1$ that takes the $(x,y,z)$ axes
+to $(x',y',z')$. The $z'$ axis is coincident with the $z$ axis and the
+$x'-y'$ plane is the equatorial plane.
 
 The second rotation, $\mathbf{R}_\phi$, is a rotation about the $y'$ axis
 by $\phi_1$ that takes the $(x',y',z')$ axes to the $(x'',y'',z'')$ axes. 
@@ -1271,7 +1255,7 @@ The co\"oordinate differences $(\Delta E = E_2-E_1, \Delta N = N_2-N_1,
 
 From Equation (18) in Deakin (the ratio of the first two rows of Equation
 (\ref{Delta-RNU})), the azimuth of a normal section plane from
-$(\lambda_1,\phi_1)$ to $(\lambda_2,\phi_2)$ is
+$(\lambda_1,\phi_1)$ to $(\lambda_2,\phi_2)$ is given by
 %
 \begin{equation}\begin{split}
 \tan \alpha_{12} = \,& \frac{\Delta E}{\Delta N}
@@ -1301,23 +1285,23 @@ $(\lambda_1,\phi_1)$ to $(\lambda_2,\phi_2)$ is
 \section{Ellipse in the normal section without explicit
 azimuth}\label{NoAz}
 
-Let $T$ be the limb sub-tangent point with geodetic co\"ordinates
+Let $P$ be the limb sub-tangent point with geodetic co\"ordinates
 $(\lambda,\phi,0)$ and geocentric co\"ordinates $( x_t, y_t, z_t )$,
-$\vec{T} = [ x_t, y_t, z_t ]^T$ be the geocentric vector to $T$, $\vec{G}$
-be the outward normal at $T$, and $\vec{V}$ be a vector along the line of
-sight from the instrument toward the limb tangent at $(\lambda,\phi,h)$. 
-Then $\vec{N} = \vec{G} \times \vec{V}$ is normal to the plane containing
-$T$, the line of sight, and the outward normal at $T$.  Let $\hat{n} =
-\frac{\vec{N}}{|\vec{N}|} = [ A, B, C ]^T$ be the unit normal to that
-plane.  From geometry, $\frac{C}{\sqrt{A^2+B^2}} = \cot\phi$.  Because
-$|\hat{n}| = 1$, $C = \cos\phi$ and $\sqrt{A^2+B^2} = \sqrt{1-C^2} =
-\sin\phi$.
+$\vec{P} = [ x_t, y_t, z_t ]^T$ be the geocentric vector to $P$, $\vec{G}$
+be the outward (not necessarily unit) normal at $P$, and $\vec{V}$ be a
+vector along the line of sight from the instrument toward the limb tangent
+at $(\lambda,\phi,h)$.  Then $\vec{N} = \vec{G} \times \vec{V}$ is normal
+to the plane containing $P$, the line of sight, and the outward normal
+$\vec{G}$ at $P$.  Let $\hat{n} = \frac{\vec{N}}{|\vec{N}|} = [ A, B, C
+]^T$ be the unit normal to that plane.  From the figure on page
+\pageref{geometric-figure}, and using $|\hat{n}| = 1$, $C = \cos\phi$ and
+$\sqrt{A^2+B^2} = \sqrt{1-C^2} = \sin\phi$.
 
-The equation of the plane containing $T$, $\vec{V}$, and $\vec{G}$ is
+The equation of the plane containing $P$, $\vec{V}$, and $\vec{G}$ is
 %
 \begin{equation}\label{z-plane} A ( x - x_t ) + B ( y - y_t ) + C ( z -
-z_t ) = 0 \text{ or } A x + B y + C z = d = \hat{n}
-\cdot \vec{T}\,. \end{equation}
+z_t ) = 0 \text{ or } A x + B y + C z = A x_t + B y_t + C z_t = d = \hat{n}
+\cdot \vec{P}\,. \end{equation}
 
 Because this plane contains $\vec{G}$, it is a normal section.  Substituting
 %
@@ -1339,7 +1323,7 @@ which is clearly an ellipse.  Substituting $x = \xi \cos \omega + \eta
 and solving for $\omega$ to eliminate the $\xi \eta$ term gives $\omega =
 \tan^{-1} \frac{A}B$.  Substituting this value of $\omega$, substituting
 $\xi=u-u_c$ and $\eta = v - v_c$, and solving for $u_c$ and $v_c$ to
-eliminate the linear terms, gives
+eliminate the terms linear in $u$ and $v$, gives
 %
 \begin{equation}
 u^2 + \frac{W^2}{F^2} \, v^2
@@ -1370,24 +1354,8 @@ R^\oplus_{\text{eq}}
                           {(1-e^2\cos^2\phi - B^2)^\frac32} \,.
 \end{equation}
 
-From the figure in section \ref{geometric}, for the prime vertical
-section, $d = \hat{n} \cdot \vec{T} = \zeta \cos \phi$ is the distance
-from the center to $\mathcal{L}$.  Substituting $\zeta = z_t
-\frac{e^2}{1-e^2}$ from Equation (\ref{zeta}) and $z_t=a\,\frac{(1-e^2)
-\sin \phi}{\sqrt{1-e^2 \sin^2 \phi}}$ from Equation (\ref{nine}),
-%
-\begin{equation}
-d = \hat{n} \cdot \vec{T}
-  = a e^2 \, \frac{\sin\phi \cos\phi}{\sqrt{1-e^2 \sin^2 \phi}} \,.
-\end{equation}
-
-Using $a$ = 6378137.0 meters and $e^2 = 6.69437999014\!\times\!10^{-3}$ 
-from WGS84 Table 3.3, the maximum distance $d$ of the prime vertical
-section from the center of the Earth is 21.38468577 kilometers, or
-$3.352810667 \times 10^{-3} \, a$, at $\phi$~= 45\degs04810613, $\gamma$~=
-44\degs85568210, $\theta$~= 44\degs95189384.
-
 %=========================================================================
+%\newpage
 \section{Relationship between gradient and position vectors}
 Let $\vec{V} = [ x, y, z ]^T$ be the position on an ellipsoid.  The
 gradient at that point is
@@ -1417,62 +1385,58 @@ position vector becomes
  \end{array} \right] \,.
 \end{equation}
 
-From the figure on page \pageref{geometric}, $\angle(\vec{V},\vec{G}) =
-\phi - \gamma = \cos^{-1} (\mathbf{g} \cdot \hat{V})$.
+\begin{floatingfigure}[l]{3.25in}
+\begin{centering}Value of $\phi-\gamma$, degrees\\[2pt]\end{centering}
+\includegraphics[width=3.25in,keepaspectratio]{wvs-146-4} \\
+\end{floatingfigure}
+
+From the figure on page \pageref{geometric-figure},
+$\angle(\vec{V},\vec{G}) = \phi - \gamma = \cos^{-1} (\mathbf{g} \cdot
+\hat{V})$.
 
 Then (using Equations (\ref{tangents}))
 %
 \begin{equation}\begin{split}\label{phi-gamma}
 \cos(\phi - \gamma) =\,& \cos \phi \cos \gamma + \sin \phi \sin \gamma =
-\mathbf{g} \cdot \hat{V} =
+\mathbf{g} \cdot \hat{V} \\
+ = \,&
 \frac{1-e^2 \sin^2 \phi}{\sqrt{\cos^2\phi + (1-e^2)^2 \sin^2\phi}}
 \text{ and} \\
 \tan(\phi - \gamma) =\,& \frac{e^2 \sin\phi \cos\phi}
                               {1-e^2 \sin^2 \phi}
-                    =  \frac{e^2 \sin\gamma \cos \gamma}
-                               {1 - e^2 \cos^2 \gamma }
-                    = \frac{e^2 \sin\theta \cos \theta}{\sqrt{1-e^2}}
-                    = \frac{e^2}{2\sqrt{1-e^2}}\, \sin 2 \theta \,,\\
+                    = \frac{e^2 \sin\gamma \cos \gamma}
+                           {1 - e^2 \cos^2 \gamma } \\
+                    =\,& \frac{e^2 \sin\theta \cos \theta}{\sqrt{1-e^2}}
+                    = \frac{e^2\, \sin 2 \theta}{2\sqrt{1-e^2}} \,,\\
 \end{split}\end{equation}
 
 which is obviously maximum for $\theta = \frac\pi4$.
 
-The angle $\phi-\gamma$ between the gradient and geocentric position
-vectors is the angle between a profile that is normal to the Earth surface
-(i.e., along a line of constant longitude and geodetic latitude), and one
-that is along a line of constant geocentric latitude.
+From Equation (\ref{in-the-plane}), the angle $\phi-\gamma$ between the
+gradient and geocentric position vectors is the angle between a profile
+that is normal to the Earth surface (i.e., along a line of constant
+longitude and geodetic latitude), and one that is along a line of constant
+geocentric latitude.
 
 Using $e^2 = 6.69437999014\!\times\!10^{-3}$ from WGS84 Table 3.3, the
 largest value of $\phi-\gamma$ is 0\degs19242430116 at $\phi$ =
 45\degs0962121506, $\gamma$ = 44\degs9037878494, $\theta = \frac\pi4$ =
 45$^\circ$.  At that latitude and an altitude of 100 kilometers, the
 distance between points on the two profiles is 335.843603774 meters.
-
-The only normal sections that include the center of the Earth are
-meridional or equatorial.  From the figure on page \pageref{geometric},
-the distance of a normal section from the center of the Earth is
-%
-\begin{equation}
-d = \frac{a e^2 \sin\phi \cos\phi}{\sqrt{1-e^2 \sin\phi}} \,.
-\end{equation}
-
-The maximum value of $d$ occurs for $\phi$ = 45\degs0340432888.
-Using a = 6378137.0 meters from WGS84 Table 3.3, the maximum value of $d$
-is 21399.5604406 meters.
-
-\begin{minipage}[t]{0.48\textwidth}
-\begin{centering}
-Value of $\phi-\gamma$, degrees\\[14pt]
-\includegraphics[width=0.98\textwidth,keepaspectratio]{wvs-146-4} \\
-\end{centering}
-\end{minipage}
-\begin{minipage}[t]{0.48\textwidth}
-\begin{centering}
-Distance $d$ of normal section\\
-from the center of the Earth\\[4pt]
-\includegraphics[width=0.98\textwidth,keepaspectratio]{wvs-146-5} \\
-\end{centering}
-\end{minipage}
+% 
+% \begin{minipage}[t]{0.48\textwidth}
+% \begin{centering}
+% Value of $\phi-\gamma$, degrees\\[14pt]
+% \includegraphics[width=0.98\textwidth,keepaspectratio]{wvs-146-4} \\
+% \end{centering}
+% \end{minipage}
+% \begin{minipage}[t]{0.48\textwidth}
+% \begin{centering}
+% Distance $d$ of normal section\\
+% from the center of the Earth\\[4pt]
+% \includegraphics[width=0.98\textwidth,keepaspectratio]{wvs-146-5} \\
+% \end{centering}
+% \end{minipage}
 
 %=========================================================================
 \section{Relationship between 2-D and 3-D gradient vectors}
@@ -1560,9 +1524,9 @@ Using Equations (\ref{xyz}) and
 %
 \begin{equation}\begin{split}\label{aux}
 G = \,& 1-e^2,\, W=1-G^2 = e^2(2-e^2),\, H = 1-e^2\cos^2\beta,\,
-        E = 1 - \epsilon^2 = \frac{G}H \\
+        E = 1 - \epsilon^2 = \frac{G}H \,, \\
 S^2 = \,& E^2 \cos^2\beta\,\sin^2\OP + \cos^2\OP
-    = \frac{G^2}{H^2} \cos^2\beta\,\sin^2\OP + \cos^2\OP \\
+    = \frac{G^2}{H^2} \cos^2\beta\,\sin^2\OP + \cos^2\OP\, \text{, and} \\
 T   = \,& S^2\,H^2 + \sin^2\beta\,\sin^2\OP
     = (1-W\cos^2\beta)(1-W\cos^2\beta\,\cos^2\OP)
 \\
@@ -1570,7 +1534,7 @@ T   = \,& S^2\,H^2 + \sin^2\beta\,\sin^2\OP
     \,, \\
 \end{split}\end{equation}
 Equations (\ref{lambdaphi}) become
-\begin{equation}\begin{split}
+\begin{equation}\begin{split}\label{lambda-phi-def}
 \tan\lambda = \,& \frac{\eta\cos\beta}{\xi}
             = E \cos\beta\, \tan\OP
             = \frac{G \cos\beta\, \tan\OP}H \\
@@ -1585,7 +1549,8 @@ Equations (\ref{lambdaphi}) become
 \sin\phi = \,& \frac{\sin\beta\,\sin\OP}{\sqrt{T}}\,. \\
 \end{split}\end{equation}
 
-Substituting into Equation (\ref{cosG}), we have
+Substituting Equations(\ref{lambda-phi-def}) into Equation (\ref{cosG}),
+we have
 %
 \begin{equation}\begin{split}
 \cos\Gamma = \,& \frac{H}{\sqrt{T}} ,\,
@@ -1676,7 +1641,10 @@ $\beta =$ 44\degs9037878494.\\[3pt]
 \newpage
 The projection of $\mathbf{g}$ into the orbit plane is parallel to
 $\mathbf{g}_p$.  This can be verified by noting that
-$\mathbf{n}_p \cdot ( \mathbf{g} \times \mathbf{g}_p ) = 0$, where
+
+\begin{equation}\label{in-the-plane}
+\mathbf{n}_p \cdot ( \mathbf{g} \times \mathbf{g}_p ) = 0\,\text{, where}
+\end{equation}
 %
 \begin{equation}
 \mathbf{n}_p = \left[ \begin{array}{c} 0 \\ -\sin\beta \\ \cos\beta
@@ -1827,6 +1795,9 @@ different by 200000 $\sin(\frac12\Gamma)$ = 335.843594550 meters.
 % $Id$
 
 % $Log$
+% Revision 1.11  2020/03/05 02:10:26  vsnyder
+% Correct some typos, more details of dGamma/dBeta solution
+%
 % Revision 1.10  2020/03/03 02:27:38  vsnyder
 % Correct typos before Equation (84) and in Equation (85)
 %
