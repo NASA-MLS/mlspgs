@@ -12,11 +12,22 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-133}
-\newcommand{\docdate}{2 March 2016}
+\newcommand{\docname}{wvs-133r1}
+\newcommand{\docdate}{23 March 2020}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
+\fi
+\ifnum\pdfoutput>0
+  \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+  \hypersetup{%
+    hypertexnames=false,%
+    colorlinks=true,%
+    linktocpage=true,%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{pdftex}
+\else
   \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
   \hypersetup{%
     hypertexnames=false%
@@ -24,25 +35,6 @@
   % Specify the driver for the color package
   \ExecuteOptions{dvips}
   %\ExecuteOptions{xdvi}
-\else
-  \ifnum\pdfoutput>0
-    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
-    \hypersetup{%
-      hypertexnames=false,%
-      colorlinks=true,%
-      linktocpage=true,%
-    }
-    % Specify the driver for the color package
-    \ExecuteOptions{pdftex}
-  \else
-    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
-    \hypersetup{%
-      hypertexnames=false%
-    }
-    % Specify the driver for the color package
-    \ExecuteOptions{dvips}
-    %\ExecuteOptions{xdvi}
-  \fi
 \fi
 
 \hyperbaseurl{}
@@ -100,8 +92,8 @@ given plane and one orthogonal to $\mathbf{L} \times \mathbf{N}$ is
 \mathbf{x} = \mathbf{L} - \mathbf{z} \,.
 \end{equation}
 
-The projection $\mathbf{r}$ of the reflecting vector $\mathbf{R}$ onto the same
-intersection is $\mathbf{r} = -\mathbf{x}$.
+The projection $\mathbf{r}$ of the reflecting vector $\mathbf{R}$ onto the
+same intersection is $\mathbf{r} = \mathbf{x}$.
 
 We have, trivially,
 %
@@ -110,13 +102,15 @@ We have, trivially,
 \end{equation}
 
 Since the projection $\mathbf{r}$ of the reflecting vector $\mathbf{R}$
-onto the same intersection is $\mathbf{r} = -\mathbf{x}$, we also have,
+onto the same intersection is $\mathbf{r} = \mathbf{x}$.  The reflection
+must reverse the projection onto $\mathbf{N}$.  Therefore the projection
+of  $\mathbf{R}$ onto $\mathbf{N}$ is $-\mathbf{z}$, and we have,
 trivially,
 %
-\begin{equation}\begin{split}
--\mathbf{R} =\,& \mathbf{z} - ( \mathbf{L} - \mathbf{z} ) \text{ or }\\
-\mathbf{R} =\,& - \mathbf{z} + ( \mathbf{L} - \mathbf{z} ) \,. \\
-\end{split}\end{equation}
+\begin{equation}
+\mathbf{R} = \mathbf{x} - \mathbf{z}
+           = ( \mathbf{L} - \mathbf{z} ) - \mathbf{z} \,. \\
+\end{equation}
 
 From this, we have
 %
@@ -124,6 +118,10 @@ From this, we have
 \mathbf{R} = \mathbf{L} - 2 \, \mathbf{z} =
  \mathbf{L} - 2 \, ( \mathbf{L} \cdot \mathbf{N} ) \, \mathbf{N}\,.
 \end{equation}
+
+Because $\mathbf{N}$ is normal, $|\mathbf{L}|^2 = |\mathbf{x}|^2 +
+|\mathbf{z}|^2 = |\mathbf{R}|^2$.  If $|\mathbf{L}| = |\mathbf{N}|=1$,
+then $|\mathbf{R}|=1$.
 
 If $\mathbf{N}$ is a normal vector that is not necessarily an unit normal
 vector, we have
@@ -144,3 +142,6 @@ vector, we have
 % $Id$
 
 % $Log$
+% Revision 1.1  2016/03/03 02:59:29  vsnyder
+% Initial commit
+%
