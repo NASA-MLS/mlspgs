@@ -5,6 +5,8 @@
 \usepackage{graphicx}
 \usepackage{longtable}
 \usepackage[strings]{underscore}
+\usepackage{xr-hyper}
+\externaldocument[146-]{wvs-146}
 
 \textwidth 6.5in
 \oddsidemargin -0.25in
@@ -12,8 +14,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-131r4}
-\newcommand{\docdate}{12 October 2017}
+\newcommand{\docname}{wvs-131r5}
+\newcommand{\docdate}{27 March 2020}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -90,6 +92,8 @@ Reference: \> wvs-030 \hr{wvs-030} \\
 \parindent 0pt \parskip 6pt
 \vspace{-20pt}
 
+\section{Ellipsoid}
+
 Using vector notation, an ellipsoid with center at $\mathbf{p}_0$ and axes
 aligned with the co\"ordinate directions can be expressed as the set of points
 $\mathbf{p}$ such that
@@ -101,7 +105,7 @@ $\mathbf{p}$ such that
 %
 where $\mathbf{p}$ is a point on the surface of the ellipsoid,
 %
-\begin{equation}
+\begin{equation}\label{M}
 \mathbf{M} = \left[
  \begin{array}{ccc}
   \frac1a & 0 & 0 \\
@@ -111,7 +115,7 @@ where $\mathbf{p}$ is a point on the surface of the ellipsoid,
 \right]
 \end{equation}
 %
-and $a$, $b$, and $c$ are the semi-minor axes.
+and $a$, $b$, and $c$ are the semi-axes.
 
 A line can be expressed as the set of points
 %
@@ -124,9 +128,10 @@ along the line.  Substituting Equation (\ref{two}) into Equation
 (\ref{one}) gives
 %
 \begin{equation}\label{four}
-(\mathbf{M}\, \mathbf{U})^T (\mathbf{M}\, \mathbf{U})\, s^2 +
-2 (\mathbf{M} ( \mathbf{C} - \mathbf{p}_0) )^T (\mathbf{M}\, \mathbf{U})\, s +
-(\mathbf{M} ( \mathbf{C} - \mathbf{p}_0) )^T
+(\mathbf{M}\, \mathbf{U})^T \cdot (\mathbf{M}\, \mathbf{U})\, s^2 +
+2 (\mathbf{M} ( \mathbf{C} - \mathbf{p}_0) )^T \cdot
+(\mathbf{M}\, \mathbf{U})\, s +
+(\mathbf{M} ( \mathbf{C} - \mathbf{p}_0) )^T \cdot
 (\mathbf{M} ( \mathbf{C} - \mathbf{p}_0) ) = 1
 \end{equation}
 
@@ -134,15 +139,14 @@ Let $\mathbf{V} = \mathbf{C} - \mathbf{p}_0$.  Then Equation (\ref{four})
 becomes
 %
 \begin{equation}\label{five}
-(\mathbf{M}\, \mathbf{U})^T (\mathbf{M}\, \mathbf{U})\, s^2 +
-2 (\mathbf{M} \mathbf{V} )^T (\mathbf{M}\, \mathbf{U})\, s +
-(\mathbf{M} \mathbf{V} )^T
-(\mathbf{M} \mathbf{V} ) = 1
+(\mathbf{M}\, \mathbf{U})^T \cdot (\mathbf{M}\, \mathbf{U})\, s^2 +
+2 (\mathbf{M} \mathbf{V} )^T \cdot (\mathbf{M}\, \mathbf{U})\, s +
+(\mathbf{M} \mathbf{V} )^T \cdot (\mathbf{M} \mathbf{V} ) = 1
 \end{equation}
 
-which will give zero, one, or two solutions for $s$ depending whether the
-line does not intersect the ellipsoid, is tangent to it, or intersects it
-twice.
+which will give zero, one, or two solutions for $s$ depending upon whether
+the line does not intersect the ellipsoid, is tangent to it, or intersects
+it twice.
 
 A method to determine the points on a line and ellipsoid that are nearest
 to each other is described in wvs-030 \hr{wvs-030}.
@@ -155,6 +159,116 @@ For the case of a sphere with radius $r$, Equation (\ref{five}) becomes
 \mathbf{V} \cdot \mathbf{V} = r^2 \,.
 \end{equation}
 
+%=========================================================================
+\section{When the ellipsoid is an oblate spheroid}
+
+Instead of Equation (\ref{M}), write
+
+\begin{equation}
+\mathbf{M} = \left[ \begin{array}{lll}
+ 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & \frac1E \\
+ \end{array} \right]\,,
+\end{equation}
+
+where $E = \sqrt{1-e^2}$ and $e^2 = 1-\frac{c^2}{a^2}$ is the square of
+the eccentricity.  Write the equation of an ellipsoid with its center at
+$\mathbf{p}_0 = (0,0,0)$ as
+
+\begin{equation}
+( \mathbf{M} \mathbf{p} )^T \cdot ( \mathbf{M} \mathbf{p} ) = a^2\,.
+\end{equation}
+
+Equation (\ref{five}) then becomes
+
+\begin{equation}\label{five-a}
+(\mathbf{M}\, \mathbf{U})^T \cdot (\mathbf{M}\, \mathbf{U})\, s^2 +
+2 (\mathbf{M} \mathbf{C} )^T \cdot (\mathbf{M}\, \mathbf{U})\, s +
+(\mathbf{M} \mathbf{C} )^T \cdot (\mathbf{M} \mathbf{C} ) = a^2
+\end{equation}
+
+Equation (\ref{five-a}) has one solution for $s$, i.e., the line is
+tangent to the ellipsoid, if and only if its discriminant is zero, i.e.,
+
+\begin{equation}
+\left( 2 (\mathbf{M} \mathbf{C} )^T \cdot (\mathbf{M}\, \mathbf{U}) \right)^2
+- 4 (\mathbf{M}\, \mathbf{U})^T \cdot (\mathbf{M}\, \mathbf{U})\, 
+\left[ (\mathbf{M} \mathbf{C} )^T \cdot (\mathbf{M} \mathbf{C} ) -a^2 \right]
+ = 0 \,.
+\end{equation}
+
+Let $\mathbf{N} = \mathbf{C} \times \mathbf{U}$.  Then the discriminant is
+zero for
+
+\begin{equation}\label{discriminant-solution}
+a^2 = \frac{ \left( \mathbf{M}^{-1} \mathbf{N} \right)^T \cdot
+             \left( \mathbf{M}^{-1} \mathbf{N} \right) }
+           { E^2 \left( \mathbf{M}\mathbf{U} \right )^T \cdot
+                 \left( \mathbf{M}\mathbf{U} \right ) }\,,
+\end{equation}
+
+but this result is not needed for further discussion.
+
+If $a$ is replaced by $a'$ in Equation (\ref{five-a}), then Equation
+(\ref{five-a}) describes an ellipsoid with the same eccentricity, but with
+semi-major axis $a'$.  If the discriminant is zero with $a'$ substituted
+for $a$ in Equation (\ref{five-a}), then the line in Equation (\ref{two})
+is tangent to the ellipsoid with semi-major axis $a'$ at the single
+solution $s$ of Equation (\ref{five-a}), \emph{viz}.
+
+\begin{equation}\label{s-solution}
+s = - \frac{ (\mathbf{M} \mathbf{C} )^T \cdot (\mathbf{M}\, \mathbf{U}) }
+           { (\mathbf{M}\, \mathbf{U})^T \cdot (\mathbf{M}\, \mathbf{U}) }
+           \,.
+\end{equation}
+
+If $a' < a$, the line intersects the ellipsoid in two places. If $a' = a$,
+the line is tangent to the ellipsoid.  If $a' > a$, the line does not
+intersect the ellipsoid.
+
+To calculate the point, on a line that does not intersect the ellipsoid
+($a' > a$), that is nearest to the ellipsoid, use Equation
+(\ref{146-geodetic}) in \h{wvs-146}, i.e., the equation of an ellipsoid
+using geodetic co\"ordinates, \emph{viz}.
+
+\begin{equation}\label{geodetic}
+\mathbf{r}(\lambda,\phi) =
+\frac{a}{\sqrt{1-e^2\sin^2\phi}}
+\left[ \begin{array}{l}
+\cos\phi \cos\lambda \\ \cos\phi \sin\lambda \\ (1-e^2) \sin\phi \\
+\end{array} \right] \,.
+\end{equation}
+
+Because every ellipsoid described by $\mathbf{M}$ has the same
+eccentricity, for different values of $a$, the position vectors are
+parallel, their (unit) gradients (Equation (\ref{146-unit-gradient}) in
+\h{wvs-146})
+
+\begin{equation}
+\mathbf{g} = \left[ \begin{array}{l}
+ \cos\phi \cos\lambda \\ \cos\phi \sin\lambda \\ \sin\phi \\
+\end{array} \right]
+\end{equation}
+
+are parallel, and the geodetic angular co\"ordinates of the point on the
+ellipsoid with semi-major axis $a$ that is nearest to the line are the
+same as the geodetic angular co\"ordinates of the tangent point to the
+ellipsoid with semi-major axis $a'$.
+
+The position $\mathbf{p}$ on the line that is nearest to the ellipsoid can
+be calculated by substituting $s$ from Equation (\ref{s-solution}) into
+Equation (\ref{two}).  The geodetic angles can be calculated from
+$\mathbf{p} = \mathbf{r}$ using Equation (\ref{geodetic}) (with $a=a'$,
+which isn't necessary), \emph{viz}.
+
+\begin{equation}\begin{split}
+\phi = \,& \tan^{-1} \frac{p_3}{(1-e^2) \sqrt{p_1^2 + p_2^3}} \\[5pt]
+\lambda = \,& \tan^{-1} \frac{p_2}{p_1}\,.
+\end{split}\end{equation}
+
+Substituting these values into Equation (\ref{geodetic}) allows to
+calculate the nearest distance $|\mathbf{p}-\mathbf{r}|$ between the line
+and the ellipsoid.
+
 \label{lastpage}
 \vspace*{-0.1in} % Somehow, this causes lastpage to be defined
 \end{document}
@@ -162,6 +276,9 @@ For the case of a sphere with radius $r$, Equation (\ref{five}) becomes
 % $Id$
 
 % $Log$
+% Revision 1.6  2017/10/13 19:03:39  vsnyder
+% Explain that the line will intersect 0, 1, or 2 times
+%
 % Revision 1.5  2016/03/19 01:39:34  vsnyder
 % Correct first-order term for s
 %
