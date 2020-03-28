@@ -587,7 +587,7 @@ described in wvs-131 \hr{wvs-131}.
 
 Expanding Equation (\ref{E}) to produce a polynomial in $t$, we have
 
-\begin{equation}\label{five}
+\begin{equation}\label{t-poly}
 (\mathbf{M}\, \mathbf{U})^T \cdot (\mathbf{M}\, \mathbf{U})\, t^2 +
 2 (\mathbf{M} \mathbf{D} )^T \cdot (\mathbf{M}\, \mathbf{U})\, t +
 (\mathbf{M} \mathbf{D} )^T \cdot (\mathbf{M} \mathbf{D} ) = r^2 \,.
@@ -605,7 +605,7 @@ $\mathcal{S}(r)$, if and only if its discriminant is zero, \emph{viz}.
  = 0 \,.
 \end{equation}
 
-Assuming the discriminant is zero, the solution of Equation (\ref{five})
+Assuming the discriminant is zero, the solution of Equation (\ref{t-poly})
 is
 
 \begin{equation}\label{tv2}
@@ -681,6 +681,9 @@ needed above.
 % $Id$
 
 % $Log$
+% Revision 1.6  2020/03/28 04:08:57  vsnyder
+% Add method based upon intersection
+%
 % Revision 1.5  2019/05/22 02:16:10  vsnyder
 % Add Jacobian{E,N}{t,h}
 %
