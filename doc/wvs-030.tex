@@ -3,6 +3,9 @@
 \usepackage[fleqn]{amsmath}
 \usepackage{floatflt}
 \usepackage{graphicx}
+\usepackage{xr-hyper}
+\externaldocument[146-]{wvs-146}
+\externaldocument[131-]{wvs-131}
 
 \textwidth 6.5in
 \oddsidemargin -0.25in
@@ -10,11 +13,22 @@
 \topmargin -0.5in
 \textheight 9.00in
 
-\newcommand{\docname}{\bf wvs-030r4}
-\newcommand{\docdate}{21 May 2019}
+\newcommand{\docname}{\bf wvs-030r5}
+\newcommand{\docdate}{27 March 2020}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
+\fi
+\ifnum\pdfoutput>0
+  \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+  \hypersetup{%
+    hypertexnames=false,%
+    colorlinks=true,%
+    linktocpage=true,%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{pdftex}
+\else
   \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
   \hypersetup{%
     hypertexnames=false%
@@ -22,25 +36,6 @@
   % Specify the driver for the color package
   \ExecuteOptions{dvips}
   %\ExecuteOptions{xdvi}
-\else
-  \ifnum\pdfoutput>0
-    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
-    \hypersetup{%
-      hypertexnames=false,%
-      colorlinks=true,%
-      linktocpage=true,%
-    }
-    % Specify the driver for the color package
-    \ExecuteOptions{pdftex}
-  \else
-    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
-    \hypersetup{%
-      hypertexnames=false%
-    }
-    % Specify the driver for the color package
-    \ExecuteOptions{dvips}
-    %\ExecuteOptions{xdvi}
-  \fi
 \fi
 
 \hyperbaseurl{}
@@ -82,6 +77,8 @@ References: \>wvs-131 \hr{wvs-131}
 
 \parindent 0pt \parskip 3pt
 \vspace{-20pt}
+
+%=========================================================================
 \section{Projective Geometry}
 
 \begin{enumerate}
@@ -90,7 +87,11 @@ References: \>wvs-131 \hr{wvs-131}
 
     A point on the line can be specified by $\vec{C}$, a vector to some
     point on the line, and a scalar multiple of an unit vector $\vec{U}$
-    in the direction of the line: $\mathcal{L}(t) = \vec{C} + t\,\vec{U}$.
+    in the direction of the line
+
+\begin{equation}\label{line-1}
+\mathcal{L}(t) = \vec{C} + t\,\vec{U} \,.
+\end{equation}
 
 \item\label{two}
 
@@ -196,6 +197,7 @@ References: \>wvs-131 \hr{wvs-131}
 
 \end{enumerate}
 
+%=========================================================================
 \section{Method of Lagrange Multipliers}
 
 \begin{enumerate}
@@ -246,6 +248,7 @@ References: \>wvs-131 \hr{wvs-131}
 
 \end{enumerate}
 
+%=========================================================================
 \section{Solve equations for line, ellipsoid, gradient, orthogonality}
 
 Define the line by $\mathcal{L}(t) = \mathbf{C} + t\, \mathbf{U}$,
@@ -376,6 +379,7 @@ iteration.  Using $\frac{\partial \mathcal{L}(t)}{\partial t} =
 \end{split}
 \end{equation}
 
+%=========================================================================
 \section{Approximation using an ellipsoid with slightly different axes}
 
 \subsection{Co\"ordinate approach}
@@ -424,20 +428,23 @@ t = -\frac{\frac{x_1 x_2}{a^2} + \frac{y_1 y_2}{b^2} + \frac{z_1 z_2}{c^2}}
 
 Substituting this value into Equation (\ref{spheroid-t}) gives $r$, while
 substituting it into Equation (\ref{line}) gives $(x_0,y_0,z_0)$, the
-point where $\mathcal{L}(t)$ intersects $\mathcal{S}(r)$.  If $r \leq 1$ then
-$\mathcal{L}(t)$ intersects $\mathcal{S}(1)$.  If $r \approx 1$ then
-$(x_0,y_0,z_0)$ is close to the point on $\mathcal{L}(t)$ that is nearest to
+point where $\mathcal{L}(t)$ intersects $\mathcal{S}(r)$.  If $r < 1$ then
+$\mathcal{L}(t)$ intersects $\mathcal{S}(1)$ in two places.  If $r = 1$
+$\mathcal{L}(t)$ is tangent to $\mathcal{S}(1)$.  Otherwise,
+$(x_0,y_0,z_0)$ is the point on $\mathcal{L}(t)$ that is nearest to
 $\mathcal{S}(1)$, and $(x_0/r,y_0/r,z_0/r)$ is close to the point on
 $\mathcal{S}(1)$ that is closest to $\mathcal{L}(t)$.
 
 To find the point on $\mathcal{S}(1)$ that is nearest to $\mathcal{L}$,
 define the surface of $\mathcal{S}(1)$ parametrically in spherical
-co\:ordinates:
+co\"ordinates, where $\theta$ is reduced latitude (also called parametric
+latitude, or eccentric anomaly in astronomy -- see the figure in Section
+\ref{146-latitudes} in \h{wvs-146}):
 %
 \begin{equation}\label{spherical}\begin{split}
-x =\,& a \cos \phi \cos \theta \\
-y =\,& b \cos \phi \sin \theta \\
-z =\,& c \sin \phi \,.
+x =\,& a \cos \theta \cos \lambda \\
+y =\,& b \cos \theta \sin \lambda \\
+z =\,& c \sin \theta \,.
 \end{split}\end{equation}
 
 The square of the distance, $s^2$, from ($x_0,y_0,z_0$) to
@@ -445,28 +452,28 @@ $\mathcal{S}(1)$ as defined using Equation (\ref{spherical}) is
 %
 \begin{equation}\begin{split}
 s^2 =\,& (x-x_0)^2 + (y-y_0)^2 + (z-z_0)^2\\
-    =\,& (a\cos\theta\cos\phi-x_0)^2+(b\sin\theta\cos\phi-y_0)^2+(c\sin\phi-z_0)^2
+    =\,& (a\cos\lambda\cos\theta-x_0)^2+(b\sin\lambda\cos\theta-y_0)^2+(c\sin\theta-z_0)^2
 \,.
 \end{split}\end{equation}
 
-The derivatives with respect to $\theta$ and $\phi$ are
+The derivatives with respect to $\lambda$ and $\theta$ are
 \begin{equation}\begin{split}\label{derivs}
+\frac{\partial s}{\partial \lambda} =\,&
+\cos^2\theta \sin2 \lambda ( b^2 - a^2 ) +
+  2 \cos\theta ( a x_0 \sin\lambda - b y_0 \cos\lambda ) \\
 \frac{\partial s}{\partial \theta} =\,&
-\cos^2\phi \sin2 \theta ( b^2 - a^2 ) +
-  2 \cos\phi ( a x_0 \sin\theta - b y_0 \cos\theta ) \\
-\frac{\partial s}{\partial \phi} =\,&
- \sin 2\phi ( c^2 - a^2 \cos^2\theta - b^2 \sin^2\theta) +
-    2 \sin\phi ( a x_0 \cos\theta + b y_0 \sin\theta ) -
-     2 c z_0 \cos\phi )
+ \sin 2\theta ( c^2 - a^2 \cos^2\lambda - b^2 \sin^2\lambda) +
+    2 \sin\theta ( a x_0 \cos\lambda + b y_0 \sin\lambda ) -
+     2 c z_0 \cos\theta )
 \,.
 \end{split}\end{equation}
 
-Setting $b=a$ and both derivatives to zero, and solving for $\theta$ and
-$\phi$, gives
+Setting $b=a$ and both derivatives to zero, and solving for $\lambda$ and
+$\theta$, gives
 %
 \begin{equation}\label{on-ellipse}\begin{split}
-\theta =\,& \tan^{-1} \frac{y_0}{x_0} \\
-\phi   =\,& \tan^{-1} \frac{g}{1 - v}
+\lambda =\,& \tan^{-1} \frac{y_0}{x_0} \\
+\theta   =\,& \tan^{-1} \frac{g}{1 - v}
 \end{split}\end{equation}
 
 where $g = \frac{c z_0}{a \rho_0}$, $\rho_0^2 = x_0^2+y_0^2$,
@@ -474,11 +481,11 @@ $ v^4 - 2v^3 + (1+g^2-h^2)v^2 + 2 h^2 v - h^2 = 0$,
 $h = \frac{e^2}{a \rho_0}$, and $e^2 = a^2-c^2$.
 As a sanity check, consider the case $a=c$, equivalently $h=0$.  We have
 $v^4 - 2v^3 + (1+g^2)v^2 = 0$, or $v = \{0,0,1+ig,1-ig\}$, giving for the
-real roots, as expected, $\phi = \tan^{-1}g =
+real roots, as expected, $\theta = \tan^{-1}g =
 \tan^{-1}\frac{z_0}{\rho_0}$.
 
-Let $(x_2,y_2,z_2) = (a \cos\phi \cos\theta, a \cos\phi \sin\theta, c
-\sin\phi)$.  The point on $\mathcal{L}(t)$ nearest to $(x_2,y_2,z_2)$ is given by
+Let $(x_2,y_2,z_2) = (a \cos\theta \cos\lambda, a \cos\theta \sin\lambda, c
+\sin\theta)$.  The point on $\mathcal{L}(t)$ nearest to $(x_2,y_2,z_2)$ is given by
 %
 \begin{equation}\label{on-line}
 t_2 = \frac{(x_2-x_1)x_2+(y_2-y_1)y_2+(z_2-z_1)z_2}
@@ -563,9 +570,9 @@ t =
 
 Substituting Equation (\ref{tv}) into Equation(\ref{E}) gives a value for
 $r$, while substituting it into Equation (\ref{p}) gives the point
-$\mathbf{p}(t)$ where $\mathcal{L}(t)$ intersects $\mathcal{S}(r)$.  If $r <
-1$, $\mathcal{L}(t)$ intersects $\mathcal{S}(1)$; otherwise $\mathbf{p}(t)$
-is a point on $\mathcal{L}(t)$ that is close to the closest point to
+$\mathbf{p}(t)$ where $\mathcal{L}(t)$ intersects $\mathcal{S}(r)$.  If $r
+< 1$, $\mathcal{L}(t)$ intersects $\mathcal{S}(1)$; otherwise
+$\mathbf{p}(t)$ is a point on $\mathcal{L}(t)$ that is nearest to
 $\mathcal{S}(1)$.
 
 Let $\mathbf{N} = \mathbf{p}(t) + u \, \mathbf{G}$ be a normal to
@@ -574,11 +581,109 @@ $\mathcal{S}(1)$ that is close to the nearest point on $\mathbf{p}(t)$ is
 the point where $\mathbf{N}$ intersects $\mathcal{S}(1)$.  This is
 described in wvs-131 \hr{wvs-131}.
 
+\section{Approach based upon finding an intersection}
+
+\subsection{General}
+
+Expanding Equation (\ref{E}) to produce a polynomial in $t$, we have
+
+\begin{equation}\label{five}
+(\mathbf{M}\, \mathbf{U})^T \cdot (\mathbf{M}\, \mathbf{U})\, t^2 +
+2 (\mathbf{M} \mathbf{D} )^T \cdot (\mathbf{M}\, \mathbf{U})\, t +
+(\mathbf{M} \mathbf{D} )^T \cdot (\mathbf{M} \mathbf{D} ) = r^2 \,.
+\end{equation}
+
+This is the same as Equation (\ref{131-five}) in \h{wvs-131}, with $s$
+replaced by $t$, and the right-hand side replaced by $r^2$.  This equation
+has one solution for $t$, i.e., $\mathcal{L}(t)$ is tangent to
+$\mathcal{S}(r)$, if and only if its discriminant is zero, \emph{viz}.
+
+\begin{equation}
+\left( 2 (\mathbf{M} \mathbf{D} )^T \cdot (\mathbf{M}\, \mathbf{U}) \right)^2
+- 4 (\mathbf{M}\, \mathbf{U})^T \cdot (\mathbf{M}\, \mathbf{U})\, 
+\left[ (\mathbf{M} \mathbf{D} )^T \cdot (\mathbf{M} \mathbf{D} ) - r^2 \right]
+ = 0 \,.
+\end{equation}
+
+Assuming the discriminant is zero, the solution of Equation (\ref{five})
+is
+
+\begin{equation}\label{tv2}
+t =
+-\frac{\left(\mathbf{M}\mathbf{D}\right)^T
+       \left(\mathbf{M}\mathbf{U}\right)}
+      {\left(\mathbf{M}\mathbf{U}\right)^T
+       \left(\mathbf{M}\mathbf{U}\right)} \,.
+\end{equation}
+
+This is the same solution as Equation (\ref{tv}).
+
+%=========================================================================
+\subsection{When the ellipsoid is an oblate spheroid}
+
+The equation of an oblate spheroid, i.e., $b=a$, using geodetic
+co\"ordinates (Equation (\ref{146-geodetic}) in \h{wvs-146}) is
+
+\begin{equation}\label{geodetic}
+\mathbf{r}(\lambda,\phi) =
+\frac{a}{\sqrt{1-e^2\sin^2\phi}}
+\left[ \begin{array}{l}
+\cos\phi \cos\lambda \\ \cos\phi \sin\lambda \\ (1-e^2) \sin\phi \\
+\end{array} \right] \,,
+\end{equation}
+
+where $e^2 = 1-\frac{c^2}{a^2}$ is the square of the eccentricity.
+
+Because every ellipsoid $\mathcal{S}(r)$ with $b=a$ has the same
+eccentricity, the position vectors are parallel, their (unit) gradients
+(Equation (\ref{146-unit-gradient}) in \h{wvs-146}),
+
+\begin{equation}
+\mathbf{g} = \left[ \begin{array}{l}
+ \cos\phi \cos\lambda \\ \cos\phi \sin\lambda \\ \sin\phi \\
+\end{array} \right]
+\end{equation}
+
+are parallel, and the geodetic angular co\"ordinates of the point on the
+ellipsoid with semi-major axis $a \, (r=1)$ that is nearest to the line
+are the same as the geodetic angular co\"ordinates of the tangent point to
+the ellipsoid with semi-major axis $a'>a\,(r<1)$.
+
+The position $\mathbf{p}$ on the line that is nearest to the ellipsoid can
+be calculated by substituting $t$ from Equation (\ref{tv2}) into
+Equation (\ref{line-1}).  The geodetic angles can be calculated from
+$\mathbf{p} = \mathbf{r}$ using Equation (\ref{geodetic}), \emph{viz}.
+
+\begin{equation}\begin{split}
+\phi = \,& \tan^{-1} \frac{p_3}{(1-e^2) \sqrt{p_1^2 + p_2^3}} \\[5pt]
+\lambda = \,& \tan^{-1} \frac{p_2}{p_1}\,.
+\end{split}\end{equation}
+
+Substituting these values into Equation (\ref{geodetic}) allows to
+calculate the nearest distance $|\mathbf{p}-\mathbf{r}|$ between the line
+and the ellipsoid.
+
+Parenthetically, the value of $r$ for which the discriminant is zero is
+given by
+
+\begin{equation}\label{discriminant-solution}
+r^2 = \frac{ \left( \mathbf{M}^{-1} \mathbf{N} \right)^T \cdot
+             \left( \mathbf{M}^{-1} \mathbf{N} \right) }
+           { (1-e^2) \left( \mathbf{M}\mathbf{U} \right )^T \cdot
+                 \left( \mathbf{M}\mathbf{U} \right ) }\,,
+\end{equation}
+
+where $\mathbf{N} = \mathbf{C}\times\mathbf{U}$, but this result was not
+needed above.
+
 \label{lastpage}
 \end{document}
 % $Id$
 
 % $Log$
+% Revision 1.5  2019/05/22 02:16:10  vsnyder
+% Add Jacobian{E,N}{t,h}
+%
 % Revision 1.4  2016/09/02 20:41:06  vsnyder
 % Correct equation for ellipsoid in Section 2
 %
