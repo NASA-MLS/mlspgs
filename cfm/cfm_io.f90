@@ -714,7 +714,12 @@ module CFM_IO_M
                 (/'L1BOA ', 'L1BRAD', 'L2GP  ', 'L2DGM '/)
       character(len=10) :: YYYYDDD 
       
-
+      ! Executable
+      ! 1st--must nullify all our local pointers before using them
+      nullify ( TemperatureInput32, H2OInput32 , &
+        O3Input32, SO2Input32, HNO3Input32, COInput32, extinctionV2R3Input32, &
+        PressureCOInput32, PressureStandardInput32, &
+        REFGPHINPUT32 , VGRIDREFGPHVALS32 )
       ! Open HDF file
       call h5fopen_f ( trim(fileName), H5F_ACC_RDONLY_F, fileID, iostat )
       if (iostat /= 0) call MLSMessage (MLSMSG_Error, ModuleName, &
@@ -877,6 +882,9 @@ module CFM_IO_M
       integer(hsize_t) :: Shp(1), Shp2(2) ! To get the shapes of datasets HD
       real(r8), pointer :: ptanValues(:,:,:)
       character(len=128) :: PTanName
+      ! Executable
+      ! 1st--must nullify all our local pointers before using them
+      nullify ( ptanValues )
 
       ! Open HDF file
       PTanName = 'GHz.ptan-FinalPtan'
@@ -2136,6 +2144,9 @@ end module
 
 
 ! $Log$
+! Revision 1.11  2016/06/14 17:47:07  pwagner
+! Added optional DSName arg to read+ptan
+!
 ! Revision 1.10  2016/03/29 20:29:52  pwagner
 ! Restored functionality to validate_path; removed redundant ' implicit none' staements
 !

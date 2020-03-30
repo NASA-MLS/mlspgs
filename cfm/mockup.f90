@@ -15,21 +15,18 @@
 ! any programs or software suite meant for long-term use.
 program MLS_CFM_Main
 
-       use CFM
-       use input
-       use machine, only: getarg, execute, is_a_directory
-
-
-       ! To convert MAF to Profile, Pranjit Saha 
-       use global_settings, only: L1MAFToL2Profile, L2ProfileToL1MAF
-       use MLSHDF5, only: MLS_H5OPEN, MLS_H5CLOSE
-       use HDF5, only:  h5open_f, h5close_f
        use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
-       
-       
+       use CFM
+       use global_settings, only: L1MAFToL2Profile, L2ProfileToL1MAF
+       use HDF5, only:  h5open_f, h5close_f
+       use input
+       use machine, only: getarg, execute, is_a_directory, nevercrash
+       use MLSHDF5, only: MLS_H5OPEN, MLS_H5CLOSE
+       use MLSL2Options, only: Toolkit
+       use MLSMEssageModule, only: MLSMessageConfig
+       use output_m, only: switchOutput
 
        implicit none
-
 
 !---------------------------- RCS Ident Info ------------------------------
        character (len=*), parameter :: ModuleName= &
@@ -46,7 +43,6 @@ program MLS_CFM_Main
        CHARACTER(LEN=20), PARAMETER :: FMT2 = "(E18.8)"
        CHARACTER(LEN=256) :: string_buffer
        
-       
        integer :: FileIndex2
        type (MLSFile_T), dimension(:), pointer :: FileDatabase2 => null()
        type (MLSFile_T) :: L1BFile2, L2GPFile2
@@ -54,7 +50,6 @@ program MLS_CFM_Main
        integer :: endL1Maf_new
        ! For reading ptan Values from L2AUX-DGM file, Pranjit Saha
        real(r8), dimension(125) :: ptanValuesRead
- 
        
        type(ForwardModelConfig_T), dimension(:), pointer :: forwardModelConfigDatabase
        type(MLSFile_T), dimension(:), pointer :: filedatabase
@@ -97,7 +92,11 @@ program MLS_CFM_Main
 
        LOGICAL :: exists ! for testing file/dir existance
 
-!=========== Customized initialization, added by Zheng Qu =====>      
+!=========== Customized initialization, added by Zheng Qu =====>    
+       Toolkit = .false.  
+       nevercrash = .false.
+       MLSMessageConfig%crashOnAnyError = .true.
+       call switchOutput ( 'stdout' )
         
        !Get command line arguement for stateVector file path , Zheng Qu
        call getarg(1, inputH5fileName)
@@ -524,10 +523,12 @@ program MLS_CFM_Main
        jacobian = CreatePlainMatrix(radiance, state)
        
        ! Call the forward model
+       print *, 'Actually calling the Forward Model'
        call runlog(VersionId, 'Calling the forward model')
        call ForwardModel2 (0, forwardModelConfigDatabase, state, &
                            stateExtra, radiance, jacobian)
 
+       print *, 'Done with the Forward Model'
        ! Write 'state', 'radiance', 'jacobian', 'ptanGHz' in separate files, Pranjit Saha
        call runlog(VersionId, 'Writing state, radiance, ptanGHz etc. to file and concatenate Jacobians.')
        if (outputTxtFile) call Write_To_File1 (state, radiance, jacobian, newer_ptanGHz)
@@ -555,6 +556,8 @@ program MLS_CFM_Main
        call Destroy_PFADataBase
 
        ! Destroy all quantity templates that goes in state and stateExtra
+       ! Except that this step often generates a double-free error
+       if ( .false. ) then
        call DestroyQuantityTemplateContents(qtemp)
        call DestroyQuantityTemplateContents(qCO)
        call DestroyQuantityTemplateContents(qSO2)
@@ -578,9 +581,11 @@ program MLS_CFM_Main
        call DestroyQuantityTemplateContents(scGeocAlt%template)
        call DestroyQuantityTemplateContents(tngtGeocAltGHz%template)
        call DestroyQuantityTemplateContents(losVelGHz%template)
+       endif
        !========================== finish cleaning ===============================
 
        !====================== Read observed radiance ============================
+       print *, 'Reading the observed radiance/noise.'
        ! Open l1brad
        call runlog(VersionId, 'Reading the observed radiance/noise.')
        error = InitializeMLSFile(l1bfile, content='l1brad', &
@@ -654,6 +659,7 @@ program MLS_CFM_Main
        !call Write2HDF5_old('mlscfm.old_out.h5',band9, precision9)
 
        ! band9 -> Radiance_Observed , Radiance -> Radiance_Calculated, Presision9 -> Radiance_Noise
+       print *, 'Writing radiance+Jacobians to output file.'
        call runlog(VersionId, 'Writing radiance+Jacobians to output file.')
        call Write2HDF5(path_join(MLS_CFM_OUTPUT_PATH,outputH5fileName, novalidation=.TRUE.),&
             Radiance_Calculated_out, &
@@ -661,6 +667,8 @@ program MLS_CFM_Main
             Radiance_Noise_out, &
             Radiance_Observed_out)
        ! Write 'band9' and 'precision9' in separate text files, Pranjit Saha
+       print *, 'Writing radiance+Jacobians to output file.'
+       call runlog(VersionId, 'Writing radiance+Jacobians to output file.')
        if (outputTxtFile) call Write_To_File2 (band9, precision9)
        ! read output H5 file for validation
 
@@ -693,19 +701,21 @@ program MLS_CFM_Main
 
        call DestroyVectorValueContent (noise9)
        call DestroyVectorValueContent (correction9)
-
+       if ( .false. ) then
        call DestroyQuantityTemplateContents(qband9)
        call DestroyQuantityTemplateContents(qbaseline9)
+       endif
 
 
        !========================================================
-
+       print *, 'Cleaning up forward model config'
        call CFM_MLSCleanup(forwardModelConfigDatabase)
 
        
        ! clean up other variables/ vectors/ templates
+       print *, 'Cleaning up remaining arrays'
        
-       call DestroyQuantityTemplateContents(newer_qPtanGHz)
+       if ( .false. ) call DestroyQuantityTemplateContents(newer_qPtanGHz)
        
        call Deallocate_test ( TemperatureInput, &
                 & 'Unable to deallocate array for TemperatureInput', ModuleName )
@@ -786,6 +796,9 @@ program MLS_CFM_Main
 end program
 
         ! $Log$
+        ! Revision 1.60  2016/03/29 18:40:07  pwagner
+        ! replaced non-standard 'inquire( DIRECTORY=' syntax and tab characters
+        !
         ! Revision 1.59  2015/08/05 20:21:29  pwagner
         ! Modified to compile properly with v4
         !
