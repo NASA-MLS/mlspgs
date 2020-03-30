@@ -1,5 +1,0 @@
-begin Retrieve
-  Skip, Boolean=Band15OFF
-  sids, fwdModelIn=state, fwdModelOut=cloudOutput, $
-    forwardModel= [ cloudFlagFwmR5H, cloudFlagFwmR5V ]
-end Retrieve

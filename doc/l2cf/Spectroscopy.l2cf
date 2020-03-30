@@ -1,5 +1,0 @@
-; Spectroscopy and molecule/isotope information
-begin spectroscopy
-  readSpectroscopy, $
-    file='!spectroscopyHDF'
-end spectroscopy
