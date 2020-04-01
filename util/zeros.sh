@@ -119,7 +119,15 @@ cmdline=`echo $0 $@`
 #my_name=zeros.sh
 me=$0
 root="/data/emls/l2gp"
-I=`echo $0 | sed 's:/.*/:/:g' | sed 's:/::' | sed 's/\.sh//'`
+# Were we called with a relative or absolute path prefix?
+# i.e., does dollar-0 begin with a slash?
+slashtest=`echo $0 | grep '^/.*'`
+if [ "$slashtest" != "" ]
+then
+  I=`echo $0 | sed 's:/.*/:/:g' | sed 's:/::' | sed 's/\.sh//'`
+else
+  I=`echo $0 | sed 's:.*/::g' | sed 's/\.sh//'`
+fi
 # $the_splitter is split_path with me's path prepended
 the_splitter="`echo $0 | sed 's/'$I'/split_path/'`"
 my_name=` $the_splitter -f $me`
@@ -212,3 +220,6 @@ else
   done
 fi
 # $Log$
+# Revision 1.1  2015/11/03 17:33:42  pwagner
+# First commit
+#
