@@ -19,8 +19,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-146r9}
-\newcommand{\docdate}{17 March 2020}
+\newcommand{\docname}{wvs-146r10}
+\newcommand{\docdate}{7 April 2020}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -79,7 +79,7 @@
 To: \>Van\\
 Subject: \>Radii of curvature of an oblate spheroid\\
 From: \>Van Snyder\\
-Reference: \>Harry Lass, {\bf Vector and Tensor Analysis}, McGraw-Hill
+References: \>Harry Lass, {\bf Vector and Tensor Analysis}, McGraw-Hill
              (1950), pp 71-78\\
            \>R.~E.~Deakin, \emph{The Normal Section
              Curve of an Ellipsoid}, November 2009,\\
@@ -224,10 +224,10 @@ c \sin \theta \\
  \sqrt{x(\lambda,\theta)^2 + y(\lambda,\theta)^2} = a \cos \theta
 \end{split}\end{equation}
 
-be the vector to a point on its surface, where $\lambda$ is longitude,
-$\theta$ is reduced latitude,\footnote{Called the \emph{eccentric anomaly}
-in astronomy.} and $e$ is the eccentricity of the oblate
-spheroid.\footnote{The eccentricity $e$ is not to be confused with
+be the vector to a point on the Earth surface, where $\lambda$ is
+longitude, $\theta$ is reduced latitude,\footnote{Called the
+\emph{eccentric anomaly} in astronomy.} and $e$ is the eccentricity of the
+oblate spheroid.\footnote{The eccentricity $e$ is not to be confused with
 $e=b_{11}$ in discussions using coefficients of the second fundamental
 form.} Then
 %
@@ -465,7 +465,7 @@ The derivatives are
  0 \\
  \end{array} \right] \\
 &\\[-5pt]&
-\frac{\partial \mathbf{r}}{\partial \phi^2} =
+\frac{\partial^2 \mathbf{r}}{\partial \phi^2} =
  \frac{a^2 c^2}{D^{\frac52}}
  \left[ \begin{array}{l}
  \cos \phi \cos \lambda ( 2 ( c^2 - a^2 ) \sin^2 \phi - a^2 ) \\
@@ -807,6 +807,15 @@ R_M\,& = \frac{1-e^2}{a^2} R_N^3 \\
    \,& = R_1 \,\text{, the minimum radius of curvature.}
 \end{split}\end{equation}
 
+The \emph{principal directions} are eigenvectors of
+$\mathbf{A}^{-1}\mathbf{B}$.  With $F = f = 0$, the eigenvectors are
+$[0,1]^T$ and $[1,0]^T$, that is, in the directions of $\frac{\partial
+\mathbf{r}}{\partial \lambda}$ and $\frac{\partial \mathbf{r}}{\partial
+\eta}$, where $\eta$ is $\theta$, $\gamma$, or $\phi$. The prime vertical
+section is the plane that includes $\frac{\partial \mathbf{r}}{\partial
+\lambda}$ (i.e., $\eta$ = constant), and the meridional section is the plane that includes
+$\frac{\partial \mathbf{r}}{\partial \eta}$ (i.e., $\lambda$ = constant).
+
 %=========================================================================
 \section{Curvature of a sphere}
 
@@ -958,7 +967,7 @@ $3.352810667\!\times 10^{-3} \, a$, at $\phi$~= 45\degs04810613, $\gamma$~=
 
 If a plane initially in the equatorial plane is rotated through an angle
 $\beta$ about a line $y = x \tan \lambda$, its intersection with the Earth
-surface is an ellipse with semi-major axis is $a$, and semi-minor axis
+surface is an ellipse with semi-major axis $a$, and semi-minor axis
 given by Equation (\ref{R}):
 %
 \begin{equation}\label{b2}
@@ -1058,9 +1067,10 @@ substitution, Equation (\ref{Normal}) becomes
 (g^2+h^2+1) x^2 + y^2 = 2 N \frac{h y - g x}{\sqrt{g^2+h^2}}\,.
 \end{equation}
 
-Substituting $x = u - u_c$ and $y = v - v_c$, and solving for $u_c$ and
-$v_c$ to make the coefficients of the terms linear in $u$ and $v$ zero,
-Equation (\ref{Normal-rot}) becomes
+Substituting $x = u - u_c$ and $y = v - v_c$, and solving for $u_c =
+\frac{N g}{\sqrt{g^2+h^2}(g^2+h^2+1)}$ and $v_c = -\frac{N
+h}{\sqrt{g^2+h^2}}$ to make the coefficients of the terms linear in $u$
+and $v$ zero, Equation (\ref{Normal-rot}) becomes
 %
 \begin{equation}\label{Normal-rot-cent}
 (g^2+h^2+1) u^2 + v^2 = N^2\,\frac{h^2+1}{g^2+h^2+1}\,,
@@ -1294,8 +1304,8 @@ at $(\lambda,\phi,h)$.  Then $\vec{N} = \vec{G} \times \vec{V}$ is normal
 to the plane containing $P$, the line of sight, and the outward normal
 $\vec{G}$ at $P$.  Let $\hat{n} = \frac{\vec{N}}{|\vec{N}|} = [ A, B, C
 ]^T$ be the unit normal to that plane.  From the figure on page
-\pageref{geometric-figure}, and using $|\hat{n}| = 1$, $C = \cos\phi$ and
-$\sqrt{A^2+B^2} = \sqrt{1-C^2} = \sin\phi$.
+\pageref{geometric-figure}, and using $|\hat{n}| = 1$, then $C = \cos\phi$
+and $\sqrt{A^2+B^2} = \sqrt{1-C^2} = \sin\phi$.
 
 The equation of the plane containing $P$, $\vec{V}$, and $\vec{G}$ is
 %
@@ -1356,8 +1366,9 @@ R^\oplus_{\text{eq}}
 
 %=========================================================================
 %\newpage
-\section{Relationship between gradient and position vectors}
-Let $\vec{V} = [ x, y, z ]^T$ be the position on an ellipsoid.  The
+\section{Relationship between gradient and position
+vectors}\label{Relationship}
+Let $\vec{P} = [ x, y, z ]^T$ be the position on an ellipsoid.  The
 gradient at that point is
 %
 \begin{equation}\label{grad3d}
@@ -1367,17 +1378,17 @@ gradient at that point is
 Then using Equation (\ref{ellipsoid}),
 %
 \begin{equation}
-\vec{G} \cdot \vec{V} = 2 \left( x^2 + y^2 + \frac{z^2}{1-e^2}\right)
+\vec{G} \cdot \vec{P} = 2 \left( x^2 + y^2 + \frac{z^2}{1-e^2}\right)
  = 2 a^2 \,.
 \end{equation}
 
 The unit gradient $\frac{\vec{G}}{|\vec{G}|} = \mathbf{g}$, Equation
 (\ref{unit-gradient}), is particularly simple in geodetic co\"ordinates.
-Using geodetic co\"ordinates, the unit vector $\hat{V}$ parallel to the
+Using geodetic co\"ordinates, the unit vector $\hat{P}$ parallel to the
 position vector becomes
 %
 \begin{equation}
-\hat{V} = \frac1{\sqrt{\cos^2\phi + (1-e^2)^2 \sin^2\phi}}
+\hat{P} = \frac1{\sqrt{\cos^2\phi + (1-e^2)^2 \sin^2\phi}}
 \left[ \begin{array}{l}
   \cos\phi \cos\lambda \\
   \cos\phi \sin\lambda \\
@@ -1391,14 +1402,14 @@ position vector becomes
 \end{floatingfigure}
 
 From the figure on page \pageref{geometric-figure},
-$\angle(\vec{V},\vec{G}) = \phi - \gamma = \cos^{-1} (\mathbf{g} \cdot
-\hat{V})$.
+$\angle(\vec{P},\vec{G}) = \phi - \gamma = \cos^{-1} (\mathbf{g} \cdot
+\hat{P})$.
 
 Then (using Equations (\ref{tangents}))
 %
 \begin{equation}\begin{split}\label{phi-gamma}
 \cos(\phi - \gamma) =\,& \cos \phi \cos \gamma + \sin \phi \sin \gamma =
-\mathbf{g} \cdot \hat{V} \\
+\mathbf{g} \cdot \hat{P} \\
  = \,&
 \frac{1-e^2 \sin^2 \phi}{\sqrt{\cos^2\phi + (1-e^2)^2 \sin^2\phi}}
 \text{ and} \\
@@ -1490,7 +1501,7 @@ $\Sigma_p$, analogously to Equations (\ref{nine}), are
 and the unit gradient within the orbit plane, analogously to the
 definition of the unit gradient $\mathbf{g}$ to the Earth surface in
 Equation (\ref{unit-gradient}), is
-
+%
 \begin{equation}
 \frac{\vec{G}_p}{| \vec{G}_p |} =
 \mathbf{g}_p =
@@ -1519,7 +1530,7 @@ Equations (\ref{nine}) to compute
 \tan\phi = \,& \frac{z}{(1-e^2)\rho} = \frac{z}{(1-e^2)\sqrt{x^2+y^2}}
 \,.
 \end{split}\end{equation}
-
+%
 Using Equations (\ref{xyz}) and
 %
 \begin{equation}\begin{split}\label{aux}
@@ -1548,7 +1559,7 @@ Equations (\ref{lambdaphi}) become
 \cos\phi = \,& \frac{S H}{\sqrt{T}} \\
 \sin\phi = \,& \frac{\sin\beta\,\sin\OP}{\sqrt{T}}\,. \\
 \end{split}\end{equation}
-
+%
 Substituting Equations(\ref{lambda-phi-def}) into Equation (\ref{cosG}),
 we have
 %
@@ -1562,7 +1573,7 @@ we have
         H \frac{\partial T}{\partial \beta} \right] \,.
  \\
 \end{split}\end{equation}
-
+%
 From Equations (\ref{aux}) we have
 \begin{equation}\begin{split}
 \frac{\partial T}{\partial \OP}
@@ -1576,7 +1587,7 @@ From Equations (\ref{aux}) we have
 \frac{\partial H}{\partial \beta}
  = 2 e^2 \cos\beta\,\sin\beta \,. \\
 \end{split}\end{equation}
-
+%
 $\frac{\partial \cos\Gamma}{\partial \OP}=0$ for $\beta=\frac\pi2$, $p=0$,
 and $p=\frac\pi2$.  For $\beta=0$, $\beta=\frac\pi2$, or $\OP=0$,
 $\Gamma=0$.  For $\OP=\frac\pi2$, $T = 1 - W \cos^2\!\beta$ and
@@ -1591,13 +1602,13 @@ $\Gamma=0$.  For $\OP=\frac\pi2$, $T = 1 - W \cos^2\!\beta$ and
 \tan\Gamma = \frac{e^2}{2\sqrt{1-e^2}}\,
 \text{, the same result as Equation (\ref{phi-gamma}).}
 \end{split}\end{equation}
-
+%
 Using $e^2 = 6.69437999014\!\times\!10^{-3}$ from WGS84 Table 3.3,
 $\beta_0 =$ 44\degs9037878494 $\approx \frac{\pi}{4.0086}$ radians and
 $\left.\Gamma\right|_{\beta_0} = $0\degs19242430116.  At an altitude of
 100 kilometers, the horizontal positions on the two gradients are
 different by 200000 $\sin\left(\frac12\Gamma\right)$ = 335.843603774
-meters.
+meters, the same result as in Section \ref{Relationship}.
 
 \newcommand*{\mydprime}{^{\prime\prime}\mkern-1.2mu}
 \newcommand{\secs}{$\stackrel{\hspace*{-0.5pt}\mydprime}{\vspace*{-2pt}.}$}
@@ -1668,6 +1679,7 @@ Therefore, $\Gamma = \sin^{-1} ( \mathbf{g} \cdot \mathbf{n}_p ) =
 \end{equation}
 
 which is the same as Equations (\ref{phi-gamma}) and (\ref{solution}).
+
 %=========================================================================
 \newpage \section*{Appendix: Bowring's proof of prime vertical radius of
 curvature} \label{appendix}
@@ -1699,6 +1711,268 @@ of curvature is equal to the length $CP$.
 \begin{centering}
 \includegraphics[scale=1.0]{wvs-146-2}\\
 \end{centering}
+
+\newpage \section*{Appendix: Curvatures for general ellipsoid}
+
+%-------------------------------------------------------------------------
+\subsection*{Using reduced latitude}
+
+\begin{equation}
+\mathbf{r} = \left[ \begin{array}{l}
+a\, \cos\theta \cos\lambda \\
+b\, \cos\theta \sin\lambda \\
+c\, \sin\theta
+\end{array} \right]
+\end{equation}
+
+\begin{equation}
+\begin{array}{lll}
+\frac{\partial \mathbf{r}}{\partial \lambda} =
+\left[ \begin{array}{l}
+-a\, \cos \theta \sin \lambda \\
+b\, \cos \theta \cos \lambda \\
+0
+\end{array} \right] &
+\frac{\partial \mathbf{r}}{\partial \theta} =
+\left[ \begin{array}{l}
+-a\, \sin \theta \cos \lambda \\
+-b\, \sin \theta \sin \lambda \\
+c\, \cos \theta \\
+\end{array}
+\right] & \\
+ & & \\
+\frac{\partial^2 \mathbf{r}}{\partial \lambda^2} =
+\left[ \begin{array}{l}
+-a\, \cos \theta \cos \lambda \\
+-b\, \cos \theta  \sin \lambda\\
+0
+\end{array} \right] &
+\frac{\partial^2 \mathbf{r}}{\partial \lambda\, \partial \theta} =
+\left[ \begin{array}{l}
+a\, \sin \theta \sin \lambda \\
+-b\, \sin \theta \cos \lambda\\
+0 \\[10pt]
+\end{array} \right ] &
+\frac{\partial^2 \mathbf{r}}{\partial \theta^2} =
+\left[ \begin{array}{l}
+-a\, \cos \theta \cos \lambda \\
+-b\, \cos \theta \sin \lambda \\
+-c\, \sin \theta
+\end{array} \right] \\
+\end{array}
+\end{equation}
+
+\begin{equation}\begin{split}
+\mathbf{N} =\,& \frac{\partial \mathbf{r}}{\partial \lambda} \times
+             \frac{\partial \mathbf{r}}{\partial \theta}\,
+           =
+           \left[ \begin{array}{l}
+             b\, c\, \cos \lambda \cos^2 \theta \\
+             a\, c\, \sin \lambda \cos^2 \theta \\
+             a\,b\, \sin \theta \cos \theta
+            \end{array} \right]
+\\[3pt]
+|\mathbf{N}|
+ = \,& \cos\theta
+     \sqrt{c^2 ( a^2 \sin^2\lambda + b^2 \cos^2\lambda ) \cos^2\theta
+           + a^2 \, b^2 \sin^2\theta} ,\,
+\mathbf{g} = \frac{\mathbf{N}}{|\mathbf{N}|} \\
+\end{split}\end{equation}
+
+\begin{equation}\begin{split}
+E = \,& \frac{\partial \mathbf{r}}{\partial \lambda} \cdot
+        \frac{\partial \mathbf{r}}{\partial \lambda}
+  = ( a^2 \sin^2\lambda + b^2 \cos^2\lambda ) \cos^2\theta \\
+F = \,& \frac{\partial \mathbf{r}}{\partial \lambda} \cdot
+        \frac{\partial \mathbf{r}}{\partial \theta}
+  =(a^2 - b^2 ) \sin\lambda \cos\lambda \sin\theta \cos\theta \\
+G = \,& \frac{\partial \mathbf{r}}{\partial \theta} \cdot
+        \frac{\partial \mathbf{r}}{\partial \theta}
+  = ( a^2 \cos^2\lambda + b^2 \sin^2\lambda ) \sin^2\theta +
+        c^2 \cos^2 \theta \\
+\end{split}\end{equation}
+
+\begin{equation}\begin{split}
+e = \,& \mathbf{g} \cdot
+        \frac{\partial^2 \mathbf{r}}{\partial \lambda^2}
+  = \frac{a\,b\,c\,cos^3\theta}{|\mathbf{N}|} \,.\\
+f = \,& \mathbf{g} \cdot
+        \frac{\partial^2 \mathbf{r}}{\partial \lambda \partial \theta}
+  = 0 \\
+g = \,& \mathbf{g} \cdot
+        \frac{\partial^2 \mathbf{r}}{\partial \theta^2}
+  = \frac{a\, b \, c\,\cos\theta}{|\mathbf{N}|} \\
+\end{split}\end{equation}
+
+\begin{equation}\begin{split}
+\kappa = \,& \frac{a b c \cos\theta}{2A}\, \left(
+             \frac{(((a^2-b^2)\cos^2\lambda-c^2)\cos^2\theta
+             -b^2 \sin^2\theta - a^2)}{|\mathbf{N}|}
+             \pm |\mathbf{N}| \sqrt{W} \right) \text{, where} \\
+A =\,& E G - F^2 = c^2 ( a^2 - ( a^2-b^2 ) \cos^2\lambda ) \cos^2\theta
+                + a^2 b^2 \sin^2\theta \text{, and} \\
+W =\,& (a^2\cos^2\lambda + b^2\sin^2\lambda -c^2 ) \cos^4\theta +
+       2 ( a^2-b^2)(b^2\sin^2\lambda - ( a^2 - 2 c^2 ) \cos^2\lambda
+         -c^2 ) \cos^2 \theta \\
+   \,& + (a^2-b^2)^2 \,.
+\end{split}\end{equation}
+
+Gaussian curvature:
+%
+\begin{equation}
+K = \kappa_1 \, \kappa_2
+  = \left( \frac{a\, b\, c}
+                {c^2 ( a^2 \sin^2\lambda + b^2 \cos^2\lambda )
+                 \cos^2\theta + a^2 b^2 \sin^2\theta }
+    \right)^2 \,.
+\end{equation}
+
+Radius of Gaussian curvature:
+
+\begin{equation}
+R = \frac{1}{\sqrt{K}} =
+ \frac{c}{ab} \left( a^2 \sin^2\lambda
+ + b^2 \cos^2\lambda \right) \cos^2\theta
+ + \frac{ab}c \sin^2\theta \,.
+\end{equation}
+
+%-------------------------------------------------------------------------
+\subsection*{Using geocentric latitude}
+
+\begin{equation}\begin{split}
+\mathbf{r} = \,&  R\, \vec{\rho} \text{ where }
+  \vec{\rho} = \left[ \begin{array}{l}
+  \cos\gamma \cos\lambda \\
+  \cos\gamma \sin\lambda \\
+  \sin\gamma
+\end{array} \right] \text{ and} \\
+R = \,& \frac{abc}
+         {\sqrt{ c^2 ( b^2 \cos^2\lambda + a^2 \sin^2\lambda ) \cos^2\gamma
+               + a^2 b^2 \sin^2\gamma}} \\
+\end{split}\end{equation}
+
+\begin{equation}\begin{split}
+\frac{\partial R}{\partial \lambda} = \,& R_\lambda = R^3
+ \left( \frac1{a^2}-\frac1{b^2} \right) \sin\lambda \cos\lambda \cos^2\eta \\
+\frac{\partial R}{\partial \gamma} = \,& R_\gamma = R^3
+ \left( \frac{\sin^2\lambda}{b^2} + \frac{\cos^2\lambda}{a^2}-\frac1{c^2}
+  \right) \sin\eta \cos\eta \\
+\frac{\partial^2 R}{\partial \lambda \partial \gamma} = \,& R_{\lambda\gamma}
+= R^5 \left( \frac1{a^2} -\frac1{b^2} \right)
+  \sin\gamma\cos\gamma \sin\lambda\cos\lambda
+  \left( \left( \frac{\sin^2\lambda}{b^2} +\frac{\cos^2\lambda}{a^2}
+                -\frac3{c^2} \right) + 2\,\frac{\sin^2\gamma}{c^2}
+  \right)
+\end{split}\end{equation}
+
+\begin{equation}\begin{array}{ll}
+\frac{\partial \vec{\rho}}{\partial \lambda} = \vec{\rho}_{\lambda} =
+\cos\gamma
+\left[ \begin{array}{l} -\sin\lambda \\
+                         \cos\lambda \\
+                          0 \end{array} \right] &
+%
+\frac{\partial \vec{\rho}}{\partial \gamma} = \vec{\rho}_{\gamma} =
+\left[ \begin{array}{l} -\sin\gamma \cos\lambda \\
+                          -\sin\gamma \sin\lambda \\
+                          \cos\gamma \end{array} \right] \\
+%
+\frac{\partial \mathbf{r}}{\partial \lambda} = \mathbf{r}_{\lambda} =
+R\, \vec{\rho}_{\lambda} + \vec{\rho}\, R_{\lambda} &
+%
+\frac{\partial \mathbf{r}}{\partial \gamma} = \mathbf{r}_{\gamma} =
+R\, \vec{\rho}_{\gamma} + \vec{\rho}\, R_{\gamma}
+\end{array}\end{equation}
+
+\begin{equation}\begin{array}{ll}
+\mathbf{N} = R \left(
+ \cos\gamma\,  ( \mathbf{r} - R_\gamma \rho_{\gamma} )
+ - R_\lambda \, \frac{\rho_{\lambda}}{\cos \gamma}
+ \right) &
+\mathbf{|N|} = R
+ \sqrt{ \left( R^2 + R_\gamma^2
+        \right) \cos^2\gamma
+      + R_\lambda^2} \\
+\mathbf{g} = \frac{\mathbf{N}}{\mathbf{|N|}}
+\end{array}\end{equation}
+
+\begin{equation}\begin{array}{ll}
+\frac{\partial^2 \vec{\rho}}{\partial \lambda^2}
+ = \vec{\rho}_{\lambda\lambda} = -\cos\gamma
+  \left[ \begin{array}{l} \cos\lambda \\ \sin\lambda \\ 0
+  \end{array} \right] &
+\frac{\partial^2 \vec{\rho}}{\partial \lambda \partial\gamma}
+ = \vec{\rho}_{\lambda\gamma} = -\sin\gamma
+  \left[ \begin{array}{l} \sin\lambda \\ \cos\lambda \\ 0
+  \end{array} \right] \\[3pt]
+\frac{\partial^2 \vec{\rho}}{\partial \gamma^2}
+ = \vec{\rho}_{\gamma\gamma} =
+  -\left[ \begin{array}{l} \cos\gamma\cos\lambda \\ \cos\gamma\sin\lambda \\
+   \sin\eta
+  \end{array} \right] \\
+\end{array}\end{equation}
+%
+\begin{equation}\begin{array}{ll}
+\frac{\partial^2 \mathbf{r}}{\partial \lambda^2}
+ = \mathbf{r}_{\lambda\lambda} =
+ R \rho_{\lambda\lambda} + R_{\lambda} \rho_{\lambda}
+ + \rho R_{\lambda\lambda} &
+\frac{\partial^2 \mathbf{r}}{\partial \lambda \partial\gamma}
+ = \mathbf{r}_{\lambda\gamma} =
+ R \rho_{\lambda\gamma} + R_{\gamma} \rho_{\lambda}
+ + \rho R_{\lambda\gamma} \\
+\frac{\partial^2 \mathbf{r}}{\partial \gamma^2}
+ = \mathbf{r}_{\gamma\gamma} =
+ R \rho_{\gamma\gamma} + R_{\gamma} \rho_{\gamma}
+ + \rho R_{\gamma\gamma} &
+\end{array}\end{equation}
+
+\begin{equation}\begin{array}{ll}
+\frac{\partial \mathbf{r}}{\partial \lambda} = \mathbf{r}_{\lambda} =
+R\, \vec{\rho}_{\lambda} + \vec{\rho}\, R_{\lambda} &
+%
+\frac{\partial \mathbf{r}}{\partial \gamma} = \mathbf{r}_{\gamma} =
+R\, \vec{\rho}_{\gamma} + \vec{\rho}\, R_{\gamma}
+\end{array}\end{equation}
+%
+\begin{equation}\begin{array}{lll}
+E = \frac{\partial \mathbf{r}}{\partial \lambda} \cdot
+    \frac{\partial \mathbf{r}}{\partial \lambda} 
+  =  R^2 \cos^2\eta + R_\lambda^2 &
+F = \frac{\partial \mathbf{r}}{\partial \lambda} \cdot
+    \frac{\partial \mathbf{r}}{\partial \gamma} 
+  = R_\lambda \, R_\gamma &
+G = \frac{\partial \mathbf{r}}{\partial \gamma} \cdot
+    \frac{\partial \mathbf{r}}{\partial \gamma}
+  = R^2 + R_\gamma^2
+\end{array}\end{equation}
+%
+\begin{equation}\begin{split}
+e =\,& -\frac{ \cos\gamma ( \sin\gamma \cos\gamma R_\gamma R
+             + \cos^2\gamma\, R^2 + 2 R_\lambda^2
+             - R\, R_{\lambda\lambda}}{|\mathbf{N}|} \\
+f =\,& \frac{ (R\,R_{\lambda\gamma} - R_\gamma\,R_\lambda) \cos\eta
+            + R\, R_\lambda \, \sin\gamma}{|\mathbf{N}|} \\
+g =\,& \cos\eta\,\frac{R\,( R_{\gamma\gamma} - R) - 2 R_\gamma^2}
+                      {|\mathbf{N}|}
+\end{split}\end{equation}
+
+\begin{equation}\label{kappa-gen}
+\kappa = \frac{(e G + g E - 2 f F ) \pm
+               \sqrt{ (e G + g E - 2 f F )^2 - 4 ( E G - F^2) ( e g - f^2)}}
+              { 2 ( E G - F^2) }
+\end{equation}
+
+Even without expanding $E$, $F$, $G$, $e$, $f$, and $g$, the roots
+$\kappa$ of Equation (\ref{third}), the values of Equation
+(\ref{kappa-gen}), each occupy four lines. Expanding completely, they
+occupy 60 lines.
+
+%-------------------------------------------------------------------------
+\subsection*{Using geodetic latitude}
+
+Geodetic latitude is not well defined for a general ellipsoid -- it
+depends upon longitude.
 
 \label{lastpage}
 \vspace*{-0.1in} % Somehow, this causes lastpage to be defined
@@ -1795,6 +2069,9 @@ different by 200000 $\sin(\frac12\Gamma)$ = 335.843594550 meters.
 % $Id$
 
 % $Log$
+% Revision 1.13  2020/03/28 04:09:44  vsnyder
+% Add labels for other documents to reference
+%
 % Revision 1.12  2020/03/23 19:19:46  vsnyder
 % Collect material about differential geometry in one section. Add derivation
 % of angle between gradient to surface and gradient to orbit plane. Other
