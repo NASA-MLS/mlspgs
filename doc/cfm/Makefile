@@ -18,6 +18,15 @@ MakeFName = Makefile
 # then to make mls with this file you must instead  of bare "make" use
 #     make -f $(MakeFName)
 
+
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+
 # where to store .configure; 
 CONFDIR=../..
 
@@ -26,6 +35,9 @@ UTILDIR=$(CONFDIR)/util
 # reecho.sh can filter out globbed file expansions that fail
 # e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
 REECHO=$(UTILDIR)/reecho.sh
+
+# Get any settings from our .configure
+include $(CONFDIR)/$(MLSCFILE)
 
 # Most source files match one of the following patterns
 f9h_sources := $(shell ${REECHO} *.f9*)
@@ -89,7 +101,7 @@ ${AUX}: cfm.tex
 ${BBL}: ${BIB} ${AUX}
 	bibtex cfm
 
-${NEAROBJS}: ${BBL} ${f9h_sources}
+${NEAROBJS}: ${BBL} ${f9h_sources} ${tex_sources}
 # ========================================================================
 
 clean:
@@ -124,6 +136,9 @@ update:
 
 # ========================================================================
 # $Log$
+# Revision 1.4  2019/06/27 21:08:56  pwagner
+# make clean more thorough
+#
 # Revision 1.3  2019/06/24 17:49:53  pwagner
 # Works more reliably like this
 #
