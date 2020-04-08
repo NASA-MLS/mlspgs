@@ -48,11 +48,12 @@ numbered 0\ldots128.
 
 \subsubsection{MLS L1 files}
 
-Three radiances files are produced for each day of MLS observations.
+As many as three radiance files are produced for each day of MLS observations.
 The L1BRADG file contains the radiances for the majority of the GHz
 bands.  The L1BRADD file contains the radiances for the four MLS digital
 autocorrelator spectrometers, also measuring GHz spectral regions.  The
-L1BRADT file contains radiances measured by the MLS THz bands.
+L1BRADT file contains radiances measured by the MLS THz bands. On dates when the
+THz module is turned off, level 1 will omit producing an L1BRADT file.
 
 L1BRAD files are stored in HDF5 (not HDF-EOS) and are flat files
 containing many HDF arrays.  The most important of these are radiances
