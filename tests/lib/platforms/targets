@@ -36,6 +36,13 @@ srclib = ../../../srclib
 include $(srclib)/$(MLSF95).$(MLSPLAT)
 include $(srclib)/targets.h
 
+ifdef NETCDF
+   EXTRA_PATHS="-I /software/toolkit/netcdf-fortran-4.5.1/include"
+   LDOPTS := "$(LDOPTS) -Wl,--allow-multiple-definition"
+   NC4_Linker_Line="-L/software/toolkit/netcdf-fortran-4.5.1/lib -lnetcdff -L/software/toolkit/netcdf-c-4.7.1/lib -lnetcdf"
+endif
+
+
 ifeq ($(NEEDS_ITM),yes)
 
 # This is the directory name from which we will get init_tables_module
@@ -159,12 +166,14 @@ $(PROG_NAME): $(ALLOBJS) $(PVM_OBJS) $(libdir)/libmls.a $(CONFDIR)/$(MLSCFILE)
 		@echo "$(lapack_message)"
 		@echo "$(hdf5_message)"
 		@echo "$(mlspack_message)"
+		@echo "$(NC4_Linker_Line)"
 		$(FC) $(LDOPTS) -o $(PROG_NAME) $(ALLOBJS) $(PVM_OBJS)  \
         -L${libdir} -lmls \
         $(utctotai_linker_line) \
 		-L${PGSTK} -lPGSTK \
         -L${HDFEOS} -lhdfeos \
         $(hdfeos5_linker_line) \
+	$(NC4_Linker_Line) \
 		-L${HDF} -lmfhdf \
         -ldf \
         -lz \
@@ -188,6 +197,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.28  2009/07/17 20:27:32  pwagner
+# Added COPTS as cc options
+#
 # Revision 1.27  2009/06/09 18:55:42  pwagner
 # Can now build writeMetadataTest.f90
 #
