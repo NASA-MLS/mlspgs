@@ -258,6 +258,7 @@ SHELL = /bin/sh
 # l2auxcat       
 # l2auxchi       
 # l2auxdump      
+# l2gp2nc4     
 # l2gpcat        
 # l2gpdiff       
 # l2gpdump       
@@ -496,7 +497,7 @@ MLSTOOLS = chunktimes checkpvmup compare dateconverter extinctionmaker fixDOI\
   heconvert h5subset h5cat hl Goldbrick_More \
   killmaster \
   l1bcat l1bdiff l1bdump l1h5subset \
-  l2auxcat l2auxchi l2auxdump l2gpcat l2gpdiff l2gpdump \
+  l2auxcat l2auxchi l2auxdump l2gp2nc4 l2gpcat l2gpdiff l2gpdump \
   l2pcdiff l2pcdump l2q lr \
   machineok misalignment resetl2gpstatus Spartacus tellMasterToQuit \
   vansGoldFilter WordSplit wrapLines
@@ -1074,6 +1075,18 @@ l2auxdump: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2auxdump.f90 l1--itm
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
+l2gp2nc4: $(CONFDIR)/$(MLSCFILE) $(CONFDIR)/netcdf/l2gp2nc4.f90 l1--itm
+# Needs further refinement
+	cd $(CONFDIR)/tests/lib; \
+	mv *.f9[0h] hideme; \
+	cd ../../netcdf; \
+	cp l2gp2nc4.f90 MLSFiles.f90 MLSNetCDF4.f90 MLS_Swrdfld.f9h \
+	MLS_Swwrfld.f9h NCL2GP.f90 ../tests/lib; \
+	cd ../tests/lib; \
+	make update; \
+	make NEEDS_ITM=yes NETCDF=yes
+	cp $(CONFDIR)/tests/lib/$(MLSCONFG)/test $(INSTALLDIR)/l2gp2nc4
+
 l2gpcat: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2gpcat.f90 l1--itm
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
@@ -1514,6 +1527,9 @@ tools: $(MLSTOOLS)
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.27  2019/04/09 20:43:06  pwagner
+# New MLSStrings.f90 simplifies building w/o toolkit
+#
 # Revision 1.26  2019/01/18 18:51:40  pwagner
 # Updated lists of modules needed to build w/o toolkit
 #
