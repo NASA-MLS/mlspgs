@@ -24,14 +24,8 @@ you have not done so already, you should use the pseudotarget
 
 The command to do this, issued from the root, mlspgs directory, is
 \begin{quote}
-\snippet{make -f MakeFC update}
+\snippet{make update}
 \end{quote}
-
-Note that the command included the command-line options \snippet{-d
-  MakeFC}.  They tell \snippet{make} to use the particular Makefile
-\snippet{MakeFC}. Among other tasks, the \snippet{update} pseudotarget
-copies this particular Makefile into \snippet{Makefile}, simplifying
-subsequent invocations of \snippet{make}.
 
 The next step is to build and install the libraries. This is easily done by
 \begin{quote}
@@ -68,6 +62,9 @@ illustrate how to compile, assuming \snippet{cfm.mod} is in
 \snippet{ifort -c -I \$INSTALLDIR mockup.f90}
 \end{quote}
 
+You won't actually have to issue the above command. It's shown for purely for
+illustration.
+
 \subsection{Using the \snippet{libcfm.a} file}
 
 The Makefiles already allow the easy implementation of this library. You
@@ -77,7 +74,7 @@ with your own, and then type
 \snippet{make update\\make}
 \end{quote}
 
-in response, you should see Makefile execute the command (or something close to
+in response, you should see Makefile execute the following command (or something close to
 it)
 \begin{verbatim}
 ifort -static -arch ia32 -o mockup mockup.o   \
