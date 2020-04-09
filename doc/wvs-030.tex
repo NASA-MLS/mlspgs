@@ -13,8 +13,8 @@
 \topmargin -0.5in
 \textheight 9.00in
 
-\newcommand{\docname}{\bf wvs-030r5}
-\newcommand{\docdate}{27 March 2020}
+\newcommand{\docname}{\bf wvs-030r6}
+\newcommand{\docdate}{8 April 2020}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -382,6 +382,7 @@ iteration.  Using $\frac{\partial \mathcal{L}(t)}{\partial t} =
 %=========================================================================
 \section{Approximation using an ellipsoid with slightly different axes}
 
+%-------------------------------------------------------------------------
 \subsection{Co\"ordinate approach}
 
 Define an ellipsoid $\mathcal{S}(r)$
@@ -500,6 +501,7 @@ iterated.
 
 If $a \neq b$, Equations (\ref{on-ellipse}) are much more complicated.
 
+%-------------------------------------------------------------------------
 \subsection{Vector approach}
 
 Define a point $\mathbf{p}(t)$ on a line $\mathcal{L}(t)$
@@ -581,9 +583,8 @@ $\mathcal{S}(1)$ that is close to the nearest point on $\mathbf{p}(t)$ is
 the point where $\mathbf{N}$ intersects $\mathcal{S}(1)$.  This is
 described in wvs-131 \hr{wvs-131}.
 
+%=========================================================================
 \section{Approach based upon finding an intersection}
-
-\subsection{General}
 
 Expanding Equation (\ref{E}) to produce a polynomial in $t$, we have
 
@@ -618,69 +619,82 @@ t =
 
 This is the same solution as Equation (\ref{tv}).
 
-%=========================================================================
-\subsection{When the ellipsoid is an oblate spheroid}
+Having $t$, one can calculate $\mathbf{p}(t)$ using Equation (\ref{p}). 
+Assuming $\mathbf{C}$ and $\mathbf{U}$ are represented using ECR, this
+gives $\mathbf{p}(t)$ in ECR.  Fukushima's method (\h{wvs-159}) can be
+used to determine geodetic co\"ordinates $(\lambda,\phi,h)$.
 
-The equation of an oblate spheroid, i.e., $b=a$, using geodetic
-co\"ordinates (Equation (\ref{146-geodetic}) in \h{wvs-146}) is
-
-\begin{equation}\label{geodetic}
-\mathbf{r}(\lambda,\phi) =
-\frac{a}{\sqrt{1-e^2\sin^2\phi}}
-\left[ \begin{array}{l}
-\cos\phi \cos\lambda \\ \cos\phi \sin\lambda \\ (1-e^2) \sin\phi \\
-\end{array} \right] \,,
-\end{equation}
-
-where $e^2 = 1-\frac{c^2}{a^2}$ is the square of the eccentricity.
-
-Because every ellipsoid $\mathcal{S}(r)$ with $b=a$ has the same
-eccentricity, the position vectors are parallel, their (unit) gradients
-(Equation (\ref{146-unit-gradient}) in \h{wvs-146}),
-
-\begin{equation}
-\mathbf{g} = \left[ \begin{array}{l}
- \cos\phi \cos\lambda \\ \cos\phi \sin\lambda \\ \sin\phi \\
-\end{array} \right]
-\end{equation}
-
-are parallel, and the geodetic angular co\"ordinates of the point on the
-ellipsoid with semi-major axis $a \, (r=1)$ that is nearest to the line
-are the same as the geodetic angular co\"ordinates of the tangent point to
-the ellipsoid with semi-major axis $a'>a\,(r<1)$.
-
-The position $\mathbf{p}$ on the line that is nearest to the ellipsoid can
-be calculated by substituting $t$ from Equation (\ref{tv2}) into
-Equation (\ref{line-1}).  The geodetic angles can be calculated from
-$\mathbf{p} = \mathbf{r}$ using Equation (\ref{geodetic}), \emph{viz}.
-
-\begin{equation}\begin{split}
-\phi = \,& \tan^{-1} \frac{p_3}{(1-e^2) \sqrt{p_1^2 + p_2^3}} \\[5pt]
-\lambda = \,& \tan^{-1} \frac{p_2}{p_1}\,.
-\end{split}\end{equation}
-
-Substituting these values into Equation (\ref{geodetic}) allows to
-calculate the nearest distance $|\mathbf{p}-\mathbf{r}|$ between the line
-and the ellipsoid.
-
-Parenthetically, the value of $r$ for which the discriminant is zero is
-given by
+Parenthetically, the value of $r$ for which the discriminant is zero for
+an oblate spheroid is given by
 
 \begin{equation}\label{discriminant-solution}
 r^2 = \frac{ \left( \mathbf{M}^{-1} \mathbf{N} \right)^T \cdot
              \left( \mathbf{M}^{-1} \mathbf{N} \right) }
            { (1-e^2) \left( \mathbf{M}\mathbf{U} \right )^T \cdot
-                 \left( \mathbf{M}\mathbf{U} \right ) }\,,
+                 \left( \mathbf{M}\mathbf{U} \right ) }
+    = \frac{ | \mathbf{M}^{-1} \mathbf{N} |^2}
+           { (1-e^2) | \mathbf{M}\mathbf{U} |^2 }
+    = \left( \frac{a}{c} \, \frac{ | \mathbf{M}^{-1} \mathbf{N} | }
+                        { | \mathbf{M} \mathbf{U} | } \right)^2 \,,
 \end{equation}
 
-where $\mathbf{N} = \mathbf{C}\times\mathbf{U}$, but this result was not
-needed above.
+where $\mathbf{N} = \mathbf{C}\times\mathbf{U}$ and $e =
+\sqrt{1-\frac{c^2}{a^2}}$, the eccentricity of an oblate spheroid, but
+this result was not needed above.
+
+% %=========================================================================
+% \subsection{When the ellipsoid is an oblate spheroid}
+% 
+% The equation of an oblate spheroid, i.e., $b=a$, using geodetic
+% co\"ordinates (Equation (\ref{146-geodetic}) in \h{wvs-146}) is
+% 
+% \begin{equation}\label{geodetic}
+% \mathbf{r}(\lambda,\phi) =
+% \frac{a}{\sqrt{1-e^2\sin^2\phi}}
+% \left[ \begin{array}{l}
+% \cos\phi \cos\lambda \\ \cos\phi \sin\lambda \\ (1-e^2) \sin\phi \\
+% \end{array} \right] \,,
+% \end{equation}
+% 
+% where $e^2 = 1-\frac{c^2}{a^2}$ is the square of the eccentricity.
+% 
+% Because every ellipsoid $\mathcal{S}(r)$ with $b=a$ has the same
+% eccentricity, the position vectors are parallel, their (unit) gradients
+% (Equation (\ref{146-unit-gradient}) in \h{wvs-146}),
+% 
+% \begin{equation}
+% \mathbf{g} = \left[ \begin{array}{l}
+%  \cos\phi \cos\lambda \\ \cos\phi \sin\lambda \\ \sin\phi \\
+% \end{array} \right]
+% \end{equation}
+% 
+% are parallel, and the geodetic angular co\"ordinates of the point on the
+% ellipsoid with semi-major axis $a \, (r=1)$ that is nearest to the line
+% are the same as the geodetic angular co\"ordinates of the tangent point to
+% the ellipsoid with semi-major axis $a'>a\,(r<1)$.
+% 
+% The position $\mathbf{p}$ on the line that is nearest to the ellipsoid can
+% be calculated by substituting $t$ from Equation (\ref{tv2}) into
+% Equation (\ref{line-1}).  The geodetic angles can be calculated from
+% $\mathbf{p} = \mathbf{r}$ using Equation (\ref{geodetic}), \emph{viz}.
+% 
+% \begin{equation}\begin{split}
+% \phi = \,& \tan^{-1} \frac{p_3}{(1-e^2) \sqrt{p_1^2 + p_2^3}} \\[5pt]
+% \lambda = \,& \tan^{-1} \frac{p_2}{p_1}\,.
+% \end{split}\end{equation}
+% 
+% Substituting these values into Equation (\ref{geodetic}) allows to
+% calculate the nearest distance $|\mathbf{p}-\mathbf{r}|$ between the line
+% and the ellipsoid.
 
 \label{lastpage}
 \end{document}
 % $Id$
 
 % $Log$
+% Revision 1.7  2020/03/28 04:12:29  vsnyder
+% Correct multiply defined label
+%
 % Revision 1.6  2020/03/28 04:08:57  vsnyder
 % Add method based upon intersection
 %
