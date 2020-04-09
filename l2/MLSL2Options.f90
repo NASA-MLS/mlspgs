@@ -279,6 +279,12 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
 
   logical, private, parameter :: countEmpty = .true. ! Except where Overridden locally
   logical, private, parameter :: AllowEnvInOpts = .true. ! Like "USEOPTSENV"
+
+  ! The following is part of a mechanism to prevent L2Options in a .opts file
+  ! from overriding either
+  ! --SkipRetrieval on the cmdline, or 
+  ! [n]SkipRetrieval=true
+  logical, private, save      :: L2OptsCantResetSkipRetrvl = .false.
   
   type :: SomeL2Options_T
     ! Whether to skip doing the retrieval--a pre-flight checkout of paths, etc.
@@ -982,6 +988,7 @@ cmds: do
           SKIPDIRECTWRITES = switch
         else if ( line(3+n:10+n) == 'skipretr' ) then
           L2Options%SkipRetrieval = switch .or. L2Options%SkipRetrievalOriginal
+          L2OptsCantResetSkipRetrvl = .true.
         else if ( line(3+n:8+n) == 'skipph' ) then
           i = i + 1
           call myNextArgument( i, inLine, entireLine, line )
@@ -1437,7 +1444,15 @@ jloop:do while ( j < len_trim(line) )
     logical, parameter :: DEEBUG = .false.
     ! Executable
     if ( DEEBUG ) print *, 'Entered SomeToL2Options'
+    ! Here's the mechanism to prevent L2Options from resetting either
+    ! --SkipRetrieval on the cmdline, or
+    ! [n]SkipRetrieval=true
+    if ( .not. L2OptsCantResetSkipRetrvl ) then
     L2Options%SkipRetrieval           =  SomeL2Options%SkipRetrieval        
+    else
+      call output( 'L2Options not permitted to reset SkipRetrieval', &
+        & advance='yes' )
+    endif
     L2Options%SkipRetrievalOriginal   =  SomeL2Options%SkipRetrievalOriginal
     L2Options%MLSL2Debug              =  SomeL2Options%MLSL2Debug           
     L2Options%Output_print_unit       =  SomeL2Options%Output_print_unit    
@@ -1561,6 +1576,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.133  2020/04/09 23:19:20  pwagner
+! Prevent L2Options from overriding --SkipRetrieval on cmdline or in opts file
+!
 ! Revision 2.132  2020/02/21 21:46:47  pwagner
 ! Added Default_L2GPFormat_write so we can choose NetCDF4 format
 !
