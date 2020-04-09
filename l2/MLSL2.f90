@@ -792,7 +792,7 @@ contains
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Skip all retrievals?', L2Options%SkipRetrieval, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-      call outputNamedValue ( 'Unretrieved states fill', STATEFILLEDBYSKIPPEDRETRIEVALS, advance='yes', &
+      call outputNamedValue ( 'Filling unretrieved states with', STATEFILLEDBYSKIPPEDRETRIEVALS, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Using wall clock instead of cpu time?', time_config%use_wall_clock, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
@@ -810,7 +810,7 @@ contains
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Suppress identical warnings after', MLSMessageConfig%limitWarnings, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-      call outputNamedValue ( 'Restart counting warnings at each phase?', restartWarnings, advance='yes', &
+      call outputNamedValue ( 'Restart warnings count at each phase?', restartWarnings, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Set error before stopping?', StopWithError, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
@@ -862,7 +862,7 @@ contains
       call RevertOutput
       call Blanks( 80, fillChar='-', advance='yes' )
       ! Many of these are defined in the PCF or in the global settings
-      ! Neither of these sections have been complted yet
+      ! Neither of these sections have been completed yet
       ! call DumpGlobalAttributes
     end if
   end subroutine Dump_settings
@@ -904,6 +904,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.233  2020/04/09 23:17:46  pwagner
+! Improved wording in Dump_settings
+!
 ! Revision 2.232  2019/08/01 23:46:50  pwagner
 ! Some Housekeeping
 !
