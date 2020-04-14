@@ -13,8 +13,8 @@
 \topmargin -0.5in
 \textheight 9.00in
 
-\newcommand{\docname}{\bf wvs-030r6}
-\newcommand{\docdate}{8 April 2020}
+\newcommand{\docname}{\bf wvs-030r7}
+\newcommand{\docdate}{10 April 2020}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -624,10 +624,44 @@ Assuming $\mathbf{C}$ and $\mathbf{U}$ are represented using ECR, this
 gives $\mathbf{p}(t)$ in ECR.  Fukushima's method (\h{wvs-159}) can be
 used to determine geodetic co\"ordinates $(\lambda,\phi,h)$.
 
-Parenthetically, the value of $r$ for which the discriminant is zero for
-an oblate spheroid is given by
+Parenthetically, the value of $r$ for which the discriminant is zero is
+given by
 
 \begin{equation}\label{discriminant-solution}
+r^2 = \det(\mathbf{M})^2
+      \frac{ \left( \mathbf{M}^{-1} \mathbf{N} \right)^T \cdot
+             \left( \mathbf{M}^{-1} \mathbf{N} \right) }
+           { \left( \mathbf{M}\mathbf{U} \right )^T \cdot
+                 \left( \mathbf{M}\mathbf{U} \right ) }
+    = \det(\mathbf{M})^2
+      \frac{ | \mathbf{M}^{-1} \mathbf{N} |^2}
+           { | \mathbf{M}\mathbf{U} |^2 }
+    = \left( \det(\mathbf{M}) \, \frac{ | \mathbf{M}^{-1} \mathbf{N} | }
+                        { | \mathbf{M} \mathbf{U} | } \right)^2 \,,
+\end{equation}
+
+where $\mathbf{N} = \mathbf{C}\times\mathbf{U}$.
+
+For an oblate spheroid, if M is written as
+
+\begin{equation}
+\mathbf{M} = \left[ \begin{array}{ccc}
+ 1 & 0 & 0 \\
+ 0 & 1 & 0 \\
+ 0 & 0 & \sqrt{1-e^2} \\
+\end{array} \right] \,,
+\end{equation}
+
+where $e = \sqrt{1-\frac{c^2}{a^2}}$, the eccentricity of an oblate
+spheroid, and $\mathcal{S}(r)$ is written as
+
+\begin{equation}
+( \mathbf{M} \mathbf{D} )^T ( \mathbf{M} \mathbf{D} ) = r^2 \,,
+\end{equation}
+
+then the value of $r$ is given by
+
+\begin{equation}\label{discriminant-solution-oblate}
 r^2 = \frac{ \left( \mathbf{M}^{-1} \mathbf{N} \right)^T \cdot
              \left( \mathbf{M}^{-1} \mathbf{N} \right) }
            { (1-e^2) \left( \mathbf{M}\mathbf{U} \right )^T \cdot
@@ -638,9 +672,8 @@ r^2 = \frac{ \left( \mathbf{M}^{-1} \mathbf{N} \right)^T \cdot
                         { | \mathbf{M} \mathbf{U} | } \right)^2 \,,
 \end{equation}
 
-where $\mathbf{N} = \mathbf{C}\times\mathbf{U}$ and $e =
-\sqrt{1-\frac{c^2}{a^2}}$, the eccentricity of an oblate spheroid, but
-this result was not needed above.
+The value of $r$ was not needed above. Incidentally, if $r<a$,
+$\mathcal{L}(t)$ intersects the Earth (see \h{wvs-131}).
 
 % %=========================================================================
 % \subsection{When the ellipsoid is an oblate spheroid}
@@ -692,6 +725,11 @@ this result was not needed above.
 % $Id$
 
 % $Log$
+% Revision 1.8  2020/04/09 02:01:01  vsnyder
+% Remove final subsection because it was (mostly) wrong. Add remark to
+% compute geodetic coordinates from ECR using Fukushima's method. Include
+% correct material from final subsection.
+%
 % Revision 1.7  2020/03/28 04:12:29  vsnyder
 % Correct multiply defined label
 %
