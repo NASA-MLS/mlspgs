@@ -226,48 +226,7 @@ the line is tangent to the ellipsoid.  If $a' > a$, the line does not
 intersect the ellipsoid.
 
 To calculate the point, on a line that does not intersect the ellipsoid
-($a' > a$), that is nearest to the ellipsoid, use Equation
-(\ref{146-geodetic}) in \h{wvs-146}, i.e., the equation of an ellipsoid
-using geodetic co\"ordinates, \emph{viz}.
-
-\begin{equation}\label{geodetic}
-\mathbf{r}(\lambda,\phi) =
-\frac{a}{\sqrt{1-e^2\sin^2\phi}}
-\left[ \begin{array}{l}
-\cos\phi \cos\lambda \\ \cos\phi \sin\lambda \\ (1-e^2) \sin\phi \\
-\end{array} \right] \,.
-\end{equation}
-
-Because every ellipsoid described by $\mathbf{M}$ has the same
-eccentricity, for different values of $a$, the position vectors are
-parallel, their (unit) gradients (Equation (\ref{146-unit-gradient}) in
-\h{wvs-146})
-
-\begin{equation}
-\mathbf{g} = \left[ \begin{array}{l}
- \cos\phi \cos\lambda \\ \cos\phi \sin\lambda \\ \sin\phi \\
-\end{array} \right]
-\end{equation}
-
-are parallel, and the geodetic angular co\"ordinates of the point on the
-ellipsoid with semi-major axis $a$ that is nearest to the line are the
-same as the geodetic angular co\"ordinates of the tangent point to the
-ellipsoid with semi-major axis $a'$.
-
-The position $\mathbf{p}$ on the line that is nearest to the ellipsoid can
-be calculated by substituting $s$ from Equation (\ref{s-solution}) into
-Equation (\ref{two}).  The geodetic angles can be calculated from
-$\mathbf{p} = \mathbf{r}$ using Equation (\ref{geodetic}) (with $a=a'$,
-which isn't necessary), \emph{viz}.
-
-\begin{equation}\begin{split}
-\phi = \,& \tan^{-1} \frac{p_3}{(1-e^2) \sqrt{p_1^2 + p_2^3}} \\[5pt]
-\lambda = \,& \tan^{-1} \frac{p_2}{p_1}\,.
-\end{split}\end{equation}
-
-Substituting these values into Equation (\ref{geodetic}) allows to
-calculate the nearest distance $|\mathbf{p}-\mathbf{r}|$ between the line
-and the ellipsoid.
+($a' > a$), that is nearest to the ellipsoid, see \h{wvs-030}.
 
 \label{lastpage}
 \vspace*{-0.1in} % Somehow, this causes lastpage to be defined
@@ -276,6 +235,9 @@ and the ellipsoid.
 % $Id$
 
 % $Log$
+% Revision 1.7  2020/03/28 04:09:22  vsnyder
+% Add calculation of nearest approach
+%
 % Revision 1.6  2017/10/13 19:03:39  vsnyder
 % Explain that the line will intersect 0, 1, or 2 times
 %
