@@ -12,11 +12,22 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-132r2}
-\newcommand{\docdate}{12 October 2017}
+\newcommand{\docname}{wvs-132r3}
+\newcommand{\docdate}{15 April 2020}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
+\fi
+\ifnum\pdfoutput>0
+  \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+  \hypersetup{%
+    hypertexnames=false,%
+    colorlinks=true,%
+    linktocpage=true,%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{pdftex}
+\else
   \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
   \hypersetup{%
     hypertexnames=false%
@@ -24,25 +35,6 @@
   % Specify the driver for the color package
   \ExecuteOptions{dvips}
   %\ExecuteOptions{xdvi}
-\else
-  \ifnum\pdfoutput>0
-    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
-    \hypersetup{%
-      hypertexnames=false,%
-      colorlinks=true,%
-      linktocpage=true,%
-    }
-    % Specify the driver for the color package
-    \ExecuteOptions{pdftex}
-  \else
-    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
-    \hypersetup{%
-      hypertexnames=false%
-    }
-    % Specify the driver for the color package
-    \ExecuteOptions{dvips}
-    %\ExecuteOptions{xdvi}
-  \fi
 \fi
 
 \hyperbaseurl{}
@@ -91,12 +83,33 @@ Reference: \> \h{wvs-128}, \h{wvs-146}
 \parindent 0pt \parskip 6pt
 \vspace{-10pt}
 
-\section{Sphere}
+\section{Circumcenter}
 
-The centers of the two spheres defined by ECR vectors $\mathbf{A}$,
-$\mathbf{B}$, and $\mathbf{C}$ to three points, and the radius $r$, are on
-the line passing through the circumcenter of the three points, and normal
-to the plane containing the three points.
+Consider three points defined by ECR vectors $\mathbf{A}$, $\mathbf{B}$,
+and $\mathbf{C}$.
+
+The circumcenter $\mathbf{v}$ of a triangle is where the perpendicular
+bisectors of the sides meet.
+
+The vector from the midpoint of side $\mathbf{AB}$ to $\mathbf{v}$ is
+$\mathbf{v} - \frac12\, ( \mathbf{A} + \mathbf{B} )$.  The condition that it
+is perpendicular to the side $\mathbf{AB}$ is
+%
+\begin{equation}
+\left( \mathbf{v} - \frac12\, ( \mathbf{A} + \mathbf{B} ) \right)
+  \cdot ( \mathbf{B}-\mathbf{A} ) = 0 \,,
+\end{equation}
+
+and similarly for the sides $\mathbf{AC}$ and $\mathbf{BC}$.  This does
+not give three conditions to determine the components of $\mathbf{v}$,
+because they are dependent.  An additional condition is that $\mathbf{v}$
+is coplanar with $\mathbf{A}$, $\mathbf{B}$, and $\mathbf{C}$, \emph{viz.}
+%
+\begin{equation}
+( \mathbf{v} - \mathbf{A} ) \cdot \left(
+( \mathbf{B}-\mathbf{A} ) \times ( \mathbf{C}-\mathbf{A} ) \right) = 0
+\,.
+\end{equation}
 
 Arbitrarily choose $\mathbf{A}$ as a reference point, and define two
 vectors
@@ -107,14 +120,30 @@ vectors
 \mathbf{c} =\,& \mathbf{C} - \mathbf{A} \,. \\
 \end{split}\end{equation}
 
-A vector normal to the plane defined by the three points is
+Then
 %
 \begin{equation}
-\mathbf{n} = \mathbf{b} \times \mathbf{c} \,.
+\mathbf{n} = 
+( \mathbf{B}-\mathbf{A} ) \times ( \mathbf{C}-\mathbf{A} )
+= \mathbf{b} \times \mathbf{c}
 \end{equation}
-%
-The vector from $\mathbf{A}$ to the circumcenter $\mathbf{p}_0$ is given
-by
+
+is normal to the plane defined by $\mathbf{A}$, $\mathbf{B}$,
+and $\mathbf{C}$.
+
+If we choose $\mathbf{A}$ as the origin, i.e., $\mathbf{A} = 0$, we have
+three equations, \emph{viz.}
+
+\begin{equation}\begin{split}
+\mathbf{v} \cdot \mathbf{b} = \,& \frac12\, \mathbf{b} \cdot \mathbf{b}
+                            = |\mathbf{b}|^2 \\
+\mathbf{v} \cdot \mathbf{c} = \,& \frac12\, \mathbf{c} \cdot \mathbf{c}
+                            = |\mathbf{c}|^2 \\
+\mathbf{v} \cdot \mathbf{n} = \,& 0 \\
+\end{split}\end{equation}
+
+The solution of these equations gives the vector from $\mathbf{A}$ to the
+circumcenter, \emph{viz.}
 %
 \begin{equation}
 \mathbf{v} = \frac{(|\mathbf{b}|^2 \mathbf{c} - |\mathbf{c}|^2 \mathbf{b})
@@ -123,13 +152,18 @@ by
 \end{equation}
 %
 The ECR vector to the circumcenter of the three points is therefore
-$\mathbf{p}_0 = \mathbf{A} + \mathbf{v}$.
+$\mathbf{p}(0) = \mathbf{A} + \mathbf{v}$.
 
-The centers of the spheres defined by $\mathbf{A}$, $\mathbf{B}$,
-$\mathbf{C}$, and $r$ are on the line
+% ======================================================================
+\section{Sphere}
+
+The centers $\mathbf{p}(t)$ of the two spheres defined by$\mathbf{A}$,
+$\mathbf{B}$, and $\mathbf{C}$, and the radius $r$, are on the line
+passing through the circumcenter of the three points, and normal to the
+plane containing the three points, \emph{viz.}
 %
 \begin{equation}
-\mathbf{p}(t) = \mathbf{p}_0 + t \, \mathbf{n} =
+\mathbf{p}(t) = \mathbf{p}(0) + t \, \mathbf{n} =
  \mathbf{A} + \mathbf{v} + t \, \mathbf{n}\,\,
 \end{equation}
 %
@@ -147,7 +181,7 @@ points, say $\mathbf{A}$, to the center of the sphere is $r$.  Therefore
 The vector $\mathbf{n}$ is (by definition) orthogonal to $\mathbf{v}$
 because $\mathbf{v}$ is in the plane defined by $\mathbf{A}$,
 $\mathbf{B}$, and $\mathbf{C}$.  Therefore the second term above is zero,
-$|\mathbf{n}|^2 \, t^2 +| \mathbf{v} | ^2 = r^2$ and
+i.e., $|\mathbf{n}|^2 \, t^2 +| \mathbf{v} | ^2 = r^2$ and
 %
 \begin{equation}\label{six}
 t = \pm \sqrt{ \frac{r^2 - | \mathbf{v} | ^2}
@@ -164,7 +198,7 @@ upon the order in which the points are considered.
 
 The centers of two circles defined by ECR vectors $\mathbf{A}$ and
 $\mathbf{B}$ to two points, and the radius $r$,  are on a line
-perpendicular to $\mathbf{B}-\mathbf{A}$ at $\mathbf{p}_0 =
+perpendicular to $\mathbf{B}-\mathbf{A}$ at $\mathbf{p}(0) =
 \frac12(\mathbf{B}+\mathbf{A})$ and in the plane containing $\mathbf{A}$
 and $\mathbf{B}$.
 
@@ -172,13 +206,13 @@ The vector normal to the plane containing $\mathbf{A}$ and $\mathbf{B}$ is
 $\mathbf{n}_1 = \mathbf{A} \times \mathbf{B}$.  The vector perpendicular
 to $\mathbf{B}-\mathbf{A}$ and in the plane is $\mathbf{n} = \mathbf{n}_1
 \times ( \mathbf{B}-\mathbf{A})$.  The vector from $\mathbf{A}$ to
-$\mathbf{p}_0$ is $\mathbf{v} = \frac12(\mathbf{B}-\mathbf{A})$.
+$\mathbf{p}(0)$ is $\mathbf{v} = \frac12(\mathbf{B}-\mathbf{A})$.
 
 The centers of the circles defined by $\mathbf{A}$, $\mathbf{B}$, and $r$
 are on the line
 %
 \begin{equation}
-\mathbf{p}(t) = \mathbf{p}_0 + t\,\mathbf{n}
+\mathbf{p}(t) = \mathbf{p}(0) + t\,\mathbf{n}
 = \frac12(\mathbf{A} + \mathbf{B}) + t\,\mathbf{n}\,,
 \end{equation}
 %
@@ -194,7 +228,7 @@ $\mathbf{A}$, to the center of the circle is $r$.  Therefore
 \end{equation}
 %
 The vector $\mathbf{n}$ is (by definition) orthogonal to $\mathbf{v}$. 
-Therefore the second term above is zero, $|\mathbf{n}|^2 \, t^2 +|
+Therefore the second term above is zero, i.e., $|\mathbf{n}|^2 \, t^2 +|
 \mathbf{v} | ^2 = r^2$ and
 %
 \begin{equation}\label{nine}
@@ -223,16 +257,16 @@ circle involves a square root, not a Newton iteration as used in
 
 If the surface of the sphere is meant to approximate a surface above the
 Earth reference ellipsoid within the triangle defined by $\mathbf{ABC}$,
-compute the geodetic latitude of $\mathbf{p}_0$, and use the method
-described in \h{wvs-146} to compute $R^{\,\oplus}_{eq_s}$, either the
-radius of Gaussian curvature or the radius of mean curvature of the
-Earth's surface at the geocentric latitude $\lambda$ at the surface below
-$\mathbf{p}_0$ (which is not the same as the geocentric latitude of
-$\mathbf{p}_0$).  Then in Equation (\ref{six}), use $r =
-R^{\,\oplus}_{eq_s} + \hat{h}$, where $\hat{h}$ is the geodetic height
-interpolated from the geodetic heights at $\mathbf{A}$, $\mathbf{B}$, and
-$\mathbf{C}$ to $\mathbf{p}_0$, using barycentric interpolation as
-described in \h{wvs-128}.
+compute the geodetic latitude of $\mathbf{p}(0)$, and use the method
+described in \h{wvs-146} to compute $R^{\,\oplus}_{\text{eq}_s}$, either
+the radius of Gaussian curvature or the radius of mean curvature of the
+Earth's surface at the geocentric latitude $\phi$ at the surface below
+$\mathbf{p}(0)$ (which is not the same as the geocentric latitude of
+$\mathbf{p}(0)$).  Then in Equation (\ref{six}), use $r =
+R^{\,\oplus}_{\text{eq}_s} + \hat{h}$, where $\hat{h}$ is the geodetic
+height interpolated from the geodetic heights at $\mathbf{A}$,
+$\mathbf{B}$, and $\mathbf{C}$ to $\mathbf{p}(0)$, using barycentric
+interpolation as described in \h{wvs-128}.
 
 If the circle is meant to approximate a surface above the Earth reference
 ellipsoid within the plane defined by $\mathbf{A}$, $\mathbf{B}$, and the
@@ -252,6 +286,9 @@ $\mathbf{A}$ and $\mathbf{B}$.
 % $Id$
 
 % $Log$
+% Revision 1.3  2017/10/13 19:05:10  vsnyder
+% Add derivation for circle.  Explain application to forward model metrics.
+%
 % Revision 1.2  2016/02/24 01:33:36  vsnyder
 % Correct a typo
 %
