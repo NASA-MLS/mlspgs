@@ -13,8 +13,8 @@
 \topmargin -0.5in
 \textheight 9.00in
 
-\newcommand{\docname}{\bf wvs-030r7}
-\newcommand{\docdate}{10 April 2020}
+\newcommand{\docname}{\bf wvs-030r8}
+\newcommand{\docdate}{17 April 2020}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -640,7 +640,14 @@ r^2 = \det(\mathbf{M})^2
                         { | \mathbf{M} \mathbf{U} | } \right)^2 \,,
 \end{equation}
 
-where $\mathbf{N} = \mathbf{C}\times\mathbf{U}$.
+where $\mathbf{N} = \mathbf{C}\times\mathbf{U}$ and we used the identity
+
+\begin{equation}
+| \mathbf{a} \times \mathbf{b} |^2
+ = |\mathbf{a}|^2 \, |\mathbf{b}|^2 \sin^2\theta
+ = |\mathbf{a}|^2 \, |\mathbf{b}|^2 (1 - \cos^2\theta )
+ = |\mathbf{a}|^2 \, |\mathbf{b}|^2 - (\mathbf{a}\cdot\mathbf{b})^2 \,.
+\end{equation}
 
 For an oblate spheroid, if M is written as
 
@@ -725,6 +732,9 @@ $\mathcal{L}(t)$ intersects the Earth (see \h{wvs-131}).
 % $Id$
 
 % $Log$
+% Revision 1.9  2020/04/14 00:54:28  vsnyder
+% Improve discussion of value of r for oblate spheroid case
+%
 % Revision 1.8  2020/04/09 02:01:01  vsnyder
 % Remove final subsection because it was (mostly) wrong. Add remark to
 % compute geodetic coordinates from ECR using Fukushima's method. Include
