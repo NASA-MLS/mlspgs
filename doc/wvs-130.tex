@@ -12,8 +12,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-130}
-\newcommand{\docdate}{4 February 2016}
+\newcommand{\docname}{wvs-130r1}
+\newcommand{\docdate}{17 April 2020}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -98,41 +98,38 @@ $\mathbf{p}$ such that
 \end{equation}
 %
 where $\mathbf{p}_0$ is a point in the plane, and $\mathbf{n}$ is a normal
-vector to it.
-A line can be expressed as the set of points
+vector to it.  A line can be expressed as the set of points
 %
 \begin{equation}\label{two}
-\mathbf{p} = d \, \mathbf{l} + \mathbf{l}_0 \,,
+\mathbf{p} = \mathbf{C} + s \, \mathbf{U} \,,
 \end{equation}
 %
-where $\mathbf{l}_0$ is a point on the line and $\mathbf{l}$ is a vector
+where $\mathbf{C}$ is a point on the line and $\mathbf{U}$ is a vector
 along the line.  Substituting Equation (\ref{two}) into Equation
 (\ref{one}) gives
 %
 \begin{equation}
-(d \, \mathbf{l} + \mathbf{l}_0 - \mathbf{p}_0) \cdot \mathbf{n} = 0 \,.
+(\mathbf{C} + s \, \mathbf{U} - \mathbf{p}_0) \cdot \mathbf{n} = 0 \,.
 \end{equation}
 %
 Expanding gives
 %
 \begin{equation}
-d \, \mathbf{l} \cdot \mathbf{n} + 
-( \mathbf{l}_0 - \mathbf{p}_0) \cdot \mathbf{n} = 0 \,.
+s \, \mathbf{U} \cdot \mathbf{n} + 
+( \mathbf{C} - \mathbf{p}_0) \cdot \mathbf{n} = 0 \,.
 \end{equation}
 %
-Solving for $d$ gives
+Solving for $s$ gives
 %
 \begin{equation}
-d = \frac{( \mathbf{p}_0 - \mathbf{l}_0) \cdot \mathbf{n}}
-         { \mathbf{l} \cdot \mathbf{n}}
+s = \frac{( \mathbf{p}_0 - \mathbf{C}) \cdot \mathbf{n}}
+         { \mathbf{U} \cdot \mathbf{n}}
 \end{equation}
 
-If $\mathbf{l} \cdot \mathbf{n} = 0$ the line and plane are parallel. 
-If $( \mathbf{l}_0 - \mathbf{p}_0) \cdot \mathbf{n} = 0$ the line is
-within the plane.  Otherwise the line and plane do not intersect.
+If $\mathbf{U} \cdot \mathbf{n} = 0$ the line and plane are parallel. 
 
-If $\mathbf{l} \cdot \mathbf{n} \neq 0$ the line intersects the plane at
-the point $d \, \mathbf{l} + \mathbf{l}_0$.
+If $\mathbf{U} \cdot \mathbf{n} \neq 0$ the line intersects the plane at
+the point $\mathbf{p} = \mathbf{C} + s \, \mathbf{U}$.
 
 \label{lastpage}
 \vspace*{-0.1in} % Somehow, this causes lastpage to be defined
@@ -141,6 +138,9 @@ the point $d \, \mathbf{l} + \mathbf{l}_0$.
 % $Id$
 
 % $Log$
+% Revision 1.1  2016/02/05 03:36:20  vsnyder
+% Initial commit
+%
 % Revision 1.1  2016/02/05 00:26:55  vsnyder
 % Initial commit
 %
