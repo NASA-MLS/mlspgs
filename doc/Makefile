@@ -133,7 +133,8 @@ vpath %.jpg $(DOCDIR)
 .SUFFIXES: .o .tex .dvi .pdf .eps .f .jpg .obj
 .tex.dvi:
 	echo "\def\dvidir{../dvi}" | cat - $< > $*.temp
-	echo "\def\pdfdir{../pdf}" | cat - $*.temp > $(TEXDIR)/$<
+	echo "\def\logdir{$(LOGDIR)}" | cat - $*.temp > $*.temp2
+	echo "\def\pdfdir{../pdf}" | cat - $*.temp2 > $(TEXDIR)/$<
 	echo "\end" | latex $(TEXDIR)/$<; \
 	echo "\end" | latex $(TEXDIR)/$<
 	mv $@ $(DVIDIR)
@@ -150,7 +151,7 @@ vpath %.jpg $(DOCDIR)
 	fi
 	mv $@ $(PDFDIR)
 	mv `${REECHO} $*.log $*.aux $*.out` $(LOGDIR)
-	rm -f $*.dvi $*.temp
+	rm -f $*.dvi $*.temp*
 
 .f.o:
 	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
@@ -251,6 +252,9 @@ update:
 
 # ========================================================================
 # $Log$
+# Revision 1.10  2019/09/19 22:19:05  pwagner
+# Includes default build rules for .obj files
+#
 # Revision 1.9  2019/06/27 21:08:47  pwagner
 # make clean more thorough
 #
