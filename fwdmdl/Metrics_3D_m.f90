@@ -539,10 +539,10 @@ contains
           cc = c + v(3)
           ! Get the geodetic coordinates of the circumcenter of facet V
           geod = cc%geod()
-          ! Get the radius of curvature at CC.  We assume that the geodetic
-          ! height of the boundary surface is so small that the radius of
-          ! curvature is essentially the same as at the Earth's surface.
-          r = radius_of_curvature_mean ( geod%lat )
+          ! Get the radius of curvature at CC.
+          ! Add the average of the heights at the vertices to the radius of
+          ! curvature.
+          r = radius_of_curvature_mean ( geod%lat ) + sum ( geod_f%v ) / 3.0
           ! Get the center of the sphere having mean radius of curvature R
           ! and including V, and center nearest the Earth's center
           call center_of_sphere ( v(3), cc, n, n2, r, center )
@@ -781,6 +781,9 @@ contains
 end module Metrics_3D_m
 
 ! $Log$
+! Revision 2.16  2020/04/21 01:24:15  vsnyder
+! Add average heights of vertices of facet to radius of curvature at surface
+!
 ! Revision 2.15  2018/08/15 01:14:54  vsnyder
 ! Move S_QTM_t here from QTM_Interpolation_Weights_3D_m.  Add Copy_Eta_to_Eta.
 ! Add Fill.  Revise calculations that depended upon list representation of
