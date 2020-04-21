@@ -785,26 +785,8 @@ Barycentric.eps: Barycentric.obj
 Barycentric.pdf: Barycentric.obj
 
 wvs-157.dvi: wvs-157.tex wvs-157-circ.eps wvs-146.dvi
-	cp $(LOGDIR)/wvs-146.aux $(DOCDIR)
-	echo "\def\dvidir{../dvi}" | cat - $< > $*.temp
-	echo "\def\pdfdir{../pdf}" | cat - $*.temp > $(TEXDIR)/$<
-	echo "\end" | latex $(TEXDIR)/$<; \
-	echo "\end" | latex $(TEXDIR)/$<
-	mv $@ $(DVIDIR)
 
 wvs-157.pdf: wvs-157.tex wvs-157-circ.pdf wvs-146.pdf
-	cp $(LOGDIR)/wvs-146.aux $(DOCDIR)
-	if [ "$*" != "index" ]; then \
-	  echo "\end" | latex $(TEXDIR)/$*.tex; \
-	  echo "\end" | latex $(TEXDIR)/$*.tex; \
-	  mv $*.dvi $(DVIDIR); \
-	  dvipdf $(DVIDIR)/$*.dvi; \
-	else \
-	  pdflatex $(TEXDIR)/$*.tex; \
-	fi
-	mv $@ $(PDFDIR)
-	mv `${REECHO} $*.log $*.aux $*.out` $(LOGDIR)
-	rm -f $*.dvi $*.temp
 
 wvs-157-circ.eps: wvs-157-circ.obj
 
@@ -813,6 +795,12 @@ wvs-157-circ.pdf: wvs-157-circ.obj
 wvs-151-QTM-1.eps: wvs-151-QTM-1.obj
 
 wvs-151-QTM-1.pdf: wvs-151-QTM-1.obj
+
+# According to Van, many more depend on wvs-146
+# We discovered these by grep 'wvs-146' doc/*.tex
+wvs-030.pdf wvs-131.pdf wvs-132.pdf wvs-157.pdf wvs-158.pdf wvs-159.pdf: wvs-146.pdf
+
+wvs-030.dvi wvs-131.dvi wvs-132.dvi wvs-157.dvi wvs-158.dvi wvs-159.dvi: wvs-146.dvi
 
 iy-005.aux: iy-005.tex
 	latex iy-005.tex
@@ -837,6 +825,9 @@ iy-006.bbl: yanovsky.bib iy-006.aux
 
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.49  2020/01/15 00:23:38  pwagner
+# Attempt to correct ties between wvs-157 and wvs-146
+#
 # Revision 1.48  2020/01/09 21:15:36  pwagner
 # Can now build changed wvs-146.tex and new wvs-157.tex
 #
