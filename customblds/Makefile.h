@@ -796,11 +796,19 @@ wvs-151-QTM-1.eps: wvs-151-QTM-1.obj
 
 wvs-151-QTM-1.pdf: wvs-151-QTM-1.obj
 
-# According to Van, many more depend on wvs-146
 # We discovered these by grep 'wvs-146' doc/*.tex
 wvs-030.pdf wvs-131.pdf wvs-132.pdf wvs-157.pdf wvs-158.pdf wvs-159.pdf: wvs-146.pdf
 
 wvs-030.dvi wvs-131.dvi wvs-132.dvi wvs-157.dvi wvs-158.dvi wvs-159.dvi: wvs-146.dvi
+
+# We discovered these by grep 'externaldocument' doc/*.tex
+wvs-030.pdf: wvs-131.pdf
+
+wvs-030.dvi: wvs-131.dvi
+
+wvs-102.pdf wvs-104.pdf : wvs-095.pdf wvs-100.pdf
+
+wvs-102.dvi wvs-104.dvi : wvs-095.dvi wvs-100.dvi
 
 iy-005.aux: iy-005.tex
 	latex iy-005.tex
@@ -825,6 +833,9 @@ iy-006.bbl: yanovsky.bib iy-006.aux
 
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.50  2020/04/21 00:07:27  pwagner
+# Removed custom build for wvs-157; added more dependncies on wvs-146
+#
 # Revision 1.49  2020/01/15 00:23:38  pwagner
 # Attempt to correct ties between wvs-157 and wvs-146
 #
