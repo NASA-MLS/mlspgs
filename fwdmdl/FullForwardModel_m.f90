@@ -631,6 +631,7 @@ contains
     use Physics, only: SpeedOfLight
     use PointingGrid_M, only: PointingGrids, PointingGrid_T, &
       & Dump_Pointing_Grid
+    use Radius_of_Curvature_m, only: Radius_of_Curvature_Normal
     use Read_Mie_m, only: IWC_S, T_S
     use Slabs_sw_m, only: AllocateSLABS, DestroyCompleteSLABS, SLABS_Struct
     use Sparse_Eta_m, only: Sparse_Eta_t
@@ -911,10 +912,10 @@ contains
     real(rp), target :: Mag_Path(s_p*max_f,4)  ! Magnetic field on path
     real(rp), target :: Rad_Avg_Path(max_c,s_pfa*noUsedChannels) ! Freq. Avgd.
                                                ! LBL radiance along the path
-    real(rp) :: R_Eq  ! Radius of equivalent circular Earth tangent to the surface
-                      ! of the Earth reference ellipsoid at the surface location
-                      ! of the tangent point, in the plane defined by the line of
-                      ! sight and the center of the Earth.
+    real(rp) :: R_Eq  ! Radius of equivalent circular Earth tangent to the
+                      ! surface of the Earth reference ellipsoid at the surface
+                      ! location of the tangent point, in the plane defined by
+                      ! the line of sight and the center of the Earth.
     real(rp) :: Radiances(noUsedChannels,no_tan_hts) ! (noChans,Nptg)
 !     real(rp) :: RADIANCES_DIFF(noUsedChannels,no_tan_hts) ! (noChans,Nptg)     ! IGOR
     real(rp) :: Spect_N_Path(max_f,size(fwdModelConf%lineWidth_TDep)) ! Line Width Temperature Dependence
@@ -1121,7 +1122,7 @@ contains
     type (VectorValue_T), target :: Q_PhiTan
     type (VectorValue_T) :: Q_TanHt
 
-    ! Coarse-zeta grid tangent quantities interpreted from intermediate
+    ! Coarse-zeta grid tangent quantities interpolated from intermediate
     ! minor-frame tangent quantities calculated from LOS, for QTM.
     real(rp) :: EarthRadC_sq(no_tan_hts) ! Square of minor axis of plane-projected
                                          ! ellipse, meters^2
@@ -1425,6 +1426,8 @@ contains
           & call output( '(Skipping loop of pointings)', advance='yes' )
       else if ( .not. FwdModelConf%generateTScat ) then
 
+
+
         do ptg_i = 1, no_tan_hts
 
           vel_rel = est_los_vel(ptg_i) / speedOfLight
@@ -1436,26 +1439,28 @@ contains
             & call frequency_setup_2 ( (1.0_rp - vel_rel) * &
             & whichPointingGrid%oneGrid(grids(ptg_i))%frequencies )
 
-          ! Calculate R_Eq in the orbit plane projected ellipse, for which
-          ! Earthradc_sq has the same value for all tangent points in the
-          ! non-QTM case because they're all in the same plane, but might have
-          ! different values for each tangent point in the QTM case because
-          ! they're not necessarily all in the same plane.
-          r_eq = get_r_eq ( tan_phi(ptg_i), earthradc_sq(ptg_i) )
-
           ! Do the ray tracing
           if ( .not. usingQTM ) then
+            ! Calculate R_Eq in the orbit plane projected ellipse, for which
+            ! Earthradc_sq has the same value for all tangent points in the
+            ! non-QTM case because they're all in the same plane.
+            r_eq = get_r_eq ( tan_phi(ptg_i), earthradc_sq(ptg_i) )
             call one_pointing ( ptg_i, vel_rel, r_eq, tan_phi=tan_phi(ptg_i), &
               &                 tan_press=tan_press(ptg_i), &
               &                 est_scGeocAlt=est_scGeocAlt(ptg_i) )
           else
+
+            ! For the QTM case, R_Eq might have different values for each
+            ! tangent point in the QTM.
+            r_eq = radius_of_curvature_normal ( QTM_paths(ptg_i)%lines(2,1), &
+                                              & tan_pt_geod(ptg_i)%surf_ECR(.false.) )
             call one_pointing ( ptg_i, vel_rel, r_eq,               &
               &                 tan_loc=tan_pt_geod(ptg_i),         &
               &                 qtm=QTM,                            &
               &                 tan_press=tan_press(ptg_i),         &
               &                 est_scGeocAlt=est_scGeocAlt(ptg_i), &
               &                 path=QTM_paths(ptg_i), s=s,         &
-              &                 f_and_v=F_and_V(ptg_i) )
+              &                 f_and_v=F_and_V(min(ptg_i,size(F_And_V))) )
           end if
         end do ! ptg_i
 
@@ -1735,7 +1740,7 @@ contains
             & orbit_plane_minor_axis_sq ( orbIncline%values(1,MAF) * deg2rad )
           ! Create coarse-grid tangent-point values, all the same
           earthradc_sq = &
-            & orbit_plane_minor_axis_sq ( orbIncline%values(1,maf) * deg2rad )
+            & orbit_plane_minor_axis_sq ( orbIncline%values(1,MAF) * deg2rad )
         else
           ! At pressure levels PTan, interpolate
           ! phitan,  scgeocalt,     losvel,      Q_EarthRadC_sq, Q_TanHt to
@@ -2420,623 +2425,7 @@ contains
     end subroutine Frequency_Setup_2
 
   ! .............................................  Generate_TScat  .....
-    subroutine Generate_TScat ( FwdModelConf )
-
-      ! Generate tables of TScat and its derivatives w.r.t. temperature
-      ! and IWC.  The geometric calculations are described in wvs_074.
-
-      use Constants, only: PI
-      use Convolve_All_m, only: Store_Other_Deriv, Store_Temperature_Deriv
-      use ForwardModelConfig, only: ForwardModelConfig_T, QtyStuff_t
-      USE Load_SPS_Data_m, only: FindInGrid
-      use MLSNumerics, only: Coefficients, InterpolateArraySetup, &
-        & InterpolateArrayTeardown
-      use MLSSignals_m, only: GetNameOfSignal
-      use Molecules, only: L_CloudIce
-      use Read_Mie_m, only: DP_DIWC, DP_DT, F_S, IWC_S, P, T_S, Theta_S
-      use Sort_m, only: Sortp
-      use Sparse_Eta_m, only: Sparse_Eta_t
-      use Tscat_Support_m, only: Interpolate_P_To_Theta_E
-      use VectorsModule, only: Dump
-
-      type(forwardModelConfig_T), intent(in) :: FwdModelConf
-
-      real(rp) :: DPhi         ! Scat_Phi - Phi_Ref
-      real(rp) :: DPhi_Xi      ! dPhi - xi = psi in wvs-074
-      real(rp) :: DXi          ! acos(cos(xis(sort_xi(ptg_i)) - xis(sort_xi(ptg_i-1))))
-      type(sparse_eta_t) :: Eta_s ! Coeffs to Scat_Tan_Phi
-      real(rp) :: Phi_Old      ! Used during iteration for Scat_Tan_Phi
-      real(rp) :: Phi_Ref      ! Tangent phi for the scattered ray
-      real(rp) :: Rads(noUsedChannels,4*nlvl+2*scatteringAngles%template%noSurfs)
-      real(r4) :: K_Atmos_TScat(noUsedChannels,size(rads,2),s_a*size(grids_f%values))
-      real(rp) :: K_Atmos_p(s_a*size(grids_f%values)) ! K_Atmos convolved with P
-      real(r4) :: K_Temp_TScat(noUsedChannels,size(rads,2),s_t*sv_t_len)
-      real(rp) :: K_Temp_p(s_t*sv_t_len) ! K_Temp convolved with P
-      real(rp) :: LogIWC       ! log10(iwc)
-      real(rp) :: P_On_Xi(size(rads,2)) ! P * sin(abs(theta)) interpolated
-                               ! to scattering point IWC and T for each xi
-      real(rp) :: dP_dIWC_On_Xi(size(rads,2)) ! dP/dIWC * sin(abs(theta)) interpolated
-                               ! to scattering point IWC and T for each xi
-      real(rp) :: dP_dT_On_Xi(size(rads,2)) ! dP/dT * sin(abs(theta)) interpolated
-                               ! to scattering point IWC and T for each xi
-      real(rp) :: R_Eq         ! Equivalent circular earth radius at Phi_Ref
-      real(rp) :: Scat_Ht      ! km from center of equivalent circular earth
-      real(rp) :: Scat_Phi     ! Of the scattering point, radians
-      real(rp) :: Scat_Tan_Ht  ! Of the ray to be scattered, Km from center
-      real(rp) :: Scat_Tan_Phi ! Of the ray to be scattered
-      real(rp) :: Scat_Zeta    ! Of the scattering point
-      real(rp) :: Theta        ! Angle from direct to reflected
-                               ! earth-intersecting ray
-      real(rp) :: Theta_e(2*size(theta_s)+1) ! Extended to -theta_s
-      real(rp) :: Vel_Rel      ! LOS velocity / speed of light, along scattered
-                               ! ray
-      real(rp) :: Xi           ! Scattering angle
-      real(rp) :: Xi_Sub       ! Angle from horizon to scattering point's
-                               ! subsurface point
-      real(rp) :: Xis(size(rads,2))
-
-      ! Interpolating factors
-      type(sparse_eta_t) :: Eta_IWC, Eta_T, Eta_T_IWC
-
-      integer :: Beg_Pos_Theta ! 1 if theta_s(1) /= 0, else 2
-!       integer :: IWC_IX        ! Which IWC index for phase function
-!       integer :: T_IX          ! Which Temperature index for phase function
-
-      integer :: F_I           ! Frequency (channel) index
-      logical :: Forward       ! Half-ray is an earth-intersecting ray
-                               ! in the forward direction, xi >= xi_sub
-      integer :: Freq_Ix(noUsedChannels) ! Frequency indices for phase tables
-      integer :: Grid_IWC      ! Index in grids_f%values for cloud
-      integer :: Grid_T        ! Index in grids_tmp%values
-      integer :: I             ! Loop inductor
-      integer :: I_R           ! Index in Rad, Xis, eventually number of them
-      integer :: I_Z           ! Index of scattering point zeta in Z_psig
-      integer :: Me = -1       ! String index for trace
-      integer :: N_Theta_e     ! size(theta_e) or size(theta_e)-1, depending
-                               ! upon whether theta_e covers 0..360 or lacks one
-      integer :: Phi_i         ! Loop inductor and subscript
-      integer :: Ptg_i, Ptg_j  ! Loop inductors and subscripts
-      logical :: Reject        ! Reject the scattering point
-      integer :: Sort_Xi(size(Xis)) ! Permutation vector to sort Xis
-      integer :: Surf_i        ! Surface (first) subscript for TScat%values,
-                               ! which combines frequency and zeta index
-      logical :: Switch42      ! "42" appears in Switches
-      integer :: Zeta_i        ! Loop inductor and subscript for TScat zetas
-      integer :: Zeta_f        ! I_z on find grid
-
-      character(128) :: Sig    ! Signal name, scratch for debug output
-
-      type (coefficients(rp)) :: Coeffs_Theta_e_Xi ! To interpolate from Theta_e to Xi
-      type (QtyStuff_T) :: TScats(noUsedChannels)
-      type (VectorValue_T), pointer :: TScat
-
-      real(rp), parameter :: PIX2 = 2.0_rp * pi
-      real(rp), parameter :: PID2 = 0.5 * pi
-
-      call trace_begin ( me, 'Generate_TScat', cond=toggle(emit) )
-      switch42 = switchDetail(switches,"42") > -1
-      if ( switch42 ) write ( 42, '(a)' ) &
-        & 'Phi_Ref  Scat_Phi  Scat_Ht   Scat_Zeta      Xi     Rad    Signal'
-
-      ! Work out by-channel stuff
-
-      ! Get channel centers if we don't already have them
-      if ( fwdModelConf%do_freq_avg .and. fwdModelConf%anyLBL(sx) .and. .not. &
-        &  fwdModelConf%anyPFA(sx) ) &
-          & call get_channel_centers ( thisSideband, channelCenters )
-
-      if ( print_TScat .or. print_TScat_detail > -1 ) &
-        & call output ( "Signals used for TScat computation:", advance="yes" )
-      do f_i = 1, noUsedChannels
-        ! Vector quantities for results, one for each channel
-        TScats(f_i)%qty => GetQuantityForForwardModel ( &
-          & fwdModelOut, quantityType=l_TScat, &
-          & signal=fwdModelConf%signals(channels(f_i)%signal)%index, &
-          & sideband=sideband, config=fwdModelConf )
-        TScats(f_i)%qty%values = 0.0 ! Is this needed?
-        if ( print_TScat .or. print_TScat_detail > -1 ) then
-          call GetNameOfSignal ( fwdModelConf%signals(channels(f_i)%signal), sig, &
-            & channel=channels(f_i)%used, sideband=thisSideband )
-          call output ( trim(sig), advance="yes" )
-        end if
-        ! Choose which frequency panel of phase function to use (don't
-        ! bother interpolating because the change as a result of the change
-        ! of frequency within a single radiometer is small).  Make sure it's
-        ! close enough.
-        freq_ix(f_i) = minloc(abs(channelCenters(f_i)-f_s),1)
-        if ( abs(channelCenters(f_i)-f_s(freq_ix(f_i))) > fwdModelConf%frqTol ) then
-          call output ( f_i, before="f_i = " )
-          call output ( freq_ix(f_i), before=", freq_ix(f_i) = " )
-          call output ( f_s(freq_ix(f_i)), before=", f_s(freq_ix(f_i)) = " )
-          call output ( channelCenters(f_i), before=", channelCenters(f_i) = " )
-          call output ( fwdModelConf%frqTol, before=", fwdModelConf%frqTol = ", &
-            & advance='yes' )
-          call MLSMessage ( MLSMSG_Error, moduleName, &
-            & 'In TScat computation, phase function frequency coordinate too far from desired frequency' )
-        end if
-      end do
-
-      ! Get TScat quantity for first signal, to access its grids (they all have
-      ! the same grids)
-      TScat => TScats(1)%qty
-
-      vel_rel = LOSVel%values(FwdModelConf%TScatMIF,MAF) / speedOfLight
-
-      phi_ref = mod(phitan%values(FwdModelConf%TScatMIF,MAF),360.0_r8) * deg2rad
-      r_eq = get_R_eq ( phi_ref, earthradc_sq(1) )
-
-      if ( print_TScat_detail > 0 .and. .not. print_TScat_deriv > -1 .and. .not. &
-        & print_incopt .and. .not. print_incrad .and. print_path <= 0 ) then
-        call output ( rad2deg*phi_ref, before="Phi_Ref = " )
-        call output ( r_eq, before=", R_eq = ", advance="yes" )
-        ! Debugging output header
-        call output ( TScat_Detail_Heading, advance="yes" )
-      end if
-
-      ! Create an array of theta's extended to negative values, onto which
-      ! to interpolate the xi's.  The phase function is sign-symmetric on
-      ! theta_s, but the radiances are not sign-symmetric on xi's.
-      theta_e(1:size(theta_s)) = -theta_s(size(theta_s):1:-1)
-      beg_pos_theta = merge(2,1,theta_s(1)==0.0)
-      theta_e(size(theta_s)+1:2*size(theta_s)+1-beg_pos_theta) = &
-        & theta_s(beg_pos_theta:)
-      ! Set up theta_e to cover 2 pi, to prepare it for periodic spline
-      ! interpolation to the input abscissa set.
-      n_theta_e = 2*size(theta_s) + 1 - beg_pos_theta
-      if ( abs(theta_e(n_theta_e)-theta_e(1)-pix2) > 0.001 ) then
-        n_theta_e = n_theta_e + 1
-        theta_e(n_theta_e) = theta_e(n_theta_e) + pix2
-      end if
-
-      ! Loop over observer zetas
-      do zeta_i = 1, TScat%template%noSurfs
-        scat_zeta = TScat%template%surfs(zeta_i,1)
-
-        ! Find index of Z_psig element closest to scat_zeta.
-        ! Assuming observer zetas got put into Z_psig as they should have been,
-        ! this should hit one element exactly.  An absolute test is good enough
-        ! because |zeta| is usually < 3.
-        i_z = minloc(abs(z_psig-scat_zeta),1)
-        if ( abs(z_psig(i_z)-scat_zeta) > &
-          & sqrt(max(epsilon(scat_zeta),epsilon(z_psig))) ) then
-          call output ( scat_zeta, before="Scattering point Zeta ", advance="yes" )
-          call output ( i_z, before="Zeta grid Z_Psig(" )
-          call output ( z_psig(i_z), before=") = " )
-          call dump ( z_psig, name=", Entire Zeta grid" )
-          call MLSMessage ( MLSMSG_Error, moduleName, &
-            & 'Scattering point Zeta does not appear to be in Zeta grid' )
-        end if
-        zeta_f = (i_z-1) * ngp1 + 1 ! On Z_GLgrid, for H_GLGrid
-
-        ! Loop over observer phis
-        do phi_i = 1, TScat%template%noInstances
-
-          reject = .false.
-
-          if ( iwc%values(zeta_i,phi_i) <= 0.0 ) then ! no IWC, no scattering
-            call output ( mod(real(TScat%template%phi(1,phi_i)),360.0), &
-              & before='Scattering point at (' )
-            call output ( z_glgrid(zeta_f), before=',', &
-              & after=') rejected because there is no IWC there.', advance='yes' )
-            reject = .true.
-          end if
-
-          if ( .not. reject ) then
-            logIWC = log10(iwc%values(zeta_i,phi_i))
-
-            ! Get interpolating factors for scattering-point IWC to phase function
-            ! IWC_s for Mie tables.
-            ! IWC_s(iwc_ix) <= logIWC < IWC_s(iwc_ix+1_).
-            reject = logIWC < IWC_s(1) .or. logIWC > IWC_s(size(IWC_s))
-            if ( .not. reject ) then
-              ! Get interpolating factors for scattering-point temperature to phase
-              ! function temperatures.
-              ! T_s(T_ix) <= temp%values(zeta_i,phi_i) < T_s(T_ix+1).
-              reject = temp%values(zeta_i,phi_i) < T_s(1) .or. &
-                     & temp%values(zeta_i,phi_i) > T_s(size(T_s))
-            end if
-
-            ! Reject the scattering point if IWC or T is outside the Mie table range.
-            if ( reject ) then
-              call output ( phi_i, before='Scattering point at (' )
-              call output ( zeta_f, before=',' )
-              call output ( mod(real(TScat%template%phi(1,phi_i)),360.0), before=') = (' )
-              call output ( z_glgrid(zeta_f), format='(f5.2)', before=',', &
-                & after=') rejected because T or IWC is outside Mie table range.' )
-              call output ( temp%values(zeta_i,phi_i), format='(f6.2)', before='  T = ' )
-              call output ( logIWC, before=', log10(IWC) = ', advance='yes' )
-            end if
-          end if
-
-          if ( .not. reject ) then
-
-            scat_phi = mod(TScat%template%phi(1,phi_i),360.0_r8) * deg2rad
-
-            grid_IWC = findInGrid ( grids_f, scat_phi, scat_zeta, l_cloudIce )
-            grid_t = findInGrid ( grids_tmp, scat_phi, scat_zeta )
-
-            dPhi = scat_phi - phi_ref
-            ! Interpolate in H_GLGrid at (phi_i,zeta_f) to get Scat_Ht
-            call eta_s%eta ( Grids_tmp%phi_basis, scat_phi )
-            scat_ht = eta_s%row_dot_vec ( 1, h_glgrid(zeta_f,:) )
-
-            ! Subsurface scattering points handled by explicit angles
-            if ( scat_ht < r_eq ) then
-              call output ( mod(real(TScat%template%phi(1,phi_i)),360.0), &
-                & before='Scattering point at (' )
-              call output ( z_glgrid(zeta_f), before=',' )
-              call output ( scat_ht, format='(f8.3)', &
-                & before=') rejected because its height (' )
-              call output ( r_eq, format='(f8.3)', &
-                & before=') is below the Earth surface (', after=').', advance='yes' )
-              reject = .true.
-            end if
-          end if
-
-          ! Fill TScat and derivatives at rejected scattering points
-          ! with zeros
-          if ( reject ) then
-            do f_i = 1, noUsedChannels
-              TScat => TScats(f_i)%qty
-              surf_i = channels(f_i)%used - channels(f_i)%origin + 1 + &
-                     & TScat%template%noChans * (zeta_i-1)
-              TScat%values(surf_i,phi_i) = 0.0
-              if ( atmos_der ) then
-                k_atmos_p = 0.0
-                call store_other_deriv ( phi_i, surf_i, TScat, &
-                                       & beta_group%qty, Grids_f, k_atmos_p, &
-                                       & F_and_V, jacobian )
-              end if
-              if ( temp_der ) then
-                k_temp_p = 0.0
-                call store_temperature_deriv ( phi_i, surf_i, TScat, &
-                                       & temp, grids_tmp, k_temp_p, &
-                                       & F_and_V, jacobian )
-              end if
-            end do
-            cycle
-          end if
-
-          ! First do pointings to each zeta surface below the scattering
-          ! point zeta.  Pointings to specified angles aren't guaranteed to
-          ! be tangent at a pressure in the zeta grid.
-
-          i_r = 0
-          do ptg_i = 1, i_z
-
-            ! Handle earth-intersecting rays using explicit angles
-            if ( ptg_i < surfaceTangentIndex ) cycle
-
-            ! Compute scat_tan_ht and scat_tan_phi for the ray to be scattered.
-            ! Start with scat_tan_phi == phi_ref and iterate.
-
-            scat_tan_phi = phi_ref
-            do i = 1, 20
-              phi_old = scat_tan_phi
-
-              ! Interpolate in H_GLGrid at (phi_i,zeta_f) to get Scat_Tan_Ht
-              call eta_s%eta ( Grids_tmp%phi_basis, scat_tan_phi )
-              scat_tan_ht = eta_s%row_dot_vec ( 1, h_glgrid(zeta_f,:) ) + &
-                          & r_eq
-
-              ! Compute scattering angle and tan phi for the ray to be
-              ! scattered.  This is measured anti clockwise from the ray from
-              ! the scattering point to the external observer, so the
-              ! "downward" ray is at a negative angle.
-              dPhi_xi = acos(min(scat_tan_ht,scat_ht)/scat_ht)
-              xi = dPhi - dPhi_xi
-              scat_tan_phi = phi_ref + xi
-              if ( abs(scat_tan_phi-phi_old) < 0.0001 ) exit
-            end do
-
-            ! Handle earth-intersecting rays using explicit angles
-            if ( scat_tan_ht < r_eq ) cycle
-
-            ! Rays from the scattering point can't be tangent to higher altitudes
-
-            if ( scat_tan_ht > scat_ht ) cycle
-
-            ! If we're doing frequency averaging, get the frequencies we need
-            ! for this pointing.
-
-            if ( associated(whichPointingGrid) ) &
-              & call frequency_setup_2 ( (1.0_rp - vel_rel) * &
-                & whichPointingGrid%oneGrid(grids(ptg_i))%frequencies )
-
-            ! Do the ray tracing and radiative transfer, four times: once each
-            ! for forward and reverse scattering, and once each for upwelling
-            ! and downwelling rays
-            call one_tscat_ray ( ptg_i, 1, vel_rel, scat_tan_phi,    &
-              &                  scat_zeta, scat_phi, scat_ht,       &
-              &                  r_eq, xi, xis, rads, k_atmos_TScat, &
-              &                  k_temp_TScat, i_r, rev=.true. )
-
-            xi = xi + pi
-            call one_tscat_ray ( ptg_i, 2, vel_rel, scat_tan_phi,    &
-              &                  scat_zeta, scat_phi, scat_ht,       &
-              &                  r_eq, xi, xis, rads, k_atmos_TScat, &
-              &                  k_temp_TScat, i_r, rev=.false. )
-
-            if ( abs(dPhi_xi) > epsilon(1.0) ) then
-              ! The next two rays are different from the previous two
-              xi = dPhi_xi + dPhi - pi
-              ! Put xi in -180..180:
-              if ( abs(xi) > pi ) xi = xi - sign(pix2,xi)
-              scat_tan_phi = scat_tan_phi + 2.0 * dphi_xi
-              call one_tscat_ray ( ptg_i, 3, vel_rel, scat_tan_phi,    &
-                &                  scat_zeta, scat_phi, scat_ht,       &
-                &                  r_eq, xi, xis, rads, k_atmos_TScat, &
-                &                  k_temp_TScat, i_r, rev=.false. )
-
-              xi = xi + pi
-              ! Put xi in -180..180:
-              if ( abs(xi) > pi ) xi = xi - sign(pix2,xi)
-              call one_tscat_ray ( ptg_i, 4, vel_rel, scat_tan_phi,    &
-                &                  scat_zeta, scat_phi, scat_ht,       &
-                &                  r_eq, xi, xis, rads, k_atmos_TScat, &
-                &                  k_temp_TScat, i_r, rev=.true. )
-            end if
-
-          end do ! ptg_i
-
-          ! Now do pointings to specified angles, but only those that result
-          ! in earth-intersecting rays.  Use the surface-pressure frequency
-          ! pointing grid for all pointings.
-
-          ! If we're doing frequency averaging, get the frequencies we need.
-
-          if ( associated(whichPointingGrid) ) &
-            & call frequency_setup_2 ( (1.0_rp - vel_rel) * &
-              & whichPointingGrid%oneGrid(grids(1))%frequencies )
-
-          do ptg_j = 1, scatteringAngles%template%noSurfs
-
-            xi = scatteringAngles%template%surfs(ptg_j,1) * deg2rad
-
-            ! Reject angles not pointing downward
-
-            if ( xi > 0.0 .or. xi < -pi ) cycle
-
-            ! Compute scat_tan_ht and scat_tan_phi for the ray to be scattered.
-
-            ! Rays that aren't earth-intersecting rays must be handled by
-            ! specified tangent zeta (else there is no unique tangent
-            ! point), not by specified angle.  They could be handled by
-            ! solving for tangent zeta using inverse interpolation in the
-            ! h_ref array, and then adding that zeta to the grid, but it's
-            ! much easier just to reject them.
-
-            scat_tan_ht = scat_ht * abs(cos(dPhi - xi)) ! -pi <= xi <= 0 here
-            if ( scat_tan_ht > r_eq ) cycle
-            theta = 2.0 * acos(scat_tan_ht/r_eq)
-
-            scat_tan_ht = scat_tan_ht - r_eq
-
-            xi_sub = dPhi - pid2
-            forward = xi >= xi_sub
-            scat_tan_phi = phi_ref + xi
-            if ( xi < xi_sub ) scat_tan_phi = scat_tan_phi - pi
-            scat_tan_phi = mod(scat_tan_phi,pix2) ! pix2 = 2.0*pi
-            if ( scat_tan_phi < -pi ) then
-              scat_tan_phi = scat_tan_phi + pix2
-            else if ( scat_tan_phi > pi ) then
-              scat_tan_phi = scat_tan_phi - pix2
-            end if
-
-            if ( print_TScat_detail > 0 ) then
-              ! "sig" is a handy otherwise-unused character variable.
-              write ( sig, "('scat_tan_ht = ', f10.4,', scat_tan_phi = ', f7.2, &
-              & ', xi_sub =', f7.2, ', theta = ', f7.2)" ) &
-              & scat_tan_ht, rad2deg*scat_tan_phi, rad2deg*xi_sub, rad2deg*theta
-              call output ( trim(sig), advance='yes' )
-            end if
-
-            ! Do the ray tracing and radiative transfer, once for the ray
-            ! at angle xi, and once for xi + 180 degrees.
-            call one_tscat_ray ( 1, -1, vel_rel, scat_tan_phi,       &
-              &                  scat_zeta, scat_phi, scat_ht,       &
-              &                  r_eq, xi, xis, rads, k_atmos_TScat, &
-              &                  k_temp_TScat, i_r, scat_tan_ht, forward )
-
-            xi = xi + pi
-            call one_tscat_ray ( 1, -2, vel_rel, scat_tan_phi,       &
-              &                  scat_zeta, scat_phi, scat_ht,       &
-              &                  r_eq, xi, xis, rads, k_atmos_TScat, &
-              &                  k_temp_TScat, i_r, scat_tan_ht, forward )
-
-          end do ! ptg_j
-
-          if ( print_TScat ) then
-            call output ("Phi_Ref  Scat_Phi   Scat_Ht  Scat_Zeta     Xi    Radiances", advance="yes" )
-            ! ptg_i and sig are just conveniently otherwise unused variables here
-            do ptg_i = 1, i_r
-              write ( sig, "(f7.2,f9.2,f12.4,f8.3,f11.2)" ) rad2deg*phi_ref, &
-                & rad2deg*scat_phi, scat_ht, scat_zeta, rad2deg*xis(ptg_i)
-              call output ( trim(sig) )
-              do f_i = 1, noUsedChannels
-                call output ( rads(f_i,ptg_i), format="(f9.3)" )
-              end do ! f_i
-              call newLine
-            end do ! ptg_i
-          end if
-          if ( switch42 ) then ! Output to unit 42
-            do ptg_i = 1, i_r
-              do f_i = 1, noUsedChannels
-                call GetNameOfSignal ( fwdModelConf%signals(channels(f_i)%signal), &
-                  & sig, channel=channels(f_i)%used, sideband=thisSideband )
-                write ( 42, "(f7.2,f9.2,f12.4,f8.3,f11.2,f9.3,2x,a)" ) &
-                  & rad2deg*phi_ref, rad2deg*scat_phi, scat_ht, scat_zeta, &
-                  & rad2deg*xis(ptg_i), rads(f_i,ptg_i), trim(sig)
-              end do
-            end do
-          end if
-
-          ! Sort the xis in preparation for interpolating.
-          call sortp ( xis(:i_r), 1, i_r, sort_xi(:i_r) )
-
-          !{ Interpolate the phase function and its IWC and temperature
-          !  derivatives to IWC and Temperature at the scattering point,
-          !  and the $\xi$'s, and convolve the interpolated phase function
-          !  with the interpolated radiances.  The interpolated values are
-          !  in order according to the sorted $\xi$'s.
-          !
-          !  Let $x$ be temperature, $y$
-          !  be IWC, and $z$ be the phase function.
-          !
-          ! Let $\xi_1 = \frac{x-x_0}{x_1-x_0}$, $\xi_0 = \frac{x_1-x}{x_1-x_0} =
-          ! 1-\xi_1$,
-          ! $\eta_1 = \frac{y-y_0}{y_1-y_0}$, $\eta_0 = \frac{y_1-y}{y_1-y_0} =
-          ! 1-\eta_1$,
-          ! $\xi = [\xi_0,\xi_1]^T$, $\eta = [\eta_0,\eta_1]^T$, and
-          ! $Z = \left| \begin{array}{cc} z_{00} & z_{01} \\ z_{10} & z_{11}\\
-          !             \end{array} \right|$.
-          !
-          ! The interpolation can be done either by interpolating in $x$ to
-          ! $z_c = \xi_0 z_{00} + \xi_1 z_{10}$ and $z_d = \xi_0 z_{01} +
-          ! \xi_1 z_{11}$ and then in $y$ to $z = \eta_0 z_c + \eta_1 z_d$,
-          ! or interpolating in $y$ to $z_a = \eta_0 z_{00} + \eta_1 z_{01}$
-          ! and $z_b = \eta_0 z_{10} + \eta_1 z_{11}$ and then in $x$ to $z =
-          ! \xi_0 z_a + \xi_1 z_b$.  The two orders of interpolation are
-          ! equivalent, and when expanded give
-          !%
-          ! $
-          ! z(x,y) = \xi_0 \eta_0 z_{00} + \xi_1 \eta_0 z_{10} +
-          ! \xi_0 \eta_1 z_{10} + \xi_1 \eta_1 z_{11},
-          ! $
-          !%
-          ! which can be expressed in matrix-vector form as $\xi^T Z \eta$.
-
-          ! Get bilinear interpolation coefficients from T_s X IWC_s to LogIWC
-          ! and temp%values(zeta_i,phi_i)
-          call eta_iwc%eta ( IWC_s, logIWC )
-          call eta_t%eta ( T_s, temp%values(zeta_i,phi_i) )
-          call eta_t_iwc%eta ( eta_t, eta_iwc )
-
-          ! Get spline interpolation coefficients from Theta_e to Xis
-          call interpolateArraySetup ( theta_e(:n_theta_e), xis(sort_xi(:i_r)), &
-            & method='S', coeffs=coeffs_Theta_e_Xi, extrapolate='P' )
-          do f_i = 1, noUsedChannels
-            TScat => TScats(f_i)%qty
-            surf_i = channels(f_i)%used - channels(f_i)%origin + 1 + &
-                   & TScat%template%noChans * (zeta_i-1)
-            ! Interpolate P to scattering point IWC and temperature, and
-            ! angles Xi at which radiative transfer was done.  The normalizing
-            ! factor of abs(sin(theta)) is applied in interpolate_P_to_theta_e.
-            call interpolate_P_to_theta_e ( p(:,:,:,freq_ix(f_i)), Eta_t_iwc, &
-              & Theta_e(:n_theta_e), Beg_Pos_Theta, Xis(sort_xi(:i_r)), &
-              & coeffs_Theta_e_Xi, P_on_Xi(:i_r) )
-            ! Interpolate P's derivatives
-            if ( atmos_der ) &
-              & call interpolate_P_to_theta_e ( dP_dIWC(:,:,:,freq_ix(f_i)), &
-                & Eta_t_iwc, Theta_e(:n_theta_e), Beg_Pos_Theta, &
-                & Xis(sort_xi(:i_r)), coeffs_Theta_e_Xi, &
-                & dP_dIWC_on_Xi(:i_r) )
-            if ( temp_der ) &
-              & call interpolate_P_to_theta_e ( dP_dT(:,:,:,freq_ix(f_i)), &
-                & Eta_t_iwc, Theta_e(:n_theta_e), Beg_Pos_Theta, &
-                & Xis(sort_xi(:i_r)), coeffs_Theta_e_Xi, &
-                & dP_dT_on_Xi(:i_r) )
-
-            !{ Compute $\int_{-\pi}^\pi \, f(\xi) P(\xi)\, \text{d}\xi$ using
-            ! trapezoidal quadrature, without assuming equal abscissa spacing,
-            ! and including the factor of 0.5 in Equation 4.50 in the 4 June
-            ! 2004 cloud forward model ATBD.  Start with the wrap-around panel.
-            ! We use acos(cos(x-y)) so as not to worry about negative angles,
-            ! angles near 360 degrees that ought to be near zero degrees, etc.
-            dXi = acos(cos(xis(sort_xi(1)) - xis(sort_xi(i_r))) )
-            TScat%values(surf_i,phi_i) = &
-              & 0.25 * ( p_on_xi(i_r)*rads(f_i,sort_xi(i_r)) + &
-              &          p_on_xi(  1)*rads(f_i,sort_xi(  1)) ) * dXi
-            if ( atmos_der ) then
-              k_atmos_p =  &
-                & 0.25 * ( p_on_xi(i_r)*k_atmos_TScat(f_i,sort_xi(i_r),:) + &
-                &          p_on_xi(  1)*k_atmos_TScat(f_i,sort_xi(  1),:) ) * dXi
-              if ( grid_IWC /= 0 ) &
-                k_atmos_p(grid_IWC) = k_atmos_p(grid_IWC) + &
-                  & 0.25 * ( dP_dIWC_on_Xi(i_r)*rads(f_i,sort_xi(i_r)) + &
-                  &          dP_dIWC_on_Xi(  1)*rads(f_i,sort_xi(  1)) ) * dXi
-            end if
-            if ( temp_der ) then
-              k_temp_p =  &
-                & 0.25 * ( p_on_xi(i_r)*k_temp_TScat(f_i,sort_xi(i_r),:) + &
-                &          p_on_xi(  1)*k_temp_TScat(f_i,sort_xi(  1),:) ) * dXi
-              if ( grid_t /= 0 ) then
-                k_temp_p(grid_t) = k_temp_p(grid_t) + &
-                  & 0.25 * ( dP_dT_on_Xi(i_r)*rads(f_i,sort_xi(i_r)) + &
-                  &          dP_dT_on_Xi(  1)*rads(f_i,sort_xi(  1)) ) * dXi
-              end if
-            end if
-            do ptg_i = 2, i_r ! Now do the rest.
-              dXi = xis(sort_xi(ptg_i)) - xis(sort_xi(ptg_i-1))
-              TScat%values(surf_i,phi_i) = TScat%values(surf_i,phi_i) + &
-                & 0.25 * ( p_on_xi(ptg_i-1)*rads(f_i,sort_xi(ptg_i-1)) + &
-                &          p_on_xi(ptg_i  )*rads(f_i,sort_xi(ptg_i  )) ) * dXi
-              if ( atmos_der ) then
-                k_atmos_p = k_atmos_p + &
-                  & 0.25 * ( p_on_xi(ptg_i-1)*k_atmos_TScat(f_i,sort_xi(ptg_i-1),:) + &
-                  &          p_on_xi(ptg_i  )*k_atmos_TScat(f_i,sort_xi(ptg_i  ),:) ) * &
-                  &        dXi
-                if ( grid_IWC /= 0 ) &
-                  k_atmos_p(grid_IWC) = k_atmos_p(grid_IWC) + &
-                    & 0.25 * ( dP_dIWC_on_Xi(ptg_i-1)*rads(f_i,sort_xi(ptg_i-1)) + &
-                    &          dP_dIWC_on_Xi(ptg_i  )*rads(f_i,sort_xi(ptg_i  )) ) * &
-                    &        dXi
-              end if
-              if ( temp_der ) then
-                k_temp_p = k_temp_p + &
-                  & 0.25 * ( p_on_xi(ptg_i-1)*k_temp_TScat(f_i,sort_xi(ptg_i-1),:) + &
-                  &          p_on_xi(ptg_i  )*k_temp_TScat(f_i,sort_xi(ptg_i  ),:) ) * &
-                  &        dXi
-                if ( grid_t /= 0 ) then
-                  k_temp_p(grid_t) = k_temp_p(grid_t) + &
-                    & 0.25 * ( dP_dT_on_Xi(ptg_i-1)*rads(f_i,sort_xi(ptg_i-1)) + &
-                    &          dP_dT_on_Xi(ptg_i  )*rads(f_i,sort_xi(ptg_i  )) ) * &
-                    &        dXi
-                end if
-              end if
-            end do ! ptg_i = 2, i_r
-
-            !{ It isn't necessary to divide by
-            ! $\int \, P(\xi) \sin\xi \, \text{d}\xi$
-            ! because that normalization was done when the $P$ tables were
-            ! constructed.
-            if ( atmos_der ) &
-              & call store_other_deriv ( phi_i, surf_i, TScat, &
-                                       & beta_group%qty, Grids_f, k_atmos_p, &
-                                       & F_and_V, jacobian )
-            if ( temp_der ) then
-              call store_temperature_deriv ( phi_i, surf_i, TScat, &
-                                       & temp, grids_tmp, k_temp_p, &
-                                       & F_and_V, jacobian )
-              if ( print_TScat_deriv > 1 ) then
-                call output ( f_i, before='K_temp_TScat(' )
-                call output ( i_r, before=',sort_xi(:' )
-                call dump ( k_temp_TScat(f_i,sort_xi(:i_r),:), name='),:)' )
-                call dump ( rad2deg*Xis(sort_xi(:i_r)), name='Xis' )
-                call dump ( P_on_Xi(:i_r), name='P_on_Xi' )
-                call dump ( dP_dT_on_Xi(:i_r), name='dP_dT_on_Xi' )
-                call dump ( k_temp_p, name='k_temp_p' )
-                call output ( surf_i, before='TScat%values(' )
-                call output ( phi_i, before=',' )
-                call output ( TScat%values(surf_i,phi_i), before=') = ', advance='yes' )
-                if ( print_TScat_deriv > 2 ) stop
-              end if
-            end if
-          end do ! f_i = 1, noUsedChannels
-          call interpolateArrayTeardown ( coeffs_Theta_e_Xi )
-
-        end do ! phi_i
-      end do ! zeta_i
-
-      if ( dump_TScat ) then
-        do f_i = 1, noUsedChannels
-          call dump ( TScats(f_i)%qty%values, name = 'TScat' )
-        end do
-      end if
-
-      call Trace_End ( 'Generate_TScat', cond=toggle(emit) )
-
-    end subroutine Generate_TScat
+    include 'Generate_TScat.f9h'
 
   ! ........................................  Get_Channel_Centers  .....
     subroutine Get_Channel_Centers ( ThisSideband, ChannelCenters )
@@ -3125,7 +2514,7 @@ contains
                                           ! undefine components' association status
       real(rp), intent(in) :: T_Path_c(:) ! Temperature on coarse path
       real(rp), intent(out) :: T_Script(:)! Planck function, Delta_B in some notes
-      real(rp), intent(out) :: TT_Path_c(:) ! tscat on coarse path
+      real(rp), intent(out) :: TT_Path_c(:) ! TScat on coarse path
       real(rp), intent(out) :: Tanh1_c(:) ! tanh(frqhk/t_path_c)
       real(rp), intent(out) :: W0_Path_c(:) ! w0 on coarse path
       real(rp), intent(in) :: Z_Path(:)   ! -Log10(Pressures) along complete path
@@ -3304,46 +2693,7 @@ contains
         incoptdepth(i_end+1:npc) = 0.0 ! in case not integrating full path
 
         if ( fwdModelConf%useTScat .and. .not. pfa ) then
-          ! Determine the frequency subscript for the Mie tables.
-          Mie_frq_index = Mie_freq_index ( frq, fwdModelConf%frqTol )
-          ! Each Mie table applies to many frequencies, so don't interpolate
-          ! again if not needed.
-          if ( Mie_frq_index /= prev_Mie_frq_ind ) then
-            call interpolate_Mie ( Mie_frq_index, eta_T_IWC_path_c,       &
-              & atmos_der, temp_der, beta_c_e_path_c(:npc),               &
-              & beta_c_s_path_c(:npc), dBeta_c_a_dIWC_path_c(:npc),       &
-              & dBeta_c_s_dIWC_path_c(:npc), dBeta_c_a_dT_path_c(:npc),   &
-              & dBeta_c_s_dT_path_c(:npc) )
-            prev_Mie_frq_ind = Mie_frq_index
-          end if
-          ! Ignore contribution of PFA Alpha to w0.
-          w0_path_c = beta_c_s_path_c(:npc) / ( alpha_path_c + beta_c_e_path_c(:npc) )
-
-          call Get_TScat_Setup ( fwdModelConf, FwdModelIn, FwdModelExtra, &
-           &                     FwdModelOut, Sideband, Frq, MAF, phiTan, &
-           &                     L2PC, RadInL2PC, dX, TScat, Grids_TScat )
-
-          ! Get TScat and derivatives on the path from the L2PC model
-          phiWindowRadians = deg2rad * &
-            & ( maxval(phiTan%values(:,windowFinish)) - &
-            &   minval(phiTan%values(:,windowStart)) )
-          call Get_TScat ( fwdModelIn, fwdModelExtra,                          &
-            &              phiWindowRadians, MAF, phiTan,                      &
-            &              frq, z_coarse, phi_path_c, tan_pt_c, grids_f,       &
-            &              L2PC, dX, TScat, radInL2PC, grids_TScat, tt_path_c, &
-            &              atmos_der, temp_der, dTScat_df, dTScat_dT )
-
-          call Get_TScat_Teardown ( dX, TScat, Grids_TScat )
-
-          ! Get combined clear-sky and TScat Delta B (t_script)
-          ! Don't restrict this to (i_start:i_end) because the end points
-          ! at 1 and npc are special.
-          call two_d_t_script_cloud ( t_path_c(i_start:i_end),    &
-            & tt_path_c(i_start:i_end), w0_path_c(i_start:i_end), &
-            & spaceRadiance%values(1,1), frq, &
-            & t_script(i_start:i_end), &
-            & B(i_start:i_end) )
-
+          include 'Using_TScat.f9h'
         else ! Not TScat model
 
           !{ Compute $\Delta B_{ij}$ for $j$ = Frq_i.  See page 42 in
@@ -3908,6 +3258,7 @@ contains
 
       integer, intent(in) :: Ptg_i     ! Tangent height pointing index
       real(rp), intent(in) :: Vel_Rel  ! Vel_z / speedOfLight
+       real(rp), intent(in) :: R_EQ    ! Equivalent Earth Radius at true surface
       real(rp), intent(in), optional :: Tan_Phi     ! orbit angle at tangent, radians
       class(h_v_geod), intent(in), optional :: Tan_Loc   ! (lon,Lat,ht)
                                        ! degrees and km, for QTM case
@@ -3954,7 +3305,6 @@ contains
       integer :: J              ! Do index
       integer :: Me = -1        ! String index for trace
       integer :: Me_Etc = -1    ! String index for trace
-      real(rp) :: R_EQ          ! Equivalent Earth Radius at true surface
       real(rp) :: REQ_S  ! Equivalent Earth Radius at height reference surface
       real(rp) :: Tan_Ht ! Geometric tangent height, km, from equivalent Earth center
       real(rp) :: Tan_Ht_S ! Tangent height above 1 bar reference surface, km
@@ -4002,7 +3352,7 @@ contains
 
       ! Compute the height of the pressure reference surface and the
       ! tangent height above that surface.
-      if ( .not. present(QTM) ) then
+      if ( .not. usingQTM ) then
         if ( associated(surfaceHeight) ) then
           call tangent_metrics ( tan_phi, grids_tmp%phi_basis,      &
             &                    h_glgrid, tan_ind_f,               & ! in
@@ -4108,7 +3458,7 @@ contains
       if ( tan_ht_s <= 0.0 ) e_rflty = earthRefl%values(1,1)
 
       ! If we're integrating from a scattering point, find where it is.
-      if ( present(scat_zeta) .and. .not. present(QTM) ) then
+      if ( present(scat_zeta) .and. .not. usingQTM ) then
         call Find_Scattering_Point ( Scat_Zeta, Scat_Phi, Scat_Ht, Xi, &
                                    & Scat_Index, Tan_Phi, Npc, Npf, &
                                    & Print_Incopt, Print_IncRad, &
@@ -4603,61 +3953,7 @@ contains
     end subroutine One_Pointing
 
   ! ..............................................  One_TScat_Ray  .....
-    subroutine One_TScat_Ray ( Ptg_i, Which, Vel_Rel, Scat_Tan_Phi,        &
-      &                        Scat_Zeta, Scat_Phi, Scat_Ht, Use_R_Eq,     &
-      &                        Xi, Xis, Rads, K_Atmos_TScat, K_Temp_TScat, &
-      &                        I_R, Scat_Tan_Ht, Forward, Rev)
-
-      ! Do one of the four TScat rays for the current pointing.
-
-      integer, intent(in) :: Ptg_i          ! Pointing index for One_Pointing
-      integer, intent(in) :: Which          ! Which call got us here
-      real(rp), intent(in) :: Vel_Rel       ! LOS Vel / speed of light
-      real(rp), intent(in) :: Scat_Tan_Phi  ! of scattering point
-      real(rp), intent(in) :: Scat_Zeta     ! of scattering point
-      real(rp), intent(in) :: Scat_Phi      ! of scattering point
-      real(rp), intent(in) :: Scat_Ht       ! of scattering point
-      real(rp), intent(in) :: Use_R_Eq      ! R_Eq to use instead of at tangent
-      real(rp), intent(in) :: Xi            ! Scattering angle, radians
-      real(rp), intent(inout) :: Xis(:)     ! Store Xi in Xis(I_R) if OK
-      real(rp), intent(inout) :: Rads(:,:)  ! Store radiance in Rads(:,I_R)
-      real(r4), intent(inout) :: K_Atmos_TScat(:,:,:) ! Store partials in K_Atmos_TScat(:,I_R,:)
-      real(r4), intent(inout) :: K_Temp_TScat(:,:,:) ! Store partials in K_Temp_TScat(:,I_R,:)
-      integer, intent(inout) :: I_R         ! Index in Xis, Update if OK
-      real(rp), intent(in), optional :: Scat_Tan_Ht ! Tangent height above
-                                            ! earth geometric surface, km, for
-                                            ! subsurface rays
-      logical, intent(in), optional :: Forward      ! For subsurface rays
-                                            ! "xi >= xi_sub" in Generate_TScat
-      logical, intent(in), optional :: Rev  ! Reverse the integration order
-
-      integer :: My_Scat_Index
-
-      ! Do the ray tracing for all the signals
-      call one_pointing ( ptg_i, vel_rel, use_r_eq, scat_tan_phi,            &
-        &                 scat_zeta=scat_zeta, scat_phi=scat_phi,            &
-        &                 scat_ht=scat_ht, xi=xi, scat_index=my_scat_index,  &
-        &                 scat_tan_ht=scat_tan_ht, forward=forward, rev=rev, &
-        &                 which=which )
-
-      if ( my_scat_index <= 0 ) return ! No ray to trace
-
-      i_r = i_r + 1
-      xis(i_r) = xi
-      rads(:,i_r) = radiances(:,ptg_i)
-      if ( atmos_der ) k_atmos_TScat(:,i_r,:) = k_atmos(:,ptg_i,:)
-      if ( temp_der ) then
-        k_temp_TScat(:,i_r,:) = k_temp(:,ptg_i,:)
-        if ( print_TScat_deriv > -1 ) then
-          call output ( i_r, before='For TScat ray ' )
-          call output ( rad2deg*xi, before=' at angle ', format='(f7.2)' )
-          call output ( i_r, before=' k_temp_TScat(:,', after=',:) ', advance='yes' )
-          call dump ( k_temp_TScat(:,i_r,:) )
-          call dump ( rads(:,i_r), name='Rads' )
-        end if
-      end if
-
-    end subroutine One_TScat_Ray
+    include 'One_TScat_Ray.f9h'
 
   end subroutine FullForwardModelAuto
 
@@ -4675,6 +3971,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.406  2020/02/07 01:11:08  pwagner
+! Offers advice and sympathy if fwdmdl config fails superset test
+!
 ! Revision 2.405  2019/10/07 20:05:53  vsnyder
 ! Get WrongTrapezoidal from the config
 !
