@@ -50,6 +50,9 @@
 # houses the product files,
 # then as a final step repack and augment them with netCDF attributes.
 
+# As an alternative, if NETCDFCONVERT is defined and executable,
+# use that instead.
+
 # usage: see (1) above
 
 #------------------------------- extant_files ------------
@@ -156,6 +159,79 @@ mycp()
     fi
   done
   set +o noglob
+}
+
+#------------------------------- mega_buck ------------
+#
+# Function to force multiple-evaluation of its second arg
+# i.e., $$..$color (where the number of $ signs is n)
+# usage: mega_buck n color
+
+mega_buck()
+{
+   # Trivial case (n is 0)
+   if [ "$1" -lt 1 ]
+   then
+     mega_buck_result="$2"
+   elif [ "$2" = "" ]
+   then
+     mega_buck_result="$2"
+   else
+     mega_buck_result=`pr_mega_buck $1 $2`
+   fi
+}
+      
+pr_double_buck()
+{
+      eval echo $`echo $1`
+}
+      
+pr_mega_buck()
+{
+      number=0
+      mega_buck_temp=$2
+      while [ "$number" -lt "$1" ]
+      do
+        mega_buck_temp=`pr_double_buck $mega_buck_temp`
+        number=`expr $number + 1`
+      done
+      echo $mega_buck_temp
+}
+      
+#---------------------------- lhs_eq_rhs
+#
+# Function to assign second arg to first: lhs=rhs
+# where (lhs rhs) = ($1 $2)
+# if given optional third arg "n"
+# assigns $$..$lhs = $$..$rhs
+
+lhs_eq_rhs()
+{
+
+      if [ $# -lt 3 ]
+      then
+         eval "$1"="'"$2"'"
+      else
+         mega_buck $3 $1
+         lhs=$mega_buck_result
+         mega_buck $3 $2
+         rhs=$mega_buck_result
+         eval "$lhs"="'"$rhs"'"
+      fi
+}
+
+#---------------------------- set_if_not_def
+#
+# Function to assign second arg to first only if first not already defined
+set_if_not_def()
+{
+     # echo $@
+     mega_buck 1 $1
+     # echo $mega_buck_result
+     if [ "$mega_buck_result" = "" -o "$mega_buck_result" = '$' ]
+     then
+       lhs_eq_rhs $@
+     fi
 }
 
 #------------------------------- run_mlsl2_ntk ------------
@@ -365,15 +441,8 @@ fi
 
 # In case you used the ep=(PGE_BINARY_DIR)
 # in the host file
-if [ "$PGE_BINARY_DIR" = "" ]
-then
-  PGE_BINARY_DIR=$HOME/pvm3/bin/LINUX
-fi
-
-if [ "$PGE_BINARY" = "" ]
-then
-  PGE_BINARY=$PGE_BINARY_DIR/mlsl2
-fi
+set_if_not_def PGE_BINARY_DIR  $HOME/pvm3/bin/LINUX
+set_if_not_def PGE_BINARY      $PGE_BINARY_DIR/mlsl2
 
 if [ ! -x "$PGE_BINARY"  ]
 then
@@ -391,9 +460,10 @@ then
   exit 1
 fi
 
-H5REPACK=$PGE_BINARY_DIR/h5repack
-NETCDFAUGMENT=$PGE_BINARY_DIR/aug_hdfeos5
-MISALIGNMENT=$PGE_BINARY_DIR/misalignment
+set_if_not_def H5REPACK       $PGE_BINARY_DIR/h5repack
+set_if_not_def NETCDFAUGMENT  $PGE_BINARY_DIR/aug_hdfeos5
+set_if_not_def NETCDFCONVERT  $PGE_BINARY_DIR/l2gp2nc4
+set_if_not_def MISALIGNMENT   $PGE_BINARY_DIR/misalignment
 if [ ! -x "$H5REPACK" ]
 then
   H5REPACK=$MLSTOOLS/h5repack
@@ -405,6 +475,10 @@ fi
 if [ ! -x "$NETCDFAUGMENT" ]
 then
   NETCDFAUGMENT=$MLSTOOLS/aug_eos5
+fi
+if [ ! -x "$NETCDFCONVERT" ]
+then
+  NETCDFCONVERT=$MLSTOOLS/l2gp2nc4
 fi
 if [ ! -x "$MISALIGNMENT" ]
 then
@@ -471,6 +545,9 @@ env | sort >> "$MLSL2PLOG"
 ulimit -s unlimited
 ulimit -a
 NORMAL_STATUS=2
+
+# ------------------ launch the level 2 run ----------------------
+# ----------------------------------------------------------------
 if [ "$UsingPCF" != "" ]
 then
   # Use sed to convert slavetmplt.sh into an executable script
@@ -520,6 +597,8 @@ else
 
   run_mlsl2_ntk
 fi
+# ----------------------------------------------------------------
+
 logit SAVEJOBSTATS $SAVEJOBSTATS
 logit masterlog $masterlog
 logit PGE_SCRIPT_DIR/jobstat-sips.sh $PGE_SCRIPT_DIR/jobstat-sips.sh
@@ -563,13 +642,111 @@ then
   mv "$LOGFILE".1 "$LOGFILE"
 fi
 
+# ------------------ check for misalignment ----------------------
+# ----------------------------------------------------------------
+file=`extant_files *L2GP-DGG_*.he5`
+# Check products for misaligned geolocations
+# If they are found to be misaligned, set return_status to 99
+if [ -x "$MISALIGNMENT" -a "$file" != "" ]
+then
+  a=`$MISALIGNMENT -silent $file`
+  if [ "$a" != "" ]
+  then
+    logit $a
+    logit "Misalignment detected"
+    logit hide_files *.he5 *.met *.xml *.h5
+    hide_files *.he5 *.met *.xml *.h5
+    return_status=99
+  fi
+fi
+
+# ------------------ convert the product file format ----------------------
+# ----------------------------------------------------------------
+# Convert hdfeos product files to netcdf
+# A trick: the hdfeos file names already end in '.nc' so
+# we'll need to mv them so they end in .he5
+# When we're done we'll have 2 versions of each std. prod. file:
+#   product.he5      hdfeos
+#   product.nc       NetCDF4
+# 
+# Possible improvements:
+# Option to end file names with ".nc4" instead of ".nc"
+# Option to hide the hdfeos versions so they aren't copied
+# to the scf or ingested into the database
+if [ -x "$NETCDFCONVERT" -a "$UsingPCF" != "" ]
+then
+  files=`extant_files *L2GP-*.nc`
+  if [ "$files" = "" ]
+  then
+    if [ -d "outputs" ]
+    then
+      cd "outputs"
+      files=`extant_files *L2GP-*.nc`
+    fi
+  fi
+  for file in $files
+  do
+    hname=`echo $file | sed 's/\.nc$/\.he5/'`
+    logit "mving $file to $hname"
+    mv $file $hname
+    logit "Converting $hname to $file"
+    $NETCDFCONVERT $hname
+    # The tool insists on naming its output file "something.nc4"
+    # So we must rename it yet again to "something.nc"
+    # What a shameful mess we've made
+    nc4name=`echo $hname | sed 's/\.he5$/\.nc4/'`
+    logit "mving $nc4name to $file"
+    mv $nc4name $file
+  done
+fi
+# ----------------------------------------------------------------
+
+
+# ------------------ nccopy ----------------------
+# ----------------------------------------------------------------
+# h5repack doesn't work properly with NetCDF files
+# Instead we must use nccopy
+if [ -x "$NCCOPY" ]
+then
+  files=`extant_files *.nc`
+  if [ "$files" = "" ]
+  then
+    if [ -d "outputs" ]
+    then
+      cd "outputs"
+      files=`extant_files *.nc`
+    fi
+  fi
+  for file in $files
+  do
+    if [ -w "$file" ]
+    then
+      packed="$file".p
+      if [ "$GZIPLEVEL" != "" ] 
+      then
+        filter="-d $GZIPLEVEL"
+      else
+        filter=""
+      fi
+      logit "nccopying $file into $packed"
+      logit $NCCOPY  $filter "$file" "$packed"
+      $NCCOPY  $filter "$file" "$packed"
+      # Here we could insert some check involving h5diff if we were dubious
+      mv "$packed" "$file"
+    fi
+  done
+fi
+# ----------------------------------------------------------------
+
+# ------------------ repack ----------------------
+# ----------------------------------------------------------------
+# repack level 2 product files to speed things up
 # Last chance to find h5repack
 if [ ! -x "$H5REPACK" ]
 then
   H5REPACK=$HDFTOOLS/h5repack
 fi
 
-# repack level 2 product files to speed things up
 if [ -x "$H5REPACK" ]
 then
   files=`extant_files *L2FWM*.h5 *L2GP-[A-CE-Z]*.he5 *L2GP-DGG_*.he5 *L2AUX-[A-C]*.h5 *L2AUX-DGM_*.h5`
@@ -578,7 +755,7 @@ then
     if [ -d "outputs" ]
     then
       cd "outputs"
-      files=`extant_files *L2FWM*.h5 *L2GP-[A-CE-Z]*.he5 *L2GP-DGG_*.he5 *L2AUX-[A-C]*.h5 *L2AUX-DGM_*.h5`
+      files=`extant_files *L2FWM*.h5 *L2GP-*.he5 *L2GP-*.nc *L2AUX-[A-C]*.h5 *L2AUX-DGM_*.h5`
     fi
   fi
   for file in $files
@@ -600,9 +777,16 @@ then
     fi
   done
 fi
+# ----------------------------------------------------------------
 
+
+# ------------------ augment ----------------------
+# ----------------------------------------------------------------
 # augment level 2 product files to make them netcdf-compatible
 # (must not reverse order of repack, augment)
+# After we become more comfortable with l2gp2nc4 actually
+# converting the hdfeos formats to NetCDF4 we may delete
+# the following part
 if [ -x "$NETCDFAUGMENT" -a "$UsingPCF" != "" ]
 then
   files=`extant_files *L2GP-[A-CE-Z]*.he5 *L2GP-DGG_*.he5`
@@ -623,22 +807,9 @@ then
     fi
   done
 fi
+# ----------------------------------------------------------------
 
-file=`extant_files *L2GP-DGG_*.he5`
-# Check products for misaligned geolocations
-# If they are found to be misaligned, set return_status to 99
-if [ -x "$MISALIGNMENT" -a "$file" != "" ]
-then
-  a=`$MISALIGNMENT -silent $file`
-  if [ "$a" != "" ]
-  then
-    logit $a
-    logit "Misalignment detected"
-    logit hide_files *.he5 *.met *.xml *.h5
-    hide_files *.he5 *.met *.xml *.h5
-    return_status=99
-  fi
-fi
+# ----------------------------------------------------------------
 
 # End toolkitless run's log file with a grep-able sign-off message
 if [ "$UsingPCF" = "" ]
@@ -655,6 +826,9 @@ else
 fi
 
 # $Log$
+# Revision 1.40  2019/07/17 20:23:04  pwagner
+# Try to makee error mesgs more helpful and conspicuous
+#
 # Revision 1.39  2019/06/27 21:07:05  pwagner
 # Print sign-off at end of toolkitless run; use logit mechanism
 #
