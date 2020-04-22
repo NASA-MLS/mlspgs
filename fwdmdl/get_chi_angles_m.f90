@@ -50,8 +50,8 @@ contains
                                         ! geodetic angle in radians
     real(rp), intent(in) :: Req         ! equivalent earth radius in km
     real(rp), intent(in) :: Elev_offset ! radiometer pointing offset in radians
-!                                         positive is towards the earth,
-!                                         negative is towards space.
+                                        ! positive is towards the earth,
+                                        ! negative is towards space.
     real(rp), intent(in) :: dh_dz       ! dh/dz  at the tangent point
 
   ! outputs
@@ -82,58 +82,69 @@ contains
   ! Start code:
 
     ht = Req + tan_ht
-    Np1 = 1.0_rp + tan_refr_index
+    Np1 = ( 1.0_rp + tan_refr_index )         ! N_t
 
     !{ Empirical formula (8.5): $H_s = R_s + 38.9014\,
-    !  \sin 2(\phi_t-51^\circ\hspace{-4.2pt}.\hspace{1pt}6814 )$
+    !  \sin 2(\phi_t-51^\circ\hspace{-4.2pt}.\hspace{1pt}6814 )$\\
+    !  This only works for EMLS at its current orbit inclination!
 
     hs = sc_geoc_alt + ampl * sin(2.0*(phi_tan-phas))
-    x = min ( Np1 * ht / hs, 1.0_rp )
+    x = min ( Np1 / ( 1.0_rp + inst_refr_index ) * ht / hs, 1.0_rp )
 
     !{ $\sin \chi^{\text{refr}}_{\text{eq}} =
     !    \frac{\mathcal{N}_t}{\mathcal{N}_s} \frac{H_t}{H_s}
     !    \frac{ \text{min} ( H_t, H^{\oplus}_t ) }{H^{\oplus}_t}$,
-    !  where $\mathcal{N}_s$ is the index of refraction at the spacecraft,
-    !  which is 1.0, and therefore need not be written explicitly.  This is
-    !  a bit different from Equation (8.3) in the 19 Aug 2004 ATBD because
-    !  that equation does not consider the case of $H_t < H^{\oplus}_t$.
+    !  where $\mathcal{N}_s$ is the index of refraction at the spacecraft. 
+    !  This is a bit different from Equation (8.3) in the 19 Aug 2004 ATBD
+    !  because that equation does not consider the case of $H_t <
+    !  H^{\oplus}_t$, and assumes the instrument is in orbit, and therefore
+    !  $N_s = 1.0$.
 
     ! ptg_angle = asin(x * min(ht,Req)/Req) - elev_offset
 
     if ( tan_ht >= 0.0_rp ) then      ! min(ht,Req)/Req = 1
 
       !{ $H_t \geq H^{\oplus}_t: ~
-      !  \sin \chi^{\text{refr}}_{\text{eq}} = N_t \frac{ H_t }{ H_s }; ~
-      !  \frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }{ \text{d} H_t}
+      !  \sin \chi^{\text{refr}}_{\text{eq}} =
+      !    \frac{N_t}{N_s} \frac{ H_t }{ H_s }; $ \\
+      !  $ \frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }{ \text{d} H_t}
       !    \cos \chi^{\text{refr}}_{\text{eq}} =
-      !    \frac{1}{H_s} \left ( N_t +
+      !    \frac{1}{N_s H_s} \left ( N_t +
       !     \frac{\text{d} N_t}{\text{d} H_t } H_t \right) =
-      !    \frac{1}{H_s} \left ( N_t +
+      !    \frac{1}{N_s H_s} \left ( N_t +
       !     \frac{ \text{d} N_t }{ \text{d} \zeta_t }
       !      \frac{ \text{d} \zeta_t }{ \text{d} H_t } H_t \right )$ \\ ~\\
       !  $N_t = 1 + a\, e^{-\zeta_t \ln 10} ~\Rightarrow~ 
-      !    \frac{ \text{d} N_t }{ \text{d} \zeta_t } = - \ln 10 ( N_t - 1 )$
+      !    \frac{ \text{d} N_t }{ \text{d} \zeta_t } = - \ln 10 ( N_t - 1 )
+      !  \Rightarrow $ \\
+      !  $\frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }
+      !                   { \text{d} H_t}
+      !    \cos \chi^{\text{refr}}_{\text{eq}} =
+      !  \sin \chi^{\text{refr}}_{\text{eq}} 
+      !   \left[ \frac1{H_t} - \frac1{N_t} ( \ln 10 ( N_t-1 ) )
+      !    \frac{ \text{d} \zeta_t }{ \text{d} H_t} \right] $
 
       sinChi = x
-      q = Np1 - ht * tan_refr_index * Ln10 / dh_dz
+      q = 1.0_rp / ht - 1.0_rp/np1 * tan_refr_index * Ln10 / dh_dz
     else                              ! min(ht,Req)/Req = ht/Req
 
       !{ $H_t < H^{\oplus}_t: ~~
       !  \sin \chi^{\text{refr}}_{\text{eq}} = 
-      !    N_t \frac{ H_t^2 }{ H_s H^{\oplus}_t }; ~~
+      !    \frac{N_t}{N_s} \frac{ H_t^2 }{ H_s H^{\oplus}_t }; ~~
       !  \frac{ \text{d} N_t }{ \text{d} H_t} = 0 ~~
       !  \Rightarrow ~~
       !  \frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }{ \text{d} H_t}
       !    \cos \chi^{\text{refr}}_{\text{eq}} =
-      !    2 \frac{ N_t H_t }{ H_s H^{\oplus}_t }$
+      !    2 \frac{N_t}{N_s} \frac{H_t }{H_s H^{\oplus}_t } =
+      !    \frac2{H_t} \sin \chi^{\text{refr}}_{\text{eq}} $
 
       sinChi = x*ht/Req
-      q = 2.0_rp * ht * Np1 / Req
+      q = 2.0_rp / ht
     end if
 
     ptg_angle = ASIN(sinChi) - elev_offset
     if ( sinChi < 1.0_rp ) then
-      dx_dh = q / (hs * sqrt(1.0_rp - sinChi**2))
+      dx_dh = q * sinChi / sqrt(1.0_rp - sinChi**2)
     else
       dx_dh = 0.0_rp
     end if
@@ -151,8 +162,8 @@ contains
   end subroutine Get_Chi_Angles_All
 
   ! --------------------------------------  Get_Chi_Angles_Simple  -----
-  subroutine Get_Chi_Angles_Simple ( SC_Geoc_Alt, Tan_Refr_Index, Inst_Refr_Index, &
-             & Tan_Ht, Phi_Tan, Req, Elev_Offset, Ptg_Angle )
+  subroutine Get_Chi_Angles_Simple ( SC_Geoc_Alt, Tan_Refr_Index, &
+             & Inst_Refr_Index, Tan_Ht, Phi_Tan, Req, Elev_Offset, Ptg_Angle )
 
   ! Set up array of pointing angles
 
@@ -170,8 +181,8 @@ contains
                                         ! geodetic angle in radians
     real(rp), intent(in) :: Req         ! equivalent earth radius in km
     real(rp), intent(in) :: Elev_offset ! radiometer pointing offset in radians
-!                                         positive is towards the earth,
-!                                         negative is towards space.
+                                        ! positive is towards the earth,
+                                        ! negative is towards space.
 
   ! outputs
 
@@ -189,10 +200,11 @@ contains
   ! Start code:
 
     ht = Req + tan_ht
-    Np1 = 1.0_rp + tan_refr_index
+    Np1 = ( 1.0_rp + tan_refr_index ) / ( 1.0_rp + inst_refr_index )
 
-    !{ Empirical formula: $H_s = R_s + 38.9014\,
-    !  \sin 2(\phi_t-51^\circ\hspace{-4.2pt}.\hspace{1pt}6814 )$
+    !{ Empirical formula (8.5): $H_s = R_s + 38.9014\,
+    !  \sin 2(\phi_t-51^\circ\hspace{-4.2pt}.\hspace{1pt}6814 )$\\
+    !  This only works for EMLS at its current orbit inclination!
 
     hs = sc_geoc_alt + ampl * sin(2.0*(phi_tan-phas))
     x = min ( Np1 * ht / hs, 1.0_rp )
@@ -200,33 +212,26 @@ contains
     !{ $\sin \chi^{\text{refr}}_{\text{eq}} =
     !    \frac{\mathcal{N}_t}{\mathcal{N}_s} \frac{H_t}{H_s}
     !    \frac{ \text{min} ( H_t, H^{\oplus}_t ) }{H^{\oplus}_t}$,
-    !  where $\mathcal{N}_s$ is the index of refraction at the spacecraft,
-    !  which is 1.0, and therefore need not be written explicitly.
+    !  where $\mathcal{N}_s$ is the index of refraction at the spacecraft. 
+    !  This is a bit different from Equation (8.3) in the 19 Aug 2004 ATBD
+    !  because that equation does not consider the case of $H_t <
+    !  H^{\oplus}_t$, and assumes the instrument is orbit, and therefore
+    !  $N_s = 1.0$.
 
     ! ptg_angle = asin(x * min(ht,Req)/Req) - elev_offset
 
     if ( tan_ht >= 0.0_rp ) then      ! min(ht,Req)/Req = 1
 
       !{ $H_t \geq H^{\oplus}_t: ~~
-      !  \sin \chi^{\text{refr}}_{\text{eq}} = N_t \frac{ H_t }{ H_s }; ~~
-      !  \frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }{ \text{d} H_t}
-      !    \cos \chi^{\text{refr}}_{\text{eq}} =\frac{1}{H_s} \left ( N_t +
-      !    \frac{ \text{d} N_t }{ \text{d} \zeta_t }
-      !      \frac{ \text{d} \zeta_t }{ \text{d} H_t } H_t \right )$ \\ ~\\
-      !  $N_t = 1 + a\, e^{-\zeta_t \ln 10} ~\Rightarrow~ 
-      !    \frac{ \text{d} N_t }{ \text{d} \zeta_t } = - \ln 10 ( N_t - 1 )$
+      !  \sin \chi^{\text{refr}}_{\text{eq}} = 
+      !  \frac{N_t}{N_s} \frac{ H_t }{ H_s }$
 
       sinChi = x
     else                              ! min(ht,Req)/Req = ht/Req
 
       !{ $H_t < H^{\oplus}_t: ~~
       !  \sin \chi^{\text{refr}}_{\text{eq}} = 
-      !    N_t \frac{ H_t^2 }{ H_s H^{\oplus}_t }; ~~
-      !  \frac{ \text{d} N_t }{ \text{d} H_t} = 0 ~~
-      !  \Rightarrow ~~
-      !  \frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }{ \text{d} H_t}
-      !    \cos \chi^{\text{refr}}_{\text{eq}} =
-      !    2 \frac{ N_t H_t }{ H_s H^{\oplus}_t }$
+      !    \frac{N_t}{N_s} \frac{ H_t^2 }{ H_s H^{\oplus}_t }$
 
       sinChi = x*ht/Req
     end if
@@ -265,76 +270,30 @@ contains
   ! outputs
 
     real(rp), intent(out) :: Ptg_angle  ! pointing angle in radians
-    real(rp), optional, intent(out) :: dx_dt(:) ! derivative of pointing angle
-                                                ! wrt temperature
-    real(rp), optional, intent(out) :: d2x_dxdt(:) ! second derivative of
+    real(rp), intent(out) :: dx_dt(:)   ! derivative of pointing angle
+                                        ! wrt temperature
+    real(rp), intent(out) :: d2x_dxdt(:) ! second derivative of
                                         ! tangent wrt temperature, pointing angle
 
   !  ----------------
   !  Local variables:
   !  ----------------
 
-    real(rp), parameter :: ampl = 38.9014
-    real(rp), parameter :: phas = 51.6814 * Deg2Rad
-
-    real(rp) :: hs, ht, Np1, sinChi, tp, x
+    real(rp) :: tp
 
   ! Start code:
 
-    ht = Req + tan_ht
-    Np1 = 1.0_rp + tan_refr_index
-
-    !{ Empirical formula: $H_s = R_s + 38.9014\,
-    !  \sin 2(\phi_t-51^\circ\hspace{-4.2pt}.\hspace{1pt}6814 )$
-
-    hs = sc_geoc_alt + ampl * sin(2.0*(phi_tan-phas))
-    x = min ( Np1 * ht / hs, 1.0_rp )
-
-    !{ $\sin \chi^{\text{refr}}_{\text{eq}} =
-    !    \frac{\mathcal{N}_t}{\mathcal{N}_s} \frac{H_t}{H_s}
-    !    \frac{ \text{min} ( H_t, H^{\oplus}_t ) }{H^{\oplus}_t}$,
-    !  where $\mathcal{N}_s$ is the index of refraction at the spacecraft,
-    !  which is 1.0, and therefore need not be written explicitly.
-
-    ! ptg_angle = asin(x * min(ht,Req)/Req) - elev_offset
-
-    if ( tan_ht >= 0.0_rp ) then      ! min(ht,Req)/Req = 1
-
-      !{ $H_t \geq H^{\oplus}_t: ~~
-      !  \sin \chi^{\text{refr}}_{\text{eq}} = N_t \frac{ H_t }{ H_s }; ~~
-      !  \frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }{ \text{d} H_t}
-      !    \cos \chi^{\text{refr}}_{\text{eq}} =\frac{1}{H_s} \left ( N_t +
-      !    \frac{ \text{d} N_t }{ \text{d} \zeta_t }
-      !      \frac{ \text{d} \zeta_t }{ \text{d} H_t } H_t \right )$ \\ ~\\
-      !  $N_t = 1 + a\, e^{-\zeta_t \ln 10} ~\Rightarrow~ 
-      !    \frac{ \text{d} N_t }{ \text{d} \zeta_t } = - \ln 10 ( N_t - 1 )$
-
-      sinChi = x
-    else                              ! min(ht,Req)/Req = ht/Req
-
-      !{ $H_t < H^{\oplus}_t: ~~
-      !  \sin \chi^{\text{refr}}_{\text{eq}} = 
-      !    N_t \frac{ H_t^2 }{ H_s H^{\oplus}_t }; ~~
-      !  \frac{ \text{d} N_t }{ \text{d} H_t} = 0 ~~
-      !  \Rightarrow ~~
-      !  \frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }{ \text{d} H_t}
-      !    \cos \chi^{\text{refr}}_{\text{eq}} =
-      !    2 \frac{ N_t H_t }{ H_s H^{\oplus}_t }$
-
-      sinChi = x*ht/Req
-    end if
-
-    ptg_angle = ASIN(sinChi) - elev_offset
+   call Get_Chi_Angles_Simple ( SC_Geoc_Alt, Tan_Refr_Index, &
+                              & Inst_Refr_Index, Tan_Ht, Phi_Tan, Req, &
+                              & Elev_Offset, Ptg_Angle )
 
   ! Do temperature stuff
   ! Set up: dx_dt, d2x_dxdt arrays for temperature derivative computations
   ! (NOTE: These entities have NO PHI dimension, so take the center Phi in dh_dt)
 
-    if ( present(dx_dt) .and. present(d2x_dxdt) ) then
-      tp = tan(ptg_angle)
-      dx_dt = tp * tan_dh_dt / ht
-      d2x_dxdt = tp * dx_dt + tan_d2h_dhdt
-    end if
+    tp = tan(ptg_angle)
+    dx_dt = tp * tan_dh_dt /  ( Req + tan_ht )
+    d2x_dxdt = tp * dx_dt + tan_d2h_dhdt
 
   end subroutine Get_Chi_Angles_Simple_Deriv
 
@@ -350,6 +309,9 @@ contains
 
 end module Get_Chi_Angles_m
 ! $Log$
+! Revision 2.25  2019/06/24 23:28:17  pwagner
+! Updated to reflect TA-01-143
+!
 ! Revision 2.24  2019/02/28 01:58:18  vsnyder
 ! More TeXnicalities only
 !
