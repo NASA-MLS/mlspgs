@@ -12,8 +12,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-130r1}
-\newcommand{\docdate}{17 April 2020}
+\newcommand{\docname}{wvs-130r2}
+\newcommand{\docdate}{23 April 2020}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -126,7 +126,9 @@ s = \frac{( \mathbf{p}_0 - \mathbf{C}) \cdot \mathbf{n}}
          { \mathbf{U} \cdot \mathbf{n}}
 \end{equation}
 
-If $\mathbf{U} \cdot \mathbf{n} = 0$ the line and plane are parallel. 
+If $\mathbf{U} \cdot \mathbf{n} = 0$ the line and plane are parallel. If,
+further, $(\mathbf{C} \neq \mathbf{p}_0)$ and $(\mathbf{C} - \mathbf{p}_0)
+\cdot \mathbf{n} = 0$, the line is in the plane, and any point will do.
 
 If $\mathbf{U} \cdot \mathbf{n} \neq 0$ the line intersects the plane at
 the point $\mathbf{p} = \mathbf{C} + s \, \mathbf{U}$.
@@ -138,6 +140,9 @@ the point $\mathbf{p} = \mathbf{C} + s \, \mathbf{U}$.
 % $Id$
 
 % $Log$
+% Revision 1.2  2020/04/18 01:39:26  vsnyder
+% Remove a mistake. Make notation similar to other papers.
+%
 % Revision 1.1  2016/02/05 03:36:20  vsnyder
 % Initial commit
 %
