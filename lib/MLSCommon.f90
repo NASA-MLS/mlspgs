@@ -249,10 +249,14 @@ module MLSCommon                ! Common definitions for the MLS software
   integer, public, parameter :: FileNameLen  = max(PGSd_PC_FILE_PATH_MAX, 132) ! was 132
   integer, public, parameter :: BareFNLen    = 64  ! Bare file name length (w/o path)
 
-  ! The next two used for tracking allocated memory
+  ! The next are used for tracking allocated memory
   ! (The 1st is public to enable reporting finer or coarser grains)
   !  real, save, public  :: MEMORY_UNITS = 1024. ! Report nothing smaller than KB
-  double precision, save, public :: NoBytesAllocated = 0.0d0 ! Number of MEMORY_UNITS allocated.
+  integer, save, public          :: NoBlocksAllocated = 0 ! Num allocate calls
+  integer, save, public          :: NoBlocksDeAllocated = 0 ! Num deallocate calls
+  double precision, save, public :: NoBytesAllocated = 0.0d0 ! Net MEMORY_UNITS allocated.
+  double precision, save, public :: TotalAllocated = 0.0d0 ! Total allocated.
+  double precision, save, public :: TotalDeAllocated = 0.0d0 ! Total deallocated.
 
   !----------------------------------------------------------------------
   !         Undefined value
@@ -736,6 +740,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.57  2020/04/27 21:28:55  pwagner
+! Separately track allocates/deallocates
+!
 ! Revision 2.56  2019/08/19 21:56:39  pwagner
 ! Moved NoBytesAllocated to MLSCommon from Allocate_Deallocate
 !
