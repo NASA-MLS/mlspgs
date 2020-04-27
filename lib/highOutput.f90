@@ -178,7 +178,7 @@ module HighOutput
 
   public :: AddRow, AddRow_Divider, AddRow_Header, AlignToFit, &
     & Banner, BeVerbose, BlanksToColumn, BlanksToTab, &
-    & Dump, DumpSize, DumpTabs, GetStamp, HeadLine, &
+    & Dump, DumpSize, DumpTabs, FinalMemoryReport, GetStamp, HeadLine, &
     & LetsDebug, NextColumn, NextTab, NumNeedsFormat, NumToChars, &
     & Output_Date_And_Time, OutputCalendar, OutputList, OutputTable, &
     & OutputAnyNamedValue, OutputNamedValue, OutputParagraph, &
@@ -1245,6 +1245,28 @@ contains
       tabs(1:n) = TABSTOPS(1:n)
     end if
   end subroutine dumpTabs
+
+  !-----------------------------------   FinalMemoryReport  -----
+  subroutine FinalMemoryReport
+    use MLSCommon, only: NoBlocksAllocated, NoBlocksDeAllocated, &
+      & NoBytesAllocated, TotalAllocated, TotalDeAllocated
+    use Output_M, only: Output
+    ! Print Final report summarizing allocates, deallocates
+
+    ! Executable code
+    call Output( 'Final report on allocates/deallocates', advance='yes' )
+    call OutputNamedValue ( 'Number of calls to _allocate_', &
+      & NoBlocksAllocated )
+    call OutputNamedValue ( 'Number of calls to _deallocate_', &
+      & NoBlocksDeAllocated )
+    call OutputNamedValue ( 'Total GB allocated', &
+      & TotalAllocated*1.e-9 )
+    call OutputNamedValue ( 'Total GB deallocated', &
+      & TotalDeAllocated*1.e-9 )
+    call OutputNamedValue ( 'Net GB remaining allocated', &
+      & NoBytesAllocated*1.e-9 )
+
+  end subroutine FinalMemoryReport
 
   ! ----------------------------------------------  getStamp  -----
   subroutine getStamp ( textCode, showTime, dateFormat, timeFormat, &
@@ -2884,6 +2906,9 @@ contains
 end module HighOutput
 
 ! $Log$
+! Revision 2.37  2020/04/27 21:32:07  pwagner
+! Added procedure to print FinalMemoryReport
+!
 ! Revision 2.36  2019/11/11 23:08:27  pwagner
 ! Added OutputParagraph
 !
