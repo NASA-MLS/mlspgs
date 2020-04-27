@@ -145,13 +145,13 @@ else
    MLSCFILE=.configure
 endif
 
-# This is just the default if you type  a bare "make"
+# This is just the default if you type a bare "make"
 alltargets: all
 
 SRCLIB=srclib
 -include $(SRCLIB)/Makefile.h
 # This will set our MLS platform, compiler. etc.
-# w/o complaining if it does nor exist yet
+# w/o complaining if it does not exist yet
 -include $(CONFDIR)/$(MLSCFILE)
 
 # All the implicit pattern-matching involving suffixes
@@ -410,7 +410,6 @@ OTHER_SUBDIRS = fwdmdl cloudfwdm cfm idlcfm
 #by entering
 #   make all
 
-#SUBDIRS = blas lib $(LEVELS) $(OTHER_SUBDIRS)
 SUBDIRS := $(shell ${REECHO} -d blas lib $(LEVELS) $(OTHER_SUBDIRS))
 
 # The next isn't really everything, just everything the SIPS might need
@@ -436,9 +435,6 @@ MLSKinds.f90      output_m.f90        ReadANumFromChars.f9h\
 io_stuff.f90      isafillvalue.f9h    lexer_types.f90\
 MLSCommon.f90     MLSStrings_0.f90    PrintIt_m.f90\
 )
-# NO_MLSMESS_SRCLIB := $(shell ${REECHO} -dir srclib -path srclib \
-#  ReadNumFromBaseN.f9h\
-#)
 
 NO_MLSMESS := $(NO_MLSMESS_LIB) $(NO_MLSMESS_SRCLIB)
 
@@ -449,9 +445,6 @@ lexer_types.f90   MLSCommon.f90            MLSStrings_0.f90\
                   numToChars.f9h           PseudoToolkit.ps90\
 MLSKinds.f90      ReadANumFromChars.f9h    toggles_core.f90\
 )
-#NO_TOOLKIT_SRCLIB := $(shell ${REECHO} -dir srclib -path srclib \
-#  ReadNumFromBaseN.f9h\
-#)
 
 NO_TOOLKIT := $(NO_TOOLKIT_LIB) $(NO_TOOLKIT_SRCLIB)
 
@@ -811,7 +804,6 @@ install-idlcfm: idlcfm
 install-l1: l1
 	@$(MAKE) -f $(MakeFName) install LEVELS=l1
 
-#install-l2: l2-delayed
 install-l2: l2
 	$(MAKE) -f $(MakeFName) install LEVELS=l2
 
@@ -847,15 +839,6 @@ install-mlstools:
   
 install-nrt: install-l1 install-l2 l2q
 	@cp $(MLSBIN)/mlsnrt*.sh $(INSTALLDIR)
-
-# For reasons not yet understood, executables built
-# directly by "make install-LEVEL" did not always
-# run properly, sometimes generating errors during tree_checker
-# This double-make has been moved down to the l2 directory
-# so we no longer to do it here
-# l2-delayed: l2
-# 	/bin/rm -f l2/$(MLSCONFG)/mlsl2
-# 	$(MAKE) levels LEVELS=l2
 
 partialclean:
 	@echo "Cleaning objects from $(SUBDIRS)"; \
@@ -1527,6 +1510,9 @@ tools: $(MLSTOOLS)
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.28  2020/04/08 21:55:48  pwagner
+# Can now build l2gp2nc4
+#
 # Revision 1.27  2019/04/09 20:43:06  pwagner
 # New MLSStrings.f90 simplifies building w/o toolkit
 #
