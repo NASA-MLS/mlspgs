@@ -517,17 +517,23 @@ contains
   ! -----------------------------------------  DestroyGriddedData  -----
   subroutine DestroyGriddedData ( Qty )
     ! This subroutine deallocates all the pointer components
+    use Toggles, only: Toggle, Gen, Levels
+    use Trace_M, only: Trace_begin, Trace_end
 
     ! Dummy argument
-    type (GriddedData_T), intent(INOUT) :: Qty
+    type (GriddedData_T), intent(inout) :: Qty
 
     ! Local variables
     integer(c_intptr_t) :: Addr         ! For tracing
     integer :: S ! Size in bytes of a deallocated field
     integer :: STATUS
     logical :: verbose
+    integer :: Me = -1           ! String index for trace
 
     ! Executable code
+    call trace_begin ( me, "DestroyGriddedData", &
+      & cond=toggle(gen) .and. levels(gen) > 1  )
+
     verbose = switchDetail(switches, 'grid') > -1
     call Deallocate_test ( qty%heights, "griddedQty%heights", ModuleName )
     call Deallocate_test ( qty%lats, "griddedQty%lats", ModuleName )
@@ -542,7 +548,10 @@ contains
     ! Now the data itself
     if ( associated(qty%field) ) then
       s = byte_size(qty%field)
-      if ( verbose ) call outputnamedValue ( 'Grid size to be destroyed', shape(qty%field) )
+      if ( verbose ) then
+        call outputnamedValue ( 'Grid size to be destroyed', shape(qty%field) )
+        call outputnamedValue ( 'Its size in MB', s/1.e6 )
+      endif
       addr = 0
       if ( s > 0 ) addr = transfer(c_loc(qty%field(1,1,1,1,1,1)), addr)
       deallocate(qty%field, STAT=status)
@@ -551,6 +560,7 @@ contains
       call output( 'This grid not allocated', advance='true' )
     end if
     qty%empty = .true.
+    call trace_end ( "DestroyGriddedData", cond=toggle(gen) )
 
   end subroutine DestroyGriddedData
 
@@ -560,7 +570,7 @@ contains
 
     use Allocate_Deallocate, only: Test_Deallocate
 
-    use Toggles, only: Toggle, Gen
+    use Toggles, only: Toggle, Gen, Levels
     use Trace_M, only: Trace_begin, Trace_end
 
     ! Dummy argument
@@ -571,7 +581,8 @@ contains
     integer :: Me = -1           ! String index for trace
     integer :: qtyIndex, s, status
 
-    call trace_begin ( me, "DestroyGriddedDataDatabase", cond=toggle(gen) )
+    call trace_begin ( me, "DestroyGriddedDataDatabase", &
+      & cond=toggle(gen) )
 
     if (associated(database)) then
       do qtyIndex=1,size(database)
@@ -587,7 +598,7 @@ contains
 
   end subroutine DestroyGriddedDataDatabase
 
-  ! --------------------------------------------  DiffGriddedData  -----
+   ! --------------------------------------------  DiffGriddedData  -----
   subroutine DiffGriddedData ( GriddedData1, GriddedData2, options )
     use Diff_1, only: Diff
 
@@ -1882,6 +1893,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.87  2020/04/27 21:34:51  pwagner
+! trace_.. added to more carefully track memory usage
+!
 ! Revision 2.86  2019/10/03 17:31:24  pwagner
 ! Convert from eta levels may now take a vGrid field
 !
