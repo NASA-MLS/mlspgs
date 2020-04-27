@@ -33,7 +33,7 @@ testdir = tests
 
 testsubdirs = $(testdir)/multiply $(testdir)/sparsify $(testdir)/test_cf_parser
 
-OMIT_SRCS := $(OMIT) sbinom.f
+OMIT_SRCS := $(OMIT) CCSDS_Time.f90 MLSHashes.f90
 
 #Toolkit-free version requires *Substitute.f90
 ifdef PGSTK
@@ -181,6 +181,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.3  2017/03/08 00:12:19  pwagner
+# ncep_dao doesn't need custom, but readGriddedUtils does
+#
 # Revision 2.2  2016/03/02 00:56:12  pwagner
 # Omits compiling PseudoToolkit.f90
 #
