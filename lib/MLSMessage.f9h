@@ -1217,7 +1217,8 @@ contains
         call Dump_MLSFile( MLSMessageConfig%MLSFile )
       end if
       ! Here's a chance to use our (separate) call stack
-      call dump_stack( where=.true., CPU=.true., StackIsEmpty=StackIsEmpty )
+      call dump_stack( where=.true., CPU=.true., &
+        & PrintMemoryReport=.true., StackIsEmpty=StackIsEmpty )
       if ( MLSMessageConfig%SendErrMsgToMaster .and. &
         & MLSMessageConfig%masterTID > 0 ) call LastGasp(ModulenameIn, Message )
       call get_config ( logFileUnit = logFileUnit )
@@ -1226,12 +1227,15 @@ contains
         NEVERCRASH = .false.
         call crash_burn
       end if
-      call exit_with_status ( 1  )
+      call exit_with_status ( 1 )
     end if
   end subroutine MLSMessageStd
 
 !
 ! $Log$
+! Revision 2.60  2020/04/30 23:13:21  pwagner
+! If we are to quit, may  as well PrintFinalReport
+!
 ! Revision 2.59  2019/04/09 20:33:56  pwagner
 ! Remove redundant USE statement
 !
