@@ -1247,14 +1247,22 @@ contains
   end subroutine dumpTabs
 
   !-----------------------------------   FinalMemoryReport  -----
-  subroutine FinalMemoryReport
+  subroutine FinalMemoryReport ( IsFinal )
     use MLSCommon, only: NoBlocksAllocated, NoBlocksDeAllocated, &
       & NoBytesAllocated, TotalAllocated, TotalDeAllocated
     use Output_M, only: Output
-    ! Print Final report summarizing allocates, deallocates
+    ! Print Final or interim report summarizing allocates, deallocates
+    logical, optional, intent(in)  :: IsFinal
 
     ! Executable code
-    call Output( 'Final report on allocates/deallocates', advance='yes' )
+    if ( .not. present ( IsFinal ) ) then
+      call Output ( 'Interim', advance='no' )
+    elseif ( .not. IsFinal ) then
+      call Output ( 'Interim', advance='no' )
+    else
+      call Output ( 'Final', advance='no' )
+    endif
+    call Output( ' report on allocates/deallocates', advance='yes' )
     call OutputNamedValue ( 'Number of calls to _allocate_', &
       & NoBlocksAllocated )
     call OutputNamedValue ( 'Number of calls to _deallocate_', &
@@ -2906,6 +2914,9 @@ contains
 end module HighOutput
 
 ! $Log$
+! Revision 2.38  2020/04/30 23:09:54  pwagner
+! Added optional arg IsFinal to FinalMemoryReport
+!
 ! Revision 2.37  2020/04/27 21:32:07  pwagner
 ! Added procedure to print FinalMemoryReport
 !
