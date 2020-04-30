@@ -10,8 +10,8 @@
 ! foreign countries or providing access to foreign persons.
 
 program MLSL2
-  use Allocate_DeAllocate, only: AllocateLogUnit, Set_Garbage_Collection, &
-    & TrackAllocates
+  use Allocate_DeAllocate, only: AllocateLogUnit, FinalMemoryReport, &
+    & Set_Garbage_Collection, TrackAllocates
   use Call_Stack_M, only: Show_Sys_Memory, Sys_Memory_Ch, Sys_Memory_Convert
   use ChunkDivide_M, only: ChunkDivideConfig
   use Declaration_Table, only: Allocate_Decl, DeAllocate_Decl, Dump_Decl
@@ -625,6 +625,7 @@ program MLSL2
   if ( timing ) call SayTime ( 'Closing and deallocating', cumulative=.false. )
   call add_to_section_timing( 'main', t0 )
   if ( trackAllocates > 0 ) call ReportLeaks ( "At end of program execution..." )
+  call FinalMemoryReport ( isFinal=.true. )
   call finish ( 'ending mlsl2' )
   if ( parallel%slave .and. len_trim(noteFile) > 0 .and. WAITFORSCRIPT ) then
     ! cycle endlessly until wrapper script kills us
@@ -904,6 +905,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.234  2020/04/30 23:29:42  pwagner
+! Add Final call to FinalMemoryReport at end
+!
 ! Revision 2.233  2020/04/09 23:17:46  pwagner
 ! Improved wording in Dump_settings
 !
