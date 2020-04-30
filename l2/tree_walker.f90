@@ -34,7 +34,7 @@ contains ! ====     Public Procedures     ==============================
     & COUNTCHUNKS, FILEDATABASE )
 
     use Algebra_M, only: Algebra
-    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, FinalMemoryReport
     use AntennaPatterns_M, only: Destroy_Ant_Patterns_Database
     use ChunkDivide_M, only: ChunkDivide, DestroyChunkDatabase
     use Chunks_M, only: Dump, MLSChunk_T
@@ -442,6 +442,7 @@ contains ! ====     Public Procedures     ==============================
               call CheckForCorruptFileDatabase( filedatabase )
             endif
             exitToNextChunk = .false.
+            call FinalMemoryReport
 subtrees:   do
               ! in the outer loop
               save2 = state ! before advancing to section below
@@ -755,6 +756,9 @@ subtrees:   do
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.213  2019/09/19 16:13:01  pwagner
+! Fixed bug in timings when processing multiple chunks serially
+!
 ! Revision 2.212  2018/09/13 20:23:23  pwagner
 ! Moved changeable options to new L2Options; added DumpOptions
 !
