@@ -2035,6 +2035,8 @@ contains ! =====     Public Procedures     =============================
         l2gpPhysicalFilename = unSplitName(file_base)
         returnStatus = 0
       end if
+      if ( len_trim(l2gpPhysicalFilename) < 1 ) &
+        & l2gpPhysicalFilename = 'DGG' ! 'all_dgg.he5'
       if ( any(DirectDatabase%fileName == l2gpPhysicalFilename) ) then
         call MLSL2Message ( MLSMSG_Error, ModuleName, &
           & "Cannot unsplit dgg dw to existing file " // &
@@ -2172,6 +2174,8 @@ contains ! =====     Public Procedures     =============================
         l2auxPhysicalFilename = unSplitName(file_base)
         returnStatus = 0
       end if
+      if ( len_trim(l2auxPhysicalFilename) < 1 ) &
+        & l2auxPhysicalFilename = 'DGM' ! 'all_dgm.h5'
       if ( any(DirectDatabase%fileName == l2auxPhysicalFilename) ) then
         call MLSL2Message ( MLSMSG_Error, ModuleName, &
           &  "Must not unsplit dgm dw to " // trim(l2auxPhysicalFilename) )
@@ -2323,6 +2327,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.208  2020/04/30 23:32:24  pwagner
+! Give default non-blank filenames to catenated DGG/DGMs
+!
 ! Revision 2.207  2020/02/07 01:15:26  pwagner
 ! Restores writing metadata for Cloud file
 !
