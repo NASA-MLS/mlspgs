@@ -1457,7 +1457,7 @@ contains
               call announceError ( son, noFWM )
             end if
           case ( f_allGriddedData )
-            if ( details < -2 ) cycle
+            if ( details < -3 ) cycle
             if ( haveGriddedData ) then
               call dump ( griddedDataBase, details , options=optionsString )
             else
@@ -3256,6 +3256,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.149  2020/04/30 23:33:42  pwagner
+! Skip Dumping AllGriddedData only if Details lt -3
+!
 ! Revision 2.148  2020/01/27 21:34:18  pwagner
 ! Consistent with new api for Dump_Signals
 !
