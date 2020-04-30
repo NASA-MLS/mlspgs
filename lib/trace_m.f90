@@ -167,11 +167,11 @@ contains ! ====     Public Procedures     ==============================
   ! bother with this if you can see both Trace_Begin and Trace_end, and
   ! they're invoked with the same condition.
 
-    use Call_Stack_m, only: Pop_Stack, Stack_T, Stack_Depth ! , Top_Stack
+    use Call_Stack_m, only: Pop_Call_Stack=>Pop_Stack, Stack_T, Stack_Depth
     use MLSMessageModule, only: MLSMessageCalls
     use MLSStringLists, only: SwitchDetail
     use Output_m, only: NewLine, Output, OutputOptions
-    use String_Table, only: create_String, Display_String, String_Table_Size
+    use String_Table, only: Create_String, Display_String, String_Table_Size
     use Toggles, only: Switches
 
     character(len=*), optional, intent(in) :: Name ! Checked but taken from stack
@@ -183,6 +183,7 @@ contains ! ====     Public Procedures     ==============================
     integer :: Check = -2
     type(stack_t) :: Frame
 
+    logical :: PrintMemoryReport ! Report on mem usage so far
     logical :: MyCond
 
     ! Executable
@@ -195,14 +196,16 @@ contains ! ====     Public Procedures     ==============================
     end if
 
     if ( check < -1 ) check = switchDetail ( switches, 'chktr' )
+    PrintMemoryReport = switchDetail ( switches, 'trmem' ) > -1
 
     myCond = merge(.true., .false., present(name))
     if ( present(cond) ) myCond = cond
     if ( myCond ) then
-      call pop_stack ( 'Exit ', .true., frame=frame, index=index, string=string, &
-        & stringIndex=stringIndex, showTime=.true. )
+      call pop_call_stack ( 'Exit ', .true., frame=frame, index=index, string=string, &
+        & stringIndex=stringIndex, showTime=.true., &
+        & PrintMemoryReport=PrintMemoryReport )
     else
-      call pop_stack ( frame=frame, index=index, Silent = .true. )
+      call Pop_Call_Stack ( frame=frame, index=index, Silent = .true. )
     end if
 
     if ( check > -1 ) then
@@ -280,6 +283,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.45  2020/04/30 23:19:52  pwagner
+! Added switch trmem to trace memory allocates/deallocates, too
+!
 ! Revision 2.44  2018/08/04 00:30:16  vsnyder
 ! Undo ALL CAPSing.  Remove dependence upon HighOutput
 !
