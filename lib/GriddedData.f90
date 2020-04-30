@@ -823,8 +823,11 @@ contains
     
     ! Local Variables
     integer            :: i
+    integer            :: MYDETAILS
     real               :: total
 
+    myDetails = 0
+    if ( present(details) ) myDetails = details
     if ( .not. associated(GriddedData)) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, 'Gridded database still null')
 
@@ -838,8 +841,13 @@ contains
 
       call output ( 'item number ' )
       call output ( i, advance='no' )
-
-      call DumpGriddedData( GriddedData(i), Details, Options )
+      if ( myDetails < -2 ) then
+        call output('Gridded quantity name ' // &
+          & trim(GriddedData(i)%quantityName), advance='yes')
+        call OutputNamedValue ( 'empty', GriddedData%empty )
+      else
+        call DumpGriddedData( GriddedData(i), Details, Options )
+      endif
       if ( .not. associated(GriddedData(i)%field) ) cycle
       total = total + product(shape(GriddedData(i)%field))
     end do ! i
@@ -1893,6 +1901,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.88  2020/04/30 23:20:59  pwagner
+! If Details lt -2 will dump only name and whether empty
+!
 ! Revision 2.87  2020/04/27 21:34:51  pwagner
 ! trace_.. added to more carefully track memory usage
 !
