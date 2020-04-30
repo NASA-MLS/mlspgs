@@ -70,6 +70,7 @@ module Call_Stack_m
   logical, save      :: Say_When         = .false.
 
   ! Display system memory changes during push and pop displays
+  logical, save ::    Show_Final_Summary = .false. ! Should be .false.
   logical, save ::    Show_Sys_Memory    = .true.
   character(len=2) :: sys_memory_ch      = 'kB'
   real             :: sys_memory_convert = 1.0
@@ -97,9 +98,9 @@ module Call_Stack_m
 contains ! ====     Public Procedures     ==============================
 
 ! ---------------------------------------------------  Dump_Stack  -----
-  subroutine Dump_Stack ( Top, Before, Where, Size, SysSize, CPU, DoDepth, Rev, &
-                        & Index, String, StringIndex, ShowTime, Used, Advance, &
-                        StackIsEmpty )
+  subroutine Dump_Stack ( Top, Before, Where, Size, SysSize, CPU, DoDepth, &
+    & Rev, Index, String, StringIndex, ShowTime, Used, Advance, &
+    & PrintMemoryReport, StackIsEmpty )
     ! Dump the call stack.  If Top is present and true, dump only the top
     ! frame.  If Before is present, print it after "depth" dots and before
     ! anything else.  If Where is present and true, and the Tree component
@@ -107,8 +108,8 @@ contains ! ====     Public Procedures     ==============================
     ! file.
 
     use Lexer_Core, only: Print_Source
-    use Output_m, only: Output
-    use HighOutput, only: DumpSize
+    use Output_m, only: NewLine, Output
+    use HighOutput, only: DumpSize, FinalMemoryReport
     use String_Table, only: Display_String
     use Tree, only: Node_in_tree, Where_At=>Where
 
@@ -126,14 +127,15 @@ contains ! ====     Public Procedures     ==============================
     character(len=*), optional, intent(in) :: String
     integer, optional, intent(in) :: StringIndex
     logical, intent(in), optional :: ShowTime   ! Show time when we dumped
-    logical, intent(out), optional :: StackIsEmpty ! Return true if stack is empty
     character(len=*), optional :: Used
     character(len=*), intent(in), optional :: Advance ! Default 'yes'
+    logical, intent(in), optional :: PrintMemoryReport! Report on mem usage so far
+    logical, intent(out), optional :: StackIsEmpty ! Return true if stack is empty
 
     character(len=3) :: DoAdvance, MyAdvance
     integer :: Depth, First, I, Inc, Last
     logical :: Error
-    logical :: MyCPU, MyDoDepth, MyRev, MySize, MySysSize, MyTop, MyWhere
+    logical :: MyCPU, MyDoDepth, MyReport, MyRev, MySize, MySysSize, MyTop, MyWhere
     logical :: MyShowTime
 
     ! Executable
@@ -177,6 +179,9 @@ contains ! ====     Public Procedures     ==============================
       last = merge(stack_ptr,lbound(stack,1),myTop)
       inc = -1
     end if
+    
+    myReport = Show_Final_Summary
+    if ( present( PrintMemoryReport ) ) myReport = PrintMemoryReport
 
     doAdvance = 'yes'
     do depth = first, last, inc
@@ -215,6 +220,10 @@ contains ! ====     Public Procedures     ==============================
         & before=' CPU: ' )
       call output ( '', advance=doAdvance )
       sys_memory_max = max( sys_memory_max, stack(depth)%sys_memory*1.0 )
+      if ( myReport ) then
+        call NewLine ( dont_make_blank_line=.true. )
+        call FinalMemoryReport
+      endif
     end do
 
   end subroutine Dump_Stack
@@ -274,7 +283,7 @@ contains ! ====     Public Procedures     ==============================
 
 ! ----------------------------------------------------  Pop_Stack  -----
   subroutine Pop_Stack ( Before, Where, Frame, Index, String, StringIndex, &
-    & Silent, ShowTime, SysSize )
+    & Silent, ShowTime, SysSize, PrintMemoryReport )
     ! Pop the stack.  If Before or Where are present, dump the top frame first.
 
     ! use Allocate_Deallocate, only: NoBytesAllocated
@@ -295,6 +304,7 @@ contains ! ====     Public Procedures     ==============================
     logical, intent(in), optional :: SysSize  ! Dump memory size, as the system
                                               ! accounts for it, in kB (default
                                               ! Show_Sys_Memory)
+    logical, intent(in), optional :: PrintMemoryReport! Report on mem usage so far
 
     double precision :: Delta ! Memory change, as accounted by Allocate_Deallocate
     logical :: HaveStack
@@ -332,7 +342,8 @@ contains ! ====     Public Procedures     ==============================
       ! an error message if we don't have a stack.
       call dump_stack ( .true., before, where, size=.false., sysSize=.false., &
         & index=index, string=string, stringIndex=stringIndex, &
-        & showTime=showTime, used=used, advance='no' )
+        & showTime=showTime, used=used, PrintMemoryReport=PrintMemoryReport, &
+        & advance='no' )
       if ( haveStack ) then
         if ( mySysSize ) then
           call memory_used ( total=total_used )
@@ -557,6 +568,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.37  2020/04/30 23:15:46  pwagner
+! Added optional arg PrintMemoryReport to Dump_Stack and Pop_Stack
+!
 ! Revision 2.36  2019/08/19 22:00:48  pwagner
 ! Avoid USE-ing Allocate_Deallocate due to circular dependency
 !
