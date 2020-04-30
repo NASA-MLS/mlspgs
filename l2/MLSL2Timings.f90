@@ -13,7 +13,7 @@
 module MLSL2Timings              !  Timings for the MLSL2 program sections
 !=============================================================================
 
-  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, FinalMemoryReport
   use Call_Stack_M, only: Sys_Memory_Ch, Sys_Memory_Convert, Sys_Memory_Max
   use HighOutput, only: Banner, BeVerbose, OutputNamedValue
   use Init_Tables_Module, only: F_Additional, F_Debug, F_Options, F_Reset, &
@@ -515,6 +515,7 @@ contains ! =====     Public Procedures     =============================
       call restoreSettings( 'stamp' )
     endif
     call add_to_phase_timing( trim(phaseString) )
+    call FinalMemoryReport
     call outputNamedValue( 'Resetting to 0 sys_memory which was', sys_memory_max )
     sys_memory_max     = 0.0
     if ( switchDetail ( switches, 'bool' ) > 0 ) &
@@ -1055,6 +1056,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.77  2020/04/30 23:31:09  pwagner
+! Add call To FinalMemoryReport at end of each phase
+!
 ! Revision 2.76  2019/09/19 16:10:28  pwagner
 ! restartTimings will optionally reset only flags, not timings
 !
