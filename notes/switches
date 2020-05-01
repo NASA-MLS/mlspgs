@@ -166,6 +166,7 @@ Switches (set by -S option in mlsl2's command line):
  taup    => Print PFA Tau in FullForwardModel
  time    => Summarize time consumed by each code section
  tps     => Test_Parse_Signals
+ trmem   => Report memory allocates/deallocates during traces
  TScat   => Print TScat matrix
  vir     => Dump 'virgin' matrix (before forming KTK)
  xvec    => 'X' vector during Newton iteration
@@ -239,6 +240,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will be ignored when responding to mlsl2 -S"?")
 
  $Log$
+ Revision 1.104  2019/04/11 23:41:08  pwagner
+ Correctd sp. error; clarified role of bookending equal-signs
+
  Revision 1.103  2018/02/28 20:02:16  pwagner
  Explain how to use -setf opts_file to turn on switches
 
