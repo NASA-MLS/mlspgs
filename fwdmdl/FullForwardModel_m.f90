@@ -57,6 +57,11 @@ module FullForwardModel_m
     ! of delta s.  We have delta s, so we ought to use it.  This flag
     ! indicates whether the incorrect computation ought to be preserved.
 
+  logical, private, parameter :: Dump_ds = .false.
+    ! The difference between the trapezoidal methods is that one uses del_s
+    ! and the other uses dsdz_c * del_zeta.  If this parameter is true,
+    ! these values are written to units 42 and 43.
+
 contains
 
   ! -------------------------------------------- FullForwardModel -----
@@ -674,10 +679,11 @@ contains
     type (Facets_and_Vertices_t), intent(in) :: F_and_V(:) ! of QTM under paths
                                             ! used to integrate the radiative-transfer
                                             ! equation
-    type (Facets_and_Vertices_t), intent(in) :: F_and_V_MIF(:) ! of QTM under MIF
-                                            ! paths.  Used for hydrostatic equilibrium
-                                            ! calculation that is used to calculate
-                                            ! MIF-based Chi angles.
+    type (Facets_and_Vertices_t), intent(in), allocatable :: F_and_V_MIF(:) ! of
+                                            ! QTM under MIF paths.  Used for
+                                            ! hydrostatic equilibrium
+                                            ! calculation that is used to
+                                            ! calculate MIF-based Chi angles.
     type(QTM_tree_t) :: QTM ! for QTM case; only
     integer, intent(in) :: No_Mol           ! Number of molecules
     integer, intent(in) :: NoUsedChannels   ! Number of channels used
@@ -2818,6 +2824,26 @@ contains
         end do
       end if
 
+      if ( dump_ds ) then
+        write ( 42, '(5(a,i0))' ) &
+          & 'dsdz_c(', i_start, ':', min(i_end,tan_pt_c)-1, ') * del_zeta(', &
+          & i_start+1, ':', min(i_end,tan_pt_c), ') \', &
+          & min(i_end,tan_pt_c)-1 - i_start + 1
+        write ( 42, '(1p5g15.6)' ) &
+          & dsdz_c(i_start:min(i_end,tan_pt_c)-1)*del_zeta(i_start+1:min(i_end,tan_pt_c))
+        write ( 42, '(5(a,i0))' ) &
+          & 'dsdz_c(', tan_pt_c+2,':',i_end,') * del_zeta(', &
+          & tan_pt_c+1, ':', i_end-1, ') \', i_end - tan_pt_c - 1
+        write ( 42, '(1p5g15.6)' ) dsdz_c(tan_pt_c+2:i_end)*del_zeta(tan_pt_c+1:i_end-1)
+        write ( 43, '(2(a,i0),a,i0)' ) &
+          & 'del_s(', i_start+1, ':', min(i_end,tan_pt_c), ') \', &
+          & min(i_end,tan_pt_c) - i_start
+        write ( 43, '(1p5g15.6)' ) 0.5*del_s(i_start+1:min(i_end,tan_pt_c))
+        write ( 43, '(2(a,i0),a,i0)' ) &
+          & 'del_s(', tan_pt_c+1,':',i_end-1,') \', i_end - tan_pt_c - 1
+        write ( 43, '(1p5g15.6)' ) 0.5*del_s(tan_pt_c+1:i_end-1)
+      end if
+
       ! Get indices for GL points only for panels that need GL, then copy
       ! temperature and mixing ratios only for those points to T_Path_f and
       ! Sps_Path_f
@@ -3971,6 +3997,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.407  2020/04/22 01:59:27  vsnyder
+! Move TScat stuff to includes. Some work on QTM chi angles
+!
 ! Revision 2.406  2020/02/07 01:11:08  pwagner
 ! Offers advice and sympathy if fwdmdl config fails superset test
 !
