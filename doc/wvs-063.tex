@@ -94,8 +94,9 @@ structures are not further described here.
 \vspace*{5pt}
 $\zeta \times \phi$ arrays, where $\phi$ is the horizontal representation
 basis for temperature and $\zeta$ is the union of $\zeta$ grids for all
-interesting species, represent quantities at reference $\zeta$ and $\phi$
-values.
+interesting species, plus intermediate $\zeta$ values for Gauss-Legendre
+quadrature, represent quantities at reference $\zeta$ and $\phi$ values
+along the line of sight.
 
 \end{frame}
 %
@@ -127,8 +128,8 @@ line-of-sight integration.
 %
 \newframe{Data structures --- more arrays}
 
-Derivatives are Path $\times$ Species quantities.  Some of these use the
-same representation as used for interpolation coefficients, which are
+Derivatives are Path $\times$ State Vector quantities.  Some of these use
+the same representation as used for interpolation coefficients, which are
 sparse because we use bilinear interpolation.  Interpolation coefficients
 are used for the chain rule.
 
@@ -223,9 +224,10 @@ one and a private one.
 \vspace*{5pt}
 The public one is {\tt FullForwardModel}.  It computes a reference $\zeta$
 grid that consists of the union of the $\zeta$ grids for all species
-specified in the configuration.  A configuration option allows
-oversampling this grid.  Then it computes the sizes of numerous arrays,
-which in some cases requires getting data from various sources.
+specified in the configuration, plus intermediate $\zeta$ values for
+Gauss-Legendre quadrature.  A configuration option allows oversampling
+this grid.  Then it computes the sizes of numerous arrays, which in some
+cases requires getting data from various sources.
 
 \vspace*{5pt}
 {\tt FullForwardModel} then calls {\tt FullForwardModelAuto}, which does
@@ -381,7 +383,7 @@ Metrics calculations are done in several steps
  therefore along the line of sight.\\[5pt]
 
  For an Earth-intersecting pointing, the ``tangent point'' is actually
- the reflection point, and $\zeta$'s below the Earth surface defing the
+ the reflection point, and $\zeta$'s below the Earth surface defining the
  pointing direction.
 
 \item Hydrostatic calculations are repeated to get a new $\zeta\times\phi$
@@ -647,7 +649,8 @@ after the ``black out'' position.
 
 ``Black out'' occurs on the lowest-pointing paths, which are also the
 longest paths.  Not computing $\beta^k_i$ beyond the ``black out''
-position might result in significant performance improvement.
+position might result in significant performance improvement -- but this
+would require significant re-organization of {\tt One\_Frequency}.
 
 \end{frame}
 %
@@ -973,6 +976,9 @@ $\zeta_{\text{min}}$]
 %%% End: 
 
 % $Log$
+% Revision 1.9  2019/09/17 23:01:16  vsnyder
+% Add comments about how to make the graphics
+%
 % Revision 1.8  2019/09/11 01:14:08  vsnyder
 % Numerous improvements resulting from today's presentation
 %
