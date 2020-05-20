@@ -3973,10 +3973,10 @@ contains
   
   ! Note:
   ! By default, options automatically includes "f", for backwards compatibility
-  ! if more than one switch matches the test_switch, the result from the first
-  ! match is shown
-  !   unless one of the options is "b" (for "back") when the last match is used
-  ! if the string list contains a "*" and one of the options is "w" then
+  ! If more than one switch matches the test_switch, the results are sorted
+  ! and the highest match is returned.
+  !   unless one of the options is "R" (see above)
+  ! If the string list contains a "*" and one of the options is "w" then
   ! the test switch is automatically present
   
   function SwitchDetail( Inlist, Test_switch, Options ) result ( Detail )
@@ -3992,22 +3992,60 @@ contains
     logical                                   :: dontsort 
     integer                                   :: elem     
     integer, dimension(MaxNumSwitches)        :: iarray
+    integer                                   :: k   
     character (len=MAXELEMENTLENGTH)          :: listElement
     character(len=8)                          :: myOptions
     integer                                   :: nElements
     integer                                   :: startOfDetails  ! index where 
-    character (len=len(test_switch))          :: switch          ! the detail number 
-    character (len=len(Inlist))               :: Switches        ! would start
-    character (len=len(Inlist))               :: tempSwitches
+    character (len=len(test_switch)+2)        :: switch          ! the detail number 
+    character (len=len(Inlist)+2)             :: Switches        ! would start
+    character (len=len(Inlist)+2)             :: tempSwitches
 
     ! Executable code
     myOptions = '-f'
     if ( present(options) ) myOptions = trim(lowercase(options))
     detail = -1
+    
+    ! May return immediately under special circumstances
+    ! Are either blank?
+    if ( len_trim(InList) < 1 .or. len_trim(test_switch) < 1 ) return
+    ! Can we tell by 1st that principles the test_switch isn't there?
+    ! 1st principles means
+    ! (a) no wild cards
+    ! (b) comma-separated InList
+    ! (c) ',switch' not found in ',switch1,switch2,..,switchn'
+    if ( index(MyOptions, '*') < 1 ) then
+      if ( index(MyOptions, 'c') < 1 ) then
+        tempSwitches = ',' // InList
+        switch = ',' // test_switch
+      else
+        tempSwitches = ',' // lowercase(InList)
+        switch = ',' // lowercase(test_switch)
+      endif
+      k = index(tempSwitches, trim(switch))
+      if ( k < 1 ) return
+      
+      ! Another short cut
+      ! Available only if the switch does not appear more than once
+      ! because, if it did, we would want to detect its highest Detail
+      ! So, if switch appears only once, then index will always return the same
+      ! k value, both when back is TRUE or FALSE
+      if ( index(tempSwitches, trim(switch), back=.true.) == k ) then
+        ! (d) now check if ',switch,' found in ',switch1,switch2,..,switchn,'
+        tempSwitches = trim(tempSwitches) // ','
+        switch = trim(switch) // ','
+        if ( index(tempSwitches, trim(switch)) > 0 ) then
+          ! The ',switch,' is present; 
+          ! the Detail has been left unspecified, which defaults to 0
+          Detail = 0
+          return
+        endif
+      endif
+    endif
 
     nElements = NumStringElements(inList, countEmpty)
 
-    if ( nElements <= 0 .or. test_switch == "" ) Return
+    if ( nElements <= 0 ) Return
 
     back = ( index(myOptions, 'b') > 0 ) 
     if ( index(myOptions, 'c') > 0 ) then
@@ -4730,6 +4768,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.86  2020/05/20 23:33:33  pwagner
+! Tried to speed up SwitchDetail
+!
 ! Revision 2.85  2019/11/11 21:17:45  pwagner
 ! subroutine wrap now takes optional arg dontSueeze
 !
