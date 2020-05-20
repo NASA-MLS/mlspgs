@@ -53,11 +53,11 @@
 
 \title{Radiative Transfer Equation \\
 in the Full Forward Model}
-\subtitle{wvs-139r3}
+\subtitle{wvs-139r4}
 
 \author{Van Snyder}
 
-\date{3 September 2019}
+\date{20 May 2020}
 
 \titlegraphic{\includegraphics[width=1.0in]{eos_mls_logo_onpink}}
 
@@ -261,7 +261,7 @@ using the chain rule, \emph{viz}.
 where $x^\mu_j$ is the $j^\text{th}$ element of the $\mu^\text{th}$
 solution profile state vector quantity (either $f^k$ or $T$), and
 $\eta^\mu_j(s)$ is the interpolation coefficient from the geolocation of
-$x^\mu_j$ to the integration path.
+$x^\mu_j$ to the integration path at $s$.
 
 \vspace*{4pt}
 Equations (\ref{three}) and (\ref{five}) are discretized, with steps at
@@ -271,13 +271,13 @@ has only four nonzeroes for each $\mu$, and the number of nonzeroes in the
 $j^\text{th}$ column for the $\mu^\text{th}$ species is $\leq 7$ because
 $s_i$ is on a constant-$\zeta$ surface and quadrature (described below)
 uses values on those surfaces, or at most three points each in
-$(\zeta_{i-1},\zeta)$ and $(\zeta_i,\zeta_{i+1})$.
+$(\zeta_{i-1},\zeta_i)$ and $(\zeta_i,\zeta_{i+1})$.
 
 \end{frame}
 
 % -----------------------------------------------------------------------------
 
-\newframe{Full Forward Model}
+\newframe{Derivatives in the Full Forward Model (1)}
 
 The Full Forward Model evaluates $I_{f^\mu}(s_m)$ by differentiating
 Equation (\ref{two}) w.r.t. $f^\mu_j$, \emph{viz}.
@@ -310,7 +310,7 @@ complicated than Equation (\ref{I_f}).
 
 % -----------------------------------------------------------------------------
 
-\newframe{Full Forward Model}
+\newframe{Derivatives in the Full Forward Model (2)}
 
 The original advantage of differentiating Equation (\ref{two}) rather than
 solving Equation(\ref{four}), giving Equation (\ref{five}), is that
@@ -339,7 +339,7 @@ be only a tiny bit slower than only at $s_m$.
 
 % -----------------------------------------------------------------------------
 
-\newframe{Full Forward Model}
+\newframe{Transmissivity in the Full Forward Model}
 
 The Full Forward Model evaluates $\mathcal{T}(s)$ as the exponential of a
 sum of a sequence of integrals, with $\zeta = -\log_{10} P$ where $P$ is
@@ -371,7 +371,7 @@ the three-point Gauss-Legendre quadrature formula.
 
 % -----------------------------------------------------------------------------
 
-\newframe{Full Forward Model}
+\newframe{Path length in the Full Forward Model (1)}
 
 For limb viewing, without considering refraction directly,
 
@@ -390,7 +390,7 @@ at the point a distance $s$ from the tangent point.
 
 % -----------------------------------------------------------------------------
 
-\newframe{Full Forward Model}
+\newframe{Path length in the Full Forward Model (1)}
 
 Thereby
 
@@ -418,7 +418,7 @@ interval, by a polynomial.
 
 % -----------------------------------------------------------------------------
 
-\newframe{Full Forward Model}
+\newframe{Full Forward Model -- Singularity at the Tangent}
 
 Using a rectangular quadrature for the integral in Equation (\ref{six}),
 
@@ -452,20 +452,47 @@ $h \rightarrow h_t$.
 
 % -----------------------------------------------------------------------------
 
-\newframe{Full Forward Model}
+\newframe{Full Forward Model -- Radiative Transfer Integral (1)}
 
 If the error estimate for the integral is small enough, a trapezoidal
-approximation is constructed using
-
-\begin{equation}\begin{split}\label{eight}
-\int_{s_{i-1}}^{s_i} \alpha(\zeta,\mathbf{x})\, \d s \approx \,&
-Q_{i-1} + \frac12 \left ( \alpha(\zeta_i,\mathbf{x}) -
-                          \alpha(\zeta_{i-1},\mathbf{x}) \right)
-                          \, \delta s_{i-1 \rightarrow i} \\
-= \,& \frac12 \left ( \alpha(\zeta_{i-1},\mathbf{x}) +
+approximation is constructed using either
+%
+\begin{equation*}
+\int_{s_{i-1}}^{s_i} \alpha(\zeta,\mathbf{x})\, \d s \approx
+  \frac12 \left ( \alpha(\zeta_{i-1},\mathbf{x}) +
                           \alpha(\zeta_i,\mathbf{x}) \right)
-                          \, \delta s_{i-1 \rightarrow i} \,. \\
-\end{split}\end{equation}
+                          \, \delta s_{i-1 \rightarrow i}
+\end{equation*}
+
+or
+%
+\begin{equation*}
+\int_{s_{i-1}}^{s_i} \alpha(\zeta,\mathbf{x})\, \d s \approx
+  \frac12 \left ( \alpha(\zeta_{i-1},\mathbf{x}) +
+                          \alpha(\zeta_i,\mathbf{x}) \right)
+                          \, \frac{\d s_{i-1}}{\d h}
+                             \frac{\d h_{i-1}}{\d\zeta}
+                             ( \zeta_i - \zeta_{i-1} )
+\end{equation*}
+
+depending upon the setting of {\tt trapezoid} in the forward model
+configuration in the {\tt l2cf} to {\tt correct} or {\tt wrong},
+respectively, wherein
+%
+\begin{equation*}
+\frac{\d s_{i-1}}{\d h} \frac{\d h_{i-1}}{\d\zeta}
+         ( \zeta_i - \zeta_{i-1} ) \approx \int_{\zeta_{i-1}}^{\zeta_i}
+ \frac{\d s}{\d h} \frac{\d h}{\d\zeta}\, \d \zeta
+\end{equation*}
+
+is a rectangular quadrature approximation to $\delta s_{i-1 \rightarrow
+i}$.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Full Forward Model -- Radiative Transfer Integral (2)}
 
 If the error estimate for the integral is not small enough, a 3-point
 Gauss-Legendre approximation is constructed using
@@ -476,7 +503,7 @@ Gauss-Legendre approximation is constructed using
 Q_{i-1} + \\
  \,&
 ( \zeta_i - \zeta_{i-1} ) \,
- \sum_{n=1,3} w_{in} \left ( \alpha(\zeta_{in},\mathbf{x}) -
+ \sum_{n=1}^3 w_{in} \left ( \alpha(\zeta_{in},\mathbf{x}) -
  \alpha(\zeta_{i-1},\mathbf{x}) \right)
 \end{split}\end{equation}
 
@@ -489,7 +516,7 @@ within the range $\zeta_{i-1} \rightarrow \zeta_i$.
 
 % -----------------------------------------------------------------------------
 
-\newframe{Full Forward Model}
+\newframe{Full Forward Model -- Radiative Transfer Integral (3)}
 
 Although this strategy provides acceptable accuracy, it creates tremendous
 mischief throughout the rest of the forward model by attempting to
@@ -517,28 +544,17 @@ evaluated at each frequency.
 
 % -----------------------------------------------------------------------------
 
-\newframe{Full Forward Model}
-
-The Full Forward Model evaluates the trapezoidal quadrature in Equation
-(\ref{eight}) less accurately than necessary.  It uses the first
-right-hand side in Equation (\ref{eight}) instead of the second.  Further,
-instead of using $\delta s_{i-1 \rightarrow i}$, which is available, it
-uses a rectangular quadrature approximation
-
-\begin{equation*}
-\delta s_{i-1 \rightarrow i} = \int_{\zeta_{i-1}}^{\zeta_i}
- \frac{\d s}{\d h} \frac{\d h}{\d\zeta}\, \d \zeta
- \approx \frac{\d s_{i-1}}{\d h} \frac{\d h_{i-1}}{\d\zeta}
-         ( \zeta_i - \zeta_{i-1} ) \,.
-\end{equation*}
-
-\end{frame}
-
 \end{document}
 
 % $Id$
 
 % $Log$
+% Revision 1.8  2019/09/04 00:22:00  vsnyder
+% Corrected derivative w.r.t. state-vector elements on page 8, added page 9,
+% embellished former page 9 (now page 10), improved discussion of singularity
+% on page 12 (now page 13), improved alternative integration strategy
+% description on page 15 (now page 16).
+%
 % Revision 1.7  2019/08/29 01:26:39  vsnyder
 % Clarify stuff, correct inconsistent notations
 %
