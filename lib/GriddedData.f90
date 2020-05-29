@@ -30,8 +30,9 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
     & MLSMSG_Warning, MLSMessageConfig, MLSMessage
   use MLSStringLists, only: SnipList, SwitchDetail
   use MLSStrings, only: LowerCase, ReadIntsFromChars
-  use Output_m, only: OutputOptions, Blanks, Output, NewLine
-  use Toggles, only: Switches
+  use Output_m, only: OutputOptions, Blanks, Output, NewLine, &
+    & ResumeOutput, SuspendOutput
+  use Toggles, only: Gen, Levels, Switches, Toggle
   use Trace_m, only: Trace_Begin, Trace_End
 
   implicit none
@@ -111,6 +112,9 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   character(len=*), parameter :: ALWAYSDUMPTHESE = ' ' ! 'dao,ncep,geos5'
   ! and for these automatically dumped ones, this level of detail for multi-dim
   integer, parameter :: AUTOMATICDETAILS = 0 ! 1 means dump, 0 means no
+  
+  ! Dump datebase memory footprint after every op
+  logical, parameter, public :: DumpDBFootPrint = .true.
 
   ! This type reflects the format of the Level 3 ASCII files, though note that
   ! these files can store multiple quantities such as these.
@@ -120,23 +124,23 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
     ! First the comment line(s) from the relevant input file
     logical :: EMPTY                    ! Set for example when file read failed
     logical :: deferReading             ! Set when to be read later
-    character (LEN=LineLen), pointer, dimension(:) :: fileComments => NULL()
+    character (len=LineLen), pointer, dimension(:) :: fileComments => NULL()
 
     ! Now the name, description and units information
     integer                 :: fileType = 0 ! From spec_indices, e.g. s_gridded
-    character (LEN=LineLen) :: sourceFileName ! Input file name
-    character (LEN=NameLen) :: quantityName ! From input file
-    character (LEN=LineLen) :: description ! Quantity description
-    character (LEN=LineLen) :: dimList
-    character (LEN=LineLen) :: fieldNames
-    character (LEN=NameLen) :: units ! Units for quantity
+    character (len=LineLen) :: sourceFileName ! Input file name
+    character (len=NameLen) :: quantityName ! From input file
+    character (len=LineLen) :: description ! Quantity description
+    character (len=LineLen) :: dimList
+    character (len=LineLen) :: fieldNames
+    character (len=NameLen) :: units ! Units for quantity
 
     ! Now define the various coordinate systems, first vertical
     integer :: verticalCoordinate ! An 'enumerated' type (e.g., V_is_...)
     integer :: noHeights         ! Number of surfaces
     real (rgr), pointer, dimension(:) :: heights  => NULL()
     ! Surfaces (e.g. pressures etc.) [noHeights]
-    character (LEN=NameLen) :: heightsUnits ! Units for heights, e.g. 'Pa'
+    character (len=NameLen) :: heightsUnits ! Units for heights, e.g. 'Pa'
 
     ! Now the latitudinal coordinate
     logical :: equivalentLatitude       ! If set, coordinate is equivalent latitude
@@ -197,7 +201,8 @@ contains
     integer :: Me = -1                  ! String index for trace cacheing
 
     ! Executable code
-    call trace_begin ( me, 'ConcatenateGriddedData_2' , cond=.false. )
+    call trace_begin ( me, 'ConcatenateGriddedData_2', &
+      & cond=toggle(gen) .and. levels(gen) > 1 )
     ! First, check that the grids A and B are conformable.
     if ( (a%verticalCoordinate /= b%verticalCoordinate) .or. &
       & (a%equivalentLatitude .neqv. b%equivalentLatitude) .or. &
@@ -278,7 +283,7 @@ contains
 
     x%field ( :, :, :, :, :, 1:a%noDates ) = a%field
     x%field ( :, :, :, :, :, a%noDates+1:x%noDates ) = b%field
-    call trace_end ( 'ConcatenateGriddedData_2' , cond=.false. )
+    call trace_end ( 'ConcatenateGriddedData_2' , cond=toggle(gen) )
   end subroutine ConcatenateGriddedData_2
 
   subroutine ConcatenateGriddedData_array ( Database, indices, X )
@@ -297,7 +302,8 @@ contains
     integer :: Me = -1                  ! String index for trace cacheing
     integer :: noDates
     ! Executable code
-    call trace_begin ( me, 'ConcatenateGriddedData_array' , cond=.false. )
+    call trace_begin ( me, 'ConcatenateGriddedData_array', &
+      & cond=toggle(gen) .and. levels(gen) > 1 )
     call DestroyGriddedData ( X )
     if ( size(indices) < 1 .or. size(database) < 1 ) go to 9
     index1 = indices(1)
@@ -366,7 +372,7 @@ contains
       x%dateEnds(i1(i):i2(i)) = Database(index1)%dateEnds
       x%field ( :, :, :, :, :, i1(i):i2(i) ) = Database(index1)%field
     enddo
-  9 call trace_end ( 'ConcatenateGriddedData_array' , cond=.false. )
+  9 call trace_end ( 'ConcatenateGriddedData_array' , cond=toggle(gen) )
 
   end subroutine ConcatenateGriddedData_array
 
@@ -396,7 +402,8 @@ contains
     real (rgr), pointer, dimension(:)     :: heights  => NULL()
 
     ! Executable code
-    call trace_begin ( me, 'ConvertFromEtaLevelGrids' , cond=.false. )
+    call trace_begin ( me, 'ConvertFromEtaLevelGrids', &
+      & cond=toggle(gen) .and. levels(gen) > 1 )
     ZetaSurfaces = .false.
     if ( present(ByLog) ) ZetaSurfaces = ByLog
     GotVgrid = associated(VGrid)
@@ -492,7 +499,7 @@ contains
       call dump( OutGrid%field( :, 1, 1, 1, 1, 1 ), 'T out (2)' )
       stop
     endif
-  9 call trace_end ( 'ConvertFromEtaLevelGrids' , cond=.false. )
+  9 call trace_end ( 'ConvertFromEtaLevelGrids' , cond=toggle(gen) )
   end subroutine ConvertFromEtaLevelGrids
 
   ! ---------------------------------------- CopyGrid ------------------
@@ -517,7 +524,6 @@ contains
   ! -----------------------------------------  DestroyGriddedData  -----
   subroutine DestroyGriddedData ( Qty )
     ! This subroutine deallocates all the pointer components
-    use Toggles, only: Toggle, Gen, Levels
     use Trace_M, only: Trace_begin, Trace_end
 
     ! Dummy argument
@@ -570,7 +576,6 @@ contains
 
     use Allocate_Deallocate, only: Test_Deallocate
 
-    use Toggles, only: Toggle, Gen, Levels
     use Trace_M, only: Trace_begin, Trace_end
 
     ! Dummy argument
@@ -582,7 +587,7 @@ contains
     integer :: qtyIndex, s, status
 
     call trace_begin ( me, "DestroyGriddedDataDatabase", &
-      & cond=toggle(gen) )
+      & cond=toggle(gen) .and. levels(gen) > 1 )
 
     if (associated(database)) then
       do qtyIndex=1,size(database)
@@ -746,12 +751,17 @@ contains
   ! Why did we choose 2, 4, 6, .. instead of 1, 3, 5 ?
   ! Also what if number of steps does not divide mesh points
   ! into whole number?
-  subroutine DownSampleGriddedData ( grid, newgrid, &
+  
+  ! Suggested improvement:
+  ! we already have various implementations of hyperslab in the software
+  ! so just reuse one of them;
+  ! i.e., pass in start, stride, and edge arrays
+  subroutine DownSampleGriddedData ( Grid, Newgrid, &
     & heightsStep, latsStep, lonsStep, lstsStep, szasStep, datesStep, &
     & firstheights, firstlats, firstlons, firstlsts, firstszas, firstdates )
 
-    type ( GriddedData_T ), intent(inout) :: GRID ! Input grid
-    type ( GriddedData_T ), intent(out)   :: NEWGRID ! Result
+    type ( GriddedData_T ), intent(inout) :: Grid ! Input grid
+    type ( GriddedData_T ), intent(out)   :: Newgrid ! Result
     integer, intent(in)                   :: heightsStep
     integer, intent(in)                   :: latsStep
     integer, intent(in)                   :: lonsStep
@@ -818,7 +828,7 @@ contains
 
     type (GriddedData_T), dimension(:), pointer :: GriddedData 
 
-    integer, intent(in), optional               :: DETAILS
+    integer, intent(in), optional               :: DETAILS ! If -4, just show footprint
     character(len=*), intent(in), optional      :: OPTIONS
     
     ! Local Variables
@@ -831,6 +841,7 @@ contains
     if ( .not. associated(GriddedData)) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, 'Gridded database still null')
 
+    if ( myDetails < -3 ) call SuspendOutput
     call output ( '============ Gridded Data Base ============', advance='yes' )
     call output ( ' ', advance='yes' )
     call output ( 'database: a priori grids: SIZE = ' )
@@ -839,18 +850,18 @@ contains
     total = 0.
     do i = 1, size(GriddedData)
 
-      call output ( 'item number ' )
-      call output ( i, advance='no' )
+      call outputNamedValue ( 'item number', i, advance='no' )
       if ( myDetails < -2 ) then
-        call output('Gridded quantity name ' // &
-          & trim(GriddedData(i)%quantityName), advance='yes')
-        call OutputNamedValue ( 'empty', GriddedData%empty )
+        call outputNamedValue('  Gridded quantity name ', &
+          & trim(GriddedData(i)%quantityName), advance='no')
+        call OutputNamedValue ( '  empty', GriddedData(i)%empty )
       else
         call DumpGriddedData( GriddedData(i), Details, Options )
       endif
       if ( .not. associated(GriddedData(i)%field) ) cycle
       total = total + product(shape(GriddedData(i)%field))
     end do ! i
+    if ( myDetails < -3 ) call ResumeOutput
     call outputNamedValue( 'Database Total Memory Footprint', &
       & bytes(GriddedData(1)%field) * total )
   end subroutine DumpGriddedDatabase
@@ -975,9 +986,12 @@ contains
       return
     endif
     call output('Gridded quantity name ' // GriddedData%quantityName, advance='yes')
-    if ( associated(GriddedData%field)) &
-      &  call outputnamedvalue ( 'Grid Memory Footprint', &
-      &  byte_size(GriddedData%field) )
+    if ( associated(GriddedData%field)) then
+      call OutputNamedValue ( 'shape(field)', &
+        &  shape(GriddedData%field) )
+      call OutputNamedValue ( 'Grid Memory Footprint', &
+        &  byte_size(GriddedData%field) )
+    endif
     if ( myDetails < -1 ) return
     oldInfo = MLSMessageConfig%Info
     MLSMessageConfig%Info = GriddedData%quantityName
@@ -1265,7 +1279,7 @@ contains
     end if
 
     ! First the vertical/horizontal coordinates
-    if ( verbose ) then
+    if ( verbose .and. qty%noHeights > 0 ) then
       call outputNamedValue( 'qty%noHeights', qty%noHeights )
       call outputNamedValue( 'qty%noLats', qty%noLats )
       call outputNamedValue( 'qty%noLons', qty%noLons )
@@ -1901,6 +1915,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.89  2020/05/29 21:54:49  pwagner
+! More detailed tracing of memory usage
+!
 ! Revision 2.88  2020/04/30 23:20:59  pwagner
 ! If Details lt -2 will dump only name and whether empty
 !
