@@ -32,9 +32,9 @@
 % -----------------------------------------------------------------------------
 %
 \title{Summary of Full Forward Model}
-\subtitle{wvs-063r7}
+\subtitle{wvs-063r8}
 \author{Van Snyder}
-\date{27 May 2020}
+\date{3 June 2020}
 \titlegraphic{\includegraphics[width=1.0in]{eos_mls_logo_onpink}}
 
 \begin{document}
@@ -881,18 +881,19 @@ Convolve\_All\_m} are used:
 %
 \newframe{Sideband loop --- Cleaning up}
 
-After antenna convolution or interpolation to PTan, the subroutines {\tt
-ScanAverage\_1d} and {\tt ScanAverage\_2d} from the module {\tt
-ScanAverage\_m} are used to average the radiances and derivatives,
-respectively, from the pointing $\chi$ angles to the MIF $\chi$ angles,
-to take motion during the MIF into account.
+After interpolation to PTan (but not after convolution), if the {\tt l2cf}
+field {\tt ScanAverage} in the forward model configuration is true, the
+subroutines {\tt ScanAverage\_1d} and {\tt ScanAverage\_2d} from the
+module {\tt ScanAverage\_m} are used to average the radiances and
+derivatives, respectively, from the pointing $\chi$ angles to the MIF
+$\chi$ angles, to take motion during the MIF into account.
 
 \vspace*{5pt}
 The subroutine {\tt Interpolate\_Values} is used to interpolate radiances
 and derivatives for each pointing to eight-point GL grids between each
-pair of values from the {\tt MIF\_Times} grid.  Those interpolated values
-are then integrated to the {\tt MIF\_Times} grid using an eight-point
-Gauss-Legendre quadrature.
+pair of values from the {\tt MIF\_Times} grid (quantity type {\tt
+L1bMIF\_TAI}).  Those interpolated values are then integrated to the {\tt
+MIF\_Times} grid using an eight-point Gauss-Legendre quadrature.
 
 \vspace*{5pt}
 Finally, some arrays explicitly allocated in {\tt FullForwardModelAuto}
@@ -976,6 +977,9 @@ $\zeta_{\text{min}}$]
 %%% End: 
 
 % $Log$
+% Revision 1.11  2020/05/27 21:34:58  vsnyder
+% Repair typo in equation on page 23
+%
 % Revision 1.9  2019/09/17 23:01:16  vsnyder
 % Add comments about how to make the graphics
 %
