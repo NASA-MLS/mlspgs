@@ -57,8 +57,9 @@ module MLSStringLists               ! Module to treat string lists
 !                      for occurrences like ${3} with 3rd arg
 ! ExpandStringRange  Turns '1,2-5,7' into '1,2,3,4,5,7' or ints or logicals
 ! ExtractSubString   Extracts portion of string sandwiched between sub1 and sub2
-! GetStringElement   Returns n'th element of string list
 ! GetHashElement     Returns value from hash list corresponding to key string
+! GetMatchedParens   Returns indexes of matched parens '(' ')'
+! GetStringElement   Returns n'th element of string list
 ! GetUniqueInts      Returns array of only unique entries from input array
 ! GetUniqueList      Returns str list of only unique entries from input list
 ! GetUniqueStrings   Returns array of only unique entries from input array
@@ -114,10 +115,11 @@ module MLSStringLists               ! Module to treat string lists
 ! ExtractSubString (char* str, char* outstr, char* sub1, char* sub2, &
 !       & [char* how], [log no_trim])
 ! char* EvaluateFormula (char* formula, char* values(:), [char* values(:)])
-! GetStringElement (strlist inList, char* outElement,
-!   nElement, log countEmpty, [char inseparator], [int SeparatorLocation] )
 ! GetHashElement (hash {keys = values}, char* key, 
 !   char* outElement, log countEmpty, [char inseparator], [log part_match])
+! GetMatchedParens ( char* str, int pairs(2,:) )
+! GetStringElement (strlist inList, char* outElement,
+!   nElement, log countEmpty, [char inseparator], [int SeparatorLocation] )
 ! GetUniqueInts (int ints(:), int outs(:), int noUnique, 
 !    [int extra(:)], [int fillValue], [int minValue]) 
 ! GetUniqueList (char* str, char* outstr(:), int noUnique, &
@@ -274,7 +276,7 @@ module MLSStringLists               ! Module to treat string lists
   public :: Array2List, BooleanValue, BuildHash, &
     & CapitalizeArray, CapitalizeList, CatLists, &
     & EvaluateFormula, ExpandStringRange, ExtractSubstring, &
-    & GetHashElement, GetStringElement, &
+    & GetHashElement, GetMatchedParens, GetStringElement, &
     & GetUniqueInts, GetUniqueStrings, GetUniqueList, &
     & InsertHashElement, Intersection, IsInList, &
     & List2Array, LoopOverFormula, ListMatches, &
@@ -287,6 +289,22 @@ module MLSStringLists               ! Module to treat string lists
     & SnipList, SortArray, SortList, StringElement, StringElementNum, &
     & SwitchDetail, &
     & Unquote, Unwrap, Wrap
+
+! A private type
+  type :: Index_Stack_t
+    integer :: Index = -1              ! into the expresion
+    double precision :: Memory = 0.0d0 ! As accounted in Allocate_Deallocate
+    integer :: Sys_Memory = 0          ! In use, in kB (1024), as accounted by
+                                       ! the system and accessed by Memory_Used
+    integer :: String = 0              ! Index in string table
+    integer :: Text = 0                ! Index in string table
+    integer :: Tree = 0                ! Where in l2cf, -1 if stack not allocated,
+                                       ! -2 if stack index < 1, -3 if stack index
+                                       ! > stack_ptr.
+  end type
+  type(Index_Stack_t), allocatable, save :: Stack(:)
+  type(Index_Stack_t)                    :: frame
+  integer, save                    :: stack_ptr
 
   interface BooleanValue
     module procedure BooleanValue_log, BooleanValue_str
@@ -478,6 +496,7 @@ contains
     integer :: level
     integer, parameter :: MAXNESTINGS=64 ! Max number of '(..)' pairs
     character(len=MAXSTRLISTLENGTH) :: collapsedstr
+    integer, dimension(2,1)         :: pairs
     character(len=MAXSTRLISTLENGTH) :: part1
     character(len=MAXSTRLISTLENGTH) :: part2
     character(len=MAXSTRLISTLENGTH) :: part3
@@ -492,7 +511,25 @@ contains
     collapsedstr = lowerCase(str)
     do level =1, MAXNESTINGS ! To prevent endlessly looping if ill-formed
       if ( index( collapsedstr, '(' ) < 1 ) exit
-      call SplitNest ( collapsedstr, part1, part2, part3 )
+      ! call SplitNest ( collapsedstr, part1, part2, part3 )
+      call GetMatchedParens( collapsedstr, pairs )
+      part1 = ' '
+      part2 = ' '
+      part3 = ' '
+      if ( pairs(1, 1) < 1 ) then
+        part2 = collapsedstr
+      elseif ( pairs(1, 1) == 1 ) then
+        part2 = collapsedstr(2:pairs(2,1)-1)
+        if ( pairs(2, 1) < len_trim(collapsedstr) ) &
+          & part3 = collapsedstr(pairs(2,1)+1:)
+      elseif ( pairs(2, 1) == len_trim(collapsedstr) ) then
+        part1 = collapsedstr(1:pairs(1,1)-1)
+        part2 = collapsedstr(pairs(1,1)+1:pairs(2,1)-1)
+      else
+        part1 = collapsedstr(1:pairs(1,1)-1)
+        part2 = collapsedstr(pairs(1,1)+1:pairs(2,1)-1)
+        part3 = collapsedstr(pairs(2,1)+1:)
+      endif
       ! Now evaluate the part2
       if ( DeeBUG ) then
         print *, 'part1 ', trim(part1)
@@ -1607,6 +1644,43 @@ contains
     enddo
 
   end subroutine GetHashElement_strarray
+
+! -------------------------------------------------  GetMatchedParens  -----
+  subroutine GetMatchedParens ( str, pairs, numpairs )
+    ! Get the indexes of Matched Parens in str
+    ! sorted so that the most deeply nested comes first.
+    ! If shape(pairs) = (/2, 1/)
+    ! then return only that most deeply nested pair.
+    ! Args:
+    character(len=*), intent(in)              :: str
+    integer, dimension(:,:), intent(out)      :: pairs
+    integer, optional      , intent(out)      :: numpairs
+    ! Internal variables
+    integer                                   :: i
+    integer                                   :: n
+    integer                                   :: k ! shape(pairs) = (2,k)
+    type(Index_Stack_t)                       :: frame
+    ! Executable
+    k = size(pairs, 2)
+    pairs = 0
+    n = 0
+    if ( present(numpairs) ) numpairs = 0
+    do i=1, len_trim(str)
+      if ( str(i:i) == '(' ) then
+        call Push ( i )
+      elseif ( str(i:i) == ')' ) then
+        call Pop ( frame )
+        ! call outputnamedvalue ( 'matched parens', (/ frame%index, i /) )
+        ! call outputnamedvalue ( 'sub-str', &
+        !  & str(frame%index+1:i-1) )
+        n = n + 1
+        pairs(1, n) = frame%index
+        pairs(2, n) = i
+        if ( present(numpairs) ) numpairs = n
+        if ( n >= k ) return
+      endif
+    enddo
+  end subroutine GetMatchedParens
 
   ! ---------------------------------------------  GetUniqueInts  -----
 
@@ -4754,6 +4828,67 @@ contains
     endif
   end subroutine prepOptions
 
+! -------------------------------------------------  Push  -----
+  subroutine Push ( Index )
+    ! Push the stack.  
+
+    integer, intent(in) :: Index ! Whatever caller wants to send
+
+    integer :: Stat
+    type(Index_Stack_t), allocatable :: Temp_Stack(:)
+    ! Executable
+
+    if ( .not. allocated(stack) ) then
+      ! If you allocate with lbound < 0, other stuff won't work.
+      allocate ( stack(1), stat=stat )
+      if ( stat /= 0 ) then
+        print *, 'Unable to allocate stack'
+        return
+      end if
+      ! call test_allocate ( stat, moduleName, 'Stack', &
+      !   & ubounds=(/startingStackSize/), elementSize=storage_size(stack) / 8 )
+      stack_ptr = 1
+      stack(1)%index=index
+    else
+      ! Must increase stack size
+      ! so we double it
+      ! But limit number doublings to MAXDOUBLINGS
+      allocate ( temp_stack(stack_ptr+1), stat=stat )
+      if ( stat /= 0 ) then
+        print *, 'Unable to allocate temp_stack'
+        return
+      end if
+      temp_stack(:stack_ptr) = stack
+      call move_alloc ( temp_stack, stack )
+      stack_ptr = stack_ptr + 1
+      stack(stack_ptr)%index =  index
+    end if
+  end subroutine Push
+
+  subroutine Pop ( Frame )
+
+    type(Index_Stack_t), intent(out) :: Frame
+
+    double precision :: Delta ! Memory change, as accounted by Allocate_Deallocate
+    logical :: HaveStack
+    integer :: IDelta         ! Memory change, as accounted by system in kB
+    logical :: MySilent
+    logical :: MySysSize
+    real :: T
+    integer :: Total_used     ! Memory used in kilobytes (1024)
+    character(len=10) :: Used
+
+    ! Executable
+    haveStack = allocated(stack)
+    if ( haveStack ) haveStack = stack_ptr >= lbound(stack,1)
+
+    if ( haveStack ) then
+      frame = stack(stack_ptr)
+      stack_ptr = stack_ptr - 1
+    end if
+
+  end subroutine Pop
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -4768,6 +4903,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.87  2020/06/03 23:39:49  pwagner
+! Improve BooleanValue_log; implemented GetMatchedParens
+!
 ! Revision 2.86  2020/05/20 23:33:33  pwagner
 ! Tried to speed up SwitchDetail
 !
