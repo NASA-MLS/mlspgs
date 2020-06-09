@@ -1255,6 +1255,7 @@ contains
     logical, optional, intent(in)  :: IsFinal
 
     ! Executable code
+    call Output ( '* ', advance='no' )
     if ( .not. present ( IsFinal ) ) then
       call Output ( 'Interim', advance='no' )
     elseif ( .not. IsFinal ) then
@@ -1262,7 +1263,7 @@ contains
     else
       call Output ( 'Final', advance='no' )
     endif
-    call Output( ' report on allocates/deallocates', advance='yes' )
+    call Output( ' report on allocates/deallocates *', advance='yes' )
     call OutputNamedValue ( 'Number of calls to _allocate_', &
       & NoBlocksAllocated )
     call OutputNamedValue ( 'Number of calls to _deallocate_', &
@@ -2914,6 +2915,9 @@ contains
 end module HighOutput
 
 ! $Log$
+! Revision 2.39  2020/06/09 21:56:32  pwagner
+! report on allocates/deallocates now stands out with stars
+!
 ! Revision 2.38  2020/04/30 23:09:54  pwagner
 ! Added optional arg IsFinal to FinalMemoryReport
 !
