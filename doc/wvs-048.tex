@@ -4,6 +4,7 @@
 \usepackage{floatflt}
 \usepackage{graphicx}
 \usepackage{longtable}
+\usepackage{srcltx}
 \usepackage[strings]{underscore}
 
 \textwidth 6.5in
@@ -12,8 +13,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{\bf wvs-048r10}
-\newcommand{\docdate}{12 May 2009}
+\newcommand{\docname}{\bf wvs-048r11}
+\newcommand{\docdate}{9 June 2020}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -84,7 +85,7 @@ From: \>Van Snyder\\
 \newcommand\Req{R^\oplus_{\text{eq}}}
 \newcommand\Reqs{{\Req}_s}
 
-\begin{floatingfigure}{3.75in}
+\begin{floatingfigure}{3.65in}
 {\includegraphics[width=3.5in,height=4.5in,clip]{./wvs-048-grid2}}
 \end{floatingfigure}
 
@@ -97,24 +98,24 @@ the earth.
 
 This diagram shows the line of sight intersecting the constant-$\zeta$
 surfaces in cartesian $\phi$--$H$ co\"{o}rdinates instead of polar 
-$\phi$--$\zeta$ co\"{o}rdinates.  The con\-stant-$\zeta$ surfaces are the
-green lines (straight lines because we use linear interpolation in
-$\phi$, instead of approximate circles), the lines of sight are the red
-lines (secant curves instead of straight lines), and the temperature
-$\phi$ basis $\phi_1 \dots \phi_n$ is the vertical black lines.  The
-quantity $H-\Req$, where $\Req$ is the equivalent circular earth radius,
-is given at specified values of $\phi$ and $\zeta$, i.e., at the
-intersections of the green and black lines, by the array {\tt H\_ref}. 
-The tangent angle $\phi_t$, the tangent height $H_t$, $\Req$, and $\phi_1
-\dots \phi_n$ are given.
+$\phi$--$\zeta$ co\"{o}rdinates.  The heights on con\-stant-$\zeta$
+surfaces are the green lines (straight lines because we use linear
+interpolation in $\phi$, instead of approximate circles), the lines of
+sight are the red lines (secant curves instead of straight lines), and the
+temperature $\phi$ basis $\phi_1 \dots \phi_n$ is the vertical black
+lines.  The quantity $H-\Req$, where $\Req$ is the equivalent circular
+earth radius, is given at specified values of $\phi$ and $\zeta$, i.e., at
+the intersections of the green and black lines, by the array {\tt
+H\_ref}.  The tangent angle $\phi_t$, the tangent height $H_t$, $\Req$,
+and $\phi_1 \dots \phi_n$ are given.
 
 Denote {\tt H\_ref} by $H_{ij}$.  Each row of {\tt H\_ref} gives the
-endpoints of a piecewise-linear con\-stant-$\zeta$ surface.  Writing the
-intersection of that line with the line of sight expressed as a function
-of $\phi$, \emph{viz.}\ $H = H_t \sec \phi$, interpolating $H$ linearly in
-$\phi$ between $H_{ij}$ and $H_{i,j+1}$, using $H_\text{tan} = H_t -
-\Req$, and subtracting $H_t$ from both sides to cancel $\Req$ on the left
-side, we need to solve
+endpoints of piecewise-linear heights on a con\-stant-$\zeta$ surface. 
+Writing the intersection of that line with the line of sight expressed as
+a function of $\phi$, \emph{viz.}\ $H = H_t \sec \phi$, interpolating $H$
+linearly in $\phi$ between $H_{ij}$ and $H_{i,j+1}$, using $H_\text{tan} =
+H_t - \Req$, and subtracting $H_t$ from both sides to cancel $\Req$ on the
+left side, we need to solve
 
 \begin{equation}\begin{split}\label{one}
 H_{ij} + \Req + (H_{i,j+1}-H_{ij})
@@ -132,11 +133,12 @@ H_{ij} + (H_{i,j+1}-H_{ij})
 H_t(\sec ( \phi - \phi_t ) - 1) \\
 \end{split}\end{equation}
 
-when $\phi_1 \leq \phi \leq \phi_n$, where $n$ is the number of columns
-in {\tt H\_ref}, for all $i$ and $j$.  For $\phi < \phi_1$ or $\phi >
-\phi_n$ assume constant-$\zeta$ surfaces are also constant-$H$ surfaces,
-i.e., $H_{i0} = H_{i1}$ and $H_{in} = H_{i,n+1}$, which reduces the above
-to $H_{i0} = H_t \sec(\phi-\phi_t)$ or $H_{in} = H_t \sec(\phi-\phi_t)$.
+for $\phi$ when $\phi_1 \leq \phi \leq \phi_n$, where $n$ is the number
+of columns in {\tt H\_ref}, for all $i$ and $j$.  For $\phi < \phi_1$ or
+$\phi > \phi_n$ assume constant-$\zeta$ surfaces are also constant-$H$
+surfaces, i.e., $H_{i0} = H_{i1}$ and $H_{in} = H_{i,n+1}$, which reduces
+the above to $H_{i0} = H_t \sec(\phi-\phi_t)$ or $H_{in} = H_t
+\sec(\phi-\phi_t)$.
 
 An added complication is that we refer all measurements to the one bar
 pressure surface $H_s$, which is gotten by interpolating $H_{1,1\dots n}$
@@ -211,7 +213,7 @@ Using 16-digit arithmetic, $-1.5 \times 10^{-9} < P_8(\delta\phi) -
 \sec(\delta\phi) + 1 \leq 0$ for $|\delta\phi| \leq 0.2$.
 
 For the Newton iteration $\delta\phi_{n+1} = \delta\phi_n - d(\delta\phi_n) /
-d^\prime(\delta\phi_n)$ the derivatives
+d^\prime(\delta\phi_n)$, the derivatives
 
 \begin{equation}
 d^\prime(\delta\phi) = a\, \sec \delta\phi \tan \delta\phi + b \approx
@@ -227,6 +229,9 @@ are necessary.  Remember, $\tan\delta\phi = \text{signum}(\delta\phi)
 % $Id$
 
 % $Log$
+% Revision 1.11  2020/04/14 22:45:41  vsnyder
+% Remove .eps from graphic filename because pdflatex wants to convert it itself
+%
 % Revision 1.10  2012/03/30 20:41:42  vsnyder
 % Repair graphics stuff
 %
