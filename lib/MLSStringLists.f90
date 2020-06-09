@@ -18,7 +18,7 @@ module MLSStringLists               ! Module to treat string lists
   use MLSFinds, only: FindFirst, FindLast
   use MLSStrings, only: Capitalize, CompressString, IsAlphabet, LowerCase, &
     & NCopies, ReadIntsFromChars, ReadNumsFromChars, Replace, Reverse, &
-    & SplitDetails, SplitNest, Squeeze, StrEq, Trim_Safe, WriteIntsToChars
+    & SplitDetails, Squeeze, StrEq, Trim_Safe, WriteIntsToChars
   use Sort_M, only: Sortp
   implicit none
   private
@@ -510,6 +510,7 @@ contains
     ! Collapse every sub-formula nested within parentheses
     collapsedstr = lowerCase(str)
     do level =1, MAXNESTINGS ! To prevent endlessly looping if ill-formed
+      if ( DEEBug ) print *, 'collapsedstr: ', trim(collapsedstr)
       if ( index( collapsedstr, '(' ) < 1 ) exit
       ! call SplitNest ( collapsedstr, part1, part2, part3 )
       call GetMatchedParens( collapsedstr, pairs )
@@ -1677,9 +1678,10 @@ contains
         pairs(1, n) = frame%index
         pairs(2, n) = i
         if ( present(numpairs) ) numpairs = n
-        if ( n >= k ) return
+        if ( n >= k ) exit
       endif
     enddo
+    call Deallocate_Index_Stack
   end subroutine GetMatchedParens
 
   ! ---------------------------------------------  GetUniqueInts  -----
@@ -4791,6 +4793,16 @@ contains
   end subroutine wrap_noQuotes
 
 !============================ Private ==============================
+! ---------------------------------------  Deallocate_Index_Stack  -----
+  subroutine Deallocate_Index_Stack
+    ! internal variables
+    integer :: stat
+    ! Executable
+    if ( .not. allocated(stack) ) return
+    deallocate ( stack, stat=stat )
+    stack_ptr = 0
+  end subroutine Deallocate_Index_Stack
+
   subroutine prepOptions( options )
     ! Process options into separate optional args
     ! You should call this at the start of every procedure
@@ -4903,6 +4915,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.88  2020/06/09 21:55:10  pwagner
+! Fix error caused by failure to Deallocate_Index_Stack
+!
 ! Revision 2.87  2020/06/03 23:39:49  pwagner
 ! Improve BooleanValue_log; implemented GetMatchedParens
 !
