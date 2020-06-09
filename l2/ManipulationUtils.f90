@@ -24,10 +24,10 @@ module ManipulationUtils        ! operations to manipulate quantities
   use MLSStats1, only: MLSCount, MLSMin, MLSMax, MLSMean, MLSMedian, &
     & MLSRMS, MLSStddev
   use MLSStringLists, only: Array2List, CatLists, GetStringElement, &
-    & List2Array, NumStringElements, &
+    & GetMatchedParens, List2Array, NumStringElements, &
     & ReplaceSubstring, SortArray
   use MLSStrings, only: Enclosure, Indexes, LowerCase, NCopies, &
-    & Reverse_Trim, SplitNest, Stretch
+    & Reverse_Trim, Stretch
   use Output_M, only: Output
   use VectorsModule, only: VectorValue_T, M_Fill, ReshapeVectorValue
   ! This module allows us to do algebraic operations on vector quantities
@@ -73,7 +73,7 @@ module ManipulationUtils        ! operations to manipulate quantities
   logical, parameter         :: Deebug     = .false.         ! Usually FALSE
   integer, parameter, public :: Maxmanipulationlen = 128     ! Is this enough?
   integer, parameter, public :: No_error_code = 0
-  integer, parameter         :: NFunNames = 41
+  integer, parameter         :: NFunNames = 42
   character(len=16), dimension(NFunNames) :: Funcolons
   character(len=16), dimension(NFunNames) :: FunNames
   character(len=8), dimension(NFunNames), parameter :: UnsortedFunnames = &
@@ -87,7 +87,7 @@ module ManipulationUtils        ! operations to manipulate quantities
     &    'asin    ', 'acos    ', 'atan    ', &
     &    'sinh    ', 'cosh    ', 'tanh    ', &
     &    'asinh   ', 'acosh   ', 'atanh   ', &
-    &    'trunc   '/)
+    &    'trunc   ', 'sqrt    '/)
 
 contains ! =====     Public Procedures     =============================
 
@@ -175,6 +175,18 @@ contains ! =====     Public Procedures     =============================
     ! Improvements to be made:
     ! (1) Check for illegal syntax 
     ! (2) Make ops into array, and loop over them where convenient
+    
+    ! New idea:
+    ! In evaluating an expression, 
+    ! (1) for each open paren '(' push  its location onto a stack
+    ! (2) for each close paren ')' pop its location off the stack
+    ! The chars between the matching '(' and ')' are to be evaluated
+    ! So we need a stack structure:
+    ! items on the stack must have components that are positions
+    ! in the string
+    ! For error-free operation, we will also track a parallel
+    ! stack which does not actually pop but insteads records the pop
+    ! and which open paren was matched.
 
     ! Internal variables
     logical                            :: Alreadyvalparens
@@ -182,13 +194,18 @@ contains ! =====     Public Procedures     =============================
     integer, parameter :: MAXNESTINGS=64 ! Max number of '(..)' pairs
     character(len=MAXMANIPULATIONLEN)  :: collapsedstr
     integer, dimension(NFunNames)      :: Ints
-    integer                            :: IFUN
+    integer                            :: Ifun
     integer                            :: level
-    logical                            :: MAPFUNCTION
+    integer                            :: level2
+    logical                            :: Mapfunction
     integer                            :: np ! number of primitives
+    integer, dimension(2,1)            :: pairs
     character(len=MAXMANIPULATIONLEN)  :: part1
     character(len=MAXMANIPULATIONLEN)  :: part2
     character(len=MAXMANIPULATIONLEN)  :: part3
+    character(len=MAXMANIPULATIONLEN)  :: part21
+    character(len=MAXMANIPULATIONLEN)  :: part22
+    character(len=MAXMANIPULATIONLEN)  :: part23
     character(len=4)                   :: vchar
       
     ! logical, parameter                 :: DEEBUG = .false.
@@ -245,12 +262,16 @@ contains ! =====     Public Procedures     =============================
     ! We're unable to ensure operator precedence
     ! so we'll attempt to identify multiplications and divisions
     ! and surround such subexpressions with extra parentheses
+    
+    ! This didn't really work properly,
+    ! so we relocated it to be inside the endless loop
+    ! over nested matched pairs of parentheses.
 
-    call ReorderPrecedence( mstr, collapsedstr )
-    if ( DeeBUG ) then
-      print *, 'incoming ', mstr
-      print *, 'after reordering precedence ', collapsedstr
-    endif
+    ! call ReorderPrecedence( mstr, collapsedstr )
+    ! if ( DeeBUG .or. .true. ) then
+    !   print *, 'incoming ', mstr
+    !   print *, 'after reordering precedence ', collapsedstr
+    ! endif
     mstr = collapsedstr
 
     collapsedstr = lowerCase(mstr)
@@ -261,18 +282,116 @@ contains ! =====     Public Procedures     =============================
     call ReplaceSubString( mstr, collapsedstr, 'e_', 'e-', &
       & which='all', no_trim=.true. )
     alreadyValParens = .false.
-    ! Collapse every sub-formula nested within parentheses
+    ! Collapse every sub-formula nested within matched pairs of parentheses
     do level =1, MAXNESTINGS ! To prevent endlessly looping if ill-formed
+      if ( DEEBug ) print *, 'collapsedstr: ', trim(collapsedstr)
       if ( index( collapsedstr, '(' ) < 1 ) exit
       collapsedstr = stretch( collapsedstr, options='o[(]' )
-      call SplitNest ( collapsedstr, part1, part2, part3 )
+      ! call SplitNest ( collapsedstr, part1, part2, part3 )
+      call GetMatchedParens( collapsedstr, pairs )
+      part1 = ' '
+      part2 = ' '
+      part3 = ' '
+      if ( pairs(1, 1) < 1 ) then
+        part2 = collapsedstr
+      elseif ( pairs(1, 1) == 1 ) then
+        part2 = collapsedstr(2:pairs(2,1)-1)
+        if ( pairs(2, 1) < len_trim(collapsedstr) ) &
+          & part3 = collapsedstr(pairs(2,1)+1:)
+      elseif ( pairs(2, 1) == len_trim(collapsedstr) ) then
+        part1 = collapsedstr(1:pairs(1,1)-1)
+        part2 = collapsedstr(pairs(1,1)+1:pairs(2,1)-1)
+      else
+        part1 = collapsedstr(1:pairs(1,1)-1)
+        part2 = collapsedstr(pairs(1,1)+1:pairs(2,1)-1)
+        part3 = collapsedstr(pairs(2,1)+1:)
+      endif
       if ( DEEBug ) then
-        print *, '(After SplitNest)'
+        print *, '(After GetMatchedParens)'
         print *, 'part1: ', trim(part1)
         print *, 'part2: ', trim(part2)
         print *, 'part3: ', trim(part3)
       endif
       part2 = adjustl(part2)
+      
+      ! Hackery-quackery alert:
+
+      ! We're unable to ensure operator precedence
+      ! (being too inept or lacking in ideas)
+      ! so we'll attempt to identify multiplications and divisions
+      ! and surround such subexpressions with extra parentheses
+
+      call ReorderPrecedence( part2, mstr )
+      if ( DEEBug ) then
+        print *, 'incoming ', part2
+        print *, 'after reordering precedence ', mstr
+      endif
+      
+      ! The next block of code is in an endless loop
+      ! of its own until there are no more parens in mstr
+      ! (which were created in ReorderPrecedence aqas explained above)
+      precedence: do level2 =1, MAXNESTINGS ! To prevent endlessly looping
+        if ( DEEBug ) print *, 'mstr: ', trim(mstr)
+        if ( index( mstr, '(' ) < 1 ) exit precedence
+        ! if ( mstr /= part2 ) then
+        call GetMatchedParens( mstr, pairs )
+        part21 = ' '
+        part22 = ' '
+        part23 = ' '
+        if ( pairs(1, 1) < 1 ) then
+          part22 = mstr
+        elseif ( pairs(1, 1) == 1 ) then
+          part22 = mstr(2:pairs(2,1)-1)
+          if ( pairs(2, 1) < len_trim(mstr) ) &
+            & part23 = mstr(pairs(2,1)+1:)
+        elseif ( pairs(2, 1) == len_trim(mstr) ) then
+          part21 = mstr(1:pairs(1,1)-1)
+          part22 = mstr(pairs(1,1)+1:pairs(2,1)-1)
+        else
+          part21 = mstr(1:pairs(1,1)-1)
+          part22 = mstr(pairs(1,1)+1:pairs(2,1)-1)
+          part23 = mstr(pairs(2,1)+1:)
+        endif
+        np = evaluatePrimitive( trim(adjustl(part22)), &
+          & a, b, c, &
+          & spreadflag, dimList )
+        write(vChar, '(i4)') np
+        if ( DEEBug ) then
+          print *, 'part21 ', part21
+          print *, 'part22 ', part22
+          print *, 'part23 ', part23
+          print *, 'vchar ', vchar
+        endif
+        ! And substitute its value for the spaces it occupied
+        if (  part21 // part23 == ' ' ) then
+          mstr = vChar
+        elseif (  part21 == ' ' ) then
+          if ( index(part23, ':') > 1 .and. index(part23, '(') < 1 ) then
+            part23 = Parenthesize(part23)
+          endif
+          ! mstr = trim(vChar) // ' ' // part3
+          mstr = catTwoOperands( trim(vChar), part23 )
+        elseif ( part23 == ' ' ) then
+          mstr = catTwoOperands( trim(part21),  vChar )
+        else
+          mstr = catTwoOperands( &
+            & trim( catTwoOperands( trim(part21),  trim(vChar) ) ), &
+            & part23 )
+          if ( DEEBug ) then
+            print *, 'part21 ', trim(part21)
+            print *, 'vchar ', trim(vchar)
+            print *, 'part23 ', trim(part23)
+          endif
+        endif
+        if ( DEEBug ) then
+          print *, 'mstr ', trim(mstr)
+        endif
+      enddo precedence ! precedence loop
+      if ( DEEBug ) then
+        print *, 'mstr (after precedence loop)', trim(mstr)
+      endif
+      part2 = mstr
+
       ! For Pete's sake, is this a bug you're coding around?
       if ( ncopies( trim(part2), ':' ) > 1 ) then
         call ParensForAll ( collapsedstr, mstr )
@@ -541,6 +660,9 @@ contains ! =====     Public Procedures     =============================
     ! the lower-precedence operators {+, -,<,>}
     ! If any terms contain higher-precedence operators {*, /}
     ! then surround them by parentheses
+    !
+    ! Note that we carefully and separately treat the args of the
+    ! the function names we know about, i.e. FUNNAMES
     character(len=*), intent(in)  :: mstr
     character(len=*), intent(out) :: collapsedstr
     ! Internal variables
@@ -562,9 +684,6 @@ contains ! =====     Public Procedures     =============================
     ! Executable
     DEEBUG = LetsDebug ( 'manipulate', 0 )
     ! Executable
-    ! Nah--just return
-    ! collapsedstr = mstr
-    ! return
     ! 1st -- replace each '-' with '+-'
     ! (Don't worry--we'll undo this before returning)
     ! (It takes two steps for each to avoid threat of infinite loop)
@@ -712,7 +831,7 @@ contains ! =====     Public Procedures     =============================
           collapsedstr = catLists( collapsedstr, element, inseparator='+' )
           cycle
         endif
-        ! Surround term with parentheses if it's a product or quotient
+        ! Surround term with parentheses if it's a product or quotient or '^'
         ! but not if it's (already) parenthetical or parentheses are not balanced
         if ( ( index(element, '*') > 0 .or. index(element, '/') > 0 .or. &
           & index(element, '^') > 0 ) .and. &
@@ -1088,8 +1207,6 @@ contains ! =====     Public Procedures     =============================
         case ('^')
           where ( newone%values > 0._rv )
             newone%values = newone%values ** part%values
-          elsewhere
-            newone%values = 0.
           end where
         case ('<')
             newone%values = min( newone%values, part%values )
@@ -1108,6 +1225,10 @@ contains ! =====     Public Procedures     =============================
             where ( part%values /= 0._rv )
               newone%values = sign(1._rv, part%values)
             end where
+        case ('sqrt')
+            where ( part%values > 0._rv )
+              newone%values = sqrt(part%values)
+            end where
         case ('trunc')
             newone%values = aint(part%values)
         case ('ifpos')
@@ -1123,14 +1244,10 @@ contains ! =====     Public Procedures     =============================
         case ('log', 'ln')
             where ( part%values > 0._rv )
               newone%values = log(part%values)
-            elsewhere
-              newone%values = 0.
             end where
         case ('log10')
             where ( part%values > 0._rv )
               newone%values = log10(part%values)
-            elsewhere
-              newone%values = 0.
             end where
         ! hyperbolic functions
         case ('sinh')
@@ -1155,15 +1272,11 @@ contains ! =====     Public Procedures     =============================
             newone%values = tan( part%values/Rad2deg )
         ! inverse trig functions to radian-valued values
         case ('asin')
-            where ( abs(part%values) > 1._rv )
-              newone%values = 0.
-            elsewhere
+            where ( abs(part%values) <= 1._rv )
               newone%values = asin( part%values )
             end where
         case ('acos')
-            where ( abs(part%values) > 1._rv )
-              newone%values = 0.
-            elsewhere
+            where ( abs(part%values) <= 1._rv )
               newone%values = acos( part%values )
             end where
         case ('atan')
@@ -1178,13 +1291,9 @@ contains ! =====     Public Procedures     =============================
             endif
             where ( abs(part%values) > 1._rv )
               newone%values = log( part%values + sqrt(part%values**2 - 1.) )
-            elsewhere
-              newone%values = 0.
             end where
         case ('atanh')
-            where ( abs(part%values) >= 1._rv )
-              newone%values = 0.
-            elsewhere
+            where ( abs(part%values) < 1._rv )
               newone%values = 0.5*log( (1. + part%values)/(1. - part%values))
             end where
         ! You can use map to reshape quantities with equal total
@@ -1452,11 +1561,13 @@ contains ! =====     Public Procedures     =============================
             enddo
           case default
             ! How could this happen?
+            call MLSL2Message( MLSMSG_Error, ModuleName, &
+              & avg // ' not recognized as a list of averageable dims' )
           end select
         case default
           ! How could this happen?
             call MLSL2Message( MLSMSG_Error, ModuleName, &
-              & avg // ' not recognized as a list of averageable dims' )
+              & op // ' not recognized as an allowable op or fun' )
         end select
         fun = ' '
         negating = .false.
@@ -1729,6 +1840,9 @@ end module ManipulationUtils
 
 !
 ! $Log$
+! Revision 2.27  2020/06/09 21:58:40  pwagner
+! Repaired bugs in processing deeply nested manipulations
+!
 ! Revision 2.26  2019/10/28 16:24:29  pwagner
 ! Fixed another bug that somtines resultd in (c +); added Manipulate_Qty
 !
