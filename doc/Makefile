@@ -150,7 +150,7 @@ vpath %.jpg $(DOCDIR)
 	  pdflatex $(TEXDIR)/$*.tex; \
 	fi
 	mv $@ $(PDFDIR)
-	mv `${REECHO} $*.log $*.aux $*.out` $(LOGDIR)
+	mv `${REECHO} $*.log $*.aux $*.out $*.nav` $(LOGDIR)
 	rm -f $*.dvi $*.temp*
 
 .f.o:
@@ -252,6 +252,9 @@ update:
 
 # ========================================================================
 # $Log$
+# Revision 1.11  2020/04/21 00:08:57  pwagner
+# externaldocument directed toward LOGDIR instead of cwd
+#
 # Revision 1.10  2019/09/19 22:19:05  pwagner
 # Includes default build rules for .obj files
 #
