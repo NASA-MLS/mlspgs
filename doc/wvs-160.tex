@@ -15,11 +15,11 @@
 \usepackage{multicol}
 \usepackage{graphicx}
 \usepackage{floatflt}
-\usepackage[strings]{underscore}
+%\usepackage[strings]{underscore}
 \usepackage{xr-hyper}
-\externaldocument[128-]{wvs-128}
-\externaldocument[131-]{wvs-131}
-\externaldocument[146-]{wvs-146}
+\externaldocument[128-]{\logdir/wvs-128}
+\externaldocument[131-]{\logdir/wvs-131}
+\externaldocument[146-]{\logdir/wvs-146}
 
 \usepackage{hyperref}
 % \hypersetup{%
@@ -174,7 +174,7 @@ their projections into the normal are reversed.  Therefore, as derived in
 \newframe{Line of sight}
 
 The line of sight is calculated by {\tt Get\_Lines\_of\_Sight} in the
-module {\tt Interpolate_MIF_to_Tan_Press_m} using
+module {\tt Interpolate\_MIF\_to\_Tan\_Press\_m} using
 
 \begin{itemize}
 
@@ -348,7 +348,7 @@ sight.
 The lines of sight for all the tangent pressures are determined.\\[5pt]
 
 The set of facets under each line of sight, and the vertices of those
-facets, are recorded in the variable {\tt F_And_V} in the full forward
+facets, are recorded in the variable {\tt F\_And\_V} in the full forward
 model.
 
 \begin{centering}
@@ -647,14 +647,14 @@ curve), and
 
 \end{itemize}
 
-EMLS {\tt Height_Metrics} in {\tt metrics_m} calculates the height and
+EMLS {\tt Height\_Metrics} in {\tt metrics\_m} calculates the height and
 orbit geodetic angle only at intersections of the line of sight with the
 constant-pressure curve (\h{wvs-048}).  The height between the points of
 constant pressure on adjacent profiles is approximated by a straight line,
 not a segment of a circle. Intersections with the profiles are not
 determined.\\[10pt]
 
-Although {\tt Metrics_3D_QTM} in {\tt Metrics_3D_m} can calculate
+Although {\tt Metrics\_3D\_QTM} in {\tt Metrics\_3D\_m} can calculate
 intersections with all three surfaces, for consistency with EMLS, it is
 referenced from {\tt FullForwardModel} in such a way as to calculate only
 intersections with the constant-pressure surface.
@@ -693,7 +693,7 @@ Otherwise, it intersects the sphere twice.
 %
 \newframe{Intersection with spherical surface of constant pressure}
 
-For every facet in {\tt F_And_V\%Facets}
+For every facet in {\tt F\_And\_V\%Facets}
 
 \begin{enumerate}
 
@@ -710,7 +710,7 @@ For every facet in {\tt F_And_V\%Facets}
       cc}.
 
 \item Determine the facet in which the point $(\lambda,\phi)$ appears
-      using {\tt QTM_Tree\%Find_Facet(cc)}.
+      using {\tt QTM\_Tree\%Find\_Facet(cc)}.
 
 \item Discard the intersection if it's not within the facet being
       considered.
@@ -1032,6 +1032,9 @@ Sort the intersections on $s$.\\
 \end{document}
 
 % $Log$
+% Revision 1.2  2020/06/10 00:35:37  vsnyder
+% Correct a typo -- already
+%
 % Revision 1.1  2020/06/10 00:18:18  vsnyder
 % Initial commit
 %
