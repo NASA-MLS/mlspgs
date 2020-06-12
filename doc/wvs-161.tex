@@ -10,8 +10,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-161}
-\newcommand{\docdate}{26 April 2020}
+\newcommand{\docname}{wvs-161r1}
+\newcommand{\docdate}{12 June 2020}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -71,6 +71,52 @@ From: \>Van Snyder\\
 
 \parindent 0pt \parskip 6pt
 \vspace{-20pt}
+
+Why are we interested in the areas of spherical triangles?
+
+Within a planar triangle whose vertices are
+$(\mathbf{v}_1,\mathbf{v}_2,\mathbf{v}_3)$, the barycentric interpolation
+coefficient $\eta_i$ from vertex $\mathbf{v}_i$ to a point $\mathbf{X}$ is
+the ratio of the area of the triangle
+$(\mathbf{v}_j,\mathbf{v}_k,\mathbf{X})$ to the area of the triangle
+$(\mathbf{v}_1,\mathbf{v}_2,\mathbf{v}_3) \,\, (i \neq j \neq k)$.
+
+There are (at least) three ways to define barycentric interpolation on a
+sphere, using planar barycentric interpolation:
+
+\begin{itemize}
+
+\item Project $\mathbf{X}$ to the planar triangle whose vertices are
+      $(\mathbf{v}_1,\mathbf{v}_2,\mathbf{v}_3)$ and use barycentric
+      interpolation within that triangle to the projection of
+      $\mathbf{X}$ to that plane.
+
+\item Construct a plane tangent to the sphere and parallel to the plane
+      defined by $(\mathbf{v}_1,\mathbf{v}_2,\mathbf{v}_3)$.  Project
+      $\mathbf{X}$ and $(\mathbf{v}_1,\mathbf{v}_2,\mathbf{v}_3)$ onto
+      that plane, and use barycentric interpolation within the projected
+      triangle to the projected image of $\mathbf{X}$.
+
+\item Construct a plane tangent to the sphere at $\mathbf{X}$. Project
+      $(\mathbf{v}_1,\mathbf{v}_2,\mathbf{v}_3)$ into that plane, and use
+      barycentric interpolation within the projected triangle.
+
+\end{itemize}
+
+In all of these methods, one loses either linear precision
+
+\begin{equation*}
+f(\mathbf{X}) = \sum_i \eta_i f(\mathbf{v}_i)
+\end{equation*}
+
+(assuming $f$ is linear), or unitarity
+
+\begin{equation*}
+\sum_i \eta_i = 1 \,.
+\end{equation*}
+
+To preserve both linear precision and unitarity, one must use the areas of
+spherical triangles to compute barycentric interpolation coefficients.
 
 The area of a spherical triangle whose vertices are
 $(\mathbf{v}_1,\mathbf{v}_2,\mathbf{v}_3)$ and whose edges are arcs of
