@@ -190,6 +190,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Internal variables
     logical                            :: Alreadyvalparens
+    logical                            :: MustCycle
     character (len=MAXMANIPULATIONLEN) :: mstr ! manipulation being manipulated
     integer, parameter :: MAXNESTINGS=64 ! Max number of '(..)' pairs
     character(len=MAXMANIPULATIONLEN)  :: collapsedstr
@@ -208,10 +209,9 @@ contains ! =====     Public Procedures     =============================
     character(len=MAXMANIPULATIONLEN)  :: part23
     character(len=4)                   :: vchar
       
-    ! logical, parameter                 :: DEEBUG = .false.
     logical                            :: DEEBUG
     ! Executable
-    DEEBUG = LetsDebug ( 'manipulate', 0 )
+    DEEBUG = LetsDebug ( 'manipulate', 0 ) ! .or. .true.
     ! Hackery-quackery alert!
     ! We will use an array of function names sorted from
     ! longest to shortest, so that if we ever FindFirst
@@ -331,6 +331,7 @@ contains ! =====     Public Procedures     =============================
       ! of its own until there are no more parens in mstr
       ! (which were created in ReorderPrecedence aqas explained above)
       precedence: do level2 =1, MAXNESTINGS ! To prevent endlessly looping
+        mustcycle = .false.
         if ( DEEBug ) print *, 'mstr: ', trim(mstr)
         if ( index( mstr, '(' ) < 1 ) exit precedence
         ! if ( mstr /= part2 ) then
@@ -352,6 +353,21 @@ contains ! =====     Public Procedures     =============================
           part22 = mstr(pairs(1,1)+1:pairs(2,1)-1)
           part23 = mstr(pairs(2,1)+1:)
         endif
+        if ( index(part22, ':') > 0 ) then
+          if ( deeBug ) print *, 'Adding parens to part22 primitive ', trim(part22)
+          call AddValFunParens ( part22, part2, mustcycle )
+          if ( deeBug ) print *, 'Afterwards ', trim(part22)
+        endif
+        if ( mustcycle ) then
+          ! Added new parens to part22 so can't evaluate this cycle; wait until next
+          mstr = trim(part21) // trim(part22) // trim(part23)
+          if ( DeeBug ) then
+            print *, 'Added new parens to part22'
+            print *, 'mstr ', trim(mstr)
+          endif
+          cycle precedence
+        endif
+        if ( deeBug ) print *, 'Evaluate part22 primitive ', trim(part22)
         np = evaluatePrimitive( trim(adjustl(part22)), &
           & a, b, c, &
           & spreadflag, dimList )
@@ -360,7 +376,8 @@ contains ! =====     Public Procedures     =============================
           print *, 'part21 ', part21
           print *, 'part22 ', part22
           print *, 'part23 ', part23
-          print *, 'vchar ', vchar
+          print *, '1st vchar ', vchar
+          call dumpAPrimitive ( primitives(np) )
         endif
         ! And substitute its value for the spaces it occupied
         if (  part21 // part23 == ' ' ) then
@@ -379,7 +396,7 @@ contains ! =====     Public Procedures     =============================
             & part23 )
           if ( DEEBug ) then
             print *, 'part21 ', trim(part21)
-            print *, 'vchar ', trim(vchar)
+            print *, '2nd vchar ', trim(vchar)
             print *, 'part23 ', trim(part23)
           endif
         endif
@@ -392,46 +409,15 @@ contains ! =====     Public Procedures     =============================
       endif
       part2 = mstr
 
-      ! For Pete's sake, is this a bug you're coding around?
-      if ( ncopies( trim(part2), ':' ) > 1 ) then
-        call ParensForAll ( collapsedstr, mstr )
-        collapsedstr = mstr
-        cycle
-      elseif ( index( trim(part2), 'val:' ) > 1 .and. .not. alreadyValParens ) then
-        alreadyValParens = .true.
-        mstr = ParenthesizeVal( collapsedstr )
-        if ( DeeBUG ) then
-          print *, 'Adding parens to val ', part2
-          print *, 'before ', trim(collapsedstr)
-          print *, 'after ', trim(mstr)
+      call AddValFunParens ( part2, collapsedstr, mustcycle )
+      if ( mustcycle ) then
+        ! Added new parens to part2 so can't evaluate this cycle; wait until next
+        collapsedstr = trim(part1) // '(' // &
+          & trim(part2) // ')' // trim(part3)
+        if ( DeeBug ) then
+          print *, 'Added new parens to part2'
+          print *, 'collapsedstr ', trim(collapsedstr)
         endif
-        collapsedstr = mstr
-        cycle
-      elseif ( any( indexes( trim(part2), FunColons(:)(2:)) > 1 ) .and. &
-        &  .not. alreadyValParens ) then
-        alreadyValParens = .true.
-        iFun = FindFirst( indexes( trim(part2), FunColons(:)(2:)) > 1 )
-        mstr = ParenthesizeFun( collapsedstr, trim(FunNames(iFun)) )
-        if ( DeeBUG ) then
-          print *, 'Adding parens to Fun ', part2, FunNames(iFun)
-          print *, 'before ', trim(collapsedstr)
-          print *, 'after ', trim(mstr)
-        endif
-        collapsedstr = mstr
-        cycle
-      endif
-      alreadyValParens = .false.
-      ! Last chance to catch a Function needing to be parenthesized
-      if ( any( indexes( trim(part2), FunColons(:)(2:)) > 1 ) ) then
-        alreadyValParens = .true.
-        iFun = FindFirst( indexes( trim(part2), FunColons(:)(2:)) > 1 )
-        mstr = ParenthesizeFun( collapsedstr, trim(FunNames(iFun)) )
-        if ( DeeBUG ) then
-          print *, 'Adding parens to Fun ', part2, FunNames(iFun)
-          print *, 'before ', trim(collapsedstr)
-          print *, 'after ', trim(mstr)
-        endif
-        collapsedstr = mstr
         cycle
       endif
       ! Now evaluate the part2
@@ -447,13 +433,15 @@ contains ! =====     Public Procedures     =============================
         collapsedstr = part1
         cycle
       else
+        if ( deeBug ) print *, 'Evaluate part2 primitive ', trim(part2)
         np = evaluatePrimitive( trim(adjustl(part2)), &
           & a, b, c, &
           & spreadflag, dimList )
         write(vChar, '(i4)') np
       endif
       if ( DeeBUG ) then
-        print *, 'vchar ', vchar
+        print *, '3rd vchar ', vchar
+        call dumpAPrimitive ( primitives(np) )
       endif
       ! And substitute its value for the spaces it occupied
       if (  part1 // part3 == ' ' ) then
@@ -475,7 +463,7 @@ contains ! =====     Public Procedures     =============================
           & part3 )
         if ( DeeBUG ) then
           print *, 'part1 ', trim(part1)
-          print *, 'vchar ', trim(vchar)
+          print *, '4th vchar ', trim(vchar)
           print *, 'part3 ', trim(part3)
         endif
       endif
@@ -492,6 +480,7 @@ contains ! =====     Public Procedures     =============================
       endif
     enddo
     ! Presumably we have collapsed all the nested '(..)' pairs by now
+    if ( deeBug ) print *, 'Evaluate final primitive ', trim(collapsedstr)
     np = evaluatePrimitive( trim(collapsedstr), &
       & a, b, c, &
       & spreadflag, dimList )
@@ -530,8 +519,81 @@ contains ! =====     Public Procedures     =============================
         quantity%values = primitives(np)%values
       end where
     end if
-    if ( DeeBUG ) call dumpPrimitives(primitives)
+    if ( DeeBUG ) call dumpPrimitives( primitives, details=1 )
     call destroyPrimitives(primitives)
+  contains
+    subroutine AddValFunParens ( part2, collapsedstr, mustcycle  )
+      ! Surround val: and fun: instances with '(' and ')'
+      character(len=*)         :: part2
+      character(len=*)         :: collapsedstr
+      logical, intent(out)     :: MustCycle
+      ! Internal variables
+      logical                  :: alreadyValParens
+      character(len=1024)      :: mstr
+      character(len=1024)      :: part2OnEntry
+      integer                  :: nParensOnEntry
+      ! For Pete's sake, is this a bug you're coding around?
+      alreadyValParens = .false.
+      MustCycle = .false.
+      nParensOnEntry = ncopies( trim(part2), ')' )
+      part2OnEntry = part2
+      if ( ncopies( trim(part2), ':' ) > 1 ) then
+        call ParensForAll ( part2, mstr )
+        part2 = mstr
+        ! cycle
+        mustcycle = nParensOnEntry < ncopies( trim(part2), ')' ) !.true.
+      elseif ( index( trim(part2), 'val:' ) > 1 .and. .not. alreadyValParens ) then
+        alreadyValParens = .true.
+        mstr = ParenthesizeVal( part2 )
+        if ( DeeBUG ) then
+          print *, 'Adding parens to val ', part2
+          print *, 'before ', trim(part2)
+          print *, 'after ', trim(mstr)
+        endif
+        part2 = mstr
+        ! cycle
+        mustcycle = nParensOnEntry < ncopies( trim(part2), ')' ) !.true.
+      elseif ( any( indexes( trim(part2), FunColons(:)(2:)) > 1 ) .and. &
+        &  .not. alreadyValParens ) then
+        alreadyValParens = .true.
+        iFun = FindFirst( indexes( trim(part2), FunColons(:)(2:)) > 1 )
+        mstr = ParenthesizeFun( part2, trim(FunNames(iFun)) )
+        if ( DeeBUG ) then
+          print *, 'Adding parens to Fun ', part2, FunNames(iFun)
+          print *, 'before ', trim(part2)
+          print *, 'after ', trim(mstr)
+        endif
+        part2 = mstr
+        ! cycle
+        mustcycle = nParensOnEntry < ncopies( trim(part2), ')' ) !.true.
+      endif
+      alreadyValParens = .false.
+      ! Last chance to catch a Function needing to be parenthesized
+      if ( any( indexes( trim(part2), FunColons(:)(2:)) > 1 ) ) then
+        alreadyValParens = .true.
+        iFun = FindFirst( indexes( trim(part2), FunColons(:)(2:)) > 1 )
+        mstr = ParenthesizeFun( part2, trim(FunNames(iFun)) )
+        if ( DeeBUG ) then
+          print *, 'Adding parens to Fun ', part2, FunNames(iFun)
+          print *, 'before ', trim(part2)
+          print *, 'after ', trim(mstr)
+        endif
+        part2 = mstr
+        ! cycle
+        mustcycle = nParensOnEntry < ncopies( trim(part2), ')' ) !.true.
+      endif
+      ! But ..
+      ! If all we did was to add '(' at the start and ')' at the end
+      ! then undo all that.
+      ! Sigh--look up "kludge" in the dictionary
+      if ( mustcycle ) then
+        part2 = adjustl(part2)
+        if ( (index(part2, '(') == 1) &
+          &  .and. &
+          & (index(part2, ')') == len_trim(part2)) ) &
+          & part2 = part2OnEntry
+      endif
+    end subroutine AddValFunParens
   end subroutine Manipulate_Qty
 
   !============ Private procedures ===============
@@ -1205,9 +1267,15 @@ contains ! =====     Public Procedures     =============================
             newone%values = newone%values / part%values
           end where
         case ('^')
+          if ( DeeBug ) then
+            print *, 'Evaluating x ^ y'
+            print *, 'x values', newone%values
+            print *, 'y values', part%values
+          endif
           where ( newone%values > 0._rv )
             newone%values = newone%values ** part%values
           end where
+          if ( deeBug ) print *, 'x^y values', newone%values
         case ('<')
             newone%values = min( newone%values, part%values )
         case ('>')
@@ -1218,7 +1286,12 @@ contains ! =====     Public Procedures     =============================
             newone%values = iand( int(newone%values), int(part%values) )
         ! Now the functions
         case ('val')
+            if ( DeeBug ) then
+              print *, 'Evaluating val:(x)'
+              print *, 'x', part%values
+            endif
             newone%values = part%values
+            if ( deeBug ) print *, 'val(x)', newone%values
         case ('abs')
             newone%values = abs( part%values )
         case ('sign')
@@ -1840,6 +1913,9 @@ end module ManipulationUtils
 
 !
 ! $Log$
+! Revision 2.28  2020/06/16 23:43:45  pwagner
+! Fixed more bugs, especially in vals and funs
+!
 ! Revision 2.27  2020/06/09 21:58:40  pwagner
 ! Repaired bugs in processing deeply nested manipulations
 !
