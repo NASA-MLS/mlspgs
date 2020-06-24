@@ -189,7 +189,6 @@ contains ! =====     Public Procedures     =============================
     ! and which open paren was matched.
 
     ! Internal variables
-    logical                            :: Alreadyvalparens
     logical                            :: MustCycle
     character (len=MAXMANIPULATIONLEN) :: mstr ! manipulation being manipulated
     integer, parameter :: MAXNESTINGS=64 ! Max number of '(..)' pairs
@@ -263,15 +262,15 @@ contains ! =====     Public Procedures     =============================
     ! so we'll attempt to identify multiplications and divisions
     ! and surround such subexpressions with extra parentheses
     
-    ! This didn't really work properly,
-    ! so we relocated it to be inside the endless loop
+    ! This wasn't sufficient alone,
+    ! so we duplicated it inside the endless loop
     ! over nested matched pairs of parentheses.
 
-    ! call ReorderPrecedence( mstr, collapsedstr )
-    ! if ( DeeBUG .or. .true. ) then
-    !   print *, 'incoming ', mstr
-    !   print *, 'after reordering precedence ', collapsedstr
-    ! endif
+    call ReorderPrecedence( mstr, collapsedstr )
+    if ( DeeBUG  ) then
+      print *, 'incoming ', mstr
+      print *, 'after reordering precedence ', collapsedstr
+    endif
     mstr = collapsedstr
 
     collapsedstr = lowerCase(mstr)
@@ -281,7 +280,6 @@ contains ! =====     Public Procedures     =============================
     mstr = collapsedstr
     call ReplaceSubString( mstr, collapsedstr, 'e_', 'e-', &
       & which='all', no_trim=.true. )
-    alreadyValParens = .false.
     ! Collapse every sub-formula nested within matched pairs of parentheses
     do level =1, MAXNESTINGS ! To prevent endlessly looping if ill-formed
       if ( DEEBug ) print *, 'collapsedstr: ', trim(collapsedstr)
@@ -329,7 +327,7 @@ contains ! =====     Public Procedures     =============================
       
       ! The next block of code is in an endless loop
       ! of its own until there are no more parens in mstr
-      ! (which were created in ReorderPrecedence aqas explained above)
+      ! (which were created in ReorderPrecedence as explained above)
       precedence: do level2 =1, MAXNESTINGS ! To prevent endlessly looping
         mustcycle = .false.
         if ( DEEBug ) print *, 'mstr: ', trim(mstr)
@@ -1913,6 +1911,9 @@ end module ManipulationUtils
 
 !
 ! $Log$
+! Revision 2.29  2020/06/24 20:54:29  pwagner
+! Corrected another bug invoking precedence
+!
 ! Revision 2.28  2020/06/16 23:43:45  pwagner
 ! Fixed more bugs, especially in vals and funs
 !
