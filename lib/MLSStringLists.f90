@@ -18,7 +18,7 @@ module MLSStringLists               ! Module to treat string lists
   use MLSFinds, only: FindFirst, FindLast
   use MLSStrings, only: Capitalize, CompressString, IsAlphabet, LowerCase, &
     & NCopies, ReadIntsFromChars, ReadNumsFromChars, Replace, Reverse, &
-    & SplitDetails, Squeeze, StrEq, Trim_Safe, WriteIntsToChars
+    & Reverse_Trim, SplitDetails, Squeeze, StrEq, Trim_Safe, WriteIntsToChars
   use Sort_M, only: Sortp
   implicit none
   private
@@ -485,6 +485,20 @@ contains
     !
     ! Limitations:
     ! does not check for unmatched parens or other illegal syntax
+    !
+    ! What about precedence? Does it assign higher precedence
+    ! to "not" than to "and"? Higher precedence to "and" than to "or"?
+
+    ! Originally it did not. Now it does.
+
+    ! To see what we're talking about
+    ! consider the following logical expression
+    !    not a and b or c
+    ! It should be evaluated the same as
+    !    ((not a) and b) or c   <-- right
+    ! instead of, e.g.
+    !    not (a and (b or c))   <-- wrong
+    
     !--------Argument--------!
     character (len=*), intent(in)           :: str
     character (len=*), intent(in)           :: lkeys
@@ -492,14 +506,19 @@ contains
     logical                                 :: BooleanValue
     character (len=1), optional, intent(in) :: separator
     ! Internal variables
-    logical, parameter          :: deeBug = .false.
-    integer :: level
+    logical, parameter              :: deeBug = .false.
+    integer                         :: level
+    integer                         :: level2
     integer, parameter :: MAXNESTINGS=64 ! Max number of '(..)' pairs
     character(len=MAXSTRLISTLENGTH) :: collapsedstr
     integer, dimension(2,1)         :: pairs
     character(len=MAXSTRLISTLENGTH) :: part1
     character(len=MAXSTRLISTLENGTH) :: part2
     character(len=MAXSTRLISTLENGTH) :: part3
+    character(len=MAXSTRLISTLENGTH) :: part21
+    character(len=MAXSTRLISTLENGTH) :: part22
+    character(len=MAXSTRLISTLENGTH) :: part23
+    character(len=MAXSTRLISTLENGTH) :: mstr
     logical :: pvalue
     character(len=16) :: vChar
 
@@ -507,8 +526,23 @@ contains
     BooleanValue = .FALSE.
     if ( str == ' ' ) return
     if ( min(len_trim(lkeys), size(lvalues)) < 1 ) return
+
+    mstr = lowerCase(str)
+    ! We're unable to ensure operator precedence
+    ! so we'll attempt to identify "and"s and "not"s
+    ! and surround such subexpressions with extra parentheses
+    
+    ! This wasn't sufficient alone,
+    ! so we duplicated it inside the endless loop
+    ! over nested matched pairs of parentheses.
+
+    call ReorderPrecedence( mstr, collapsedstr )
+    if ( DeeBUG ) then
+      print *, 'incoming ', trim(mstr)
+      print *, 'after reordering precedence ', trim(collapsedstr)
+    endif
+
     ! Collapse every sub-formula nested within parentheses
-    collapsedstr = lowerCase(str)
     do level =1, MAXNESTINGS ! To prevent endlessly looping if ill-formed
       if ( DEEBug ) print *, 'collapsedstr: ', trim(collapsedstr)
       if ( index( collapsedstr, '(' ) < 1 ) exit
@@ -537,6 +571,77 @@ contains
         print *, 'part2 ', trim(part2)
         print *, 'part3 ', trim(part3)
       endif
+      ! Hackery-quackery alert:
+
+      ! We're unable to ensure operator precedence
+      ! (being too inept or lacking in ideas)
+      ! so we'll attempt to identify "and"s and "not"s
+      ! and surround such subexpressions with extra parentheses
+
+      call ReorderPrecedence( part2, mstr )
+      if ( DEEBug ) then
+        print *, 'incoming ', trim(part2)
+        print *, 'after reordering precedence ', trim(mstr)
+      endif
+      
+      ! The next block of code is in an endless loop
+      ! of its own until there are no more parens in mstr
+      ! (which were created in ReorderPrecedence as explained above)
+      precedence: do level2 =1, MAXNESTINGS ! To prevent endlessly looping
+        if ( DEEBug ) print *, 'mstr: ', trim(mstr)
+        if ( index( mstr, '(' ) < 1 ) exit precedence
+        ! if ( mstr /= part2 ) then
+        call GetMatchedParens( mstr, pairs )
+        part21 = ' '
+        part22 = ' '
+        part23 = ' '
+        if ( pairs(1, 1) < 1 ) then
+          part22 = mstr
+        elseif ( pairs(1, 1) == 1 ) then
+          part22 = mstr(2:pairs(2,1)-1)
+          if ( pairs(2, 1) < len_trim(mstr) ) &
+            & part23 = mstr(pairs(2,1)+1:)
+        elseif ( pairs(2, 1) == len_trim(mstr) ) then
+          part21 = mstr(1:pairs(1,1)-1)
+          part22 = mstr(pairs(1,1)+1:pairs(2,1)-1)
+        else
+          part21 = mstr(1:pairs(1,1)-1)
+          part22 = mstr(pairs(1,1)+1:pairs(2,1)-1)
+          part23 = mstr(pairs(2,1)+1:)
+        endif
+        if ( deeBug ) print *, 'Evaluate part22 primitive ', trim(part22)
+        pvalue = evaluatePrimitive( trim(part22) )
+        vChar = 'true'
+        if ( .not. pvalue ) vChar = 'false'
+        if ( DEEBug ) then
+          print *, 'part21 ', trim(part21)
+          print *, 'part22 ', trim(part22)
+          print *, 'part23 ', trim(part23)
+          print *, '1st vchar ', trim(vchar)
+        endif
+        ! And substitute its value for the spaces it occupied
+        if (  part21 // part23 == ' ' ) then
+          mstr = vChar
+        elseif (  part21 == ' ' ) then
+          mstr = trim(vChar) // ' ' // part3
+        elseif ( part23 == ' ' ) then
+          mstr = trim(part21) // ' ' //  vChar
+        else
+          mstr = trim(part21) // ' ' //  vChar // ' ' // part23
+          if ( DEEBug ) then
+            print *, 'part21 ', trim(part21)
+            print *, '2nd vchar ', trim(vchar)
+            print *, 'part23 ', trim(part23)
+          endif
+        endif
+        if ( DEEBug ) then
+          print *, 'mstr ', trim(mstr)
+        endif
+      enddo precedence ! precedence loop
+      if ( DEEBug ) then
+        print *, 'mstr (after precedence loop)', trim(mstr)
+      endif
+      part2 = mstr
       if ( part2 == ' ' ) then
         ! This should never happen with well-formed formulas
         collapsedstr = part1
@@ -562,6 +667,115 @@ contains
     ! Presumably we have collapsed all the nested '(..)' pairs by now
     BooleanValue = evaluatePrimitive( trim(collapsedstr) )
   contains
+  function isBalanced ( str ) result ( itIs )
+    ! Are numbers of '(' and ')' in str equal?
+    ! See also Enclosure subroutine in MLSStrings
+    character(len=*), intent(in) :: str
+    logical                      :: itIs
+    ! Internal variables
+    integer :: i
+    integer :: balance
+    ! Executable
+    ! 1st--Just count
+    ! Not as strict as "do they balance", but easier to check
+    itIs = ncopies( trim(str), '('           ) ==  &
+      &    ncopies( trim(str), ')'           ) 
+    if ( .not. itIs ) return
+    ! Now look more closely
+    ! Each '(' adds 1, each ')' subtracts 1, though never going negative
+    ! If 0 when done, we're balanced, != 0 if not
+    balance = 0
+    do i=1, len_trim(str)
+      select case(str(i:i))
+      case ('(')
+        balance = balance + 1
+      case (')')
+        balance = max( 0, balance - 1 )
+      ! case default (leaves balance unchanged)
+      end select
+    enddo
+    itIs = ( balance == 0 )
+  end function isBalanced
+
+  function isParenthetical ( str ) result ( itIs )
+    ! TRUE if 1st non-blank is '(' and last non-blank is ')'
+    ! Do we really need to make this a recursive function?
+    character(len=*), intent(in) :: str
+    logical                      :: itIs
+    itIs = index( adjustl(str), '('           ) == 1 .and. &
+      &    index( trim(str), ')', back=.true. ) == len_trim(str)
+  end function isParenthetical
+
+    subroutine ReorderPrecedence ( arg, sult )
+      character(len=*), intent(in)                  :: arg
+      character(len=*), intent(out)                 :: sult
+      !
+      integer                                       :: i
+      integer                                       :: n
+      character                                     :: separator
+      character(len=MAXSTRLISTLENGTH)               :: element
+      character(len=MAXSTRLISTLENGTH)               :: rev
+      character(len=MAXSTRLISTLENGTH)               :: tmp
+      !
+      sult = ' '
+      if ( len_trim(arg) < 1 ) then
+        return
+      endif
+      separator = '+'
+      ! 1st, replace each instance of ' or ' with '+'
+      !      replace each instance of ' and ' with '*'
+      call ReplaceSubString( arg, rev, ' or ', ' + ', &
+        & which='all', no_trim=.true. )
+      call ReplaceSubString( rev, tmp, ' and ', ' * ', &
+        & which='all', no_trim=.true. )
+      if ( DeeBUG ) print *, 'arg in ReorderPrecedence: ', trim(arg)
+      n = NumStringElements( tmp, COUNTEMPTY, inseparator='+' )
+      do i=1, n
+        call GetStringElement ( tmp, element, i, countEmpty, inseparator='+' )
+        ! Be careful not to surround a string that ends with an op
+        ! (Why does this keep happening?)
+        rev = Reverse_trim(element)
+        ! Is it an op?
+        if ( index( '+-*/', rev(1:1) ) > 0 ) then
+          sult = catLists( sult, element, inseparator='+' )
+          cycle
+        endif
+        ! Surround term with parentheses if it's a product or quotient or '^'
+        ! but not if it's (already) parenthetical or parentheses are not balanced
+        if ( ( index(element, '*') > 0  ) .and. &
+          & ( &
+          &   .not. isParenthetical(element) .and. isBalanced(element) &
+          & ) &
+          & ) then
+          if ( DEEBug ) then
+          print *, 'element to be parenthesized: ', trim(element)
+          print *, 'isParenthetical(element): ', isParenthetical(element)
+          print *, 'isBalanced(element): ', isBalanced(element)
+          print *, 'ncopies( trim(element), "("): ', ncopies( trim(element), '(')
+          print *, 'ncopies( trim(element), ")"): ', ncopies( trim(element), ')')
+          endif
+          element = '(' // trim(element) // ')'
+        endif
+        ! Avoid producing two consecutive ops, like '+ +' or '* +'
+        ! which would happen if collapsedstr ends with an op
+        ! Begin by finding its last non-blank char
+        !
+        rev = Reverse_trim(element)
+        ! Is it an op?
+        if ( index( '+-*/', rev(1:1) ) > 0 ) then
+          sult = trim(sult) // element
+        else
+          sult = catLists( sult, element, inseparator='+' )
+        endif
+      enddo
+      ! Now replace each '+' with ' or '
+      ! and each '*' with ' and '
+      call ReplaceSubString( sult, rev, '+', ' or ', &
+        & which='all', no_trim=.true. )
+      call ReplaceSubString( rev, sult, '*', ' and ', &
+        & which='all', no_trim=.true. )
+    end subroutine ReorderPrecedence
+
     function evaluatePrimitive(primitive) result(value)
       ! Evaluate an expression composed entirely of
       ! (0) constants (e.g., 'true')
@@ -619,8 +833,8 @@ contains
           if ( DeeBug ) then
             print *, trim(variable), ' is ', part
             if ( present(separator) ) print *, 'iachar(separator)', ' is ', iachar(separator)
-            print *, 'keys', ' is ', trim(lkeys)
-            print *, 'values', ' is ', lvalues
+            ! print *, 'keys', ' is ', trim(lkeys)
+            ! print *, 'values', ' is ', lvalues
           endif
         end select
         if ( hit ) then
@@ -645,8 +859,8 @@ contains
         if ( DeeBUG ) then
           print *, 'variable ', variable
           print *, 'part ', part
-          print *, 'hit ', hit
-          print *, 'negating ', negating
+          if ( hit ) print *, 'hit ', hit
+          if ( negating ) print *, 'negating ', negating
           print *, 'value ', value
         endif
         done = ( elem >= n )
@@ -4915,6 +5129,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.89  2020/06/24 20:52:33  pwagner
+! BooleanValue_log now respects precedence of 'and' over 'or'
+!
 ! Revision 2.88  2020/06/09 21:55:10  pwagner
 ! Fix error caused by failure to Deallocate_Index_Stack
 !
