@@ -120,7 +120,6 @@ contains
     real(r8) :: Lambda
     real(r8) :: LambdaX2Pi                   ! 2 * Pi * Lambda
     real(r8) :: Q                            ! Factor used to scale derivatives
-    real(r8) :: Log2                         ! Log 2 of array size
     character(len=MaxSigLen) :: SigName      ! Signal Name
     integer :: SIDEBAND                      ! From parse_signal
     integer :: Status                        ! From read or allocate
@@ -188,13 +187,7 @@ outer1: do
         & uBounds = howManySignals(i), &
         & elementSize = storage_size(antennaPatterns(i)%signals) / 8, address=addr )
 
-      log2 = log10( real(howManyPoints(i)) ) / log10(2.0)
-      if ( log2 - nint(log2) /= 0.0 ) then
-        power2 = int(log2)+1
-      else
-        power2 = nint(log2)
-      end if
-      power2 = 2**power2
+      power2 = 2**ceiling( log10( real(howManyPoints(i)) ) / log10(2.0) )
 ! billsdebug
       power2 = 2**11
 
@@ -389,6 +382,9 @@ outer1: do
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 2.18  2015/03/28 01:58:02  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
 ! Revision 2.17  2014/09/05 18:38:01  vsnyder
 ! More complete and accurate allocate/deallocate size tracking
 !
