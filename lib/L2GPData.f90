@@ -935,6 +935,20 @@ contains ! =====     Public Procedures     =============================
     Quantity%template%losAngle(1,:)       = l2gp%losAngle
     Quantity%template%solarTime(1,:)      = l2gp%solarTime
     Quantity%template%solarZenith(1,:)    = l2gp%solarZenith
+    ! If SetupNewQuantityTemplate edxplained clearly and accurately
+    ! about the 2 indexes of the surfs array, this if bloc wouldn't be needed.
+    ! However, all the chaff about regular, coherent, and stacked
+    ! possibilities, with no effort at explaining them,
+    ! leaves us no recourse but what might be called
+    !   d e f e n s i v e   p r o g r a m m i n g
+    if ( size(Quantity%template%surfs,1) == l2gp%nLevels ) then
+      Quantity%template%surfs(:,1)          = l2gp%pressures
+    elseif ( size(Quantity%template%surfs,2) == l2gp%nLevels ) then
+      Quantity%template%surfs(1,:)          = l2gp%pressures
+    ! else
+      ! call MLSMessage ( MLSMSG_Error, ModuleName, &
+      !   & 'ConvertL2GPToQuantity failed to cope with l2gp pressures' )
+    endif
   end subroutine ConvertL2GPToQuantity
 
   ! ---------------------- cpHE5GlobalAttrs  ---------------------------
@@ -5636,6 +5650,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.245  2020/03/20 23:04:13  pwagner
+! Made consistent with new he5_readglobalattr api
+!
 ! Revision 2.244  2020/03/04 21:24:48  pwagner
 ! Make stuff public needed by NCL2GPData; preFill status with l2gp%MissingStatus
 !
