@@ -209,7 +209,9 @@ contains ! =====     Public Procedures     =============================
     character(len=4)                   :: vchar
       
     logical                            :: DEEBUG
+    logical                            :: verbose
     ! Executable
+    verbose = LetsDebug ( 'manipulate', -1 ) ! .or. .true.
     DEEBUG = LetsDebug ( 'manipulate', 0 ) ! .or. .true.
     ! Hackery-quackery alert!
     ! We will use an array of function names sorted from
@@ -218,7 +220,7 @@ contains ! =====     Public Procedures     =============================
     ! The options string contains 's' to sort from shortest to longest,
     ! and 'r' to reverse the sorting order before returning FunNames
     call SortArray( UnsortedFunNames, ints, FunNames, options='-rs' )
-    if ( DeeBug ) &
+    if ( verbose ) &
       & call Dump( Funnames, 'functions after sorting', width=5 )
     ! We surround the function names with colons ":"
     ! to prevent confusion of, say, "acos" with "cos"
@@ -226,10 +228,10 @@ contains ! =====     Public Procedures     =============================
     do iFun = 1, NFUNNAMES
       FUNCOLONS(iFun) = ':' // trim(FunNames(iFun)) // ':'
     enddo
-    if ( DeeBug ) &
+    if ( verbose ) &
       & call Dump( Funcolons, 'functions with colons', width=5 )
     mstr = str
-    if ( DeeBUG ) print *, 'mstr: ', trim(mstr)
+    if ( verbose ) print *, 'mstr: ', trim(mstr)
     MapFunction = ( index(mstr, 'map' ) > 0 )
     nullify(primitives)
     np = 0
@@ -237,7 +239,7 @@ contains ! =====     Public Procedures     =============================
     ! Find any terms composed of digits (i.e., literal numbers) ddd and
     ! mark each as val(ddd)
     call markDigits( lowerCase(mstr), collapsedstr )
-    if ( DEEBUG ) call outputNamedValue( 'collapsedstr', collapsedstr )
+    if ( verbose ) call outputNamedValue( 'collapsedstr', collapsedstr )
 
     ! We'll allow both '||' and '|' to mean 'or'
     ! and also both '&&' and '&' to mean 'and'
@@ -267,14 +269,14 @@ contains ! =====     Public Procedures     =============================
     ! over nested matched pairs of parentheses.
 
     call ReorderPrecedence( mstr, collapsedstr )
-    if ( DeeBUG  ) then
+    if ( verbose  ) then
       print *, 'incoming ', mstr
       print *, 'after reordering precedence ', collapsedstr
     endif
     mstr = collapsedstr
 
     collapsedstr = lowerCase(mstr)
-    if ( DEEBUG ) call outputNamedValue( 'collapsedstr', collapsedstr )
+    if ( verbose ) call outputNamedValue( 'collapsedstr', collapsedstr )
 
     ! Restore 'e-'
     mstr = collapsedstr
@@ -282,7 +284,7 @@ contains ! =====     Public Procedures     =============================
       & which='all', no_trim=.true. )
     ! Collapse every sub-formula nested within matched pairs of parentheses
     do level =1, MAXNESTINGS ! To prevent endlessly looping if ill-formed
-      if ( DEEBug ) print *, 'collapsedstr: ', trim(collapsedstr)
+      if ( verbose ) print *, 'collapsedstr: ', trim(collapsedstr)
       if ( index( collapsedstr, '(' ) < 1 ) exit
       collapsedstr = stretch( collapsedstr, options='o[(]' )
       ! call SplitNest ( collapsedstr, part1, part2, part3 )
@@ -304,7 +306,7 @@ contains ! =====     Public Procedures     =============================
         part2 = collapsedstr(pairs(1,1)+1:pairs(2,1)-1)
         part3 = collapsedstr(pairs(2,1)+1:)
       endif
-      if ( DEEBug ) then
+      if ( verbose ) then
         print *, '(After GetMatchedParens)'
         print *, 'part1: ', trim(part1)
         print *, 'part2: ', trim(part2)
@@ -320,7 +322,7 @@ contains ! =====     Public Procedures     =============================
       ! and surround such subexpressions with extra parentheses
 
       call ReorderPrecedence( part2, mstr )
-      if ( DEEBug ) then
+      if ( verbose ) then
         print *, 'incoming ', part2
         print *, 'after reordering precedence ', mstr
       endif
@@ -330,7 +332,7 @@ contains ! =====     Public Procedures     =============================
       ! (which were created in ReorderPrecedence as explained above)
       precedence: do level2 =1, MAXNESTINGS ! To prevent endlessly looping
         mustcycle = .false.
-        if ( DEEBug ) print *, 'mstr: ', trim(mstr)
+        if ( verbose ) print *, 'mstr: ', trim(mstr)
         if ( index( mstr, '(' ) < 1 ) exit precedence
         ! if ( mstr /= part2 ) then
         call GetMatchedParens( mstr, pairs )
@@ -352,30 +354,30 @@ contains ! =====     Public Procedures     =============================
           part23 = mstr(pairs(2,1)+1:)
         endif
         if ( index(part22, ':') > 0 ) then
-          if ( deeBug ) print *, 'Adding parens to part22 primitive ', trim(part22)
+          if ( verbose ) print *, 'Adding parens to part22 primitive ', trim(part22)
           call AddValFunParens ( part22, part2, mustcycle )
-          if ( deeBug ) print *, 'Afterwards ', trim(part22)
+          if ( verbose ) print *, 'Afterwards ', trim(part22)
         endif
         if ( mustcycle ) then
           ! Added new parens to part22 so can't evaluate this cycle; wait until next
           mstr = trim(part21) // trim(part22) // trim(part23)
-          if ( DeeBug ) then
+          if ( verbose ) then
             print *, 'Added new parens to part22'
             print *, 'mstr ', trim(mstr)
           endif
           cycle precedence
         endif
-        if ( deeBug ) print *, 'Evaluate part22 primitive ', trim(part22)
+        if ( verbose ) print *, 'Evaluate part22 primitive ', trim(part22)
         np = evaluatePrimitive( trim(adjustl(part22)), &
           & a, b, c, &
           & spreadflag, dimList )
         write(vChar, '(i4)') np
-        if ( DEEBug ) then
+        if ( verbose ) then
           print *, 'part21 ', part21
           print *, 'part22 ', part22
           print *, 'part23 ', part23
           print *, '1st vchar ', vchar
-          call dumpAPrimitive ( primitives(np) )
+          if ( DeeBug ) call dumpAPrimitive ( primitives(np) )
         endif
         ! And substitute its value for the spaces it occupied
         if (  part21 // part23 == ' ' ) then
@@ -392,17 +394,17 @@ contains ! =====     Public Procedures     =============================
           mstr = catTwoOperands( &
             & trim( catTwoOperands( trim(part21),  trim(vChar) ) ), &
             & part23 )
-          if ( DEEBug ) then
+          if ( verbose ) then
             print *, 'part21 ', trim(part21)
             print *, '2nd vchar ', trim(vchar)
             print *, 'part23 ', trim(part23)
           endif
         endif
-        if ( DEEBug ) then
+        if ( verbose ) then
           print *, 'mstr ', trim(mstr)
         endif
       enddo precedence ! precedence loop
-      if ( DEEBug ) then
+      if ( verbose ) then
         print *, 'mstr (after precedence loop)', trim(mstr)
       endif
       part2 = mstr
@@ -412,14 +414,14 @@ contains ! =====     Public Procedures     =============================
         ! Added new parens to part2 so can't evaluate this cycle; wait until next
         collapsedstr = trim(part1) // '(' // &
           & trim(part2) // ')' // trim(part3)
-        if ( DeeBug ) then
+        if ( verbose ) then
           print *, 'Added new parens to part2'
           print *, 'collapsedstr ', trim(collapsedstr)
         endif
         cycle
       endif
       ! Now evaluate the part2
-      if ( DeeBUG ) then
+      if ( verbose ) then
         print *, '(Before evaluating part2)'
         print *, 'collapsedstr ', collapsedstr
         print *, 'part1 ', trim(part1)
@@ -431,15 +433,15 @@ contains ! =====     Public Procedures     =============================
         collapsedstr = part1
         cycle
       else
-        if ( deeBug ) print *, 'Evaluate part2 primitive ', trim(part2)
+        if ( verbose ) print *, 'Evaluate part2 primitive ', trim(part2)
         np = evaluatePrimitive( trim(adjustl(part2)), &
           & a, b, c, &
           & spreadflag, dimList )
         write(vChar, '(i4)') np
       endif
-      if ( DeeBUG ) then
+      if ( verbose ) then
         print *, '3rd vchar ', vchar
-        call dumpAPrimitive ( primitives(np) )
+        if ( DeeBug ) call dumpAPrimitive ( primitives(np) )
       endif
       ! And substitute its value for the spaces it occupied
       if (  part1 // part3 == ' ' ) then
@@ -459,30 +461,30 @@ contains ! =====     Public Procedures     =============================
         collapsedstr = catTwoOperands( &
           & trim( catTwoOperands( trim(part1),  trim(vChar) ) ), &
           & part3 )
-        if ( DeeBUG ) then
+        if ( verbose ) then
           print *, 'part1 ', trim(part1)
           print *, '4th vchar ', trim(vchar)
           print *, 'part3 ', trim(part3)
         endif
       endif
-      if ( DeeBUG ) then
+      if ( verbose ) then
         print *, 'collapsedstr ', trim(collapsedstr)
       endif
       ! Before exiting, will we need to reorder any priorities?
       if ( index( collapsedstr, '(' ) < 1 ) then
         call ReorderPrecedence( collapsedstr, mstr )
         collapsedstr = mstr
-        if ( DeeBUG ) then
+        if ( verbose ) then
           print *, 'collapsedstr (reordered) ', trim(collapsedstr)
         endif
       endif
     enddo
     ! Presumably we have collapsed all the nested '(..)' pairs by now
-    if ( deeBug ) print *, 'Evaluate final primitive ', trim(collapsedstr)
+    if ( verbose ) print *, 'Evaluate final primitive ', trim(collapsedstr)
     np = evaluatePrimitive( trim(collapsedstr), &
       & a, b, c, &
       & spreadflag, dimList )
-    if ( DeeBUG ) then
+    if ( verbose ) then
       print *, 'np ', np
       print *, 'size(database) ', size(primitives)
     endif
@@ -1911,6 +1913,9 @@ end module ManipulationUtils
 
 !
 ! $Log$
+! Revision 2.30  2020/06/30 23:24:09  pwagner
+! Manipulate_Qty now has a verbose mode and a DeeBug mode
+!
 ! Revision 2.29  2020/06/24 20:54:29  pwagner
 ! Corrected another bug invoking precedence
 !
