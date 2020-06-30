@@ -63,10 +63,13 @@ module HighOutput
 ! Dump                     Dump output, pattern, or stamp options
 ! Dumpsize                 Print a nicely-formatted memory size 
 ! Dumptabs                 Print the current tab stop positions
+! FinalMemoryReport        Print a summary of memory allocated/deallocated
 ! GetStamp                 Get stamp being added to every output
 ! HeadLine                 Print a line with eye-catching features
 !                           e.g., '*-------  Your message here   -------*'
 ! LetsDebug                Should we print extra debugging data?
+! NextColumn               Return next column number that would be printed
+! NextTab                  Return next column number that Tab would move to
 ! NumNeedsFormat           Return what format is needed to output num
 ! NumToChars               Return what string would be printed by output
 ! OutputCalendar           Output nicely-formatted calendar page
@@ -103,12 +106,15 @@ module HighOutput
 !       where n can be an int or a real, and 
 !       units is a scalar of the same type, if present
 ! DumpTabs ( [int tabs(:)] )
+! FinalMemoryReport ( [log IsFinal] )
 ! GetStamp ( [char* textCode], [log post], [int interval],
 !          [log showTime], [char* dateFormat], [char* timeFormat] )
 ! HeadLine ( char* chars, 
 !          [char fillChar], [char* Before], [char* After], 
 !          [int columnRange(2)], [char alignment], [int skips], [log underline] )
 ! log LetsDebug ( char* switch[(:)], threshold )
+! int NextColumn ( )
+! int NextTab ( )
 ! char* NumNeedsFormat ( value )
 ! char* NumToChars ( value, [char* format] )
 ! Output_Date_And_Time ( [log date], [log time], [char* from_where], 
@@ -150,11 +156,11 @@ module HighOutput
 ! public global parameters directly
 ! (in OO-speak they are class-level rather than instance-level)
 ! Sometimes there is more than one way to accomplish the same thing
-! E.g., calling TimeStamp or using SetStamp before calling output
+! E.g., calling TimeStamp or else using SetStamp before calling output
 !
-! To understand the codes for dateformat and timeFormat, see the dates_module
+! To understand the codes for DateFormat and TimeFormat, see the Dates_Module
 ! 
-! You can use this module to build a 2d table of names and values
+! Here's how to build and print a 2d table of names and values
 ! (1) Call startTable
 ! (2) Optionally call AddRow_header
 ! (3) Optionally call AddRow_divider
@@ -168,13 +174,23 @@ module HighOutput
 ! The aligment arg in AlignToFit, etc.  can be explained best with an example,
 ! in fact 4 different examples (showing L, R, C, and J in that order)
 ! ------------------------------------------------------------------------------
-! The first line                                                                
-!                                                                The second line
-!                                 The third line                                
+! The first line is L                                                               
+!                                                           The second line is R
+!                               The third line is C                                
 ! The                                 final                                 line
 ! ------------------------------------------------------------------------------
 ! The same 4 styles can be applied to Banner and StyledOutput by
 ! suitable choices of the options arg.
+!
+! A better programmer would make a '--help' option
+! available for most of these procedures
+! and maybe the whole module, too.
+
+! A general rule to be remembered always:
+!    * There's no software that can't be improved *
+! which is a corollary of the more biting and disheartening rule
+!    * There's no software that is free of bugs *
+
 
   public :: AddRow, AddRow_Divider, AddRow_Header, AlignToFit, &
     & Banner, BeVerbose, BlanksToColumn, BlanksToTab, &
@@ -210,7 +226,8 @@ module HighOutput
   end interface
 
 ! Other modules may interrogate Beverbose or LetsDebug to decide whether or not
-! to print some intermediate results or messages
+! to print some intermediate results or messages.
+! Do these really belong here, or somewhere else?
   interface Beverbose
     module procedure Beverbose_Chars
     module procedure Beverbose_Chararray
@@ -268,8 +285,13 @@ module HighOutput
     module procedure TimeStamp_Char, TimeStamp_Integer, TimeStamp_Logical
   end interface
   
+  ! -------------------------------------------------------------------------
+  ! *      Module settings, parameters, and data types                      *
   ! When Calling OutputNamedValue with character values, should we trim them?
-  logical, public                      :: TrimCharacterValues = .true.
+  logical, public        :: TrimCharacterValues = .true.
+  logical, save, private :: OldNeverStamp
+  integer, save, private :: OLDWRAPPASTCOLNUM = 0
+  integer, save, private :: WRAPPASTCOLNUM = 0  ! Don't print beyond (if > 0)
   
   ! -------------------------------------------------------------------------
   ! Used for automatic assembly of a table to be neatly formatted and output
@@ -288,11 +310,9 @@ module HighOutput
   character(len=MAXCELLSIZE), dimension(:,:), pointer :: CellDatabase => null()
   ! -------------------------------------------------------------------------
 
+  ! -------------------------------------------------------------------------
+  ! * Tabs                                                                    *
   integer, private, parameter :: MAXNUMTABSTOPS = 24
-  logical, save, private :: OldNeverStamp
-  integer, save, private :: OLDWRAPPASTCOLNUM = 0
-  integer, save, private :: WRAPPASTCOLNUM = 0  ! Don't print beyond (if > 0)
-
   ! These next tab stops can be reset using the procedure setTabs
   ! the default values correspond to range coded '5-120+5'
   ! (read as from 5 to 120 in intervals of 5)
@@ -301,6 +321,7 @@ module HighOutput
     & (/ 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, &
     &   65, 70, 75, 80, 85, 90, 95,100,105,110,115,120 /)
 
+  ! -------------------------------------------------------------------------
   ! For certain numerical values we will use list directed '*' format
   ! unless optional FORMAT specifier supplied
   double precision, parameter, dimension(3) :: DPREFERDEFAULTFORMAT = &
@@ -308,6 +329,7 @@ module HighOutput
   character(len=12), private :: sdNeedsFormat = '(1pg14.6)'
   character(len=12), private :: sdNeedsFragment = '(1pg14'
 
+  ! -------------------------------------------------------------------------
   ! This is the type for configuring how to automatically style 
   ! special output formats; e.g., Banner
   ! Note the effect on the "bars" part of "stars and bars"
@@ -2915,6 +2937,9 @@ contains
 end module HighOutput
 
 ! $Log$
+! Revision 2.40  2020/06/30 23:18:07  pwagner
+! Improved comments among toc and api blocs
+!
 ! Revision 2.39  2020/06/09 21:56:32  pwagner
 ! report on allocates/deallocates now stands out with stars
 !
