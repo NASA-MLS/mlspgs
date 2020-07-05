@@ -405,7 +405,7 @@ contains ! =====     Public Procedures     =============================
       & F_Alllinesincatalog, F_Atmos_Der, F_Atmos_Second_Der, &
       & F_Binselectors, F_Channels, F_Cloud_Der, F_Default_Spectroscopy, &
       & F_Differentialscan, F_Do_1d, F_Do_Baseline, F_Do_Conv, &
-      & F_Do_Freq_Avg, F_Forcesidebandfraction, F_Frequency, F_Frqtol, &
+      & F_Do_Freq_Avg, F_Forcesidebandfraction, F_Frqtol, &
       & F_Ignorehessian, F_Incl_Cld, F_Integrationgrid, F_I_Saturation, &
       & F_Linearsideband, F_Linecenter, F_Linewidth, F_Linewidth_Tdep, &
       & F_Lockbins, F_Lsblblmolecules, F_Lsbpfamolecules, F_MIFTangent, &
@@ -1174,7 +1174,7 @@ op:     do j = 2, nsons(theTree)
     case ( l_scan )
       info%isRadianceModel = .false.
       ! Add 1d/2d method later probably !??? NJL
-      if ( any(got( (/ f_channels, f_frequency, f_lineCenter, f_lineWidth, &
+      if ( any(got( (/ f_channels, f_lineCenter, f_lineWidth, &
         &              f_lineWidth_TDep, f_molecules, f_moleculeDerivatives, &
         &              f_signals /) )) .or. &
         & any( (/ info%atmos_der, info%do_conv, info%do_baseline, &
@@ -1188,7 +1188,7 @@ op:     do j = 2, nsons(theTree)
       info%isRadianceModel = .true.
       if ( .not. all(got( (/f_signals/) )) ) & ! Maybe others later
         & call AnnounceError ( IncompleteLinearFwm, root )
-      if ( any(got( (/f_do_conv,f_do_freq_avg,f_do_1d,f_incl_cld,f_frequency /) )) ) &
+      if ( any(got( (/f_do_conv,f_do_freq_avg,f_do_1d,f_incl_cld /) )) ) &
         & call AnnounceError ( IrrelevantFwmParameter, root, &
         & "do_conv, do_freq_avg, do_1d, incl_cld, frequency" )
      if ( .not. associated(L2PCDatabase) ) & 
@@ -1583,6 +1583,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.193  2020/07/05 20:20:19  vsnyder
+! Remove frequency field because it's not used
+!
 ! Revision 2.192  2019/10/07 20:05:16  vsnyder
 ! Add trapezoid field to ForwardModel, for quadrature in FullForwardModel
 !
