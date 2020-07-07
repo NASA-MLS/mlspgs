@@ -7,8 +7,8 @@
 \usepackage{longtable}
 \usepackage[strings]{underscore}
 
-\newcommand{\docname}{wvs-120}
-\newcommand{\docdate}{30 Oct 2014}
+\newcommand{\docname}{wvs-120r1}
+\newcommand{\docdate}{6 July 2020}
 
 \textwidth 6.5in
 \oddsidemargin -0.25in
@@ -175,9 +175,25 @@ wind and diurnal effects, would certainly be greater than for the IGRF
 model, making the difference in cost between prior calculation and on-line
 calculation even greater.
 
+\section*{For SMLS}
+
+For SMLS, the horizontal grid is a QTM. A QTM-based grid for the magnetic
+field will be necessary for SMLS. The vertical axis ought to be height,
+not $\zeta$ or GPH, because geometric co\"ordinates used by the IGRF
+model.
+
+A QTM-based grid for the magnetic field would also work for UARS. The
+scheme used for UARS is complicated. It might be useful to change to a
+QTM-based magnetic field for UARS, and remove the complication caused by
+the UARS scheme. The complication appears in the {\tt Grids_t} structure,
+which has an additional ``cross'' coordinate.
+
 \label{lastpage}
 \end{document}
 
 % $Id$
 
 % $Log$
+% Revision 1.1  2014/11/10 20:27:39  vsnyder
+% Initial commit
+%
