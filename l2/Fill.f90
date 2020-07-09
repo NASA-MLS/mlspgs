@@ -105,7 +105,9 @@ contains ! =====     Public Procedures     =============================
     use ForwardModelConfig, only: Forwardmodelconfig_T
     use ForwardModelSupport, only: Fillfwdmodeltimings
     use Global_Settings, only: Brightobjects
-    use GriddedData, only: GriddedData_T
+    use GriddedData, only: GriddedData_T, &
+      & AddGriddedDataToDatabase,  &
+      & DestroyGriddedData, Dump, DumpDBFootPrint
     use Hessianmodule_1, only: AddhessiantoDatabase, Createemptyhessian, &
       & Streamlinehessian, Hessian_T
     use HGridsDatabase, only: HGrids_T
@@ -121,7 +123,7 @@ contains ! =====     Public Procedures     =============================
       & F_Ecrtofov, F_Earthradius, F_Exact, F_Excludebelowbottom, &
       & F_ExplicitValues, F_Expr, F_ExpandMask, F_Extinction, &
       & F_Fieldecr, F_File, F_Flags, F_Force, F_Shape, &
-      & F_Fraction, F_Fromprecision, &
+      & F_Fraction, F_Fromprecision, F_Grid, &
       & F_Geocaltitudequantity, F_Geolocation, F_Gphquantity, F_GroupName, &
       & F_Height, F_Heightrange, F_Hessian, &
       & F_Highbound, F_H2oquantity, F_H2oprecisionquantity, F_HGrid, &
@@ -183,12 +185,13 @@ contains ! =====     Public Procedures     =============================
       & L_Zeta
     ! Now The Specifications:
     use Init_Tables_Module, only: S_AnygoodValues, S_Anygoodradiances, &
-      & S_Case, S_Catchwarning, S_Compare, S_Computetotalpower, S_Destroy, &
-      & S_Diff, S_Directread, S_Dump, S_Endselect, S_Execute, &
+      & S_Case, S_Catchwarning, S_Compare, S_Computetotalpower, &
+      & S_Concatenate, S_ConcatenateGrids, S_ConvertEtaToP, &
+      & S_Destroy, S_Diff, S_Directread, S_Dump, S_Endselect, S_Execute, &
       & S_Fill, S_Fillcovariance, S_Filldiagonal, &
-      & S_Flagcloud, S_Flushl2pcbins, S_Flushpfa, S_Hessian, &
-      & S_Load, S_Matrix, S_Negativeprecision, S_Phase, S_Populatel2pcbin, &
-      & S_Reevaluate, S_Repeat, S_Restrictrange, S_ChangeSettings, &
+      & S_Flagcloud, S_Flushl2pcbins, S_Flushpfa, S_Gridded, S_Hessian, &
+      & S_Load, S_Matrix, S_Merge, S_MergeGrids, S_Negativeprecision, S_Phase, S_Populatel2pcbin, &
+      & S_ReadGriddedData, S_Reevaluate, S_Repeat, S_Restrictrange, S_ChangeSettings, &
       & S_Select, S_Skip, S_Snoop, S_Streamlinehessian, S_Subset, &
       & S_Time, S_Transfer, S_UpdateMask, S_Vector
     ! Now Some Arrays
@@ -210,6 +213,8 @@ contains ! =====     Public Procedures     =============================
       & Matrix_T, Nullifymatrix
     ! Note: If You Ever Want To Include Defined Assignment For Matrices, Please
     ! Carefully Check Out The Code Around The Call To Snoop.
+    use MergeGridsModule, only: Concatenate, ConvertEtaToP, &
+      & MergeGrids, MergeOneGrid
     use MLSFiles, only: HDFVersion_5, GetMLSFileByType
     use MLSL2Options, only: L2cfnode, &
       & RuntimeValues, L2Options, SpecialDumpFile, MLSL2Message
@@ -222,7 +227,7 @@ contains ! =====     Public Procedures     =============================
     use MLSRandomNumber, only: MLS_Random_Seed, Math77_Ran_Pack
     use MLSStringlists, only: Catlists, GethashElement, &
       & NumstringElements, PuthashElement, &
-      & StringElement, StringElementnum
+      & StringElement, StringElementnum, SwitchDetail
     use MLSStrings, only: Lowercase
     use Molecules, only: L_H2O
     use Moretree, only: Get_Boolean, Get_Field_Id, Get_Label_And_Spec, &
@@ -233,13 +238,13 @@ contains ! =====     Public Procedures     =============================
     use PFAData_M, only: Flush_PFAData
     use QuantityTemplates, only: QuantityTemplate_T, &
       & ModifyQuantityTemplate
-    use ReadAPriori, only: APrioriFiles
+    use ReadAPriori, only: APrioriFiles, ProcessOneAprioriFile
     use SnoopMLSL2, only: Snoop
     use String_Table, only: Get_String
     use Subsetmodule, only: ApplyMasktoquantity, Restrictrange, &
       & Setupflagcloud, Setupsubset, UpdateMask
     use Time_M, only: SayTime, Time_Now
-    use Toggles, only: Gen, Levels, Toggle
+    use Toggles, only: Gen, Levels, Switches, Toggle
     use Trace_M, only: Trace_Begin, Trace_End
     use Tree, only: Decorate, Decoration, Nsons, Sub_Rosa, Subtree, Where
     use VectorsModule, only: AddVectortoDatabase, &
@@ -402,6 +407,7 @@ contains ! =====     Public Procedures     =============================
     integer :: GPHQUANTITYINDEX         ! In the source vector
     integer :: GPHVECTORINDEX           ! In the vector database
     logical, dimension(field_first:field_last) :: GOT
+    type(GriddedData_T), pointer :: Grid
     integer :: GRIDINDEX                ! Index of requested grid
     integer :: GSON                     ! Descendant of Son
     integer :: HEIGHTNODE               ! Descendant of son
@@ -430,6 +436,12 @@ contains ! =====     Public Procedures     =============================
     type (MLSFile_T), pointer             :: L1BFile
     integer :: L2AUXINDEX               ! Index into L2AUXDatabase
     integer :: L2GPINDEX                ! Index into L2GPDatabase
+    integer :: LastAprioriPCF = 1
+    integer :: LastClimPCF    = 1
+    integer :: LastDAOPCF     = 1
+    integer :: LastGEOS5PCF   = 1
+    integer :: LastHeightPCF  = 1
+    integer :: LastNCEPPCF    = 1
     integer :: LENGTHSCALE              ! Index of lengthscale vector in database
     logical :: LOGSPACE                 ! Interpolate in log space?
     integer :: LOSVECTORINDEX           ! index in vector database
@@ -570,6 +582,7 @@ contains ! =====     Public Procedures     =============================
     integer :: USBQUANTITYINDEX         ! Inddex in vector database
     integer :: USBFRACTIONVECTORINDEX   ! Index in vector database
     integer :: USBFRACTIONQUANTITYINDEX ! Index in vector database
+    integer :: Value
     real(r8), dimension(2) :: VALUEASARRAY ! From expr
     integer :: VALUESNODE               ! For the parser
     integer :: VECTORINDEX              ! In the vector database
@@ -581,6 +594,8 @@ contains ! =====     Public Procedures     =============================
     logical :: WHERENOTFILL             ! Don't replace fill values
     integer, parameter :: whereRange  = 0
     integer :: WIDTH                    ! Width of boxcar
+    logical :: verbose
+    logical :: verboser
 
     ! Executable code
     timing = section_times
@@ -591,6 +606,8 @@ contains ! =====     Public Procedures     =============================
     if ( specialDumpFile /= ' ' ) &
       & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
 
+    verbose = ( switchDetail(switches, 'grid' ) > -1 )
+    verboser = ( switchDetail(switches, 'grid' ) > 0 )
     ! Don't initialize field values here--instead place them after the do below
     fillerror = 0
     templateIndex = -1
@@ -765,6 +782,42 @@ contains ! =====     Public Procedures     =============================
         call decorate ( key,  BooleanFromComparingQtys ( key, vectors ) )
       case ( s_computeTotalPower )
         call ComputeTotalPower ( key, vectors )
+      case ( s_concatenate )
+        call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
+          & Concatenate ( key, griddedDataBase ) ) )
+        if ( DumpDBFootPrint ) call Dump ( griddedDataBase, Details=-4 )
+      case ( s_ConvertEtaToP )
+        call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
+          & ConvertEtaToP ( key, griddedDataBase ) ) )
+        if ( DumpDBFootPrint ) call Dump ( griddedDataBase, Details=-4 )
+      case ( s_merge )
+        call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
+          & MergeOneGrid ( key, griddedDataBase ) ) )
+        if ( DumpDBFootPrint ) call Dump ( griddedDataBase, Details=-4 )
+      case ( s_concatenateGrids, s_mergeGrids )
+        ! We must get "grid" field from command
+        do j = 2, nsons(key)
+          gson = subtree(j, key)
+          select case ( decoration(subtree(1, gson) ) )
+          case ( f_grid )
+            value = decoration ( decoration ( subtree(2, gson) ) )
+          case default
+          end select
+        enddo
+        grid => griddedDataBase(value)
+        call DestroyGriddedData( grid )
+        if ( get_spec_id(key) == s_mergeGrids ) then
+          grid = MergeOneGrid ( key, griddedDataBase )
+        else
+          grid = Concatenate ( key, griddedDataBase )
+        endif
+        if ( verbose ) then
+          call output( 'The GriddedDatabase, ' )
+          call outputNamedValue( 'size(db)', size(griddedDataBase) )
+          call outputNamedValue( 'our index', value )
+          call outputNamedValue( 'is it empty?', grid%empty )
+        endif
+        if ( DumpDBFootPrint ) call Dump ( griddedDataBase, Details=-4 )
       case ( s_Reevaluate )
         call decorate ( key,  BooleanFromFormula ( 0, key, vectors ) )
       case ( s_diff, s_dump ) ! ======================== Diff, Dump ==========
@@ -782,6 +835,17 @@ contains ! =====     Public Procedures     =============================
           & MatrixDatabase=Matrices, HessianDatabase=Hessians )
       case ( s_execute ) ! ======================== ExecuteCommand ==========
         call ExecuteCommand ( key )
+      case ( s_Gridded, s_ReadGriddedData )
+        call processOneAprioriFile ( key, L2GPDatabase, L2auxDatabase, &
+          & GriddedDatabase, fileDataBase, &
+          & LastAprioriPCF , &
+          & LastClimPCF    , &
+          & LastDAOPCF     , &
+          & LastGEOS5PCF   , &
+          & LastHeightPCF  , &
+          & LastNCEPPCF     &
+            )
+        if ( DumpDBFootPrint ) call Dump ( griddedDataBase, Details=-4 )
       case ( s_hessian ) ! ===============================  Hessian  =====
         got = .false.
         do j = 2, nsons(key)
@@ -3387,6 +3451,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.483  2020/07/09 23:55:06  pwagner
+! Many cmds from readApriori and MergeGrids phase now available to Fill phase
+!
 ! Revision 2.482  2019/10/16 20:55:57  pwagner
 ! Subset command may take a MissingValue field
 !
