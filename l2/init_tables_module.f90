@@ -1909,11 +1909,12 @@ contains ! =====     Public procedures     =============================
       begin, z+z_fill, &
              s+s_anyGoodRadiances, s+s_anyGoodValues, &
              s+s_case, s+s_catchWarning, s+s_compare, s+s_computeTotalPower, &
+             s+s_convertEtaToP, s+s_delete, &
              s+s_destroy, s+s_diff, s+s_directRead, s+s_dump, s+s_endSelect, &
-             s+s_execute, s+s_fill, s+s_fillCovariance, &
-             s+s_fillDiagonal, s+s_flagcloud, s+s_flushL2PCBins, s+s_flushPFA, &
-             s+s_hessian, s+s_load, s+s_matrix, s+s_negativePrecision, &
-             s+s_phase, s+s_populateL2PCBin, s+s_reevaluate, &
+             s+s_execute, s+s_fill, s+s_fillCovariance, s+s_fillDiagonal, &
+             s+s_flagcloud, s+s_flushL2PCBins, s+s_flushPFA, s+s_Gridded, &
+             s+s_hessian, s+s_load, s+s_matrix, s+s_mergeGrids, s+s_negativePrecision, &
+             s+s_phase, s+s_populateL2PCBin, s+s_readGriddedData, s+s_reevaluate, &
              s+s_repeat, s+s_restrictRange, s+s_select, s+s_changeSettings, &
              s+s_skip, s+s_snoop, s+s_streamlineHessian, s+s_subset, &
              s+s_time, s+s_transfer, s+s_updateMask, s+s_vector, n+n_section, &
@@ -2144,6 +2145,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.652  2020/07/09 23:53:48  pwagner
+! Many cmds from readApriori and MergeGrids phase now available to Fill phase
+!
 ! Revision 2.651  2019/10/16 20:54:28  pwagner
 ! Subset command may take a MissingValue field
 !
