@@ -2725,6 +2725,11 @@ contains ! ===================================== Public Procedures =====
     ! Now bound the chunks to be within the processing range
     chunks%firstMAFIndex = min ( max ( chunks%firstMAFIndex, m1 ), m2 )
     chunks%lastMAFIndex = min ( max ( chunks%lastMAFIndex, m1 ), m2 )
+    
+    ! Each chunk remembers its own time range
+    ! in case we readGriddedDatat during the loop of chunks
+    ! chunks%Startime = taiTime%dpField(1,1,chunks%firstMAFIndex)
+    ! chunks%Endtime =  taiTime%dpField(1,1,chunks%lastMAFIndex)
 
     ! Now offset these to the index in the file not the array
     ! chunks%firstMAFIndex = chunks%firstMAFIndex + mafRange(1) - 1
@@ -2733,7 +2738,7 @@ contains ! ===================================== Public Procedures =====
     chunks%lastMAFIndex = chunks%lastMAFIndex - 1
 
     ! If at this point the last two chunks end in the same place, this is
-    ! a subtle defect in our chunking algorihtm, lets avoid it
+    ! a subtle defect in our chunking algorithm, lets avoid it
     if ( noChunks > 1 ) then
       if ( chunks(noChunks-1)%lastMAFIndex == chunks(noChunks)%lastMAFIndex ) then
         call DeleteChunk ( chunks, noChunks )
@@ -2830,6 +2835,8 @@ contains ! ===================================== Public Procedures =====
       m2 = min( chunks(chunk)%lastMAFIndex + 1,  mafRange%L2Cover(2) + 1 )
       chunks(chunk)%phiStart = tpGeodAngle%dpField(1,1,m1)
       chunks(chunk)%phiEnd = tpGeodAngle%dpField(1,1,m2)
+      chunks(chunk)%StartTime = taiTime%dpField(1,1,m1)
+      chunks(chunk)%EndTime   = taiTime%dpField(1,1,m2)
     enddo
     if ( swLevel > -1 ) then
       call output ( 'After dealing with obstructions', advance='no' )
@@ -3019,6 +3026,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.137  2020/07/09 23:52:25  pwagner
+! Added Start,EndTime components to MLSChunk_T
+!
 ! Revision 2.136  2019/10/16 20:57:37  pwagner
 ! Fixed a strange bug involving get_boolean
 !
