@@ -317,10 +317,12 @@ module MLSCommon                ! Common definitions for the MLS software
     ! This for each chunk is the index of the first non-overlapped profile in 
     ! each hGrid into the relevant output (l2gp?) file.
     integer, dimension(:), pointer :: HGridTotals => NULL()
-    ! This is somewhat repetetive.  It's the total number of profiles in
+    ! This is somewhat repetitive.  It's the total number of profiles in
     ! the output hGrid.  It's only really used in parallel runs.
     real(rp) :: phiStart = 0. ! for use by regular HGrid
     real(rp) :: phiEnd   = 0.
+    double precision :: StartTime = 0. ! for use by readGriddedData
+    double precision :: EndTime   = 0.
   end type MLSChunk_T
 
   ! Information describing the files used by the mls software
@@ -740,6 +742,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.58  2020/07/09 23:51:12  pwagner
+! Added Start,EndTime components to MLSChunk_T
+!
 ! Revision 2.57  2020/04/27 21:28:55  pwagner
 ! Separately track allocates/deallocates
 !
