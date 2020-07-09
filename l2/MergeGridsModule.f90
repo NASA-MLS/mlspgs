@@ -27,7 +27,7 @@ module MergeGridsModule
   implicit none
   private
 
-  public :: MergeGrids
+  public :: Concatenate, ConvertEtaToP, MergeGrids, MergeOneGrid
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -46,7 +46,7 @@ contains ! ===================================  Public procedures  =====
       & BooleanFromFormula, DumpCommand, ExecuteCommand, &
       & MLSCase, MLSEndSelect, MLSSelect, MLSSelecting, Skip
     use GriddedData, only: GriddedData_T, &
-      & AddGriddedDataToDatabase, DestroyGriddedData
+      & AddGriddedDataToDatabase, DestroyGriddedData, Dump, DumpDBFootPrint
     use Init_Tables_Module, only: F_Grid, S_Boolean, &
       & S_Case, S_ChangeSettings, S_Concatenate, S_ConcatenateGrids, &
       & S_ConvertEtaToP, S_Delete, S_Diff, S_Dump, &
@@ -126,11 +126,14 @@ contains ! ===================================  Public procedures  =====
       case ( s_concatenate )
         call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
           & Concatenate ( key, griddedDataBase ) ) )
+        if ( DumpDBFootPrint ) call Dump ( griddedDataBase, Details=-4 )
       case ( s_ConvertEtaToP )
         call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
           & ConvertEtaToP ( key, griddedDataBase ) ) )
+        if ( DumpDBFootPrint ) call Dump ( griddedDataBase, Details=-4 )
       case ( s_delete )
         call DeleteGriddedData ( key, griddedDatabase )
+        if ( DumpDBFootPrint ) call Dump ( griddedDataBase, Details=-4 )
       case ( s_diff, s_dump )
         call dumpCommand ( key, griddedDataBase=griddedDataBase )
       case ( s_execute ) ! ======================== ExecuteCommand ==========
@@ -145,6 +148,7 @@ contains ! ===================================  Public procedures  =====
           & LastHeightPCF  , &
           & LastNCEPPCF     &
             )
+        if ( DumpDBFootPrint ) call Dump ( griddedDataBase, Details=-4 )
       case ( s_isFileAbsent )
         call decorate ( key, BooleanFromEmptySwath ( key ) )
       case ( s_isGridEmpty )
@@ -153,6 +157,7 @@ contains ! ===================================  Public procedures  =====
       case ( s_merge )
         call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
           & MergeOneGrid ( key, griddedDataBase ) ) )
+        if ( DumpDBFootPrint ) call Dump ( griddedDataBase, Details=-4 )
       case ( s_concatenateGrids, s_mergeGrids )
         ! We must get "grid" field from command
         do j = 2, nsons(key)
@@ -176,6 +181,7 @@ contains ! ===================================  Public procedures  =====
           call outputNamedValue( 'our index', value )
           call outputNamedValue( 'is it empty?', grid%empty )
         endif
+        if ( DumpDBFootPrint ) call Dump ( griddedDataBase, Details=-4 )
       case ( s_reevaluate )
         call decorate ( key,  BooleanFromFormula ( 0, key ) )
       case ( s_skip ) ! ================================ Skip ==========
@@ -184,6 +190,7 @@ contains ! ===================================  Public procedures  =====
       case ( s_wmoTrop )
         call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
           & wmoTropFromGrid ( key, griddedDataBase ) ) )
+        if ( DumpDBFootPrint ) call Dump ( griddedDataBase, Details=-4 )
       case ( s_wmoTropFromGrids )
         ! We must get "grid" field from command
         do j = 2, nsons(key)
@@ -197,6 +204,7 @@ contains ! ===================================  Public procedures  =====
         grid => griddedDataBase(value)
         call DestroyGriddedData( grid )
         grid = wmoTropFromGrid ( key, griddedDataBase )
+        if ( DumpDBFootPrint ) call Dump ( griddedDataBase, Details=-4 )
       case default
         ! Shouldn't get here if parser worked?
         call MLSL2Message ( MLSMSG_Error, ModuleName, &
@@ -1226,6 +1234,9 @@ contains ! ===================================  Public procedures  =====
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.69  2020/07/09 23:54:30  pwagner
+! Many cmds from readApriori and MergeGrids phase now available to Fill phase
+!
 ! Revision 2.68  2019/10/03 17:30:17  pwagner
 ! Convert from eta levels may now take a vGrid field
 !
