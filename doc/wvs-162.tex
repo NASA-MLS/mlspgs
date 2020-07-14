@@ -10,8 +10,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-162}
-\newcommand{\docdate}{9 July 2020}
+\newcommand{\docname}{wvs-162r1}
+\newcommand{\docdate}{13 July 2020}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -68,7 +68,8 @@
 To: \>Paul, Bill, William, Nathaniel\\
 Subject: \>Forward Model Configuration\\
 From: \>Van Snyder\\
-%Reference: \> foo \\
+References: \> \h{wvs-017}, \h{wvs-027}, \h{wvs-049}, \h{wvs-065}, \\
+  \> \h{wvs-067}, \h{wvs-070}, \h{wvs-107}
 \end{tabbing}
 
 \parindent 0pt \parskip 6pt
@@ -95,7 +96,7 @@ The actions of the forward models are controlled by several factors.
   
   \item {\tt MieTables}
   
-  \item {\tt PFAfiles}
+  \item {\tt PFAFiles}
   
   \item {\tt PointingGrid}
   
@@ -1123,6 +1124,239 @@ specified on the {\tt Retrieve} statement. A {\tt SIDS} run doesn't
 inherently know a Jacobian is necessary, so it won't create one. If you
 want derivatives, for example to create {\tt l2pc} files, a Jacobian must
 be specified.
+
+\section*{Command-line options}
+
+Several command-line options affect the full forward model. Command-line
+options are case sensitive.
+
+%\newcommand{\lbrack}{[}
+%\newcommand{\rbrack}{]}
+\begin{description}
+
+\item[\tt -f\lbrack n\rbrack] causes tracing within the full forward
+  model. Larger values of n cause more detailed tracing.
+
+\end{description}
+
+The following switches are preceded on the command line by {\tt -S}. Then
+can be individually specified, each with {\tt -S}, or several can be
+specified in one command-line option beginning with {\tt -S}. All {\tt -S} switches can optionally be
+followed by a number $n$. If $n$ does not appear, it is assumed to be
+zero. If a switch is not set, the {\tt SwitchDetail} function from the
+{\tt MLSStringLists} module returns $-1$.
+
+\begin{description}
+
+\item[\tt 0sl] prints a warning message if there are no lines or continuum
+  for at least one species.
+
+\item[\tt ant] dumps the antenna patterns database after reading it in the
+  {\tt globalSettings} section.
+
+\item[\tt Azimuth] prints the viewing azimuth for UARS.
+
+\item[\tt binsel] prints information about bin selection when selecting
+  {\tt l2pc} bins.
+
+\item[\tt clean] adds the ``-c'' option to several dumps. The effect is
+  that array dumps are preceded by $\backslash n$ where $n$ is the array
+  size, and lines of the dump do not contain subscripts. This is useful to
+  read dumps in {\tt idl} using my {\tt read1d} program.
+
+\item[\tt dacsfil] dumps the DACS filter database after reading it in the
+  {\tt globalSettings} section.
+
+\item[\tt deltaupol] causes the {\tt deltau_pol} array to be dumped. {\tt
+  deltau_pol} is the exponential of the $2\times2$ polarized incremental
+  optical depth matrix.
+
+\item[\tt dmess] causes messages about requesting derivatives for
+  quantities that are not in the state vector to be warnings instead of
+  errors.
+
+\item[\tt dpri\lbrack n\rbrack\ -SDpri -SDPRI] cause {\tt Rad_Tran_Pol} to
+  dump internal arrays {\tt more_inds}, {\tt gl_inds}, {\tt
+  gl_delta_polarized}, {\tt incoptdepth_pol_gl}, {\tt incoptdepth_pol},
+  and {\tt ref_cor}. If $n = 0$, the dumps occur only if {\tt cs_expmat}
+  (exponential of a $2 \times 2$ matrix) detects an overflow. If $n = 1$
+  the dump occurs every time {\tt Rad_Tran_Pol} is invoked. If $n > 1$ the
+  dump occurs on the first invocation, and {\tt mlsl2} stops. {\tt Dpri}
+  is the same as {\tt dpri1}. {\tt DPRI} is the same as {\tt dpri2}. If
+  {\tt cs_expmat} detects an overflow, any $n\geq0$ causes the dumps, and
+  if $n > 1$ {\tt mlsl2} stops.
+
+\item[\tt drfc\lbrack n\rbrack] dumps diagnostic information about the
+  failure of the iteration to solve\\
+   $h ( 1 + n_1 \exp ( \epsilon (h - h_1))) = \sqrt{q^2 +
+  \mathcal{N}_t^2 H_t^2}$\\
+  for $h$, where $q$ is one of the abscissae of the Gauss-Legendre
+  quadrature for the integral in Equation (10.12) on page 45 of the 19
+  August 2005 MLS Full Forward Model ATBD, $\epsilon =
+  \frac{\log(n_2/n_1)}{h_2-h_1}$, $h_1$ and $n_1$ are the values of $h$
+  and $\mathcal{N}$ at $\zeta_i$, and $h_2$ and
+  $n_2$ are the values of $h$ and $\mathcal{N}$ at $\zeta_{i-1}$.
+
+\item[\tt dsct] causes generated {\tt TScat} values to be dumped.
+
+\item[\tt dtcst]  causes much printing related to derivatives during {\tt
+  TScat} table generation.
+
+\item[\tt filt] dumps the filter database after reading it in the {\tt
+  globalSettings} section.
+
+\item[\tt ffrq] causes frequencies selected from the point frequency grid
+  to be dumped.
+
+\item[\tt fmconf] causes the forward model configuration to be dumped.
+
+\item[\tt fwmd\lbrack n\rbrack\ -SDpri -SDPRI] dumps the forward model
+  configuration after adding some things derived from it, and the
+  spectroscopy catalog extract. The detail level for dumping the
+  spectroscopy catalog extract is the low-order digit of $n$. If $n>9$
+  {\tt mlsl2} stops. Once set, the switch retains its value, even if it is
+  set by the {\tt switches} field of the {\tt retrieve} statement.
+
+\item[\tt -gMag] dumps the magnetic field quantity that is created by a
+  {\tt fill} statement.
+
+\item[\tt Grids] causes the internal structures {\tt grids_f} (mixing
+  ratios), {\tt grids_tmp} (temperature) {\tt grids_v} (line center
+  frequency), {\tt grids_w} (line width), and {\tt grids_m} (line width
+  temperature dependence exponent) to be dumped if the horizontal basis is
+  not QTM.
+
+\item[\tt hnan] causes dumping during Hessian convolution.
+
+\item[\tt hndp\lbrack n\rbrack] causes dumping during computation of the
+  refractive correction described in Equation (10.12) of the 19 August 2004
+  MLS ATBD. If $n\wedge 1 = 1$, dump the arrays if there is trouble.
+  If $n\wedge 2 = 1$, dump the arrays and stop. If $n\wedge 4 = 1$, dump
+  the iterates.
+
+\item[\tt hphi] causes {\tt h} and {\tt phi} inputs to {\tt
+  Height_Metrics} to be dumped.
+
+\item[\tt igsc\lbrack n\rbrack] changes the error message to a warning if
+  the scattering point does not appear to be in the path during {\tt
+  TScat} table generation, if $n>0$.
+
+\item[\tt incp] causes the species list from the forward model
+  configuration, the index of the tangent point in the coarse grid, the
+  index of the tangent point in the fine grid, $\beta$ on the coarse path,
+  mixing ratios on the coarse path, $\alpha$ on the coarse path, the
+  incremental optical depth, $\delta s$, indices of GL points on the fine
+  path, and indices of panels on the coarse path needing GL, to be dumped.
+  For polarized runs it also causes the $2\times2$ polarized incremental
+  optical depth matrix to be dumped. It also causes output during {\tt
+  TScat} table generation.
+
+\item[\tt incr] causes {\tt tau} $\left(\exp \int_0^s \alpha \,\d
+  s\right)$, {\tt inc_rad_path} ($I(s)$), {\tt t_script} ($\mathcal{T} =
+  \Delta B$), frequency, and {\tt radV} ($I(s_{\mathcal{M}})$) to be
+  dumped. It also causes output during {\tt TScat} table generation.
+
+\item[\tt lblb\lbrack n\rbrack] causes printing during $\beta$ generation.
+  for nonpolarized radiative transfer. Once set, the switch retains its
+  value, even if it is set by the {\tt switches} field of the {\tt
+  retrieve} statement. {\tt n} has three digits $n_2n_1n_0$. If $n_0>0$
+  dump $\beta$. If $n_0>1$ dump temperature and $\text{tanh} \frac{h\nu}{2
+  k T}$. If $n_1>0$ dump $\zeta$ instead of $P$. If $n_2>0$ stop after
+  dumping. 
+
+\item[\tt mag\lbrack n\rbrack] causes the MIF, MAF, rotation matrix ({\tt
+  ECRtoFOV}), heights on the fine grid, the magnitude of the magnetic
+  field $H$, the $\cos\theta$, $\sin\theta \cos\phi$, and $\sin\theta
+  \sin\phi$ components of the magnetic field, to be dumped. If $n$ is odd
+  the magnetic field on the path is also dumped as a matrix.
+
+\item[\tt MagGrid\lbrack n\rbrack] dumps the {\tt grids_mag} structure
+  after the magnetic field is generated. The detail level for the dump is
+  given by {\tt n}.
+
+\item[\tt metd\lbrack n\rbrack] dumps quantities during {\tt
+  Height_Metrics} calculation. Increasing {\tt n} increases the number of
+  quantities dumped. If $n>1$ {\tt mlsl2} stops after finishing {\tt
+  More_Metrics}.
+
+\item[\tt mhpx] causes output relating to failure of the $h$ -- $\phi$
+  iteration in {\tt Height_Metrics}.
+
+\item[\tt nfmpt] (case insensitive) turns off the pointing loop.
+
+\item[\tt path\lbrack n\rbrack] causes path quantities to be printed in a
+  readable format. If $n=0$ only $\phi$ and $\zeta$ are printed. If $n>1$
+  the volume mixing ratios and $\beta$ are printed. If $n>0$, $\alpha$,
+  incremental optical depth, $\tau = \exp \int_0^s \alpha \,\d s$, $I(s)$,
+  and temperature are printed.
+
+\item[\tt pfab] prints PFA data during PFA generation.  Once set, the
+  switch retains its value, even if it is set by the {\tt switches} field
+  of the {\tt retrieve} statement.
+
+\item[\tt pfag] prints progress information during PFA generation.
+
+\item[\tt pfaw] prints the PFA group name when one is created in a PFA HDF
+  file.
+
+\item[\tt plane\lbrack n\rbrack] causes printing while calculating the
+  viewing plane for UARS.
+
+\item[\tt point] dumps the pointing grid database after reading it in the
+  {\tt globalSettings} section.
+
+\item[\tt POLB polb] dumps polarized $\beta$. {\tt POLB} stops after
+  dumping. Once set, the switch retains its value, even if it is set by
+  the {\tt switches} field of the {\tt retrieve} statement.
+
+\item[\tt polr\lbrack n\rbrack] causes the $2\times2$ complex radiance
+  matrix to be printed. If $n>0$, the pointing index is also printed. If
+  $n>1$ the frequency index is also printed.
+
+\item[\tt psct] causes much printing during {\tt TScat} table generation.
+
+\item[\tt ptg] prints the pointing ($\chi$) angles before antenna
+  convolution.
+
+\item[\tt rad\lbrack n\rbrack] causes tangent pressures and radiance to be
+  printed when the full forward model completes. If $n>0$ it also causes
+  frequencies and radiances to be printed for each pointing. Causes
+  radiances to be printed when the linearized forward model completes.
+
+\item[\tt RAD] causes radiances to be printed when the linearized forward
+  model completes, and then {\tt mlsl2} stops.
+
+\item[\tt rcfx\lbrack n\rbrack] prints information if the refractive
+  correction computation failed. If $n>0$ and the refractive correction
+  computation failed, {\tt mlsl2} stops.
+
+\item[\tt seez] causes many things to be printed. See {\tt
+  dump_print_code.f9h}. This started as Zvi's debug printing, and then
+  grew.
+
+\item[\tt spec speC] dumps the spectroscopy catalog at the end of the {\tt
+  Spectroscopy} section. {\tt speC} stops after dumping the catalog.
+
+\item[\tt tauL] causes line-by-line $\tau = \exp \int_0^s \alpha \,\d s$
+  to be printed during a PFA run. This is called $\tau^s_{in}$ in
+  \h{wvs-027}.
+
+\item[\tt tauP] causes PFA $\tau = \exp \int_0^s \alpha \,\d s$ to be
+  printed during a PFA run. This is called $\tau^w_{in}$ in \h{wvs-027}.
+
+\item[\tt -TScat] causes much printing during {\tt TScat} table
+  generation.
+
+\item[\tt zdet] prints details relating to finding a minimum $\zeta$ that
+  is not at the tangent point.
+
+\item[\tt ZMOR] causes printing related to finding a minimum $\zeta$ that
+  is not at the tangent point.
+
+\item[\tt zmor] causes a search for a minimum $\zeta$ that is not at the
+  tangent point. This code has never been exercised; it might not work.
+
+\end{description}
 
 \label{lastpage}
 \vspace*{-0.1in} % Somehow, this causes lastpage to be defined
