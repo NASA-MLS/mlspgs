@@ -714,12 +714,7 @@ module CFM_IO_M
                 (/'L1BOA ', 'L1BRAD', 'L2GP  ', 'L2DGM '/)
       character(len=10) :: YYYYDDD 
       
-      ! Executable
-      ! 1st--must nullify all our local pointers before using them
-      nullify ( TemperatureInput32, H2OInput32 , &
-        O3Input32, SO2Input32, HNO3Input32, COInput32, extinctionV2R3Input32, &
-        PressureCOInput32, PressureStandardInput32, &
-        REFGPHINPUT32 , VGRIDREFGPHVALS32 )
+
       ! Open HDF file
       call h5fopen_f ( trim(fileName), H5F_ACC_RDONLY_F, fileID, iostat )
       if (iostat /= 0) call MLSMessage (MLSMSG_Error, ModuleName, &
@@ -882,11 +877,9 @@ module CFM_IO_M
       integer(hsize_t) :: Shp(1), Shp2(2) ! To get the shapes of datasets HD
       real(r8), pointer :: ptanValues(:,:,:)
       character(len=128) :: PTanName
-      ! Executable
-      ! 1st--must nullify all our local pointers before using them
-      nullify ( ptanValues )
 
       ! Open HDF file
+      nullify( ptanValues )
       PTanName = 'GHz.ptan-FinalPtan'
       if ( present(DSName) ) PTanName = DSName
       call h5fopen_f ( trim(fileName), H5F_ACC_RDONLY_F, fileID, iostat )
@@ -982,6 +975,9 @@ module CFM_IO_M
    end subroutine  !! end of subroutine Write_To_File2 ( band9, precision9 )
 
    ! Write 'state;, 'radiance', 'jacobian', 'ptanGHz' to separate text file, Pranjit Saha
+   ! You will be happier if you rewrite this subroutine so it
+   ! doesn't require so much tweaking each time you add or remove
+   ! a species from state
    subroutine Write_To_File1 (state, radiance, jacobian, newer_ptanGHz)
       ! Reference to user defined types
       use VectorsModule, only: VECTOR_T, VectorValue_T
@@ -999,57 +995,69 @@ module CFM_IO_M
       integer :: indx, i
       CHARACTER(LEN=20), PARAMETER :: FMT1 = "(F16.5)"
       CHARACTER(LEN=20), PARAMETER :: FMT2 = "(E18.8)"
+      integer :: qty
 
       ! Open file to write, for 'state'
+      qty = 0
       open (unit = 1, file = "state.txt")
       !write (1, *) ""
+      qty = qty + 1
       write (1, *) "Species 1: Temperature"
-      write (1, *) "Total values: ", state%quantities(1)%template%noSurfs
+      write (1, *) "Total values: ", state%quantities(qty)%template%noSurfs
 
-      do rows = 1, state%quantities(1)%template%noSurfs
-        write (1, FMT1, advance="no") state%quantities(1)%values(rows, 1)
+      do rows = 1, state%quantities(qty)%template%noSurfs
+        write (1, FMT1, advance="no") state%quantities(qty)%values(rows, 1)
       end do
 
       !write (1, *) ""
+      ! You omitted CO, remember
+      if ( .false. ) then
+      qty = qty + 1
       write (1, *) "Species 2: CO"
-      write (1, *) "Total values: ", state%quantities(2)%template%noSurfs
-      do rows = 1, state%quantities(2)%template%noSurfs
-        write (1, FMT2, advance="no") state%quantities(2)%values(rows, 1)
+      write (1, *) "Total values: ", state%quantities(qty)%template%noSurfs
+      do rows = 1, state%quantities(qty)%template%noSurfs
+        write (1, FMT2, advance="no") state%quantities(qty)%values(rows, 1)
       end do
+      endif
 
       !write (1, *) ""
+      qty = qty + 1
       write (1, *) "Species 3: O2"
-      write (1, *) "Total values: ", state%quantities(3)%template%noSurfs
-      do rows = 1, state%quantities(3)%template%noSurfs
-         write (1, FMT1, advance="no") state%quantities(3)%values(rows, 1)
+      write (1, *) "Total values: ", state%quantities(qty)%template%noSurfs
+      do rows = 1, state%quantities(qty)%template%noSurfs
+         write (1, FMT1, advance="no") state%quantities(qty)%values(rows, 1)
       end do
 
       !write (1, *) ""
+      qty = qty + 1
       write (1, *) "Species 4: SO2"
-      write (1, *) "Total values: ", state%quantities(4)%template%noSurfs
-      do rows = 1, state%quantities(4)%template%noSurfs
-         write (1, FMT2, advance="no") state%quantities(4)%values(rows, 1)
+      write (1, *) "Total values: ", state%quantities(qty)%template%noSurfs
+      do rows = 1, state%quantities(qty)%template%noSurfs
+         write (1, FMT2, advance="no") state%quantities(qty)%values(rows, 1)
       end do
 
       !write (1, *) ""
+      qty = qty + 1
       write (1, *) "Species 5: HNO3"
-      write (1, *) "Total values: ", state%quantities(5)%template%noSurfs
-      do rows = 1, state%quantities(5)%template%noSurfs
-         write (1, FMT2, advance="no") state%quantities(5)%values(rows, 1)
+      write (1, *) "Total values: ", state%quantities(qty)%template%noSurfs
+      do rows = 1, state%quantities(qty)%template%noSurfs
+         write (1, FMT2, advance="no") state%quantities(qty)%values(rows, 1)
       end do
 
       !write (1, *) ""
+      qty = qty + 1
       write (1, *) "Species 6: O3"
-      write (1, *) "Total values: ", state%quantities(6)%template%noSurfs
-      do rows = 1, state%quantities(6)%template%noSurfs
-         write (1, FMT2, advance="no") state%quantities(6)%values(rows, 1)
+      write (1, *) "Total values: ", state%quantities(qty)%template%noSurfs
+      do rows = 1, state%quantities(qty)%template%noSurfs
+         write (1, FMT2, advance="no") state%quantities(qty)%values(rows, 1)
       end do
 
       !write (1, *) ""
+      qty = qty + 1
       write (1, *) "Species 7: ExtinctionV2R3"
-      write (1, *) "Total values: ", state%quantities(7)%template%noSurfs
-      do rows = 1, state%quantities(7)%template%noSurfs
-         write (1, FMT2, advance="no") state%quantities(7)%values(rows, 1)
+      write (1, *) "Total values: ", state%quantities(qty)%template%noSurfs
+      do rows = 1, state%quantities(qty)%template%noSurfs
+         write (1, FMT2, advance="no") state%quantities(qty)%values(rows, 1)
       end do
       ! close file opened to write
       close(1)
@@ -1074,36 +1082,40 @@ module CFM_IO_M
 
       ! Save 'jacobian' values in a file
       open (unit = 1, file = "jacobian.txt")
+
+      rows = 1
+      ! Don't you remember? There is no CO
+      if ( .false. ) then
       write (1, *) "Species 2: CO"
       write (1, *) "Rows: ", jacobian%block(1, 2)%nRows
       write (1, *) "Columns: ", jacobian%block(1, 2)%nCols
 
       columns = 2   ! CO is saved in index 2, temp is in index 1 - if retrieved
-      rows = 1
       do i = 1, jacobian%block(1, 2)%nRows
          do indx = 1, jacobian%block(1, 2)%nCols
            write (1, FMT1, advance="no") jacobian%block(rows, columns) %values(i, indx)
          end do
          write(1, *) ""
       end do
+      endif
 
+      columns = 5 ! 6 ! for O3
       write (1, *) "Species 6: O3"
-      write (1, *) "Rows: ", jacobian%block(1, 6)%nRows
-      write (1, *) "Columns: ", jacobian%block(1, 6)%nCols
-      columns = 6 ! for O3
-      do i = 1, jacobian%block(1, 6)%nRows
-         do indx = 1, jacobian%block(1, 6)%nCols
+      write (1, *) "Rows: ", jacobian%block(1, columns)%nRows
+      write (1, *) "Columns: ", jacobian%block(1, columns)%nCols
+      do i = 1, jacobian%block(1, columns)%nRows
+         do indx = 1, jacobian%block(1, columns)%nCols
            write (1, FMT1, advance="no") jacobian%block(rows, columns)%values(i, indx)
          end do
          write(1, *) ""
       end do
 
+      columns = 6 ! 7 ! for EXTINCTIONV2
       write (1, *) "Species 7: ExtinctionV2"
-      write (1, *) "Rows: ", jacobian%block(1, 7)%nRows
-      write (1, *) "Columns: ", jacobian%block(1, 7)%nCols
-      columns = 7 ! for EXTINCTIONV2
-      do i = 1, jacobian%block(1, 7)%nRows
-         do indx = 1, jacobian%block(1, 7)%nCols
+      write (1, *) "Rows: ", jacobian%block(1, columns)%nRows
+      write (1, *) "Columns: ", jacobian%block(1, columns)%nCols
+      do i = 1, jacobian%block(1, columns)%nRows
+         do indx = 1, jacobian%block(1, columns)%nCols
            write (1, FMT1, advance="no") jacobian%block(rows, columns)%values(i, indx)
          end do
          write(1, *) ""
