@@ -1,3 +1,0 @@
-! Deallocates memory allocated by ReadAntennaPatterns
-subroutine Destroy_Ant_Patterns_Database
-end subroutine

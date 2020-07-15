@@ -1,4 +1,0 @@
-;   Example (2)
-begin ReadApriori
-  Select, Boolean=meteorologyType ;;; ------------ start of Select ----------
-end ReadApriori

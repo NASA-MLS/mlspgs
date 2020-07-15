@@ -1,4 +1,0 @@
-begin Construct
-  BScalar: Boolean, values="true", /literal
-end Construct
-
