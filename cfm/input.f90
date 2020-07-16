@@ -103,4 +103,5 @@ module Input
            -2.84114E-10_r8,   2.23855E-10_r8,   1.03013E-10_r8,   1.03013E-10_r8,   1.03013E-10_r8, &
             1.03013E-10_r8,   1.03013E-10_r8,   1.03013E-10_r8,   1.03013E-10_r8,   1.03013E-10_r8 /)
    real(r8) :: refGPHInput = 16514.4_r8
+   real(r8), dimension(:), pointer ::  H2OInput
 end module
