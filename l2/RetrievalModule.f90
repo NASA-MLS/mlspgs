@@ -113,7 +113,9 @@ contains
     use Toggles, only: GEN, Switches, Toggle, Levels
     use Trace_m, only: Trace_Begin, Trace_End
     use Track_m, only: ReportLeaks
-    use Tree, only: Decorate, Decoration, NSons, Where, Sub_Rosa, Subtree
+    use Tree, only: Decorate, Decoration, Node_Id, NSons, Sub_Rosa, Subtree, &
+      & Where
+    use Tree_Types, only: N_Array
     use Vectorsmodule, only: ClearMask, ClearUnderMask, &
       & ClearVector, CloneVector, CopyVector, CopyVectorMask, CreateMask, &
       & DestroyVectorInfo, DumpVectorNorms, GetVectorQuantityByType, M_Linalg, &
@@ -168,6 +170,7 @@ contains
     type(vector_T), pointer :: FwdModelExtra
     type(vector_T), pointer :: FwdModelOut
     logical :: Got(field_first:field_last) ! "Got this field already"
+    integer :: GSon                     ! a son of Son.
     type(vector_T), pointer :: HighBound ! For state during retrieval
     integer :: HRegOrders               ! Regularization orders
     integer :: HRegQuants               ! Regularization quantities
@@ -284,11 +287,13 @@ contains
     integer :: Me_UpdateMask = -1       ! "Retrieve.UpdateMask"
 
     ! Error message codes
-    integer, parameter :: BothOrNeither = 1
+    integer, parameter :: ArrayOfArrays = 1
+    integer, parameter :: BothOrNeither = ArrayOfArrays + 1
     integer, parameter :: DiagNoCov = BothOrNeither + 1
     integer, parameter :: IfAThenB = DiagNoCov + 1
     integer, parameter :: Inconsistent = IfAThenB + 1   ! Inconsistent fields
-    integer, parameter :: NotGeneral = Inconsistent + 1 ! Not a general matrix
+    integer, parameter :: NoExtraVec = Inconsistent + 1 ! no FwdModelExtra
+    integer, parameter :: NotGeneral = NoExtraVec + 1   ! Not a general matrix
     integer, parameter :: NotSPD = notGeneral + 1       ! Not symmetric pos. definite
 
     dumpQuantitiesNode = 0
@@ -441,7 +446,13 @@ repeat_loop: do ! RepeatLoop
               call allocate_test ( configIndices, nsons(son)-1, "ConfigIndices", &
                 & moduleName )
               do k = 2, nsons(son)
-                configIndices(k-1) = decoration(decoration(subtree(k,son)))
+                gson = subtree(k,son)
+                if ( node_id(gson) == n_array ) then
+                  call announceError ( arrayOfArrays, field )
+                  configIndices(k-1) = -999
+                else
+                  configIndices(k-1) = decoration(decoration(gson))
+                end if
               end do
             case ( f_fwdModelExtra )
               fwdModelExtra => vectorDatabase(decoration(decoration(subtree(2,son))))
@@ -485,7 +496,13 @@ repeat_loop: do ! RepeatLoop
               call Allocate_Test ( sparseQuantities, nsons(son)-1, &
                 & 'sparseQuantities', ModuleName )
               do k = 2, nsons(son)
-                sparseQuantities(k-1) = decoration(decoration(subtree(k,son)))
+                gson = subtree(k,son)
+                if ( node_id(gson) == n_array ) then
+                  call announceError ( arrayOfArrays, field )
+                  sparseQuantities(k-1) = -999
+                else
+                  sparseQuantities(k-1) = decoration(decoration(gson))
+                end if
               end do
             case ( f_state )
               state => vectorDatabase(decoration(decoration(subtree(2,son))))
@@ -593,6 +610,9 @@ repeat_loop: do ! RepeatLoop
             & call announceError ( inconsistent, f_negateSD, f_regAfter )
           if ( negateSD .and. .not. got(f_outputSD) ) &
             & call AnnounceError ( ifAThenB, f_negateSD, f_outputSD )
+          if ( ( method == l_newtonian .or. method == l_simple ) .and. &
+             & parallelMode .and. .not. got(f_fwdModelExtra) ) &
+            & call announceError ( noExtraVec )
 
           if ( error == 0 ) then
 
@@ -864,6 +884,10 @@ repeat_loop: do ! RepeatLoop
       call print_source ( where(son) )
       call output ( ', RetrievalModule complained: ' )
       select case ( code )
+      case ( arrayOfArrays )
+        call output ( 'Field ' )
+        call display_string ( field_indices(fieldIndex) )
+        call output ( ' cannot be an array of arrays', advance='yes' )
       case ( bothOrNeither )
         call output ( 'One of ' )
         call display_string ( field_indices(fieldIndex) )
@@ -879,6 +903,9 @@ repeat_loop: do ! RepeatLoop
         call output ( ' field appears then the ' )
         call display_string ( field_indices(anotherFieldIndex) )
         call output ( ' field shall also appear.', advance='yes' )
+      case ( noExtraVec )
+        call output ( 'FwdModelExtra is required for parallel forward models.', &
+                    & advance='yes' )
       case ( inconsistent, notGeneral, notSPD )
         if ( present(string) ) call output ( string )
         call output ( 'the field ' )
@@ -1633,9 +1660,11 @@ repeat_loop: do ! RepeatLoop
       call allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', &
         & ModuleName )
       ! Launch fwmParallel slaves
-      if ( parallelMode ) &
-        & call SetupFWMSlaves ( configDatabase(configIndices), &
+      if ( parallelMode ) then
+        if ( .not. got(f_fwdModelExtra) ) call announceError ( noExtraVec )
+        call SetupFWMSlaves ( configDatabase(configIndices), &
         & state, fwdModelExtra, FwdModelOut, jacobian )
+      end if
       foundBetterState = ( maxJacobians == 0 )
       chunk%abandoned = .false.
       ! Set options for NWT
@@ -3003,6 +3032,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.365  2020/07/17 19:38:52  vsnyder
+! Check that FwdModelExtra exists if -Sfwmparallel is set
+!
 ! Revision 2.364  2019/06/24 23:29:26  pwagner
 ! Updated to reflect TA-01-143
 !
