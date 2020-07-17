@@ -397,10 +397,10 @@ contains ! =====     Public Procedures     =============================
 
     character (len=*), intent(in) :: fileName ! Name of file to append to
     type( l2GPData_T ), intent(inout) :: l2gp ! What to append
-    character (len=*), optional, intent(IN) ::swathName!default->l2gp%swathName
-    integer,intent(IN),optional   :: offset
-    integer, intent(IN), optional ::lastProfile
-    integer,intent(IN),optional   :: TotNumProfs
+    character (len=*), optional, intent(in) ::swathName!default->l2gp%swathName
+    integer,intent(in),optional   :: offset
+    integer, intent(in), optional ::lastProfile
+    integer,intent(in),optional   :: TotNumProfs
     integer, optional, intent(in) :: hdfVersion
     logical, intent(in), optional :: createSwath
     integer, optional, intent(in) :: maxchunksize
@@ -472,18 +472,18 @@ contains ! =====     Public Procedures     =============================
     type (L2GPData_T), intent(INOUT) :: l2gp
     ! This is the name the swath is given in the file. By default it is
     ! the name contained in l2gp
-    character (len=*), optional, intent(IN) ::swathName!default->l2gp%swathName
+    character (len=*), optional, intent(in) ::swathName!default->l2gp%swathName
     ! This (offset) is the point in the swath at which the data is written. 
     ! First profile in the file has offset==0. If the swath in the file is 
     ! shorter than offset + ( num of profiles in l2gp) then it grows by magic
-    integer, intent(IN), optional::offset
+    integer, intent(in), optional::offset
     ! TotNumProfs is a new argument. It seems only to be used if we are 
     ! creating a swath, rather than adding to one. In that case I guess
     ! it is the total number of profiles in the swath created. I also 
     ! guess that this is done so that we can avoid growing and re-growing 
     ! the swath.
-    integer, intent(IN), optional ::TotNumProfs
-    integer, intent(IN), optional ::lastProfile
+    integer, intent(in), optional ::TotNumProfs
+    integer, intent(in), optional ::lastProfile
     logical, intent(in), optional :: createSwath
     integer, optional, intent(in) :: maxchunksize
     ! Local
@@ -2861,7 +2861,7 @@ contains ! =====     Public Procedures     =============================
 
     integer, intent(in) :: l2FileHandle ! From swopen
     type( L2GPData_T ), intent(inout) :: l2gp
-    character (len=*), optional, intent(IN) :: swathName ! Defaults->l2gp%name
+    character (len=*), optional, intent(in) :: swathName ! Defaults->l2gp%name
 
     ! Variables
     type (GlobalAttributes_T)         :: gAttributes
@@ -3934,12 +3934,12 @@ contains ! =====     Public Procedures     =============================
     ! (Some older files won't have this field)
     ! Arguments
 
-    character (len=*), intent(IN) :: swathname ! Name of swath
+    character (len=*), intent(in) :: swathname ! Name of swath
     type(MLSFile_T)                :: L2GPFile
-    integer, intent(IN), optional :: firstProf, lastProf ! Defaults to first and last
-    type( L2GPData_T ), intent(OUT) :: l2gp ! Result
+    integer, intent(in), optional :: firstProf, lastProf ! Defaults to first and last
+    type( L2GPData_T ), intent(out) :: l2gp ! Result
     character, intent(in) :: HMOT   ! 'H' 'M'(def) 'O' 'T'
-    integer, intent(OUT),optional :: numProfs ! Number actually read
+    integer, intent(out),optional :: numProfs ! Number actually read
     logical, optional, intent(in) :: ReadData
 
     ! Local Parameters
@@ -4013,14 +4013,18 @@ contains ! =====     Public Procedures     =============================
       DF_Precision = DATA_FIELD2
       if ( deeBugHere ) print *, 'DF_NAME: ',DF_NAME
       if ( deeBugHere ) print *, 'DF_Precision: ',DF_Precision
-      ! Here we read the Missing Value attribute
-      status = he5_swrdlattr( swid, 'L2gpValue', 'MissingValue', MissingValue )
-      if ( status /= 0 ) then
-        call MLSMessage( MLSMSG_Warning, ModuleName, &
+      ! Here we read the MissingValue attribute
+      ! If we can't for any reason, it retains its default value
+      if ( hdfVersion == HDFVERSION_5 ) then
+        status = &
+          & he5_swrdlattr( swid, 'L2gpValue', 'MissingValue', MissingValue )
+        if ( status /= 0 ) then
+          call MLSMessage( MLSMSG_Warning, ModuleName, &
          &'Failed to read Missing Value attribute for ' &
          & // trim(swathname), MLSFile=L2GPFile )
-      else
-        l2gp%MissingL2GP = MissingValue(1)
+        else
+          l2gp%MissingL2GP = MissingValue(1)
+        endif
       endif
     case default
     end select
@@ -4327,9 +4331,9 @@ contains ! =====     Public Procedures     =============================
 
     ! Arguments
 
-    integer, intent(IN) :: l2FileHandle ! From swopen
+    integer, intent(in) :: l2FileHandle ! From swopen
     type (L2GPData_T), intent(INOUT) :: l2gp
-    character (len=*), optional, intent(IN) ::swathName!default->l2gp%swathName
+    character (len=*), optional, intent(in) ::swathName!default->l2gp%swathName
     integer, optional, intent(in) :: hdfVersion
     logical, optional, intent(in) :: notUnlimited
     ! Exectuable code
@@ -4367,7 +4371,7 @@ contains ! =====     Public Procedures     =============================
     ! Arguments
     type(MLSFile_T)                :: L2GPFile
     type( L2GPData_T ), intent(inout) :: l2gp
-    character (len=*), optional, intent(IN) :: swathName ! Defaults to l2gp%swathName
+    character (len=*), optional, intent(in) :: swathName ! Defaults to l2gp%swathName
     integer, optional, intent(in) :: nLevels
     logical, optional, intent(in) :: notUnlimited   !               as nTimes
     logical, optional, intent(in) :: compressTimes  ! don't store nTimesTotal
@@ -4639,8 +4643,8 @@ contains ! =====     Public Procedures     =============================
 
     type( L2GPData_T ), intent(inout) :: l2gp
     type(MLSFile_T)                :: L2GPFile
-    character (len=*), intent(IN), optional :: swathName ! Defaults->l2gp%name
-    integer,intent(IN),optional::offset
+    character (len=*), intent(in), optional :: swathName ! Defaults->l2gp%name
+    integer,intent(in),optional::offset
 
     ! Variables
 
@@ -4744,8 +4748,8 @@ contains ! =====     Public Procedures     =============================
 
     type( L2GPData_T ), intent(inout) :: l2gp
     type(MLSFile_T)                :: L2GPFile
-    character (len=*), intent(IN), optional :: swathName ! Defaults->l2gp%name
-    integer,intent(IN),optional::offset
+    character (len=*), intent(in), optional :: swathName ! Defaults->l2gp%name
+    integer,intent(in),optional::offset
     ! Parameters
     ! logical, parameter :: DEEBUG = .false.
 
@@ -4896,7 +4900,7 @@ contains ! =====     Public Procedures     =============================
 
     type( L2GPData_T ), intent(inout) :: l2gp
     type(MLSFile_T)                :: L2GPFile
-    character (len=*), intent(IN), optional :: swathName ! Defaults->l2gp%name
+    character (len=*), intent(in), optional :: swathName ! Defaults->l2gp%name
 
     ! Parameters
     character (len=*), parameter :: NOUNITS = 'NoUnits'
@@ -5504,7 +5508,7 @@ contains ! =====     Public Procedures     =============================
     ! Arguments
     type(MLSFile_T)                :: L2GPFile
     type (L2GPData_T), intent(INOUT) :: l2gp
-    character (len=*), optional, intent(IN) ::swathName!default->l2gp%swathName
+    character (len=*), optional, intent(in) ::swathName!default->l2gp%swathName
     
     ! Brief description of subroutine
     ! This subroutine creates an alias for each of the two data fields
@@ -5558,7 +5562,7 @@ contains ! =====     Public Procedures     =============================
 
     type(MLSFile_T)                :: L2GPFile
     type (L2GPData_T), intent(INOUT) :: l2gp
-    character (len=*), optional, intent(IN) ::swathName!default->l2gp%swathName
+    character (len=*), optional, intent(in) ::swathName!default->l2gp%swathName
     logical, optional, intent(in) :: notUnlimited
     ! Local
     logical :: alreadyOpen
@@ -5650,6 +5654,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.246  2020/06/30 23:20:18  pwagner
+! ConvertL2GPToQuantity copies pressures, hopefulyy w/o crashing
+!
 ! Revision 2.245  2020/03/20 23:04:13  pwagner
 ! Made consistent with new he5_readglobalattr api
 !
