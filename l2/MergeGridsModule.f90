@@ -27,7 +27,8 @@ module MergeGridsModule
   implicit none
   private
 
-  public :: Concatenate, ConvertEtaToP, MergeGrids, MergeOneGrid
+  public :: Concatenate, ConvertEtaToP, DeleteGriddedData, &
+    & MergeGrids, MergeOneGrid, WMOTropFromGrid
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -357,8 +358,9 @@ contains ! ===================================  Public procedures  =====
     use GriddedData, only: GriddedData_T, Dump, &
       & ConcatenateGriddedData, CopyGrid, DestroyGriddedData, NullifyGriddedData
     use Init_Tables_Module, only: F_A, F_B, F_DeleteGrids, F_SourceGrid
+    use MLSStringlists, only: SwitchDetail
     use MoreTree, only: Get_Boolean, Get_Field_Id
-    use Toggles, only: Gen, Toggle
+    use Toggles, only: Gen, Switches, Toggle
     use Trace_M, only: Trace_Begin, Trace_End
     use Tree, only: Nsons, Subtree, Decoration
     
@@ -379,12 +381,13 @@ contains ! ===================================  Public procedures  =====
     integer :: FIELD_INDEX            ! Type of tree node
     integer :: GRIDS_NODE
     integer :: I                      ! Loop counter
-    logical, parameter :: IgnoreEmptyGrids = .false.
+    logical, parameter :: IgnoreEmptyGrids = .true. ! .false.
     type (griddedData_T), target :: Intermediate
     integer :: Me = -1                ! String index for trace
     integer :: returnStatus
     integer :: SON                    ! Tree node
     integer :: VALUE                  ! Tree node
+    logical :: verbose
     logical :: WEARETHEFIRST
 
     ! Executable code
@@ -392,6 +395,7 @@ contains ! ===================================  Public procedures  =====
     call nullifyGriddedData ( newGrid ) ! for Sun's still useless compiler
     call nullifyGriddedData ( Intermediate ) ! for Sun's still useless compiler
     deleteGrids = .false.
+    verbose = ( switchDetail(switches, 'grid' ) > -1 )
 
     ! Get the information from the l2cf
     grids_node = 0
@@ -464,7 +468,10 @@ contains ! ===================================  Public procedures  =====
       do i=2, nsons(grids_node)
         db_index = decoration(decoration(subtree(i, grids_node )))
         b => griddedDataBase ( db_index )
-        if ( b%empty ) cycle
+        if ( b%empty ) then
+          if ( verbose ) print *, 'empty grid at i ', i, ' db_index: ', db_index
+          cycle
+        endif
         if ( DEEBUG ) then
           print *, ' '
           print *, 'db_index: ', db_index
@@ -1234,6 +1241,9 @@ contains ! ===================================  Public procedures  =====
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.70  2020/07/22 22:56:16  pwagner
+! Made more cmds public; IgnoreEmptyGrids now TRUE when Concatenating grids
+!
 ! Revision 2.69  2020/07/09 23:54:30  pwagner
 ! Many cmds from readApriori and MergeGrids phase now available to Fill phase
 !
