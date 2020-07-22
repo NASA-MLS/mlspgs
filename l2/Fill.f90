@@ -63,11 +63,12 @@ contains ! =====     Public Procedures     =============================
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
     use Chunks_M, only: MLSChunk_T
-    use Destroycommand_M, only: DestroyCommand
+    use DestroyCommand_M, only: DestroyCommand
     use DumpCommand_M, only: BooleanFromAnyGoodRadiances, &
-      & BooleanFromAnygoodValues, &
-      & BooleanFromCatchwarning, BooleanFromComparingQtys, BooleanFromFormula, &
-      & Dumpcommand, ExecuteCommand, Initializerepeat, Nextrepeat, &
+      & BooleanFromAnygoodValues, BooleanFromCatchwarning, &
+      & BooleanFromChunkEndsBefore, BooleanFromChunkStartsAfter, &
+      & BooleanFromComparingQtys, BooleanFromFormula, &
+      & DumpCommand, ExecuteCommand, Initializerepeat, Nextrepeat, &
       & MLSCase, MLSEndSelect, MLSSelect, MLSSelecting, &
       & Repeat=>skip, Skip
     use Expr_M, only: Expr
@@ -185,15 +186,16 @@ contains ! =====     Public Procedures     =============================
       & L_Zeta
     ! Now The Specifications:
     use Init_Tables_Module, only: S_AnygoodValues, S_Anygoodradiances, &
-      & S_Case, S_Catchwarning, S_Compare, S_Computetotalpower, &
-      & S_Concatenate, S_ConcatenateGrids, S_ConvertEtaToP, &
+      & S_Case, S_Catchwarning, S_ChunkEndsBefore, S_ChunkStartsAfter, &
+      & S_Compare, S_Computetotalpower, &
+      & S_Concatenate, S_ConcatenateGrids, S_ConvertEtaToP, S_Delete, &
       & S_Destroy, S_Diff, S_Directread, S_Dump, S_Endselect, S_Execute, &
       & S_Fill, S_Fillcovariance, S_Filldiagonal, &
       & S_Flagcloud, S_Flushl2pcbins, S_Flushpfa, S_Gridded, S_Hessian, &
       & S_Load, S_Matrix, S_Merge, S_MergeGrids, S_Negativeprecision, S_Phase, S_Populatel2pcbin, &
       & S_ReadGriddedData, S_Reevaluate, S_Repeat, S_Restrictrange, S_ChangeSettings, &
       & S_Select, S_Skip, S_Snoop, S_Streamlinehessian, S_Subset, &
-      & S_Time, S_Transfer, S_UpdateMask, S_Vector
+      & S_Time, S_Transfer, S_UpdateMask, S_Vector, S_WMOTropFromGrids
     ! Now Some Arrays
     use Intrinsic, only: Lit_Indices, &
       & Phyq_Angle, Phyq_Dimensionless, Phyq_Invalid, Phyq_Length, &
@@ -213,17 +215,22 @@ contains ! =====     Public Procedures     =============================
       & Matrix_T, Nullifymatrix
     ! Note: If You Ever Want To Include Defined Assignment For Matrices, Please
     ! Carefully Check Out The Code Around The Call To Snoop.
-    use MergeGridsModule, only: Concatenate, ConvertEtaToP, &
-      & MergeGrids, MergeOneGrid
+    use MergeGridsModule, only: Concatenate, ConvertEtaToP, DeleteGriddedData, &
+      & MergeGrids, MergeOneGrid, WMOTropFromGrid
     use MLSFiles, only: HDFVersion_5, GetMLSFileByType
     use MLSL2Options, only: L2cfnode, &
-      & RuntimeValues, L2Options, SpecialDumpFile, MLSL2Message
+      & DumpMacros, RuntimeValues, L2Options, SpecialDumpFile, MLSL2Message
     use MLSL2Timings, only: Section_Times, &
       & AddPhaseToPhaseNames, FillTimings, FinishTimings
     use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
       & MLSMsg_L1bread, MLSMessageReset
     use MLSPCF2, only: MLSPCF_ElevOffset_Start, MLSPCF_Misc_End, &
-      & MLSpcf_L2apriori_Start, MLSpcf_L2apriori_End
+      & MLSPCF_L2apriori_Start, MLSPCF_L2apriori_End, &
+      & MLSPCF_L2clim_Start, MLSPCF_L2clim_End, &
+      & MLSPCF_L2dao_Start, MLSPCF_L2dao_End, &
+      & MLSPCF_L2geos5_Start, MLSPCF_L2geos5_End, &
+      & MLSPCF_L2ncep_Start, MLSPCF_L2ncep_End, &
+      & MLSPCF_Surfaceheight_Start, MLSPCF_Surfaceheight_End
     use MLSRandomNumber, only: MLS_Random_Seed, Math77_Ran_Pack
     use MLSStringlists, only: Catlists, GethashElement, &
       & NumstringElements, PuthashElement, &
@@ -360,6 +367,8 @@ contains ! =====     Public Procedures     =============================
     integer :: BOXCARMETHOD             ! l_min, l_max, l_mean
     integer :: BQTYINDEX                ! Index of a quantity in vector
     integer :: BVECINDEX                ! Index of a vector
+    logical :: carryover
+    character(len=32) :: cvalue
     real(rv) :: C                       ! constant "c" in manipulation
     logical :: CENTERVERTICALLY         ! For bin based fills
     integer :: CHANNEL                  ! For spreadChannels fill
@@ -608,6 +617,24 @@ contains ! =====     Public Procedures     =============================
 
     verbose = ( switchDetail(switches, 'grid' ) > -1 )
     verboser = ( switchDetail(switches, 'grid' ) > 0 )
+    call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
+      & 'carryover', cvalue, countEmpty=countEmpty, &
+      & inseparator=runTimeValues%sep )
+    carryover = ( index(lowercase(cvalue), 't') > 0 )
+    if ( verbose ) call dumpMacros
+    if ( verboser ) call outputNamedValue( 'carryover', carryover )
+    if ( .not. carryover ) then
+      LastAprioriPCF = mlspcf_l2apriori_start - 1
+      lastClimPCF = mlspcf_l2clim_start - 1
+      lastDAOPCF = mlspcf_l2dao_start - 1
+      lastNCEPPCF = mlspcf_l2ncep_start - 1
+      lastGEOS5PCF = mlspcf_l2geos5_start - 1
+      LastHeightPCF = mlspcf_surfaceHeight_start - 1
+    end if
+    if ( verboser ) call outputNamedValue ( 'mlspcf_l2geos5_start', mlspcf_l2geos5_start )
+    if ( verboser ) call outputNamedValue ( 'lastGEOS5PCF', lastGEOS5PCF )
+    if ( verboser ) call outputNamedValue ( 'LastClimPCF', LastClimPCF )
+    if ( verboser ) call outputNamedValue ( 'carryOver', carryOver )
     ! Don't initialize field values here--instead place them after the do below
     fillerror = 0
     templateIndex = -1
@@ -773,11 +800,20 @@ contains ! =====     Public Procedures     =============================
       case ( s_case ) ! ============ seeking matching case ==========
         ! We'll continue seeking a match unless the case is TRUE
         call MLSCase (key)
+      case ( s_delete )
+        call DeleteGriddedData ( key, griddedDatabase )
+        if ( DumpDBFootPrint ) call Dump ( griddedDataBase, Details=-4 )
       case ( s_endSelect ) ! ============ End of select .. case ==========
         ! We'done with seeking a match
         call MLSEndSelect (key)
       case ( s_catchWarning )
         call decorate ( key,  BooleanFromCatchWarning ( key ) )
+      case ( s_ChunkEndsBefore )
+        call decorate ( key, &
+          & BooleanFromChunkEndsBefore ( key, chunks(ChunkNo), griddedDatabase ) )
+      case ( s_ChunkStartsAfter )
+        call decorate ( key, &
+          & BooleanFromChunkStartsAfter ( key, chunks(ChunkNo), griddedDatabase ) )
       case ( s_compare )
         call decorate ( key,  BooleanFromComparingQtys ( key, vectors ) )
       case ( s_computeTotalPower )
@@ -890,6 +926,20 @@ contains ! =====     Public Procedures     =============================
       case ( s_skip ) ! ============================== Skip ==========
         ! We'll skip the rest of the section if the Boolean cond'n is TRUE
         if ( Skip(key) ) exit repeat_loop
+      case ( s_wmoTropFromGrids )
+        ! We must get "grid" field from command
+        do j = 2, nsons(key)
+          gson = subtree(j, key)
+          select case ( decoration(subtree(1, gson) ) )
+          case ( f_grid )
+            value = decoration ( decoration ( subtree(2, gson) ) )
+          case default
+          end select
+        enddo
+        grid => griddedDataBase(value)
+        call DestroyGriddedData( grid )
+        grid = wmoTropFromGrid ( key, griddedDataBase )
+        if ( DumpDBFootPrint ) call Dump ( griddedDataBase, Details=-4 )
       case ( s_matrix ) ! ===============================  Matrix  =====
         got = .false.
         matrixType = l_plain
@@ -3451,6 +3501,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.484  2020/07/22 23:00:17  pwagner
+! Many changes to allow GriddedData to be read and used during Fill sections
+!
 ! Revision 2.483  2020/07/09 23:55:06  pwagner
 ! Many cmds from readApriori and MergeGrids phase now available to Fill phase
 !
