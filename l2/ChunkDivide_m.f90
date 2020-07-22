@@ -2842,8 +2842,10 @@ contains ! ===================================== Public Procedures =====
       call output ( 'After dealing with obstructions', advance='no' )
       call output ( ', poss. overlaps outside proc. range', advance='yes' )
       call Dump ( chunks )
-      call dump ( chunks%phiStart , 'phiStarts' )
-      call dump ( chunks%phiEnd ,   'phiEnds' )
+      call dump ( chunks%phiStart  , 'phiStarts' )
+      call dump ( chunks%phiEnd    , 'phiEnds  ' )
+      call dump ( chunks%StartTime , 'StartTime' )
+      call dump ( chunks%EndTime   , 'EndTime  ' )
     endif
     ! Tidy up
     call DeallocateL1BData ( tpGeodAngle )
@@ -3026,6 +3028,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.138  2020/07/22 22:50:04  pwagner
+! Added chunks%Start, EndTimes to Dumps ending ChunkDivide_Orbital
+!
 ! Revision 2.137  2020/07/09 23:52:25  pwagner
 ! Added Start,EndTime components to MLSChunk_T
 !
