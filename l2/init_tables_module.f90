@@ -144,7 +144,9 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_CHANGESETTINGS     = s_catenate + 1
   integer, parameter :: S_CHECKPOINT         = s_changeSettings + 1
   integer, parameter :: S_CHUNKDIVIDE        = s_checkpoint + 1
-  integer, parameter :: S_COLUMNSCALE        = s_chunkDivide + 1
+  integer, parameter :: S_CHUNKENDSBEFORE    = s_chunkdivide + 1
+  integer, parameter :: S_CHUNKSTARTSAFTER   = s_chunkendsbefore + 1
+  integer, parameter :: S_COLUMNSCALE        = s_chunkstartsafter + 1
   integer, parameter :: S_COMBINECHANNELS    = s_columnScale + 1
   integer, parameter :: S_COMPARE            = s_combinechannels + 1
   integer, parameter :: S_COMPUTETOTALPOWER  = s_compare + 1
@@ -366,6 +368,8 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_changeSettings) =         add_ident ( 'changeSettings' )
     spec_indices(s_checkpoint) =             add_ident ( 'checkpoint' )
     spec_indices(s_chunkDivide) =            add_ident ( 'chunkDivide' )
+    spec_indices(s_chunkEndsBefore) =        add_ident ( 'chunkEndsBefore' )
+    spec_indices(s_chunkStartsAfter) =       add_ident ( 'chunkStartsAfter' )
     spec_indices(s_columnScale) =            add_ident ( 'columnScale' )
     spec_indices(s_combineChannels) =        add_ident ( 'combineChannels' )
     spec_indices(s_compare) =                add_ident ( 'compare' )
@@ -1211,6 +1215,20 @@ contains ! =====     Public procedures     =============================
              np+n_spec_def /) )
 
     call make_tree( (/ &
+      begin, s+s_ChunkEndsBefore, &
+             begin, f+f_grid, field_spec(s_Gridded,s_concatenate,req=req), &
+             begin, f+f_Boolean, field_spec(s_Boolean,req=req), &
+             begin, f+f_reverse, boolean(), &
+             np+n_spec_def /) )
+
+    call make_tree( (/ &
+      begin, s+s_ChunkStartsAfter, &
+             begin, f+f_grid, field_spec(s_Gridded,s_concatenate,req=req), &
+             begin, f+f_Boolean, field_spec(s_Boolean,req=req), &
+             begin, f+f_reverse, boolean(), &
+             np+n_spec_def /) )
+
+    call make_tree( (/ &
       begin, s+s_isGridEmpty, &
              begin, f+f_grid, field_spec(s_Gridded,s_concatenate,req=req), &
              begin, f+f_Boolean, field_spec(s_Boolean,req=req), &
@@ -1539,6 +1557,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_xStar, field_spec(s_vector), &
              begin, f+f_yStar, field_spec(s_vector), &
              ndp+n_spec_def /), continue=.true. )
+
     call make_tree ( (/ & ! Must be AFTER s_vector
       begin, s+s_checkpoint, &
              begin, f+f_fileName, string(req=req), &
@@ -1714,6 +1733,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_l2parsf, &
              begin, f+f_file, string(), np+n_spec_def &
              /) )
+
     call make_tree ( (/ &
       begin, s+s_retrieve, & ! Must be AFTER s_forwardModel, s_quantity, 
                              !               s_vector and s_matrix
@@ -1907,9 +1927,10 @@ contains ! =====     Public procedures     =============================
              n+n_section /) )
     call make_tree ( (/ &
       begin, z+z_fill, &
-             s+s_anyGoodRadiances, s+s_anyGoodValues, &
+             s+s_anyGoodRadiances, s+s_anyGoodValues, s+s_Boolean, &
              s+s_case, s+s_catchWarning, s+s_compare, s+s_computeTotalPower, &
-             s+s_convertEtaToP, s+s_delete, &
+             s+s_chunkEndsBefore, s+s_chunkStartsAfter, s+s_delete, &
+             s+s_concatenate, s+s_concatenateGrids, s+s_ConvertEtaToP,&
              s+s_destroy, s+s_diff, s+s_directRead, s+s_dump, s+s_endSelect, &
              s+s_execute, s+s_fill, s+s_fillCovariance, s+s_fillDiagonal, &
              s+s_flagcloud, s+s_flushL2PCBins, s+s_flushPFA, s+s_Gridded, &
@@ -1917,7 +1938,8 @@ contains ! =====     Public procedures     =============================
              s+s_phase, s+s_populateL2PCBin, s+s_readGriddedData, s+s_reevaluate, &
              s+s_repeat, s+s_restrictRange, s+s_select, s+s_changeSettings, &
              s+s_skip, s+s_snoop, s+s_streamlineHessian, s+s_subset, &
-             s+s_time, s+s_transfer, s+s_updateMask, s+s_vector, n+n_section, &
+             s+s_time, s+s_transfer, s+s_updateMask, s+s_vector, s+s_wmoTropFromGrids, &
+             n+n_section, &
       begin, z+z_retrieve, s+s_anyGoodValues, s+s_case, s+s_catchWarning, &
              s+s_checkpoint, s+s_compare, s+s_diff, s+s_dump, s+s_dumpBlocks, &
              s+s_endSelect, s+s_flagCloud, s+s_flushPFA, s+s_leakcheck, &
@@ -2145,6 +2167,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.653  2020/07/22 22:46:39  pwagner
+! Added chunkEndsBefore, ChunkStartsAfter commands
+!
 ! Revision 2.652  2020/07/09 23:53:48  pwagner
 ! Many cmds from readApriori and MergeGrids phase now available to Fill phase
 !
