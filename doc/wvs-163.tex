@@ -13,8 +13,8 @@
 \topmargin -0.5in
 \textheight 9.1in
 
-\newcommand{\docname}{wvs-163}
-\newcommand{\docdate}{19 July 2020}
+\newcommand{\docname}{wvs-163r1}
+\newcommand{\docdate}{22 July 2020}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -395,7 +395,7 @@ of arrays! I.e., do not use a value of the form  [\dots {\tt[b, c]}
   matrix of the final iteration. This isn't the output standard deviation
   because it is not divided by the square root of the degrees of freedom
   (the difference between the number of rows and number of columns of
-  $\mathbf{L}$).
+  $\mathbf{K}$).
 
 \item[\tt precisionFactor] Elements of the {\tt outputSD} vector that are
   greater than the specified value are negated if {\tt negateSD} has the
@@ -451,7 +451,7 @@ of arrays! I.e., do not use a value of the form  [\dots {\tt[b, c]}
 
 \item[\tt toleranceF] specifies the value of the {\tt relsf} component of
   the {\tt NWT_Options} structure in {\tt dnwt_module}. If
-  $\left||\tilde{\mathbf{f}}| - |\tilde{\mathbf{f}}|_{\text{min}}\right| <
+  $|\tilde{\mathbf{f}}| - |\tilde{\mathbf{f}}|_{\text{min}} <
   \text{\tt relsf}\times |\tilde{\mathbf{f}}|_{\text{min}}$ the Newton
   iteration is terminated with its flag equal to {\tt NF_Tolf}.
   $|\tilde{\mathbf{f}}|_{\text{min}}$ is the estimate of the minimum value
@@ -624,17 +624,19 @@ SwitchDetail} function from the {\tt MLSStringLists} module returns $-1$.
 \item[\tt fiw\lbrack n\rbrack] dumps the SIDS instance window. Greater
   values of $n$ cause more details to be dumped.
 
-\item[\tt fnmin\lbrack n\rbrack] dumps {\tt fnmin}, the estimated minimum
-  value $|\mathbf{\tilde f}|_{\text{min}}$ of $|\mathbf{\tilde f}|$,
-  according to a comment -- but it actually dumps $\delta\mathbf{x}$ if
-  $n>1$. Greater values of $n$ cause more details to be dumped.
+\item[\tt fnmin\lbrack n\rbrack] dumps $|\mathbf{\tilde f}|^2$ and
+  $|\delta \mathbf{x}|^2$ if {\tt fnmin}$^2 = |\mathbf{\tilde f}|^2 -
+  |\delta \mathbf{x}|^2 < 0$ (see \h{wvs-014}). If $n>1$ it also dumps
+  $\delta \mathbf{x}$. Greater values of $n$ cause more details to be
+  dumped.
 
-\item[\tt fnorm\lbrack n\rbrack] dumps the apriori contribution to
+\item[\tt fnorm\lbrack n\rbrack] dumps $|\mathbf{\tilde f}|^2 =
+  \mathbf{\tilde f} \cdot \mathbf{\tilde f}$ and the Tikhonov contribution
+  to $|\mathbf{\tilde f}|^2 = ( \mathbf{R} \mathbf{x} ) ^T ( \mathbf{R}
+  \mathbf{x} )$. If $n>1$, it also dumps the apriori contribution to
   $|\mathbf{\tilde f}|^2 = ( \mathbf{a} - \mathbf{x} ) \cdot (\mathbf{F}
   \mathbf{a})$. Also dumps $\mathbf{a} - \mathbf{x}$ and $\mathbf{F}
-  \mathbf{a}$ if $n>1$. Dumps the Tikhonov contribution to
-  $|\mathbf{\tilde f}|^2 = \mathbf{R}^T \mathbf{R}$. Dumps
-  $|\mathbf{\tilde f}|^2 = \mathbf{\tilde f} \cdot \mathbf{\tilde f}$.
+  \mathbf{a}$ if $n>1$.
 
 
 \item[\tt fwmparallel] specifies that the {\tt retrieve} statement is to
@@ -757,3 +759,6 @@ SwitchDetail} function from the {\tt MLSStringLists} module returns $-1$.
 \end{document}
 
 % $Log$
+% Revision 1.1  2020/07/20 21:14:21  vsnyder
+% Initial commit
+%
