@@ -35,32 +35,23 @@
        Atmosphere Data Algorithms Software Users Guide}]{hyperref}
 \usepackage[strings]{underscore}
 
-\ifx\pdfoutput\undefined
-  \pdfoutput=0
+\ifx\pdfoutput\undefined \pdfoutput=0 \fi
+\ifnum\pdfoutput>0
   \hypersetup{%
-    hypertexnames=false,hyperindex=true%
+    hypertexnames=false,%
+    colorlinks=true,%
+    linktocpage=true,%
+    pdfpagelabels
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{pdftex}
+\else
+  \hypersetup{%
+    hypertexnames=false%
   }
   % Specify the driver for the color package
   \ExecuteOptions{dvips}
   %\ExecuteOptions{xdvi}
-\else
-  \ifnum\pdfoutput>0
-    \hypersetup{%
-      hypertexnames=false,%
-      colorlinks=true,%
-      linktocpage=true,%
-      pdfpagelabels
-    }
-    % Specify the driver for the color package
-    \ExecuteOptions{pdftex}
-  \else
-    \hypersetup{%
-      hypertexnames=false%
-    }
-    % Specify the driver for the color package
-    \ExecuteOptions{dvips}
-    %\ExecuteOptions{xdvi}
-  \fi
 \fi
 %
 %-------------------------------------------------------------------------------
@@ -1348,9 +1339,9 @@ different type declarations.)
 
 \ifnum\pdfoutput>0
 \hspace*{3in}
-\label{toptree}\includegraphics[bb=98 79 543 517,scale=1.00,angle=90]{tree-2}\newpage
-\hspace*{2in}
-\label{bigtree}\includegraphics[bb=17 71 466 716,scale=0.90,angle=180]{tree-1}\newpage
+\label{toptree}\includegraphics[bb=98 79 543 517,
+  scale=1.00,angle=90]{tree-2}\newpage
+\label{bigtree}\includegraphics[scale=0.90,angle=180]{tree-1}\newpage
 \vspace*{-1in}
 \label{dottree}\includegraphics[bb=106 70 721 777,
   scale=0.90,angle=90]{tree-3}\newpage
@@ -1367,6 +1358,9 @@ different type declarations.)
 \end{document}
 
 % $Log$
+% Revision 1.8  2017/11/01 23:06:26  vsnyder
+% Correct wrong word in 2.2.1, repair obsolete hyperref stuff
+%
 % Revision 1.7  2014/01/23 02:54:23  vsnyder
 % Add IF, SELECT and DO constructs.  Completely revise "Crash course in
 % language analysis" to reflect LR instead of LL.  Display new grammar.
