@@ -734,6 +734,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_a, field_spec(s_gridded,s_convertetatop), &
              begin, f+f_b, field_spec(s_gridded,s_convertetatop), &
              begin, f+f_sourceGrid, field_spec(s_gridded,s_convertetatop), &
+             begin, f+f_allowEmptyGrids, boolean(), &
              begin, f+f_deleteGrids, boolean(), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
@@ -745,6 +746,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_b, field_spec(s_gridded,s_convertetatop), &
              begin, f+f_sourceGrid, field_spec(s_gridded,s_convertetatop), &
              begin, f+f_deleteGrids, boolean(), &
+             begin, f+f_allowEmptyGrids, boolean(), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_wmoTrop, &  ! Must be AFTER S_Gridded and S_Concatenate
@@ -2167,6 +2169,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.654  2020/07/23 22:18:40  pwagner
+! AllowEmptyGrids is a new field in Concatenate; defaults to pre-v5.1 behavior
+!
 ! Revision 2.653  2020/07/22 22:46:39  pwagner
 ! Added chunkEndsBefore, ChunkStartsAfter commands
 !
