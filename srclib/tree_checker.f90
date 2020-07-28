@@ -32,8 +32,8 @@ module TREE_CHECKER
     &                           FIELD_LAST, LIT_INDICES, PHYQ_DIMENSIONLESS, &
     &                           SECTION_FIRST, SECTION_INDICES, SECTION_LAST, &
     &                           SECTION_ORDERING
-  use INTRINSIC, only: ALL_FIELDS, DOT => T_A_dot_B, EMPTY_OK, EXPR_OK, L_True, &
-    &                  L_True, L_False, NO_ARRAY, NO_CHECK_EQ, NO_DUP, &
+  use INTRINSIC, only: ALL_FIELDS, Array_Array, DOT => T_A_dot_B, EMPTY_OK, &
+    &                  EXPR_OK, L_True, L_False, NO_ARRAY, NO_CHECK_EQ, NO_DUP, &
     &                  NO_POSITIONAL, PHYQ_INVALID, REQ_FLD, SPEC_INDICES, &
     &                  T_BOOLEAN, U
   use LEXER_CORE, only: PRINT_SOURCE
@@ -66,7 +66,8 @@ module TREE_CHECKER
   integer, private, parameter :: INCONSISTENT_UNITS = INCONSISTENT_TYPES + 1
   integer, private, parameter :: LABEL_CONFLICT = INCONSISTENT_UNITS + 1
   integer, private, parameter :: MISSING_FIELD = LABEL_CONFLICT + 1
-  integer, private, parameter :: NO_CODE_FOR = MISSING_FIELD + 1
+  integer, private, parameter :: NO_ARRAY_ARRAY = MISSING_FIELD + 1
+  integer, private, parameter :: NO_CODE_FOR = NO_ARRAY_ARRAY + 1
   integer, private, parameter :: NO_CYCLE_EXIT_TARGET = NO_CODE_FOR + 1
   integer, private, parameter :: NO_DECLARATION = NO_CYCLE_EXIT_TARGET + 1
   integer, private, parameter :: NO_DOT = NO_DECLARATION + 1
@@ -257,6 +258,10 @@ contains ! ====     Public Procedures     ==============================
     case ( missing_field )
       call display_string ( field_indices(fields(1)), before='the "' )
       call output ( '" field is required but not present.', advance='yes' )
+    case ( no_array_array )
+      call display_string ( field_indices(fields(1)), &
+        & before='an array element is not allowed to be an array in the "' )
+      call output ( '" field.', advance='yes' )
     case ( no_code_for )
       call output ( 'there is no code to analyze ' )
       call dump_tree_node ( where, 0, advance='yes' )
@@ -511,6 +516,8 @@ contains ! ====     Public Procedures     ==============================
             end if
             select case ( stat )
             case ( 0 )
+            case ( no_array_array )
+              call announce_error ( subtree(1,son), no_array_array, fields=(/ field_lit /) )
             case ( no_declaration )
               call announce_error ( subtree(1,son), no_declaration )
             case ( no_expr )
@@ -546,7 +553,10 @@ contains ! ====     Public Procedures     ==============================
       integer, intent(in) :: Root   ! of son of n_asg or n_array
       integer, intent(in) :: Field  ! spec of field to check
       integer, intent(in) :: Start  ! index of sons of field
+
+      logical :: Array_Array_OK ! OK for array element to be an array
       type(decls) :: DECL  ! Declaration of a name
+      integer :: Gson      ! Son of son
       integer :: J         ! Index of root of "field"
       integer :: Me = -1   ! String index for trace
       integer :: TEST_TYPE ! Used to test the tree-node for a type reference
@@ -614,7 +624,12 @@ contains ! ====     Public Procedures     ==============================
         ! Either field needs x.y, or an allowed type was not found
         stat = wrong_type
       case ( n_array )
+        if ( mod(decoration(field)/array_array,2) == 0 ) then
+            stat = no_array_array
+    go to 9
+        end if
         do j = 1, nsons(root)
+          gson = subtree(j,root)
           stat = assignBody ( subtree(j,root), field, start )
           if ( stat /= 0 ) &
     go to 9
@@ -2261,6 +2276,9 @@ contains ! ====     Public Procedures     ==============================
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.53  2016/11/02 22:18:57  vsnyder
+! Don't use decl%tree as a tree node index if it isn't one
+!
 ! Revision 1.52  2016/05/25 00:17:29  vsnyder
 ! Decruftication
 !
