@@ -1521,7 +1521,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_module, field_spec(s_module), &
              begin, f+f_moleculeDerivatives, field_type(t_molecule), &
              begin, f+f_moleculeSecondDerivatives, field_type(t_molecule), &
-             begin, f+f_molecules, field_type(t_molecule), &
+             begin, f+f_molecules, field_type(t_molecule,array=.true.), &
              begin, f+f_nabterms, numeric(phyq_dimensionless), &
              begin, f+f_nazimuthangles, numeric(phyq_dimensionless), &
              begin, f+f_ncloudspecies, numeric(phyq_dimensionless), &
@@ -1934,10 +1934,10 @@ contains ! =====     Public procedures     =============================
              s+s_chunkEndsBefore, s+s_chunkStartsAfter, s+s_delete, &
              s+s_concatenate, s+s_concatenateGrids, s+s_ConvertEtaToP,&
              s+s_destroy, s+s_diff, s+s_directRead, s+s_dump, s+s_endSelect, &
-             s+s_execute, s+s_fill, s+s_fillCovariance, s+s_fillDiagonal, &
-             s+s_flagcloud, s+s_flushL2PCBins, s+s_flushPFA, s+s_Gridded, &
-             s+s_hessian, s+s_load, s+s_matrix, s+s_mergeGrids, s+s_negativePrecision, &
-             s+s_phase, s+s_populateL2PCBin, s+s_readGriddedData, s+s_reevaluate, &
+             s+s_execute, s+s_fill, s+s_fillCovariance, &
+             s+s_fillDiagonal, s+s_flagcloud, s+s_flushL2PCBins, s+s_flushPFA, &
+             s+s_hessian, s+s_load, s+s_matrix, s+s_negativePrecision, &
+             s+s_phase, s+s_populateL2PCBin, s+s_reevaluate, &
              s+s_repeat, s+s_restrictRange, s+s_select, s+s_changeSettings, &
              s+s_skip, s+s_snoop, s+s_streamlineHessian, s+s_subset, &
              s+s_time, s+s_transfer, s+s_updateMask, s+s_vector, s+s_wmoTropFromGrids, &
@@ -2109,51 +2109,56 @@ contains ! =====     Public procedures     =============================
   end function Field_Spec_5
 
   ! -------------------------------------------  Field_Type_Array  -----
-  pure function Field_Type_Array ( Type, Req )
+  pure function Field_Type_Array ( Type, Req, Array )
     ! Declare field-Type field
     use Tree_types, only: n_field_type
     integer, intent(in) :: Type(:)          ! T_...
     logical, intent(in), optional :: Req    ! Field is required if true
+    logical, intent(in), optional :: Array  ! Array element arrays OK if true
     integer :: Field_Type_Array(1+size(Type))
-    field_type_array =  (/ t+Type, node(req)+n_field_type /)
+    field_type_array =  (/ t+Type, node(req,array)+n_field_type /)
   end function Field_Type_Array
 
   ! -----------------------------------------------  Field_Type_1  -----
-  pure function Field_Type_1 ( Type, Req, Empty )
+  pure function Field_Type_1 ( Type, Req, Empty, Array )
     ! Declare field-Type field
     use Tree_types, only: n_field_type
     integer, intent(in) :: Type             ! T_...
     logical, intent(in), optional :: Req    ! Field is required if true
     logical, intent(in), optional :: Empty  ! Empty is OK if true
+    logical, intent(in), optional :: Array  ! Array elements array OK if true
     integer :: Field_Type_1(2)
-    field_type_1 =  (/ t+Type, node(req,empty=empty)+n_field_type /)
+    field_type_1 =  (/ t+Type, node(req,empty=empty,array=array)+n_field_type /)
   end function Field_Type_1
 
   ! -----------------------------------------------  Field_Type_2  -----
-  pure function Field_Type_2 ( Type1, Type2, Req )
+  pure function Field_Type_2 ( Type1, Type2, Req, Array )
     ! Declare field-Type field
     use Tree_types, only: n_field_type
     integer, intent(in) :: Type1, Type2     ! T_...
     logical, intent(in), optional :: Req    ! Field is required if true
+    logical, intent(in), optional :: Array  ! Array elements array OK if true
     integer :: Field_Type_2(3)
-    field_type_2 =  (/ t+type1, t+type2, node(req)+n_field_type /)
+    field_type_2 =  (/ t+type1, t+type2, node(req,array=array)+n_field_type /)
   end function Field_Type_2
 
   ! -------------------------------------------------------  Node  -----
-  pure function Node ( Req, Scalar, Empty, Expr )
+  pure function Node ( Req, Scalar, Empty, Expr, Array )
     ! Compute node generator = N if Req is absent or false, or NR
     ! if Req is present and true
-    use Intrinsic, only: D, Empty_OK, Expr_OK, No_Array, Req_Fld
+    use Intrinsic, only: Array_Array, D, Empty_OK, Expr_OK, No_Array, Req_Fld
     logical, intent(in), optional :: Req    ! Field is required if true
     logical, intent(in), optional :: Scalar ! Scalar is required if true
     logical, intent(in), optional :: Empty  ! Empty is OK if true
     logical, intent(in), optional :: Expr   ! Expr is OK if true
+    logical, intent(in), optional :: Array  ! Array elements arrays OK if true
     integer :: Node
     node = n
     if ( present(req) ) node = node + merge(d*req_fld,0,req)
     if ( present(scalar) ) node = node + merge(d*no_array,0,scalar)
     if ( present(empty) ) node = node + merge(d*empty_OK,0,empty)
     if ( present(expr) ) node = node + merge(d*expr_OK,0,expr)
+    if ( present(array) ) node = node + merge(d*array_array,0,array)
   end function Node
 
 !--------------------------- end bloc --------------------------------------
@@ -2169,6 +2174,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.655  2020/07/28 20:34:31  vsnyder
+! Allow Molecules field of ForwardModel to have array elements that are arrays
+!
 ! Revision 2.654  2020/07/23 22:18:40  pwagner
 ! AllowEmptyGrids is a new field in Concatenate; defaults to pre-v5.1 behavior
 !
