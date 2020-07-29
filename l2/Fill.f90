@@ -67,7 +67,7 @@ contains ! =====     Public Procedures     =============================
     use DumpCommand_M, only: BooleanFromAnyGoodRadiances, &
       & BooleanFromAnygoodValues, BooleanFromCatchwarning, &
       & BooleanFromChunkEndsBefore, BooleanFromChunkStartsAfter, &
-      & BooleanFromComparingQtys, BooleanFromFormula, &
+      & BooleanFromComparingQtys, BooleanFromEmptyGrid, BooleanFromFormula, &
       & DumpCommand, ExecuteCommand, Initializerepeat, Nextrepeat, &
       & MLSCase, MLSEndSelect, MLSSelect, MLSSelecting, &
       & Repeat=>skip, Skip
@@ -191,7 +191,7 @@ contains ! =====     Public Procedures     =============================
       & S_Concatenate, S_ConcatenateGrids, S_ConvertEtaToP, S_Delete, &
       & S_Destroy, S_Diff, S_Directread, S_Dump, S_Endselect, S_Execute, &
       & S_Fill, S_Fillcovariance, S_Filldiagonal, &
-      & S_Flagcloud, S_Flushl2pcbins, S_Flushpfa, S_Gridded, S_Hessian, &
+      & S_Flagcloud, S_Flushl2pcbins, S_Flushpfa, S_Gridded, S_Hessian, S_IsGridEmpty, &
       & S_Load, S_Matrix, S_Merge, S_MergeGrids, S_Negativeprecision, S_Phase, S_Populatel2pcbin, &
       & S_ReadGriddedData, S_Reevaluate, S_Repeat, S_Restrictrange, S_ChangeSettings, &
       & S_Select, S_Skip, S_Snoop, S_Streamlinehessian, S_Subset, &
@@ -811,6 +811,9 @@ contains ! =====     Public Procedures     =============================
       case ( s_ChunkEndsBefore )
         call decorate ( key, &
           & BooleanFromChunkEndsBefore ( key, chunks(ChunkNo), griddedDatabase ) )
+      case ( s_IsGridEmpty )
+        call decorate ( key, &
+          & BooleanFromEmptyGrid ( key, griddedDataBase ) )
       case ( s_ChunkStartsAfter )
         call decorate ( key, &
           & BooleanFromChunkStartsAfter ( key, chunks(ChunkNo), griddedDatabase ) )
@@ -3501,6 +3504,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.485  2020/07/29 23:36:19  pwagner
+! May utilize BooleanFromEmptyGrid in Fill sections
+!
 ! Revision 2.484  2020/07/22 23:00:17  pwagner
 ! Many changes to allow GriddedData to be read and used during Fill sections
 !
