@@ -18,7 +18,7 @@
 \usepackage[strings]{underscore}
 
 \usepackage{xr-hyper}
-\externaldocument[146-]{\logdir/wvs-146}
+\externaldocument[146-]{wvs-146}
 
 \textwidth 6.5in
 \oddsidemargin -0.25in
@@ -26,8 +26,8 @@
 \topmargin -0.5in
 \textheight 9.1in
 
-\newcommand{\docname}{wvs-157}
-\newcommand{\docdate}{5 January 2020}
+\newcommand{\docname}{wvs-157r1}
+\newcommand{\docdate}{7 August 2020}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -326,12 +326,74 @@ the radius of curvature of the normal section, as described in Equation
 (\ref{146-Req}) in section \ref{146-Normal-Section}, or Equation
 (\ref{146-Req2}) in section \ref{146-NoAz}, in \h{wvs-146}.
 
+\section{Calculations in three dimensions, without using $H_s$}
+
+From the figure, $\cos \chi_\text{eq} = \mathbf{L} \cdot \mathbf{g}$,
+where $\mathbf{L}$ is the unit vector in the direction from the instrument
+to the tangent point, and $\mathbf{g}$ is the unit gradient from the
+surface toward the instrument, Equation (\ref{146-unit-gradient}) in
+\h{wvs-146}.
+
+Equation (\ref{one}) can be written as
+
+\begin{equation}
+\sin \chi_\text{eq}^\text{refr} =
+ \frac{\mathcal{N}_t}{\mathcal{N}_s} \sin \chi_\text{eq} =
+ \frac{\mathcal{N}_t}{\mathcal{N}_s} \sqrt{1-\cos^2 \chi_\text{eq}} =
+ \frac{\mathcal{N}_t}{\mathcal{N}_s}
+  \sqrt{1-(\mathbf{L} \cdot\mathbf{g})^2} \,.
+\end{equation}
+
+The derivative of $\chi_\text{eq}^\text{refr}$ with respect to $H_t$ is
+also needed. Starting from Equation (\ref{one}),
+
+\begin{equation}
+\frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }{ \text{d} H_t}
+  \cos \chi^{\text{refr}}_{\text{eq}} =
+  \frac{1}{\mathcal{N}_s H_s} \left ( \mathcal{N}_t +
+   \frac{\text{d} \mathcal{N}_t}{\text{d} H_t } H_t \right) =
+  \frac{1}{\mathcal{N}_s H_s} \left ( \mathcal{N}_t +
+   \frac{ \text{d} \mathcal{N}_t }{ \text{d} \zeta_t }
+    \frac{ \text{d} \zeta_t }{ \text{d} H_t } H_t \right ) \,.
+\end{equation}
+
+We have
+
+\begin{equation}
+\mathcal{N}_t = 1 + a\, e^{-\zeta_t \ln 10} ~\Rightarrow~ 
+  \frac{ \text{d} \mathcal{N}_t }{ \text{d} \zeta_t } =
+   - \ln 10 ( \mathcal{N}_t - 1 ) \,.
+\end{equation}
+
+Therefore
+
+\begin{equation}
+\frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }
+                 { \text{d} H_t}
+  \cos \chi^{\text{refr}}_{\text{eq}} =
+\sin \chi^{\text{refr}}_{\text{eq}} 
+ \left[ \frac1{H_t} - \frac1{\mathcal{N}_t} ( \ln 10 ( \mathcal{N}_t-1 ) )
+  \frac{ \text{d} \zeta_t }{ \text{d} H_t} \right] \,, \text{ or}
+\end{equation}
+
+\begin{equation}
+\frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }
+                 { \text{d} H_t} =
+ \frac{\mathcal{N}_t \sin \chi_{\text{eq}}}
+      {\sqrt{\mathcal{N}_s^2 - \mathcal{N}_t^2 \sin^2 \chi_{\text{eq}}}}
+ \left[ \frac1{H_t} - \frac1{\mathcal{N}_t} ( \ln 10 ( \mathcal{N}_t-1 ) )
+  \frac{ \text{d} \zeta_t }{ \text{d} H_t} \right] \,.
+\end{equation}
+
 \label{lastpage}
 \end{document}
 
 % $Id$
 
 % $Log$
+% Revision 1.3  2020/04/21 00:05:49  pwagner
+% Should work better with make
+%
 % Revision 1.2  2020/01/21 23:10:18  vsnyder
 % More material about computing chi angles
 %
