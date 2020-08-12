@@ -34,7 +34,8 @@ contains
              & Tan_Ht, Phi_Tan, Req, Elev_Offset, Ptg_Angle, dX_dH, dH_dZ, &
              & Tan_dH_dT, Tan_d2H_dHdT, dX_dT, d2X_dXdT )
 
-  ! Set up array of pointing angles
+  ! Compute pointing angle and its derivative with respect to tangent
+  ! height. Optionally compute derivatives with respect to temperature.
 
     use Constants, only: Deg2Rad, Ln10
     use MLSKinds, only: RP
@@ -45,14 +46,14 @@ contains
                                         ! altitude in km
     real(rp), intent(in) :: Tan_Refr_Index ! Index of refraction - 1 at tangent
     real(rp), intent(in) :: Inst_Refr_Index ! Index of refraction - 1 at instrument
-    real(rp), intent(in) :: Tan_ht      ! tangent height relative to Req
+    real(rp), intent(in) :: Tan_ht      ! tangent height relative to Req in km
     real(rp), intent(in) :: Phi_tan     ! tangent orbit plane projected
                                         ! geodetic angle in radians
-    real(rp), intent(in) :: Req         ! equivalent earth radius in km
+    real(rp), intent(in) :: Req         ! equivalent earth radius in km at tangent
     real(rp), intent(in) :: Elev_offset ! radiometer pointing offset in radians
                                         ! positive is towards the earth,
                                         ! negative is towards space.
-    real(rp), intent(in) :: dh_dz       ! dh/dz  at the tangent point
+    real(rp), intent(in) :: dh_dz       ! dh/dz at the tangent point
 
   ! outputs
 
@@ -165,7 +166,7 @@ contains
   subroutine Get_Chi_Angles_Simple ( SC_Geoc_Alt, Tan_Refr_Index, &
              & Inst_Refr_Index, Tan_Ht, Phi_Tan, Req, Elev_Offset, Ptg_Angle )
 
-  ! Set up array of pointing angles
+  ! Compute pointing angle.
 
     use Constants, only: Deg2Rad
     use MLSKinds, only: RP
@@ -245,7 +246,7 @@ contains
              & Inst_Refr_Index, Tan_Ht, Phi_Tan, Req, Elev_Offset, Ptg_Angle, &
              & Tan_dH_dT, Tan_d2H_dHdT, dX_dT, d2X_dXdT )
 
-  ! Set up array of pointing angles
+  ! Compute Pointing angle and its derivative with respect to temperature.
 
     use Constants, only: Deg2Rad
     use MLSCommon, only: RP
@@ -309,6 +310,9 @@ contains
 
 end module Get_Chi_Angles_m
 ! $Log$
+! Revision 2.26  2020/04/22 01:59:43  vsnyder
+! Some work on QTM chi angles
+!
 ! Revision 2.25  2019/06/24 23:28:17  pwagner
 ! Updated to reflect TA-01-143
 !
