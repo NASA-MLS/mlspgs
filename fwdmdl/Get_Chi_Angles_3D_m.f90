@@ -48,7 +48,7 @@ contains
     real(rp), intent(in) :: Tan_Refr_Index ! Index of refraction - 1 at tangent
     real(rp), intent(in) :: Inst_Refr_Index ! Index of refraction - 1 at instrument
     real(rv), intent(in) :: InstECR(3)  ! Instrument position in ECR
-    real(rv), intent(in) :: LOS(3)      ! Line-of-sight vector in ECR
+    real(rv), intent(in) :: LOS(3)      ! Line-of-sight unit vector in ECR
     real(rp), intent(in) :: Tan_ht      ! tangent height relative to Req in km
     real(rp), intent(in) :: Req         ! equivalent earth radius in km at tangent
     real(rp), intent(in) :: Elev_offset ! radiometer pointing offset in radians
@@ -80,46 +80,78 @@ contains
     real(rp) :: Grad(3)      ! Geodetic normal at instrument position
     real(rp) :: Ht           ! Tangent height from center of equivalent
                              ! spherical earth
-    real(rp) :: LG           ! (LOS .dot. Grad) ** 2
+    real(rp) :: Ns, Nt       ! Index of refraction at instrument, tangent
     real(rp) :: SinChi       ! Sin \chi_eq^refr
+    real(rp) :: TanChi       ! Tan \chi_eq^refr
 
     geod = xyz_to_geod ( instECR )
     grad = [ cos(geod(1)) * cos(geod(2)), cos(geod(1)) * sin(geod(2)), &
            & sin(geod(1)) ]  ! Equation (18) in wvs-146.
     ht = tan_ht + req
+    ns = Inst_Refr_Index + 1.0
+    nt = Tan_Refr_Index + 1
 
   !{ The refraction-corrected pointing angle $\chi_\text{eq}^\text{refr}$ is
   !  given by Equation (14) in wvs-157:
   !
+  !  $H_t \geq R_{\text{eq}}$:
   !  \begin{equation*}
   !    \sin \chi_\text{eq}^\text{refr}
+  !      = \frac{\mathcal{N}_t}{\mathcal{N}_s} \frac{H_t}{H_s}
   !      = \frac{\mathcal{N}_t}{\mathcal{N}_s} \sin \chi_\text{eq}
   !  \end{equation*}
   !
   !  where $\chi_\text{eq}$ is the angle between the geodetic normal at the
-  !  instrument position and the line-of-sight.
-
-    lg = dot_product(grad,los) ** 2 ! cos^2 \chi_eq
-    sinChi = asin ( ( tan_refr_index / inst_refr_index ) * &
-                  & sqrt( 1 - lg ) )
-    ptg_angle = sinChi - elev_offset
-
-  !{ The derivative of the refraction-corrected pointing angle with respect to
-  !  tangent height is given by Equation (17) in wvs-157, viz.
+  !  instrument position and the line-of-sight =
+  !  $\sin^{-1} \frac{H_t}{H_s} =$
+  !  $\cos^{-1}$( {\tt grad} $\cdot$ {\tt LOS} ).
+  !  The latter does not require converting the instrument ECR position to
+  !  geodetic co\"ordinates and height, then computing the radius of curvature
+  !  at the geodetic co\"ordinates of the instrument, to get $H_s$.
   !
-  ! \begin{equation*}
-  ! \frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }
-  !                  { \text{d} H_t}
-  !   \cos \chi^{\text{refr}}_{\text{eq}} =
-  ! \sin \chi^{\text{refr}}_{\text{eq}} 
-  !  \left[ \frac1{H_t} - \ln 10 \, \frac{\mathcal{N}_t-1}{\mathcal{N}_t}
-  !   \frac{ \text{d} \zeta_t }{ \text{d} H_t} \right].
-  ! \end{equation*}
+  !  $H_t < R_{\text{eq}}$:
+  !  \begin{equation*}
+  !    \sin \chi_\text{eq}^\text{refr}
+  !      = \frac{\mathcal{N}_t}{\mathcal{N}_s} \frac{H_t^2}{H_s R_{\text{eq}}}
+  !      = \frac{H_t}{R_{\text{eq}}} \frac{\mathcal{N}_t}{\mathcal{N}_s}
+  !        \sin \chi_\text{eq}
+  !  \end{equation*}
+
+    sinChi = ( ( nt / ns ) * &
+             & sqrt( 1 - dot_product(grad,los) ** 2 ) )
+    if ( tan_ht < 0.0 ) sinChi = sinChi * ht/req
+    ptg_angle = asin(sinChi) - elev_offset
+
+  !{ $H_t \geq R_{\text{eq}}$:
+  !  The derivative of the refraction-corrected pointing angle with respect to
+  !  tangent height is given by Equation (17) in wvs-157:
+  !
+  !  \begin{equation*}
+  !  \frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }
+  !                   { \text{d} H_t}
+  !    \cos \chi^{\text{refr}}_{\text{eq}} =
+  !  \sin \chi^{\text{refr}}_{\text{eq}} 
+  !   \left[ \frac1{H_t} - \ln 10 \, \frac{\mathcal{N}_t-1}{\mathcal{N}_t}
+  !    \frac{ \text{d} \zeta_t }{ \text{d} H_t} \right].
+  !  \end{equation*}
+  !
+  !  $H_t < R_{\text{eq}}$:
+  !  $\frac{\text{d} \mathcal{N}_t}{\text{d} H_t} = 0
+  !  \Rightarrow
+  !  \frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }
+  !      { \text{d} H_t}\cos \chi^{\text{refr}}_{\text{eq}} =
+  !  2 \frac{\mathcal{N}_t}{\mathcal{N}_s} \frac{H_t}{H_s R_{\text{eq}}} =
+  !  \frac2{H_t} \sin \chi^{\text{refr}}_{\text{eq}}$
   
     if ( sinChi < 1.0 ) then
-      dx_dh = ( sinChi / sqrt( ( 1 - sinChi ) * ( 1 + sinChi ) ) ) * &
-            & ( 1.0 / ht - ln10 * ( tan_refr_index - 1 ) / tan_refr_index / &
-                         & dh_dz ) ! Equation (17) in wvs-157
+      tanChi = sinChi / sqrt( ( 1.0 - sinChi ) * ( 1 + sinChi ) )
+      if ( tan_ht >= 0.0 ) then
+        dx_dh = tanChi * &
+              & ( 1.0 / ht - ln10 * tan_refr_index / nt / &
+                           & dh_dz ) ! Equation (17) in wvs-157
+      else
+        dx_dh = tanChi * 2.0 / ht
+      end if
     else
       dx_dh = 0.0
     end if
@@ -156,7 +188,7 @@ contains
     real(rp), intent(in) :: Tan_Refr_Index ! Index of refraction - 1 at tangent
     real(rp), intent(in) :: Inst_Refr_Index ! Index of refraction - 1 at instrument
     real(rv), intent(in) :: InstECR(3)  ! Instrument position in ECR
-    real(rv), intent(in) :: LOS(3)      ! Line-of-sight vector in ECR
+    real(rv), intent(in) :: LOS(3)      ! Line-of-sight unit vector in ECR
     real(rp), intent(in) :: Tan_ht      ! tangent height relative to Req in km
     real(rp), intent(in) :: Req         ! equivalent earth radius in km at tangent
     real(rp), intent(in) :: Elev_offset ! radiometer pointing offset in radians
@@ -173,29 +205,46 @@ contains
     real(rp) :: Grad(3)      ! Geodetic normal at instrument position
     real(rp) :: Ht           ! Tangent height from center of equivalent
                              ! spherical earth
-    real(rp) :: LG           ! (LOS .dot. Grad) ** 2
+    real(rp) :: Ns, Nt       ! Index of refraction at instrument, tangent
     real(rp) :: SinChi       ! Sin \chi_eq^refr
 
     geod = xyz_to_geod ( instECR )
     grad = [ cos(geod(1)) * cos(geod(2)), cos(geod(1)) * sin(geod(2)), &
            & sin(geod(1)) ]  ! Equation (18) in wvs-146.
     ht = tan_ht + req
+    ns = Inst_Refr_Index + 1.0
+    nt = Tan_Refr_Index + 1
 
   !{ The refraction-corrected pointing angle $\chi_\text{eq}^\text{refr}$ is
   !  given by Equation (14) in wvs-157:
   !
+  !  $H_t \geq R_{\text{eq}}$:
   !  \begin{equation*}
   !    \sin \chi_\text{eq}^\text{refr}
+  !      = \frac{\mathcal{N}_t}{\mathcal{N}_s} \frac{H_t}{H_s}
   !      = \frac{\mathcal{N}_t}{\mathcal{N}_s} \sin \chi_\text{eq}
   !  \end{equation*}
   !
   !  where $\chi_\text{eq}$ is the angle between the geodetic normal at the
-  !  instrument position and the line-of-sight.
+  !  instrument position and the line-of-sight =
+  !  $\sin^{-1} \frac{H_t}{H_s} =$
+  !  $\cos^{-1}$( {\tt grad} $\cdot$ {\tt LOS} ).
+  !  The latter does not require converting the instrument ECR position to
+  !  geodetic co\"ordinates and height, then computing the radius of curvature
+  !  at the geodetic co\"ordinates of the instrument, to get $H_s$.
+  !
+  !  $H_t < R_{\text{eq}}$:
+  !  \begin{equation*}
+  !    \sin \chi_\text{eq}^\text{refr}
+  !      = \frac{\mathcal{N}_t}{\mathcal{N}_s} \frac{H_t^2}{H_s R_{\text{eq}}}
+  !      = \frac{H_t}{R_{\text{eq}}} \frac{\mathcal{N}_t}{\mathcal{N}_s}
+  !        \sin \chi_\text{eq}
+  !  \end{equation*}
 
-    lg = dot_product(grad,los) ** 2 ! cos^2 \chi_eq
-    sinChi = asin ( ( tan_refr_index / inst_refr_index ) * &
-                  & sqrt( 1 - lg ) )
-    ptg_angle = sinChi - elev_offset
+    sinChi = ( ( nt / ns ) * &
+             & sqrt( 1 - dot_product(grad,los) ** 2 ) ) ! 1 - cos^2 \chi_eq
+    if ( tan_ht < 0.0 ) sinChi = sinChi * ht/req
+    ptg_angle = asin(sinChi) - elev_offset
 
   end subroutine Get_Chi_Angles_Simple
 
@@ -217,7 +266,7 @@ contains
     real(rp), intent(in) :: Tan_Refr_Index ! Index of refraction - 1 at tangent
     real(rp), intent(in) :: Inst_Refr_Index ! Index of refraction - 1 at instrument
     real(rv), intent(in) :: InstECR(3)  ! Instrument position in ECR
-    real(rv), intent(in) :: LOS(3)      ! Line-of-sight vector in ECR
+    real(rv), intent(in) :: LOS(3)      ! Line-of-sight unit vector in ECR
     real(rp), intent(in) :: Tan_ht      ! tangent height relative to Req in km
     real(rp), intent(in) :: Req         ! equivalent earth radius in km at tangent
     real(rp), intent(in) :: Elev_offset ! radiometer pointing offset in radians
@@ -263,6 +312,9 @@ contains
 
 end module Get_Chi_Angles_3D_m
 ! $Log$
+! Revision 2.2  2020/08/17 22:45:11  vsnyder
+! Correct some mistakes. Correct some comments. Handle subsurface tangent.
+!
 ! Revision 2.1  2020/08/12 00:04:10  vsnyder
 ! Initial commit
 !
