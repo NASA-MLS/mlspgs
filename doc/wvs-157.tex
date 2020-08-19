@@ -26,7 +26,7 @@
 \topmargin -0.5in
 \textheight 9.1in
 
-\newcommand{\docname}{wvs-157r3}
+\newcommand{\docname}{wvs-157r4}
 \newcommand{\docdate}{19 August 2020}
 
 \ifx\pdfoutput\undefined
@@ -328,11 +328,10 @@ the radius of curvature of the normal section, as described in Equation
 
 \section{Calculations in three dimensions, without using $H_s$}
 
-From the figure, $\cos \chi_\text{eq} = \mathbf{L} \cdot \mathbf{g}$,
-where $\mathbf{L}$ is the unit vector in the direction from the instrument
-to the tangent point, and $\mathbf{g}$ is the unit gradient from the
-surface toward the instrument, Equation (\ref{146-unit-gradient}) in
-\h{wvs-146}.
+From the figure, $\cos \chi_\text{eq} = \vec{F} \cdot \vec{g}$, where
+$\vec{F}$ is the unit vector in the direction from the instrument to the
+tangent point, and $\vec{g}$ is the unit gradient from the surface
+toward the instrument, Equation (\ref{146-unit-gradient}) in \h{wvs-146}.
 
 Equation (\ref{one}) can be written as
 
@@ -341,7 +340,7 @@ Equation (\ref{one}) can be written as
  \frac{\mathcal{N}_t}{\mathcal{N}_s} \sin \chi_\text{eq} =
  \frac{\mathcal{N}_t}{\mathcal{N}_s} \sqrt{1-\cos^2 \chi_\text{eq}} =
  \frac{\mathcal{N}_t}{\mathcal{N}_s}
-  \sqrt{1-(\mathbf{L} \cdot\mathbf{g})^2} \,.
+  \sqrt{1-(\vec{F} \cdot\vec{g})^2} \,.
 \end{equation}
 
 The derivative of $\chi_\text{eq}^\text{refr}$ with respect to $H_t$ is
@@ -391,6 +390,9 @@ Therefore
 % $Id$
 
 % $Log$
+% Revision 1.6  2020/08/19 17:32:33  vsnyder
+% Correct a typo
+%
 % Revision 1.5  2020/08/12 00:00:28  vsnyder
 % Revised Equations 17 and 18
 %
