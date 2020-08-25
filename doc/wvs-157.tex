@@ -336,7 +336,7 @@ also needed.
 \end{equation}
 
 From the figure, $\frac{s^2}{\sqrt{H_t^2+s^2}} = \cos^2
-\chi_\text{eq}$.  Then
+\chi_\text{eq} = ( \vec{F}\cdot\vec{g} )^2$.  Then
 
 \begin{equation}
 \frac{\text{d} \chi^{\text{refr}}_{\text{eq}} }{ \text{d} H_t}
@@ -345,7 +345,12 @@ From the figure, $\frac{s^2}{\sqrt{H_t^2+s^2}} = \cos^2
   \left[ \frac1{\mathcal{N}_t}
          \frac{\text{d} \mathcal{N}_t}{\text{d} \zeta_t}
          \frac{\text{d} \zeta_t}{\text{d} H_t} +
-         \frac{\cos^2\chi_\text{eq}}{H_t} \right].
+         \frac{\cos^2\chi_\text{eq}}{H_t} \right] =
+  \sin \chi^{\text{refr}}_{\text{eq}}
+  \left[ \frac1{\mathcal{N}_t}
+         \frac{\text{d} \mathcal{N}_t}{\text{d} \zeta_t}
+         \frac{\text{d} \zeta_t}{\text{d} H_t} +
+         \frac{( \vec{F}\cdot\vec{g} )^2}{H_t} \right].
 \end{equation}
 
 We have
@@ -362,7 +367,7 @@ Therefore
 \frac{\text{d} \chi^{\text{refr}}_{\text{eq}} }{ \text{d} H_t}
   \cos \chi^{\text{refr}}_{\text{eq}} =
   \sin \chi^{\text{refr}}_{\text{eq}}
-  \left[\frac{\cos^2\chi_{\text{eq}}}{H_t}  -
+  \left[\frac{( \vec{F}\cdot\vec{g} )^2}{H_t}  -
          \ln 10\, \frac{\mathcal{N}_t-1}{\mathcal{N}_t}
          \frac{\text{d} \zeta_t}{\text{d} H_t} \right].
 \end{equation}
@@ -376,6 +381,9 @@ $s$ are required.
 % $Id$
 
 % $Log$
+% Revision 1.9  2020/08/21 19:57:24  vsnyder
+% Update revision number and date
+%
 % Revision 1.8  2020/08/21 19:54:24  vsnyder
 % Account for d(f.g)/d H_t
 %
