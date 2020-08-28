@@ -293,7 +293,7 @@ contains
       allocate ( Q_LOS(ECRtoFOV%template%noSurfs), stat=stat, errmsg=ermsg )
       call test_allocate ( stat, moduleName, "Q_LOS", 1, 1, &
         & ermsg=ermsg )
-      ScECR_MIF => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+      scECR_MIF => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=l_scECR, config=fwdModelConf )
       do k = 1, size(Q_LOS)
         Q_LOS(k)%lines(1,1)%xyz = ScECR_MIF%value3(1:3,k,fmstat%maf) ! C vec
@@ -527,12 +527,11 @@ contains
                               & grids_n, grids_v, grids_w,                     &
                               & ptan, phitan, temp,                            &
 !Q                              & QTM_HGrid, &
-                              & Q_LOS,                                         &
-                              & QTM_Paths, F_and_V, F_and_V_MIF, no_mol,       &
-                              & noUsedChannels, no_sv_p_T,                     &
-                              & n_t_zeta, sv_t_len, nlvl,                      &
-                              & no_tan_hts, surfaceTangentIndex,  max_c,       &
-                              & maxVert, max_f, ptan_der,                      &
+                              & Q_LOS, QTM_Paths, ScECR_MIF,                   &
+                              & F_and_V, F_and_V_MIF, no_mol, noUsedChannels,  &
+                              & no_sv_p_T, n_t_zeta, sv_t_len, nlvl, no_tan_hts,&
+                              & surfaceTangentIndex,                           &
+                              & max_c, maxVert, max_f, ptan_der,               &
                               & s_t, s_a, s_h, s_lc, s_lw, s_td, s_p, s_pfa,   &
                               & s_i, s_tg, s_ts, s_QTM,                        &
                               ! Optional:
@@ -581,7 +580,7 @@ contains
                              & grids_n, grids_v, grids_w, ptan,                &
                              & phitan, temp, &
 !Q                             & QTM_HGrid, &
-                             & Q_LOS, QTM_Paths,                               &
+                             & Q_LOS, QTM_Paths, ScECR_MIF,                    &
                              & F_and_V, F_and_V_MIF, no_mol, noUsedChannels,   &
                              & No_sv_p_T, n_t_zeta, sv_t_len, nlvl, no_tan_hts,&
                              & surfaceTangentIndex,                            &
@@ -676,6 +675,8 @@ contains
     type (VectorValue_T), intent(in) :: Temp ! Temperature component of state vector
     type (Path_t), allocatable :: Q_LOS(:)  ! Minor-frame lines of sight for QTM
     type (Path_t), intent(inout) :: QTM_Paths(:) ! LOS through QTM
+    type (VectorValue_T), intent(in), pointer :: ScECR_MIF ! Instrument
+                                            ! position in ECR (MIF quantity)
     type (Facets_and_Vertices_t), intent(in) :: F_and_V(:) ! of QTM under paths
                                             ! used to integrate the radiative-transfer
                                             ! equation
@@ -1479,11 +1480,10 @@ contains
         & cond=toggle(emit) .and. levels(emit) > 2 )
 
       if ( .not. fwdModelConf%generateTScat ) then
-        if ( thisSideband == fwdModelConf%sidebandStart ) &
+        if ( thisSideband == fwdModelConf%sidebandStart ) then
            ! Same for both sidebands, so only need to do it once
-!????? Need work here for QTM, especially Grids_Tmp, which is used
-!????? for calculating Chi angles.
-          & call convolution_setup ( dh_dz_out, dx_dh_out, dxdT_surface, &
+          if ( .not. usingQTM ) then
+            call convolution_setup ( dh_dz_out, dx_dh_out, dxdT_surface, &
               & dxdT_tan, Q_EarthRadC_sq, Est_ScGeocAlt, &
               & FwdModelConf, &
               & FwdModelExtra, FwdModelIn, Grids_f, Grids_tmp, &
@@ -1491,6 +1491,18 @@ contains
               & PhiTan, PTan, RefGPH, SCGeocAlt, &
               & Surf_Angle, Chi_MIF_Tan, Tan_Phi, Tan_Press, &
               & WindowFinish, WindowStart )
+          else ! QTM
+            call convolution_setup ( dh_dz_out, dx_dh_out, dxdT_surface, &
+              & dxdT_tan, Q_EarthRadC_sq, Est_ScGeocAlt, &
+              & FwdModelConf, &
+              & FwdModelExtra, FwdModelIn, Grids_f, Grids_tmp, &
+              & L1BMIF_TAI, MAF, MIFDeadTime, &
+              & PhiTan, PTan, RefGPH, SCGeocAlt, &
+              & Surf_Angle, Chi_MIF_Tan, Tan_Phi, Tan_Press, &
+              & WindowFinish, WindowStart, &
+              & n_path_c(1), scECR_MIF, ECRtoFOV )
+          end if
+        end if
         call convolution & ! or interpolate to ptan
           ( dh_dz_out, dx_dh_out, dx_dT, dxdT_surface, &
           & dxdT_tan, d2x_dxdT, F_and_V, &
@@ -1691,7 +1703,7 @@ contains
         & quantityType=l_spaceRadiance, config=fwdModelConf )
       surfaceHeight => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=l_surfaceHeight, config=fwdModelConf, noError=.true. )
-      if ( FwdModelConf%polarized ) then
+      if ( FwdModelConf%polarized .or. usingQTM ) then
         ECRtoFOV => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
           & quantityType=l_ECRtoFOV, config=fwdModelConf )
       end if
@@ -3693,27 +3705,49 @@ contains
 
       end if ! polarized
 
-      if ( present(est_scGeocAlt) .and. .not. fwdModelConf%generateTScat .and. &
-         & thisSideband == fwdModelConf%sidebandStart ) then
-        ! Compute the pointing angles.  These are needed for antenna
-        ! convolution, not for ray tracing.  They are the same for both
-        ! sidebands, so there's no need to compute them twice.  We can't easily
-        ! move these computations into the convolution code because they need
-        ! Tan_Ht_s and Req_s, which are gotten from Tangent_Metrics and
-        ! Height_Metrics.
-        n_path_inst = merge ( n_path_c(1), 0.0_rp, usingQTM )
-        if ( temp_der ) then
-          ! Est_SCgeocAlt is in meters, but Get_Chi_Angles wants it in km.
-          call get_chi_angles ( 0.001_rp*est_scGeocAlt, n_path_c(tan_pt_c), &
-             & n_path_inst, tan_ht_s, tan_phi, req_s, 0.0_rp, &
-             & ptg_angles(ptg_i), tan_dh_dt, tan_d2h_dhdt, dx_dt(ptg_i,:), &
-             & d2x_dxdt(ptg_i,:) )
-        else
-          ! Est_SCgeocAlt is in meters, but Get_Chi_Angles wants it in km.
-          call get_chi_angles ( 0.001_rp*est_scGeocAlt, n_path_c(tan_pt_c), &
-             & n_path_inst, tan_ht_s, tan_phi, req_s, 0.0_rp, &
-             & ptg_angles(ptg_i) )
+      if ( .not. usingQTM ) then
+        if ( present(est_scGeocAlt) .and. .not. fwdModelConf%generateTScat .and. &
+           & thisSideband == fwdModelConf%sidebandStart ) then
+          ! Compute the pointing angles.  These are needed for antenna
+          ! convolution, not for ray tracing.  They are the same for both
+          ! sidebands, so there's no need to compute them twice.  We can't easily
+          ! move these computations into the convolution code because they need
+          ! Tan_Ht_s and Req_s, which are gotten from Tangent_Metrics and
+          ! Height_Metrics.
+          n_path_inst = 0.0
+          if ( temp_der ) then
+            ! Est_SCgeocAlt is in meters, but Get_Chi_Angles wants it in km.
+            call get_chi_angles ( 0.001_rp*est_scGeocAlt, n_path_c(tan_pt_c), &
+               & n_path_inst, tan_ht_s, tan_phi, req_s, 0.0_rp, &
+               & ptg_angles(ptg_i), tan_dh_dt, tan_d2h_dhdt, dx_dt(ptg_i,:), &
+               & d2x_dxdt(ptg_i,:) )
+          else
+            ! Est_SCgeocAlt is in meters, but Get_Chi_Angles wants it in km.
+            call get_chi_angles ( 0.001_rp*est_scGeocAlt, n_path_c(tan_pt_c), &
+               & n_path_inst, tan_ht_s, tan_phi, req_s, 0.0_rp, &
+               & ptg_angles(ptg_i) )
+          end if
         end if
+      else ! Using QTM
+        block
+          use Get_Chi_Angles_3D_m, only: Get_Chi_Angles
+          if ( .not. fwdModelConf%generateTScat .and. &
+             & thisSideband == fwdModelConf%sidebandStart ) then
+            n_path_inst = n_path_c(1)
+            if ( temp_der ) then
+              call get_chi_angles ( n_path_c(tan_pt_c), n_path_inst, &
+                & Q_LOS(k)%lines(1,1)%xyz, Q_LOS(k)%lines(2,1)%xyz, & ! ECR & LOS
+                & tan_ht_s, req_s, 0.0_rp, & ! Elev_Offset
+                & ptg_angles(ptg_i), &
+                & tan_dh_dt, tan_d2h_dhdt, dx_dt(ptg_i,:), d2x_dxdt(ptg_i,:) )
+            else
+              call get_chi_angles ( n_path_c(tan_pt_c), n_path_inst, &
+                & Q_LOS(k)%lines(1,1)%xyz, Q_LOS(k)%lines(2,1)%xyz, & ! ECR & LOS
+                & tan_ht_s, req_s, 0.0_rp, & ! Elev_Offset
+                & ptg_angles(ptg_i) )
+            end if
+          end if
+        end block
       end if
       ! Compute refractive correction and Del_s
       n_path_c(1:npc) = n_path_c(1:npc) + 1.0_rp
@@ -3997,6 +4031,11 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.408  2020/05/05 23:57:56  vsnyder
+! Made F_and_V_MIF dummy argument of FullForwardModelAuto allocatable. Intel
+! ifort 19 gets a seg fault at the call if the actual argument is not allocated,
+! which it isn't if the run isn't QTM.
+!
 ! Revision 2.407  2020/04/22 01:59:27  vsnyder
 ! Move TScat stuff to includes. Some work on QTM chi angles
 !
