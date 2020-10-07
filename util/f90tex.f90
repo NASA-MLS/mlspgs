@@ -308,7 +308,14 @@ program F90TEX
     end select
   end do
 
-  if ( state == 1 ) call output ( stop_code(sx), tex=.true. )
+  if ( state == 1 ) then
+    call output ( stop_code(sx), tex=.true. )
+  else if ( state > 1 ) then
+    if ( box .and. state == 2 ) call output ( '}}' )
+    call output ( '' ) ! without this, the previous paragraph gets line
+                           ! numbers if there is more than one paragraph in
+                           ! block
+  end if
     
 ! Output the ending stuff
 ! The only effect of the "vspace" line is that "lastpage" is defined
@@ -363,6 +370,9 @@ contains
 end program F90TEX
 
 ! $Log$
+! Revision 1.23  2016/03/28 22:18:39  vsnyder
+! Keep substring bounds for Line in range
+!
 ! Revision 1.22  2013/08/09 00:40:39  vsnyder
 ! Some cannonball polishing
 !
