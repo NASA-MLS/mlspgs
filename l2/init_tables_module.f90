@@ -196,7 +196,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_MERGE              = s_matrix + 1
   integer, parameter :: S_MERGEGRIDS         = s_merge + 1
   integer, parameter :: S_NEGATIVEPRECISION  = s_mergeGrids + 1
-  integer, parameter :: S_NORMALEQUATIONS    = s_negativePrecision + 1
+  integer, parameter :: S_NEURALNET          = s_negativePrecision + 1
+  integer, parameter :: S_NORMALEQUATIONS    = s_neuralNet + 1
   integer, parameter :: S_OUTPUT             = s_normalEquations + 1
   integer, parameter :: S_PFADATA            = s_output + 1
   integer, parameter :: S_PHASE              = s_pfadata + 1
@@ -420,6 +421,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_merge) =                  add_ident ( 'merge' )
     spec_indices(s_mergeGrids) =             add_ident ( 'mergeGrids' )
     spec_indices(s_negativePrecision ) =     add_ident ( 'negativePrecision' )
+    spec_indices(s_neuralNet         ) =     add_ident ( 'neuralNet' )
     spec_indices(s_normalEquations ) =       add_ident ( 'normalEquations' )
     spec_indices(s_output) =                 add_ident ( 'output' )
     spec_indices(s_pfaData) =                add_ident ( 'pfaData' )
@@ -1737,6 +1739,14 @@ contains ! =====     Public procedures     =============================
              /) )
 
     call make_tree ( (/ &
+      begin, s+s_neuralNet, & ! Must be AFTER s_forwardModel, s_quantity, 
+                             !               s_vector and s_matrix
+             begin, f+f_measurements, field_spec(s_vector,req=req), &
+             begin, f+f_state, field_spec(s_vector,req=req), &
+             begin, f+f_file, string(), np+n_spec_def &
+             /) )
+
+    call make_tree ( (/ &
       begin, s+s_retrieve, & ! Must be AFTER s_forwardModel, s_quantity, 
                              !               s_vector and s_matrix
              begin, f+f_apriori, field_spec(s_vector), &
@@ -2174,6 +2184,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.657  2020/12/22 22:21:40  pwagner
+! Added NeuralNet command
+!
 ! Revision 2.656  2020/07/29 23:43:50  pwagner
 ! May utilize BooleanFromEmptyGrid in Fill sections
 !
