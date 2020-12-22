@@ -110,7 +110,10 @@ MODULE MLSPCF2
    INTEGER, PARAMETER :: mlspcf_l2dao_end = 22199
    !
    INTEGER, PARAMETER :: mlspcf_l2clim_start = 22200
-   INTEGER, PARAMETER :: mlspcf_l2clim_end = 22299
+   INTEGER, PARAMETER :: mlspcf_l2clim_end = 22249
+   !
+   INTEGER, PARAMETER :: mlspcf_l2neurnet_start = 22250
+   INTEGER, PARAMETER :: mlspcf_l2neurnet_end = 22299
    !
    INTEGER, PARAMETER :: mlspcf_l2ascii_start = 22300
    INTEGER, PARAMETER :: mlspcf_l2ascii_end = 22399
@@ -154,6 +157,9 @@ contains
 END MODULE MLSPCF2
 
 ! $Log$
+! Revision 2.29  2020/12/22 22:21:01  pwagner
+! Reserved id nums for Neural Net Coefficient Files
+!
 ! Revision 2.28  2017/07/10 18:53:23  pwagner
 ! Added mlspcf_l2ascii_start, mlspcf_l2ascii_end
 !
