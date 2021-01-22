@@ -80,8 +80,9 @@ contains
       & L_HighCloud, L_Jacobian_Cols, L_Jacobian_Rows, L_LowCloud, &
       & L_Newtonian, L_None, L_Norm, L_NumGrad, L_NumJ, L_NumNewt, L_Simple, &
       & S_AnyGoodValues, S_CatchWarning, S_Case, S_Compare, &
-      & S_Diff, S_Dump, S_DumpBlocks, S_FlagCloud, S_FlushPFA, S_LeakCheck, &
-      & S_EndSelect, S_Reevaluate, S_Repeat, S_RestrictRange, S_Retrieve, &
+      & S_Diff, S_Dump, S_DumpBlocks, S_EndSelect, S_FlagCloud, S_FlushPFA, &
+      & S_LeakCheck, S_NeuralNet, &
+      & S_Reevaluate, S_Repeat, S_RestrictRange, S_Retrieve, &
       & S_Select, S_SIDS, S_Skip, S_Snoop, S_Subset, S_Time, S_UpdateMask
     use L2parinfo, only: Parallel
     use MatrixModule_1, only: AddToMatrixDatabase, CopyMatrix, CreateEmptyMatrix, &
@@ -100,6 +101,7 @@ contains
       & Get_Spec_Id
     use MLSStringlists, only: SwitchDetail
     use MLSStrings, only: WriteIntsToChars
+    use NeuralNet_M, only: NeuralNet
     use Next_Tree_Node_m, only: Init_Next_Tree_Node, Next_Tree_Node, &
       & Next_Tree_Node_State
     use Output_m, only: Blanks, Output, RevertOutput, SwitchOutput
@@ -281,6 +283,7 @@ contains
     ! See Push_Stack_b in Call_Stack
     integer :: Me = -1                  ! "Retrieve"
     integer :: Me_FlagCloud = -1        ! "Retrieve.flagCloud"
+    integer :: Me_NeuralNet = -1        ! "Retrieve.NeuralNet
     integer :: Me_RestrictRange = -1    ! "Retrieve.RestrictRange
     integer :: Me_Retrieve = -1         ! "Retrieve.retrieve"
     integer :: Me_Subset = -1           ! "Retrieve.subset"
@@ -374,6 +377,11 @@ repeat_loop: do ! RepeatLoop
             end if
             call reportLeaks ( whereLeakCheck )
           end if
+        case ( s_NeuralNet )
+          call trace_begin ( Me_NeuralNet, "Retrieve.NeuralNet", root, &
+            & cond=toggle(gen) .and. levels(gen) > 0 )
+          call NeuralNet ( key, vectorDatabase, chunk, FileDatabase )
+          call trace_end ( cond=toggle(gen) .and. levels(gen) > 0 )
         case ( s_restrictRange )
           call trace_begin ( me_restrictRange, "Retrieve.RestrictRange", root, &
             & cond=toggle(gen) .and. levels(gen) > 0 )
@@ -3032,6 +3040,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.366  2021/01/22 00:21:10  pwagner
+! Added NeuralNet command
+!
 ! Revision 2.365  2020/07/17 19:38:52  vsnyder
 ! Check that FwdModelExtra exists if -Sfwmparallel is set
 !
