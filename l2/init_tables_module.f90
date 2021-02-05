@@ -1955,9 +1955,9 @@ contains ! =====     Public procedures     =============================
       begin, z+z_retrieve, s+s_anyGoodValues, s+s_case, s+s_catchWarning, &
              s+s_checkpoint, s+s_compare, s+s_diff, s+s_dump, s+s_dumpBlocks, &
              s+s_endSelect, s+s_flagCloud, s+s_flushPFA, s+s_leakcheck, &
-             s+s_reevaluate, s+s_repeat, s+s_restrictRange, s+s_retrieve, &
-             s+s_select, s+s_sids, s+s_skip, s+s_snoop, s+s_subset, &
-             s+s_time, s+s_updateMask, &
+             s+s_neuralNet, s+s_reevaluate, s+s_repeat, s+s_restrictRange, &
+             s+s_retrieve, s+s_select, s+s_sids, s+s_skip, s+s_snoop, &
+             s+s_subset, s+s_time, s+s_updateMask, &
              n+n_section, &
       begin, z+z_join, s+s_time, s+s_label, s+s_l2gp, s+s_l2aux, &
              s+s_case, s+s_directWrite, s+s_diff, s+s_dump, s+s_endSelect, &
@@ -2184,6 +2184,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.658  2021/02/05 05:17:50  pwagner
+! Must permit NeuralNet command in Retrieve section
+!
 ! Revision 2.657  2020/12/22 22:21:40  pwagner
 ! Added NeuralNet command
 !
