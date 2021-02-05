@@ -34,6 +34,7 @@ module Optional_m
 !                       optional arg is present; if present sets it to TRUE
 ! Pass_or_catch      Do we Process an Exception_t datatype, or Pass it on up
 !                       the chain of calls?
+! Print_Default      Print an int array , or a default mesg if not present
 ! Raise              Construct an Exception_t datatype
 ! === (end of toc) ===
 
@@ -47,7 +48,7 @@ module Optional_m
   public :: Default, Default_Char, Default_Double, Default_Integer
   public :: Default_Logical, Default_Single
   public :: HowWeHandle_int, HowWeHandle_log
-  public :: Dump, DumpException, Raise, Pass_or_Catch
+  public :: Dump, DumpException, Raise, Pass_or_Catch, Print_Default
 
   interface Default
     module procedure Default_Char, Default_Double, Default_Integer
@@ -56,6 +57,10 @@ module Optional_m
 
   interface Dump
     module procedure DumpException, DumpDatabase
+  end interface
+
+  interface Print_Default
+    module procedure PrintDefault_Intarr
   end interface
 
   interface Pass_or_Catch
@@ -330,6 +335,22 @@ contains
       & call DumpException( exception )
   end function Pass_or_Catch_char
 
+  ! ------------------- PrintDefault_intarr --------------------
+  ! The PrintDefault subroutine prints either the value
+  ! if present, or else a default character string
+  subroutine PrintDefault_intarr ( name, ints, mesg )
+    ! Args
+    character(len=*), intent(in)                     :: name
+    integer, dimension (:), optional, intent(in)     :: ints
+    character(len=*), intent(in)                     :: mesg
+    ! Executable
+    if ( present(ints) ) then
+      print *, trim(name) // ': ', ints
+    else
+      print *, trim(name) // ' ' // trim(mesg)
+    endif
+  end subroutine PrintDefault_intarr
+
   ! ------------------- Raise --------------------
   ! The Raise function constructs an Exception
   ! The caller can Catch it himself, or Pass it back up the Chain
@@ -373,6 +394,9 @@ contains
 end module Optional_m
 
 ! $Log$
+! Revision 2.6  2021/02/05 05:10:33  pwagner
+! Added a new Print_Default
+!
 ! Revision 2.5  2019/10/31 22:56:51  pwagner
 ! Moved DumpException here from dump_1
 !

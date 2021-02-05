@@ -28,6 +28,11 @@
 
 !     character(len=*), parameter :: Sfx = '*' ! Type and rank in subr name
 
+! Sadly, our implementation of hyperslabs seems to be buggy.
+!
+!  For an example of how to do it right, see
+! /software/toolkit/ifc17/hdf5/fortran/examples//hyperslab.f90
+!
 
 ! $Id$
 
@@ -41,8 +46,16 @@
     integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    rank = size(shp)
     call trace_begin ( 'LoadFromHDF5DS_'//sfx, cond=.false. )
+    rank = size(shp)
+    ! print *, 'rank ', rank
+!     if ( present(start) .and. present(count) .and. present(stride) .and. present(block) ) &
+!       & print *, start, count, stride, block
+!     call trace_begin ( 'LoadFromHDF5DS_'//sfx, cond=.false. )
+!     call Print_Default( 'start ', start , 'not present' )
+!     call Print_Default( 'count ', count , 'not present' )
+!     call Print_Default( 'stride', stride, 'not present' )
+!     call Print_Default( 'block ', block , 'not present' )
     locID = MLSFile%fileID%f_id
     if ( MLSFile%fileID%grp_id > 0 ) locID = MLSFile%fileID%grp_id
     ! This next is inelegant: grp_id should be a linked list
@@ -77,6 +90,8 @@
         & start, count, stride, block )
       call h5dread_f ( setID, H5T, value, &
         & (/ shp, ones(rank:6) /), status, memspaceID, spaceID )
+      if ( status /= 0 ) &
+        & print *, (/ shp, ones(rank:6) /), status, memspaceID, spaceID
       call finishLoad ( name, status, spaceID, setID, memspaceID, MLSFile=MLSFile )
     else
       call check_for_fit ( spaceID, shp, name )
@@ -88,6 +103,9 @@
 !   end subroutine LoadFromHDF5DS_*
 
 ! $Log$
+! Revision 2.6  2021/02/05 05:12:00  pwagner
+! Noted probable bug in how we treat hyperslab
+!
 ! Revision 2.5  2013/08/31 01:24:53  vsnyder
 ! Replace MLSMessageCalls with trace_begin and trace_end
 !
