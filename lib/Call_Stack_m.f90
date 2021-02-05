@@ -316,6 +316,10 @@ contains ! ====     Public Procedures     ==============================
     character(len=10) :: Used
 
     ! Executable
+    if ( stack_ptr < 1 ) then
+      print *, 'Attempt to pop an already empty stack failed'
+      return
+    endif
     if ( Verbose ) then
       call output( 'Popping' )
       if ( stack(stack_ptr)%string > 0 ) &
@@ -568,6 +572,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.38  2021/02/05 05:09:40  pwagner
+! Prevents index error if popping an empty stack
+!
 ! Revision 2.37  2020/04/30 23:15:46  pwagner
 ! Added optional arg PrintMemoryReport to Dump_Stack and Pop_Stack
 !
