@@ -16,16 +16,20 @@ module NeuralNet_m              ! Use Neural Net Model to Retrieve State
   use Global_Settings, only: L1MAFToL2Profile, L2ProfileToL1MAF
   use HighOutput, only: BeVerbose, Dump, LetsDebug, OutputNamedValue
   use MLSCommon, only: MLSChunk_T, MLSFile_T
-  use MLSFiles, only: MLS_CloseFile, MLS_OpenFile
-  use MLSFinds, only: FindFirst
-  use MLSKinds, only: Rv
+  use MLSFiles, only: MLS_CloseFile, MLS_OpenFile, &
+    & AddInitializeMLSFile, Dump, HDFVersion_5
+  use MLSFinds, only: FindFirst, FindLast
+  use MLSKinds, only: R4, Rv
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+  use MLSSignals_M, only: GetSignalName
   use MLSStats1, only: MLSMax, MLSMin
+  use MLSStrings, only: Capitalize, ReplaceNonAscii
   use MoreTree, only: Get_Field_Id
-  ! use NeuralNetUtils_m, only: NeuralNet_T, RunNeuralNet
+  use NeuralNetUtils_m, only: NeuralNetCoeffs_T, NeuralNetInputData_T, &
+    & Dump, NeuralNetFit
   use Output_M, only: Output
-  use QuantityTemplates, only: Rt
-  use String_Table, only: Display_String, Get_String
+  ! use QuantityTemplates, only: Rt
+  use String_Table, only: Get_String
   use Toggles, only: Gen, Levels, Switches, Toggle
   use Trace_M, only: Trace_Begin, Trace_End
   use Tree, only: Decoration, Sub_Rosa, Subtree, Nsons, Subtree
@@ -43,7 +47,7 @@ module NeuralNet_m              ! Use Neural Net Model to Retrieve State
   public :: NeuralNet
 
 ! === (start of toc) ===
-! NeuralNet          Given a measurement vector and file of coefficients
+! NeuralNet          Given a measurement vector and a file of coefficients
 !                      calculate the resulting state vector
 ! === (end of toc) ===
 
@@ -58,7 +62,13 @@ module NeuralNet_m              ! Use Neural Net Model to Retrieve State
   private :: not_used_here
 !---------------------------------------------------------------------------
 
-  logical, parameter :: countEmpty = .true. ! Except where overriden locally
+  ! The following must someday also be read from the file of n-n coefficients
+  integer, parameter              :: NumHiddenLayers  = 2
+  character(len=*), parameter     :: switchOver       = 'tanh' ! or 'sigmoid'
+  integer, parameter              :: NumChnnelsBand1  = 25
+  integer, parameter              :: NumChnnelsBand8  = 25
+  integer, parameter              :: NumChnnelsBand22 = 51
+  integer, parameter              :: NumMIFs          = 75
 
 contains ! =====     Public Procedures     =============================
 
@@ -66,7 +76,7 @@ contains ! =====     Public Procedures     =============================
 
 
   subroutine NeuralNet ( Key, VectorsDatabase, Chunk, FileDatabase )
-    use Init_Tables_Module, only: L_Temperature, L_Radiance
+    use Init_Tables_Module, only: L_HDF, L_Temperature, L_Radiance
     use Init_Tables_Module, only: F_State, F_Measurements, F_File
     integer, intent(in)                        :: Key
     type(vector_T), dimension(:), target       :: VectorsDatabase
@@ -86,12 +96,13 @@ contains ! =====     Public Procedures     =============================
     integer :: LastBin
     integer :: LastProfile
     integer :: MAF
-    real(rt):: MaxLat
-    real(rt):: MinLat
+    real(r4):: MaxLat
+    real(r4):: MinLat
     integer :: MyFile                 ! FileDatabase index
     integer :: Profile
     integer :: SON                    ! Tree node
     integer :: SIGNAL                 ! the signal we're looking for
+    character(len=32) :: SignalStr    ! its string value
     integer :: Status
     integer :: thisMAF
     integer :: thisProfile
@@ -103,7 +114,9 @@ contains ! =====     Public Procedures     =============================
     type (VectorValue_T), pointer   :: Radiances ! The radiances for this band
     type (VectorValue_T), pointer   :: Temperature ! The quantity to fill
     
-    real, dimension(:,:,:), allocatable     :: Coeffs
+    ! real, dimension(:,:,:), allocatable     :: Coeffs
+    type(NeuralNetCoeffs_T)         :: Coeffs
+    type(NeuralNetInputData_T)      :: NNMeasurements
     ! type (NeuralNet_T)              :: MyNeuralNet
     character (len=1024)            :: FileName
     character (len=*), parameter    :: DefaultFileName = &
@@ -115,13 +128,13 @@ contains ! =====     Public Procedures     =============================
     ! For now we have 18 bins, each of size 10, spanning latitudes from the
     ! South Pole to the North
     integer, parameter              :: NumBins = 18
-    real(rt), dimension(NumBins), parameter :: BinArray = &
+    real(r4), dimension(NumBins), parameter :: BinArray = &
       & (/ -90., -80., -70., -60., -50., -40., -30., -20., -10., &
       &      0.,  10.,  20.,  30.,  40.,  50.,  60.,  70.,  80. /)
-    real(rt), parameter             :: BinSz = 10.
+    real(r4), parameter             :: BinSz = 10.
         
     ! Executable code
-    DEEBUG = LetsDebug ( 'neu', 0 )
+    DEEBUG = LetsDebug ( 'neu', 0 ) .or. .true.
     call trace_begin ( me, 'NeuralNet_m.NeuralNet', key, &
       & cond=toggle(gen) .and. levels(gen) > 1 )
 
@@ -140,10 +153,13 @@ contains ! =====     Public Procedures     =============================
 
     if ( file > 0 ) then
       call get_string ( file, filename, strip=.true. )
+      myFile =  FileNameToID( trim(filename), FileDataBase ) 
     else
-      filename = defaultFileName
+      myFile = 0
     end if
-    myFile =  FileNameToID( trim(filename), FileDataBase ) 
+    if ( myFile < 1 ) then
+      filename = defaultFileName
+    endif
     if ( DeeBug ) then
       call outputNamedValue ( 'filename', trim(filename) )
     endif
@@ -151,8 +167,10 @@ contains ! =====     Public Procedures     =============================
 
     do i = 1, state%template%noQuantities
       if ( state%quantities(i)%template%quantityType /= l_temperature ) then
-        call announce_error ( key, &
-          & "state vector must contain only Temperature" )
+        ! call announce_error ( key, &
+        !   & "state vector must contain only Temperature" )
+        print *, 'Skipping non-Temperarture state quantity'
+        cycle
       end if
       Temperature => state%quantities(i)
       Temperature%values = 0.0_rv
@@ -164,26 +182,62 @@ contains ! =====     Public Procedures     =============================
       if ( measurements%quantities(j)%template%radiometer /= Temperature%template%radiometer ) cycle
       radiances => measurements%quantities(j)
       signal = measurements%quantities(j)%template%signal
+      call GetSignalName ( signal, signalStr )
+      signalStr = ReplaceNonAscii( signalStr, ' ' )
+      select case (Capitalize(signalStr) )
+      case ('R1A:118.B1F:PT.S0.FB25-1')
+        NNMeasurements%Band_1_Radiances%NumChannels = NumChnnelsBand1
+        NNMeasurements%Band_1_Radiances%NumMIFs     = NumMIFs
+        allocate( &
+          & NNMeasurements%Band_1_Radiances%&
+          &   values(NumChnnelsBand1, NumMIFs) )
+      case ('R3:240.B8F:PT.S3.FB25-8')
+        NNMeasurements%Band_8_Radiances%NumChannels = NumChnnelsBand8
+        NNMeasurements%Band_8_Radiances%NumMIFs     = NumMIFs
+        allocate( &
+          & NNMeasurements%Band_8_Radiances%&
+          &   values(NumChnnelsBand8, NumMIFs) )
+      case ('R1A:118.B22D:PT.S0.DACS-4')
+        NNMeasurements%Band_22_Radiances%NumChannels = NumChnnelsBand22
+        NNMeasurements%Band_22_Radiances%NumMIFs     = NumMIFs
+        
+        allocate( &
+          & NNMeasurements%Band_22_Radiances%&
+          &   values(NumChnnelsBand22, NumMIFs) )
+      end select
     end do                          ! End loop over bands
 
-    CoeffsFile => FileDatabase(myFile)
+    if ( myFile > 0 ) then
+      CoeffsFile => FileDatabase(myFile)
+    else
+      CoeffsFile => AddInitializeMLSFile ( FileDatabase, name=fileName, &
+        & shortName='Temperature', &
+        & type=l_hdf, content='NNCoeffs', HDFVersion=HDFVersion_5 )
+    endif
+    if ( DeeBug ) call Dump ( FileDatabase )
     call MLS_OpenFile( CoeffsFile, Status )
     ! These are absolute profile numbers, i.e. they start at '1' only
     ! for the first chunk
     firstProfile = L1MAFToL2Profile ( Chunk%firstMAFIndex, FileDatabase )
     lastProfile  = L1MAFToL2Profile ( Chunk%lastMAFIndex , FileDatabase )
+    print *, 'firstProfile ', firstProfile
+    print *, 'lastProfile  ',  lastProfile
     
     ! Here's something new: must find first and last latitude bins
     minLat = mlsmin( temperature%template%geodLat(1,:) )
     maxLat = mlsmax( temperature%template%geodLat(1,:) )
-    firstBin = FindFirst ( BinArray - minLat > 0._rt )
-    lastBin  = FindFirst ( BinArray - maxLat > 0._rt )
+    firstBin = FindLast ( BinArray - minLat < 0._r4 )
+    lastBin  = FindFirst ( BinArray - maxLat > 0._r4 )
+    print *, 'firstBin ', firstBin
+    print *, 'lastBin  ',  lastBin
     do BinNum = firstBin, lastBin
       call ReadCoeffsFile ( CoeffsFile, BinNum, &
         & Coeffs ) ! Should be & MyNeuralNet
       do profile = 1, temperature%template%NoInstances ! firstProfile, lastProfile
 !         call InitializeNNMeasurements ( NNMeasurements )
         ! Does this profile fall within this bin num?
+        print *, 'lat of profile ', profile, ' ', temperature%template%geodLat(1,profile)
+        print *, 'bin range ', BinArray(BinNum), BinArray(BinNum)+BinSz
         if ( &
           & temperature%template%geodLat(1,profile) < BinArray(BinNum) &
           & .or. &
@@ -193,17 +247,22 @@ contains ! =====     Public Procedures     =============================
         thisProfile = profile + firstProfile - 1
         thisMAF = L2ProfileToL1MAF ( thisProfile, fileDatabase )
         MAF = thisMAF - Chunk%firstMAFIndex + 1
+        print *, 'binNum, profile, MAF ', binNum, profile, MAF
+        print *, 'thisprofile, thisMAF ', thisprofile, thisMAF
         ! MAF and profile are indices inside the chunk, not absolute indices
         do j = 1, measurements%template%noQuantities
           if ( measurements%quantities(j)%template%quantityType /= l_radiance ) cycle
           if ( measurements%quantities(j)%template%radiometer /= Temperature%template%radiometer ) cycle
           radiances => measurements%quantities(j)
           signal = measurements%quantities(j)%template%signal
-!           call AssembleNNMeasurement ( NNMeasurements, &
-!             & radiances%value3(:,:,MAF), &
-!             & MyNeuralNet )
+          print *, 'Calling AssembleNNMeasurement'
+          call AssembleNNMeasurement ( NNMeasurements, &
+            & radiances, signal, Coeffs%MIFs, MAF )
         end do                          ! End loop over bands
-!         call RunNeuralNet ( NNMeasurements, Temperature%values, MyNeuralNet )
+!         call RunNeuralNet ( NNMeasurements, c, MyNeuralNet )
+        print *, 'Calling NeuralNetFit'
+        Temperature%values(:, profile) = NeuralNetFit ( NNMeasurements, &
+          & Coeffs, NumHiddenLayers, switchOver )
       enddo
     enddo
     call MLS_CloseFile( CoeffsFile, Status )
@@ -212,7 +271,7 @@ contains ! =====     Public Procedures     =============================
 
 
 
-    if ( BeVerbose( 'neu', 0 ) ) then
+    if ( BeVerbose( 'neu', 0 ) .or. DeeBug ) then
       call Dump( Temperature%values )
       call Dump( Coeffs )
     endif
@@ -232,8 +291,6 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), optional, intent(in)  :: QTY
       integer, intent(in), dimension(:), optional :: EXTRAINFO
 
-      integer :: I
-
       if ( present(extraMessage) ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & trim(extraMessage) )
@@ -251,17 +308,52 @@ contains ! =====     Public Procedures     =============================
     end subroutine announce_error
   
   !------------------------------------------  AssembleNNMeasurements  -----
-    subroutine AssembleNNMeasurements ! ( NNMeasurements, &
-!             & radiances%value3(:,:,MAF), &
-!             & MyNeuralNet )
+    subroutine AssembleNNMeasurement ( NNMeasurements, &
+             & radiances, signal, MIFs, MAF )
       ! Assemble masurements array to be used by RunNeuralNet
-      ! real(rt), allocatable, dimension(:,:) :: NNMeasurements
-    end subroutine AssembleNNMeasurements
+      ! real(r4), allocatable, dimension(:,:) :: NNMeasurements
+      type (VectorValue_T), pointer   :: Radiances ! The radiances for this band
+      type(NeuralNetInputData_T)      :: NNMeasurements
+      integer                         :: SIGNAL    ! the signal we're looking for
+      integer, dimension(:)           :: MIFs      ! MIF numbers in radiances
+      integer                         :: MAF
+      ! Local variables
+      integer                         :: channel
+      integer                         :: MIF
+      character(len=32)               :: SignalStr  ! its string value
+      ! Executable
+      call GetSignalName ( signal, signalStr )
+      signalStr = ReplaceNonAscii( signalStr, ' ' )
+      select case (Capitalize(signalStr) )
+      case ('R1A:118.B1F:PT.S0.FB25-1')
+        do MIF = 1, NumMIFs
+          do channel = 1, NumChnnelsBand1
+            NNMeasurements%Band_1_Radiances%values(channel,MIF) = &
+              & radiances%value3(channel, MIFs(MIF), MAF)
+          enddo
+        enddo
+        
+      case ('R3:240.B8F:PT.S3.FB25-8')
+        do MIF = 1, NumMIFs
+          do channel = 1, NumChnnelsBand8
+            NNMeasurements%Band_8_Radiances%values(channel,MIF) = &
+              & radiances%value3(channel, MIFs(MIF), MAF)
+          enddo
+        enddo
+      case ('R1A:118.B22D:PT.S0.DACS-4')
+        do MIF = 1, NumMIFs
+          do channel = 1, NumChnnelsBand22
+            NNMeasurements%Band_22_Radiances%values(channel,MIF) = &
+              & radiances%value3(channel, MIFs(MIF), MAF)
+          enddo
+        enddo
+      end select
+    end subroutine AssembleNNMeasurement
 
   !------------------------------------------  InitializeNNMeasurements  -----
     subroutine InitializeNNMeasurements ! ( NNMeasurements )
       ! allocate and initialize masurements array to be used by RunNeuralNet
-      ! real(rt), allocatable, dimension(:,:) :: NNMeasurements
+      ! real(r4), allocatable, dimension(:,:) :: NNMeasurements
     end subroutine InitializeNNMeasurements
 
   !------------------------------------------  ReadCoeffsFile  -----
@@ -272,28 +364,183 @@ contains ! =====     Public Procedures     =============================
       
       type (MLSFile_T)                        :: CoeffsFile
       integer, intent(in)                     :: BinNum
-      real, dimension(:,:,:), allocatable     :: Coeffs
+      ! real, dimension(:,:,:), allocatable     :: Coeffs
+      type(NeuralNetCoeffs_T)                 :: Coeffs
       ! Local variables
+      integer, dimension(2)                   :: shp    ! So we can reshape
       integer, dimension(3)                   :: start
       integer, dimension(3)                   :: count
       integer, dimension(3)                   :: stride
       integer, dimension(3)                   :: block
-      real(rt), dimension(:,:), allocatable   :: values2
-      real(rt), dimension(:,:,:), allocatable :: values3
+      character(len=35), dimension(:), allocatable     :: bands
+      integer, dimension(:), allocatable      :: MIFs
+      real(r4), dimension(:), allocatable     :: values1
+      real(r4), dimension(:,:), allocatable   :: values2
+      real(r4), dimension(:,:,:), allocatable :: values3
       ! Executable
+      print *, 'Now in ReadCoeffsFile'
+      ! stop
       ! Allocate the max space we'll need
-      allocate ( values2(7575, 1) )
-      allocate ( values3(7575, 5078, 1) )
+      allocate ( values1(5078) )
+      allocate ( values2(1, 7575) )
+      allocate ( values3(1, 5078, 7575) )
+      ! Allocate the fields of our datatype to be read
+      allocate ( Coeffs%Intercepts_Hidden_Layer_1(5078) )
+      allocate ( Coeffs%Intercepts_Hidden_Layer_2(5078) )
+      allocate ( Coeffs%Weights_Hidden_Labels_Layer(5078, 42) )
+      allocate ( Coeffs%Weights_Hidden_Layer_1     (7575, 5078) )
+      allocate ( Coeffs%Weights_Hidden_Layer_2     (5078, 5078) )
+      allocate ( Coeffs%Normalization_Labels_Max(42) )
+      allocate ( Coeffs%Normalization_Labels_Min(42) )
+      allocate ( Coeffs%Standardization_Brightness_Temperature_Mean(7575) )
+      allocate ( Coeffs%Standardization_Brightness_Temperature_Std (7575) )
+      allocate ( Coeffs%MIFs(75) )
+      allocate ( Coeffs%Bands(3) )
       ! Now read each dataset, 
       ! using a rank 2 or rank 3 temporary as appropriate
-      start = (/ 1, binNum, 0 /)
+      ! Sadly, our implementation of hyperslabs seems to be buggy.
+      !
+      !  For an example of how to do it right, see
+      ! /software/toolkit/ifc17/hdf5/fortran/examples//hyperslab.f90
+      !
+      ! Until we repair the hyperslab in LoadFromHDF5DS, we must resort to
+      ! reading all 18 latitude bins every time (oof!)
+      
+      ! Bands
+      allocate( Bands(3) )
+      call LoadFromHDF5DS ( CoeffsFile, &
+        & "Bands", &
+        & Bands )
+        Coeffs%Bands = &
+          Bands
+
+      ! MIFs
+      allocate( MIFs(75) )
+      call LoadFromHDF5DS ( CoeffsFile, &
+        & "MIFs", &
+        & MIFs )
+        Coeffs%MIFs = &
+          MIFs
+
+      start = (/ binNum, 1, 0 /)
       stride = (/ 1, 1, 1 /)
-      count = (/ 5078, 1, 0 /)
+      count = (/ 1, 5078, 0 /)
       block = (/ 1, 1, 0 /)
+!       print *, start(1:1), count(1:1), stride(1:1), block(1:1)
+!       call LoadFromHDF5DS ( CoeffsFile, &
+!         & "Intercepts_Hidden_Layer_1", &
+!         & values2(:,1:count(2)), &
+!         & start(1:2), count(1:2) )
+! !        & start(1:2), count(1:2), stride(1:2), block(1:2) )
+!         Coeffs%Intercepts_Hidden_Layer_1 = &
+!           values2(1,1:count(2))
+      deallocate ( values2 )
+
+      allocate ( values2(18, 42) )
+      call LoadFromHDF5DS ( CoeffsFile, &
+        & "Intercepts_Hidden_Labels_Layer", &
+        & values2 )
+        Coeffs%Intercepts_Hidden_Labels_Layer = &
+          values2(binNum,:)
+      print *, 'Intercepts_Hidden_Labels_Layer'
+
+      deallocate ( values2 )
+
+      allocate ( values2(18, 5078) )
+      call LoadFromHDF5DS ( CoeffsFile, &
+        & "Intercepts_Hidden_Layer_1", &
+        & values2 )
+        Coeffs%Intercepts_Hidden_Layer_1 = &
+          values2(binNum,:)
+
+      print *, 'Loaded Intercepts_Hidden_Layer_1'
+!       call LoadFromHDF5DS ( CoeffsFile, &
+!         & "Intercepts_Hidden_Layer_2", &
+!         & values1, &
+!         & start, count, stride, block )
+!         Coeffs%Intercepts_Hidden_Layer_2 = &
+!           values1(:)
+! 
+      call LoadFromHDF5DS ( CoeffsFile, &
+        & "Intercepts_Hidden_Layer_2", &
+        & values2 )
+        Coeffs%Intercepts_Hidden_Layer_2 = &
+          values2(binNum,:)
+
+      print *, 'Loaded Intercepts_Hidden_Layer_2'
+
+      deallocate ( values2 )
+
+      allocate ( values2(18, 7575) )
+
       call LoadFromHDF5DS ( CoeffsFile, &
         & "Standardization_Brightness_Temperatures_Mean", &
-        & values2, &
-        & start(1:2), count(1:2), stride(1:2), block(1:2) )
+        & values2 )
+        Coeffs%Standardization_Brightness_Temperature_Mean = &
+          values2(binNum,:)
+
+      print *, 'Standardization_Brightness_Temperatures_Mean'
+
+      call LoadFromHDF5DS ( CoeffsFile, &
+        & "Standardization_Brightness_Temperatures_Std", &
+        & values2 )
+        Coeffs%Standardization_Brightness_Temperature_Std = &
+          values2(binNum,:)
+      print *, 'Standardization_Brightness_Temperatures_Std'
+
+      deallocate ( values3 )
+
+      allocate ( values3(18, 42,5078) )
+      shp = (/ 5078, 42 /)
+      call LoadFromHDF5DS ( CoeffsFile, &
+        & "Weights_Hidden_Labels_Layer", &
+        & values3 )
+        Coeffs%Weights_Hidden_Labels_Layer = &
+          Reshape( values3(binNum,:,:), shp, order=(/2,1/) )
+      print *, 'Weights_Hidden_Labels_Layer'
+      print *, shape(values3)
+      print *, shape(Coeffs%Weights_Hidden_Labels_Layer)
+      ! stop
+
+      deallocate ( values3 )
+
+      allocate ( values3(18, 5078, 7575) )
+      shp = (/ 7575, 5078 /)
+
+      call LoadFromHDF5DS ( CoeffsFile, &
+        & "Weights_Hidden_Layer_1", &
+        & values3 )
+        Coeffs%Weights_Hidden_Layer_1 = &
+          Reshape( values3(binNum,:,:), shp, order=(/2,1/) )
+      print *, 'Weights_Hidden_Layer_1'
+
+      deallocate ( values3 )
+
+      allocate ( values3(18, 5078, 5078) )
+      shp = (/ 5078, 5078 /)
+      call LoadFromHDF5DS ( CoeffsFile, &
+        & "Weights_Hidden_Layer_2", &
+        & values3 )
+        Coeffs%Weights_Hidden_Layer_2 = &
+          Reshape( values3(binNum,:,:), shp, order=(/2,1/) )
+      print *, 'Weights_Hidden_Layer_2'
+
+      deallocate ( values2 )
+
+      allocate ( values2(18, 42) )
+      call LoadFromHDF5DS ( CoeffsFile, &
+        & "Normalization_Labels_Max", &
+        & values2 )
+        Coeffs%Normalization_Labels_Max = &
+          values2(binNum, :)
+      print *, 'Normalization_Labels_Max'
+
+      call LoadFromHDF5DS ( CoeffsFile, &
+        & "Normalization_Labels_Min", &
+        & values2 )
+        Coeffs%Normalization_Labels_Min = &
+          values2(binNum, :)
+      print *, 'Normalization_Labels_Min'
     end subroutine ReadCoeffsFile
 
   !------------------------------------------  FileNameToID  -----
@@ -332,6 +579,9 @@ end module NeuralNet_m
 
 !
 ! $Log$
+! Revision 2.2  2021/02/05 05:16:37  pwagner
+! Repaired many errors; others doubtless remain
+!
 ! Revision 2.1  2021/01/22 00:22:18  pwagner
 ! First commit
 !
