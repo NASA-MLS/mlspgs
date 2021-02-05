@@ -118,7 +118,9 @@ contains
     call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
       & l1bFlag, dontPad=.true.)
     ! 2nd--read the profile
-    L2GPFile => GetMLSFileByType(filedatabase, content='l2gp')
+    L2GPFile => GetMLSFileByType ( filedatabase, content='l2gp' )
+    if ( .not. associated(L2GPFile) ) &
+      & L2GPFile => GetMLSFileByType ( filedatabase, content='l2dgg' )
     noSwaths = mls_InqSwath ( L2GPFile%name, SwathList, listSize, &
            & hdfVersion=HDFVERSION_5 )
     call GetStringElement (trim(swathList), swath, 1, countEmpty )
@@ -180,7 +182,9 @@ contains
     call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
       & l1bFlag, dontPad=.true.)
     ! 2nd--read the profile
-    L2GPFile => GetMLSFileByType(filedatabase, content='l2gp')
+    L2GPFile => GetMLSFileByType ( filedatabase, content='l2gp' )
+    if ( .not. associated(L2GPFile) ) &
+      & L2GPFile => GetMLSFileByType ( filedatabase, content='l2dgg' )
     noSwaths = mls_InqSwath ( L2GPFile%name, SwathList, listSize, &
            & hdfVersion=HDFVERSION_5 )
     if ( DEEBUG ) call outputNamedValue( 'profile', profile )
@@ -1360,6 +1364,9 @@ contains
 end module Global_Settings
 
 ! $Log$
+! Revision 2.179  2019/04/18 16:30:10  pwagner
+! Overwrite GlobalAttributes%PGEVersion only if currently blank
+!
 ! Revision 2.178  2018/11/01 23:16:00  pwagner
 ! Improve appearance of settings when dumped
 !
