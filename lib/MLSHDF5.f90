@@ -34,6 +34,7 @@ module MLSHDF5
   use MLSStringLists, only: CatLists, IsInList, &
     & GetStringElement, Intersection, NumStringElements, StringElement
   use MLSStrings, only: Indexes, Lowercase, Replace, Trim_Safe
+  use Optional_M, only: Print_Default
   use Output_M, only: Newline, Output
   use Trace_M, only: Trace_Begin, Trace_End
   ! Let's Break Down Our Use, Parameters First
@@ -6190,6 +6191,14 @@ contains ! ======================= Public Procedures =========================
      if ( DEEBUG ) print *, 'trying to select hyperslab: ', &
        & int(start(1:rank), hsize_t), int(count(1:rank), hsize_t), &
        & int(stride(1:rank), hsize_t), int(block(1:rank), hsize_t)
+      if ( rank > size(start) ) then
+        print *, 'Error in selecting hyperslab--rank too big for size(start)'
+        print *, 'rank   ', rank
+        print *, 'start  ', start 
+        print *, 'count  ', count 
+        print *, 'stride ', stride
+        print *, 'block  ', block 
+      endif
       call h5sselect_hyperslab_f ( spaceID, H5S_SELECT_SET_F, &
         & int(start(1:rank), hsize_t), int(count(1:rank), hsize_t), status, &
         & int(stride(1:rank), hsize_t), int(block(1:rank), hsize_t) )
@@ -6450,6 +6459,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.149  2021/02/05 05:13:15  pwagner
+! Prints more if rank too large
+!
 ! Revision 2.148  2019/06/26 22:56:10  pwagner
 ! Needed H5SGet_Simple_Extent_NPoints_F to fix sometime link error
 !
