@@ -378,6 +378,7 @@ repeat_loop: do ! RepeatLoop
             call reportLeaks ( whereLeakCheck )
           end if
         case ( s_NeuralNet )
+          if ( L2Options%SkipRetrieval .and. STATEFILLEDBYSKIPPEDRETRIEVALS == 0. ) cycle
           call trace_begin ( Me_NeuralNet, "Retrieve.NeuralNet", root, &
             & cond=toggle(gen) .and. levels(gen) > 0 )
           call NeuralNet ( key, vectorDatabase, chunk, FileDatabase )
@@ -3040,6 +3041,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.367  2021/02/05 05:18:50  pwagner
+! Avoid calling NeuralNet when skipping Retrievals, too
+!
 ! Revision 2.366  2021/01/22 00:21:10  pwagner
 ! Added NeuralNet command
 !
