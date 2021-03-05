@@ -15,21 +15,30 @@
 ! but the code should be able to do any species, provided the correct
 ! training data is provided. 
 
+! To adapt to other species, we must revisit the hardcoded use of some
+! signal names, arrays sizes, etc. both here and in l2/NeuralNet_m.f90
+
 MODULE NeuralNetUtils_M
 
-  USE Dump_0, only: Dump
-  USE HighOutput, only: OutputNamedValue
-  USE MLSHDF5, only: SaveAsHDF5DS
-  USE MLSKinds, only: R8
-  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error
-  IMPLICIT NONE
+  use Dump_0, only: Dump
+  use HighOutput, only: OutputNamedValue
+  use MLSCommon, only: MLSFile_T
+  use MLSHDF5, only: SaveAsHDF5DS
+  use MLSKinds, only: R4, R8
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use Output_M, only: Output
+  implicit none
 
   TYPE radiance_T
      character(len=64) :: signal
      !INTEGER :: NumMAFS ! <----- it's only ever going to be one MAF, right?
-     INTEGER :: NumChannels
-     INTEGER :: NumMIFs
-     REAL(R8), dimension(:,:), allocatable :: values
+     !
+     ! Instead of the original quantity's larger number of channels and MIFs,
+     ! we store only the useful ones, by downsampling using integer
+     ! arrays in the NeuralNetCoeffs (see below)
+     integer :: NumChannels
+     integer :: NumMIFs
+     real(R8), dimension(:,:), allocatable :: values
   END TYPE radiance_T
 
   TYPE NeuralNetCoeffs_T
@@ -43,28 +52,28 @@ MODULE NeuralNetUtils_M
      ! every channel in the DACS 
      ! (and someday may even skip some in the non-DACS)
      ! So (M,3)
-     Integer,  dimension(:,:), allocatable :: Channels_In_Each_Band
+     integer,  dimension(:,:), allocatable :: Channels_In_Each_Band
 
      ! these are the dimensions for each part (assuming that we keep
      ! with Frank set up for Temperature retrieval)
 
      ! [42], number of pressure levels
-     REAL(R8), dimension(:), allocatable :: Intercepts_Hidden_Labels_Layer
-     REAL(R8), dimension(:), allocatable :: Output_Pressure_Levels
-     Integer,  dimension(:), allocatable :: Output_Pressure_Levels_Indices
+     real(R8), dimension(:), allocatable :: Intercepts_Hidden_Labels_Layer
+     real(R8), dimension(:), allocatable :: Output_Pressure_Levels
+     integer,  dimension(:), allocatable :: Output_Pressure_Levels_Indices
 
      ! [5078]. Number of Neurons in hidden layers
-     REAL(R8), dimension(:), allocatable :: Intercepts_Hidden_Layer_1
-     REAL(R8), dimension(:), allocatable :: Intercepts_Hidden_Layer_2
+     real(R8), dimension(:), allocatable :: Intercepts_Hidden_Layer_1
+     real(R8), dimension(:), allocatable :: Intercepts_Hidden_Layer_2
 
      ! [5078, 42] = [nNeurons, nLevels]
-     REAL(R8), dimension(:,:), allocatable :: Weights_Hidden_Labels_Layer
-     REAL(R8), dimension(:,:), allocatable :: Weights_Hidden_Layer_1
-     REAL(R8), dimension(:,:), allocatable :: Weights_Hidden_Layer_2
+     real(R8), dimension(:,:), allocatable :: Weights_Hidden_Labels_Layer
+     real(R8), dimension(:,:), allocatable :: Weights_Hidden_Layer_1
+     real(R8), dimension(:,:), allocatable :: Weights_Hidden_Layer_2
 
      ! [42]. Number of levels
-     REAL(R8), dimension(:), allocatable :: Normalization_Labels_Max
-     REAL(R8), dimension(:), allocatable :: Normalization_Labels_Min
+     real(R8), dimension(:), allocatable :: Normalization_Labels_Max
+     real(R8), dimension(:), allocatable :: Normalization_Labels_Min
      
      ! [75]. Number of MIFs
      integer, dimension(:), allocatable :: MIFs
@@ -72,8 +81,8 @@ MODULE NeuralNetUtils_M
      ! [7575] number of 'variables', i.e. 2*25*75 + 51*75
      ! This is band 1[channel X MIF] + band 8 [channel X MIF ]  and 
      ! band 22 [channel X MIF]
-     REAL(R8), dimension(:), allocatable :: Standardization_Brightness_Temperature_Mean
-     REAL(r8), dimension(:), allocatable :: Standardization_Brightness_Temperature_Std
+     real(R8), dimension(:), allocatable :: Standardization_Brightness_Temperature_Mean
+     real(r8), dimension(:), allocatable :: Standardization_Brightness_Temperature_Std
 
   END TYPE NeuralNetCoeffs_T
 
@@ -101,7 +110,8 @@ MODULE NeuralNetUtils_M
        & NeuralNetInputData_T, & 
        & NeuralNetCoeffs_T, & 
        & NeuralNetFit, & 
-       & Radiance_T
+       & Radiance_T, &
+       & StandardizeRadiances
 
   
   
@@ -113,6 +123,53 @@ MODULE NeuralNetUtils_M
 
 
 CONTAINS 
+  subroutine CompareStandardizedRads ( TempFileID, MAF, Rads, standardized )
+    ! Compare with the standardized rads written to the TempFile by
+    ! Frank's python script
+    use Intrinsic, only: L_HDF
+    use MLSHDF5, only: LoadFromHDF5DS
+    use MLSFiles, only: HDFVersion_5
+    ! Dummy args
+    integer, intent(in) :: TempFileID ! For optional comparisons
+    integer, intent(in) :: MAF ! For optional comparisons
+    real(r8), intent(in), dimension(:) :: Rads
+    logical, intent(in) :: standardized
+    !
+    type (MLSFile_T)                       :: TempFile
+    real(r4), allocatable, dimension(:,:)  :: values2
+    real(r4), dimension(size(Rads))        :: diffs
+    character(len=32)                      :: radianceType
+    ! Executable
+    TempFile%FileID%f_id = TempFileID
+    TempFile%StillOpen = .true.
+    TempFile%type = l_hdf
+    TempFile%hdfVersion = HDFVersion_5
+    allocate ( values2(7575, 3495) )
+    if ( standardized ) then
+      call LoadFromHDF5DS ( TempFile, &
+        & "Standardized_Brightness_Temps_Matrix", &
+        & values2 )
+      radianceType = 'standardized'
+    else
+      call LoadFromHDF5DS ( TempFile, &
+        & "Brightness_Temps_Matrix", &
+        & values2 )
+      radianceType = 'original'
+    endif
+    diffs = Rads - values2(:, MAF)
+    call output( '     ------------------', advance='yes' )
+    call output( '     (As we compute them)', advance='yes' )
+    call outputNamedValue ( trim(radianceType) // 'Rad min', minval(Rads) )
+    call outputNamedValue ( trim(radianceType) // 'Rad max', maxval(Rads) )
+    call output( '     (As read from Franks file)', advance='yes' )
+    call outputNamedValue ( trim(radianceType) // 'Rad min', minval(values2(:, MAF)) )
+    call outputNamedValue ( trim(radianceType) // 'Rad max', maxval(values2(:, MAF)) )
+    call outputNamedValue ( 'min diff', minval(diffs) )
+    call outputNamedValue ( 'max diff', maxval(diffs) )
+    call Dump ( diffs, 'diffs', options='@' )
+    call output( '     ------------------', advance='yes' )
+  end subroutine CompareStandardizedRads
+
   subroutine Dump_Coeffs ( Coeffs, Details )
     type ( NeuralNetCoeffs_T )                 :: Coeffs
     integer, intent(in), optional              :: Details
@@ -166,34 +223,35 @@ CONTAINS
     call dump ( Coeffs%Standardization_Brightness_Temperature_Std , 'Std_Bright_Temp_Std ' )
   end subroutine Dump_Coeffs
 
-  FUNCTION NeuralNetFit(nnInputData, nnCoeffs, nHL, TYPE, &
-    & FileID ) RESULT(prediction)
+  FUNCTION NeuralNetFit( nnInputData, nnCoeffs, nHL, TYPE, &
+    & RadFileID, TempFileID, MAF, profile ) RESULT(prediction)
 
     ! Fortran version of the IDL code in `example_idl.pro' from Frank
 
-    TYPE (NeuralNetInputData_T),intent(IN):: nnInputData
-    TYPE (NeuralNetCoeffs_T), INTENT(IN)  :: nnCoeffs
-    INTEGER,intent(in) :: nHL ! number of hidden layers. Will probably always be 2
-    CHARACTER(len=*),INTENT(IN) :: TYPE ! type  may be either 'tanh' or 'sigmoid'
-    REAL(r8), dimension(:), ALLOCATABLE :: prediction
-    integer, optional, intent(in) :: FileID ! For optionally saving Datasets
-
-
+    TYPE (NeuralNetInputData_T),intent(in):: nnInputData
+    TYPE (NeuralNetCoeffs_T), intent(in)  :: nnCoeffs
+    integer,intent(in) :: nHL ! number of hidden layers. Will probably always be 2
+    CHARACTER(len=*),intent(in) :: TYPE ! type  may be either 'tanh' or 'sigmoid'
+    real(r8), dimension(:), allocatable :: prediction
+    integer, optional, intent(in) :: RadFileID ! For optionally saving Datasets
+    integer, optional, intent(in) :: TempFileID ! For optional comparisons
+    integer, optional, intent(in) :: MAF ! For optional comparisons
+    integer, optional, intent(in) :: profile ! For optional comparisons
 
     ! Local variables
-    LOGICAL,SAVE :: first = .TRUE.
-    INTEGER, SAVE:: nMIFs
-    INTEGER, SAVE, dimension(2) :: nChans
-    INTEGER, SAVE :: nSurfs, nVars, nNeurons
+    logical,save :: first = .TRUE.
+    integer, save:: nMIFs
+    integer, save, dimension(2) :: nChans
+    integer, save :: nSurfs, nVars, nNeurons
 
     ! Various working space arrays
-    REAL(r8),dimension(:), allocatable :: working_space
-    REAL(r8), dimension(:), ALLOCATABLE  :: NeuronValues, NeuronValues2
+    real(r8),dimension(:), allocatable :: working_space
+    real(r8), dimension(:), allocatable  :: NeuronValues, NeuronValues2
 
     real(r8) :: y_pred
 
-    INTEGER :: c,n,m,jj,s,v! various counters
-    INTEGER, dimension(2) :: dims2
+    integer :: c,n,m,jj,s,v! various counters
+    integer, dimension(2) :: dims2
 
 
     ! ----------- executable statements -----------------
@@ -268,11 +326,19 @@ CONTAINS
 
     call OutputNamedValue ( 'nVars', nVars )
     call OutputNamedValue ( 'shape(WHL1)', shape(nnCoeffs%Weights_Hidden_Layer_1) )
+    call OutputNamedValue ( 'min(Rads)', minval(working_space(1:jj-1)) )
+    call OutputNamedValue ( 'max(Rads)', maxval(working_space(1:jj-1)) )
     
     ! Optionally save this dataset for comparison with
     ! PyThon or iDl or whaTeVer you guys use these daYs
-    if ( present(FileID) ) &
-      & call SaveAsHDF5DS ( FileID, 'Radiances', working_space(1:jj-1) )
+    if ( present(RadFileID) ) &
+      & call SaveAsHDF5DS ( RadFileID, 'Radiances', working_space(1:jj-1) )
+
+    ! Optionally save this dataset for comparison with
+    ! PyThon or iDl or whaTeVer you guys use these daYs
+    if ( present(TempFileID) ) &
+      & call CompareStandardizedRads ( TempFileID, MAF, working_space(1:jj-1), &
+      & standardized=.true. )
 
     ! unlike the IDL code, this routine will only ever see 1 MAF
     ! (sample) at a time, so we don't need the IDL loop over `samples'
@@ -343,12 +409,111 @@ CONTAINS
 
 
   END function NeuralNetFit
-
+  
+  subroutine StandardizeRadiances ( nnInputData, &
+              & Mean, &
+              & StdDev, &
+              & TempFileID, MAF )
+    ! Compute the ratio
+    !       values - mean
+    !       --------------
+    !           StdDev
+    ! and use it to replace corresponding values in NNMeasurements.
+    type (NeuralNetInputData_T),intent(inout)             :: nnInputData
+    real(r8), dimension(:), intent(in)                    :: Mean
+    real(r8), dimension(:), intent(in)                    :: StdDev
+    integer, optional, intent(in) :: TempFileID ! For optional comparisons
+    integer, optional, intent(in) :: MAF ! For optional comparisons
+    ! Internal variables
+    real(r8), dimension(:), allocatable                   :: ratio
+    real(r8), dimension(:), allocatable                   :: values
+    integer                                               :: channel
+    integer                                               :: j ! index into mean
+    integer                                               :: MIF
+    integer                                               :: n ! how many overall
+    ! Executable
+    if ( size(mean) /= size(stddev) ) then
+         CALL MLSMessage( MLSMSG_error, ModuleName, &
+             & "input arrays mean and stddev must have the same size" )
+    endif
+    allocate( values(size(mean) ) )
+    allocate( ratio(size(mean) ) )
+    ! Gather values
+    j = 0
+    ! Band _1_
+    do MIF=1, nnInputData%Band_1_Radiances%NumMIFs
+      do channel=1, nnInputData%Band_1_Radiances%NumChannels
+        j = j + 1
+        values(j) = nnInputData%Band_1_Radiances%values(channel, MIF)
+      enddo
+    enddo
+    ! Band _8_
+    do MIF=1, nnInputData%Band_8_Radiances%NumMIFs
+      do channel=1, nnInputData%Band_8_Radiances%NumChannels
+        j = j + 1
+        values(j) = nnInputData%Band_8_Radiances%values(channel, MIF)
+      enddo
+    enddo
+    ! Band _22_
+    do MIF=1, nnInputData%Band_22_Radiances%NumMIFs
+      do channel=1, nnInputData%Band_22_Radiances%NumChannels
+        j = j + 1
+        values(j) = nnInputData%Band_22_Radiances%values(channel, MIF)
+      enddo
+    enddo
+    n = j
+    if ( n /= size(mean) ) then
+         CALL MLSMessage(MLSMSG_error, ModuleName, &
+             & "n must equal size of mean array")
+    endif
+    print *, 'n: ', n
+    do j=1, n
+      ratio(j) = ( values(j) - mean(j) ) / stddev(j)
+    enddo
+    call Dump( values, 'values' )
+    call Dump( mean ,  'mean  ' )
+    call Dump( stddev, 'stddev' )
+    call Dump( ratio , 'ratio ' )
+    call OutputNamedValue ( 'min(Ratio)', minval(ratio) )
+    call OutputNamedValue ( 'max(Ratio)', maxval(ratio) )
+    if ( present(TempFileID) ) &
+      & call CompareStandardizedRads ( TempFileID, MAF, values, &
+      & standardized=.false. )
+    ! Now use these standardized radiances to replace the measurement's values
+    j = 0
+    ! Band _1_
+    do MIF=1, nnInputData%Band_1_Radiances%NumMIFs
+      do channel=1, nnInputData%Band_1_Radiances%NumChannels
+        j = j + 1
+        nnInputData%Band_1_Radiances%values(channel, MIF) = ratio(j)
+      enddo
+    enddo
+    print *, 'j: ', j
+    print *, ratio(j)
+    ! Band _8_
+    do MIF=1, nnInputData%Band_8_Radiances%NumMIFs
+      do channel=1, nnInputData%Band_8_Radiances%NumChannels
+        j = j + 1
+        nnInputData%Band_8_Radiances%values(channel, MIF) = ratio(j)
+      enddo
+    enddo
+    print *, 'j: ', j
+    print *, ratio(j)
+    ! Band _22_
+    do MIF=1, nnInputData%Band_22_Radiances%NumMIFs
+      do channel=1, nnInputData%Band_22_Radiances%NumChannels
+        j = j + 1
+        nnInputData%Band_22_Radiances%values(channel, MIF) = ratio(j)
+      enddo
+    enddo
+    print *, 'j: ', j
+    print *, ratio(j)
+  end subroutine StandardizeRadiances
 
   ! Dot product.
-  REAL(r8) FUNCTION dot(X,Y)
-    REAL(r8), dimension(:),INTENT(IN):: x,y
-    INTEGER :: i,nn
+  real(r8) FUNCTION dot(X,Y)
+    real(r8), dimension(:),intent(in):: x,y
+    integer :: i,nn
     dot=0
     nn=size(x)
     IF (nn .NE. SIZE(y)) THEN 
@@ -363,8 +528,8 @@ CONTAINS
 
   ! Sigmoid subroutine
   SUBROUTINE sigmoid(x,s) 
-    REAL(r8),dimension(:),INTENT(in) :: x
-    REAL(r8),dimension(:) :: s
+    real(r8),dimension(:),intent(in) :: x
+    real(r8),dimension(:) :: s
     s = 1.0/(1.0+EXP(-x))
   END SUBROUTINE sigmoid
 
@@ -380,6 +545,9 @@ CONTAINS
 
 END MODULE NeuralNetUtils_M
 ! $Log$
+! Revision 2.2  2021/02/19 00:29:46  pwagner
+! repaired many bugs; still unsatisfactory imo
+!
 ! Revision 2.1  2021/02/05 05:14:40  pwagner
 ! First commit
 !
