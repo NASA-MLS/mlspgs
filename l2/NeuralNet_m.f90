@@ -13,23 +13,24 @@
 module NeuralNet_m              ! Use Neural Net Model to Retrieve State
 !=============================================================================
 
+  use Chunks_m, only: Dump
   use Global_Settings, only: L1MAFToL2Profile, L2ProfileToL1MAF
-  use HDF, only: Dfacc_Create
+  use HDF, only: DFAcc_Create, DFAcc_RDOnly
   use HighOutput, only: BeVerbose, Dump, LetsDebug, OutputNamedValue
   use MLSCommon, only: MLSChunk_T, MLSFile_T
-  use MLSFiles, only: MLS_CloseFile, MLS_OpenFile, &
+  use MLSFiles, only: MLS_CloseFile, MLS_OpenFile, MLS_SFEnd, MLS_SFStart, &
     & AddInitializeMLSFile, Dump, HDFVersion_5
   use MLSFinds, only: FindFirst, FindLast
-  use MLSKinds, only: R4, Rv
+  use MLSKinds, only: R4, R8, Rv
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSSignals_M, only: DisplayRadiometer, GetSignalName
   use MLSStats1, only: MLSMax, MLSMin
   use MLSStrings, only: Capitalize, ReplaceNonAscii
   use MoreTree, only: Get_Field_Id
   use NeuralNetUtils_m, only: NeuralNetCoeffs_T, NeuralNetInputData_T, &
-    & Dump, NeuralNetFit
+    & Dump, NeuralNetFit, StandardizeRadiances
   use Output_M, only: Output
-  ! use QuantityTemplates, only: Rt
+  use QuantityTemplates, only: Dump
   use String_Table, only: Get_String
   use Toggles, only: Gen, Levels, Switches, Toggle
   use Trace_M, only: Trace_Begin, Trace_End
@@ -71,6 +72,8 @@ module NeuralNet_m              ! Use Neural Net Model to Retrieve State
   integer, parameter              :: NumChnnelsBand22 = 51
   integer, parameter              :: NumMIFs          = 75
   integer, parameter              :: NumLevels        = 42
+  
+  Logical, parameter              :: StandardizeRadiancesHere = .true.
 
 contains ! =====     Public Procedures     =============================
 
@@ -103,11 +106,13 @@ contains ! =====     Public Procedures     =============================
     real(r4):: MinLat
     integer :: MyFile                 ! FileDatabase index
     integer :: Profile
+    integer :: RadfileID
     integer :: SON                    ! Tree node
     integer :: SIGNAL                 ! the signal we're looking for
     character(len=32) :: SignalStr    ! its string value
     integer :: Status
     real(Rv), allocatable, dimension(:) :: TemperatureValues
+    integer :: TempfileID
     integer :: thisMAF
     integer :: thisProfile
 
@@ -119,10 +124,8 @@ contains ! =====     Public Procedures     =============================
     type (VectorValue_T), pointer   :: Radiances ! The radiances for this band
     type (VectorValue_T), pointer   :: Temperature ! The quantity to fill
     
-    ! real, dimension(:,:,:), allocatable     :: Coeffs
     type(NeuralNetCoeffs_T)         :: Coeffs
     type(NeuralNetInputData_T)      :: NNMeasurements
-    ! type (NeuralNet_T)              :: MyNeuralNet
     character (len=1024)            :: FileName
     character (len=*), parameter    :: DefaultFileName = &
       & '/users/fwerner/Documents/database/trained_neural_nets/temperature/v1.14/1/' &
@@ -132,6 +135,10 @@ contains ! =====     Public Procedures     =============================
       & '/users/pwagner/' &
       & // &
       & 'Radiances_used_in_nn.h5' ! For radiances
+    character (len=*), parameter    :: DefaultTemperatures = &
+      & '/users/fwerner/Documents/database/trained_neural_nets/test_data/temperature/v1.13/' &
+      & // &
+      & 'Temperature_20190101.h5' ! For results to compare with
     ! Beware if the following ever change
     ! For we will then need to read them from the file of coefficients
     ! For now we have 18 bins, each of size 10, spanning latitudes from the
@@ -147,6 +154,20 @@ contains ! =====     Public Procedures     =============================
     call trace_begin ( me, 'NeuralNet_m.NeuralNet', key, &
       & cond=toggle(gen) .and. levels(gen) > 1 )
     NeededBands = .false.
+
+    RadfileID = mls_sfstart ( trim(DefaultRadiances), DFAcc_Create, &
+        &                                          hdfVersion=HDFVersion_5 )
+    TempfileID = mls_sfstart ( trim(DefaultTemperatures), DFAcc_RDOnly, &
+        &                                          hdfVersion=HDFVersion_5 )
+    print *, 'Opened RadFile id ', RadfileID
+    print *, 'Opened TempFile id ', TempfileID
+    if ( RadfileID < 0 ) then
+      call announce_error ( key, &
+        & 'Failed to Open/Create Radiances File: ' // trim(DefaultRadiances) )
+    endif
+!       RadiancesFile => AddInitializeMLSFile ( FileDatabase, name=DefaultRadiances, &
+!         & shortName='Radiances', access=Dfacc_Create,  &
+!         & type=l_hdf, content='NNRadiances', HDFVersion=HDFVersion_5 )
 
     do i = 2, nsons(key)
       son = subtree(i,key)
@@ -179,7 +200,7 @@ contains ! =====     Public Procedures     =============================
       if ( state%quantities(i)%template%quantityType /= l_temperature ) then
         ! call announce_error ( key, &
         !   & "state vector must contain only Temperature" )
-        print *, 'Skipping non-Temperarture state quantity'
+        print *, 'Skipping non-Temperature state quantity'
         cycle
       end if
       Temperature => state%quantities(i)
@@ -250,16 +271,18 @@ contains ! =====     Public Procedures     =============================
       CoeffsFile => AddInitializeMLSFile ( FileDatabase, name=fileName, &
         & shortName='Temperature', &
         & type=l_hdf, content='NNCoeffs', HDFVersion=HDFVersion_5 )
-      RadiancesFile => AddInitializeMLSFile ( FileDatabase, name=DefaultRadiances, &
-        & shortName='Radiances', access=Dfacc_Create,  &
-        & type=l_hdf, content='NNRadiances', HDFVersion=HDFVersion_5 )
     endif
-    if ( DeeBug ) call Dump ( FileDatabase )
+    if ( DeeBug .and. .false. ) call Dump ( FileDatabase )
     call MLS_OpenFile( CoeffsFile, Status )
-    call Dump( RadiancesFile )
-    call MLS_OpenFile( RadiancesFile, Status )
+    ! call Dump( RadiancesFile )
+!     call MLS_OpenFile( RadiancesFile, Status )
+!     if ( Status /= 0 ) then
+!       call announce_error ( key, &
+!         & 'Failed to Open/Create Radiances File' )
+!     endif
     ! These are absolute profile numbers, i.e. they start at '1' only
     ! for the first chunk
+    call Dump ( Chunk )
     firstProfile = L1MAFToL2Profile ( Chunk%firstMAFIndex, FileDatabase )
     lastProfile  = L1MAFToL2Profile ( Chunk%lastMAFIndex , FileDatabase )
     print *, 'firstProfile ', firstProfile
@@ -293,30 +316,72 @@ contains ! =====     Public Procedures     =============================
         MAF = thisMAF - Chunk%firstMAFIndex + 1
         print *, 'binNum, profile, MAF ', binNum, profile, MAF
         print *, 'thisprofile, thisMAF ', thisprofile, thisMAF
+        print *, 'Num measurement quantities ', measurements%template%noQuantities
+        print *, 'Temperature radiometer ', Temperature%template%radiometer
         ! MAF and profile are indices inside the chunk, not absolute indices
         do j = 1, measurements%template%noQuantities
+          call Dump ( measurements%quantities(j)%template )
           if ( measurements%quantities(j)%template%quantityType /= l_radiance ) cycle
-          if ( measurements%quantities(j)%template%radiometer /= Temperature%template%radiometer ) cycle
+          !
+          print *, 'Qty radiometer ', measurements%quantities(j)%template%radiometer
+          ! Because there is no radiometer defined for Temperature,
+          ! we can hardly compare it to whatever radiometer the measurement
+          ! quantity uses
+          ! if ( measurements%quantities(j)%template%radiometer /= Temperature%template%radiometer ) cycle
+          !
           radiances => measurements%quantities(j)
           signal = measurements%quantities(j)%template%signal
           print *, 'Calling AssembleNNMeasurement'
           call AssembleNNMeasurement ( NNMeasurements, &
             & radiances, signal, &
             & Coeffs%MIFs, Coeffs%Channels_In_Each_Band, MAF )
-        end do                          ! End loop over bands
+        end do     
+        ! End loop over bands
+        if ( all(NNMeasurements%Band_1_Radiances%values == 0._r8) ) &
+          print *, 'All band 1 radiances vanish'
+        if ( all(NNMeasurements%Band_8_Radiances%values == 0._r8) ) &
+          print *, 'All band 8 radiances vanish'
+        if ( all(NNMeasurements%Band_22_Radiances%values == 0._r8) ) &
+          print *, 'All band 22 radiances vanish'
+        if ( StandardizeRadiancesHere ) then
+          call StandardizeRadiances ( NNMeasurements, &
+            & Coeffs%Standardization_Brightness_Temperature_Mean, &
+            & Coeffs%Standardization_Brightness_Temperature_Std, &
+            & TempFileID, thisMAF)
+        endif
 !         call RunNeuralNet ( NNMeasurements, c, MyNeuralNet )
         print *, 'Calling NeuralNetFit'
+        print *, 'Rad FileID: ', RadfileID
         ! Temperature%values(8:49, profile) = NeuralNetFit ( NNMeasurements, &
         !   & Coeffs, NumHiddenLayers, switchOver )
         TemperatureValues = NeuralNetFit ( NNMeasurements, &
-          & Coeffs, NumHiddenLayers, switchOver, RadiancesFile%FileID%f_id )
+          & Coeffs, NumHiddenLayers, switchOver, &
+          & RadfileID, TempFileID, thisMAF, thisProfile )
         do j=1, NumLevels
           Temperature%values(Coeffs%Output_Pressure_Levels_Indices(j), profile) = &
             & TemperatureValues(j)
         enddo
+        call Dump ( Temperature%values(:, profile), 'Temps (nn)' )
       enddo
     enddo
     call MLS_CloseFile( CoeffsFile, Status )
+
+    Status = MLS_SFEnd( RadfileID, hdfVersion=HDFVersion_5 )
+    print *, 'Closed RadFile id ', RadfileID
+    print *, Status
+    if ( Status /= 0 ) then
+      print *, 'Error in ending hdf access to file'
+      stop
+    endif
+
+    Status = MLS_SFEnd( TempfileID, hdfVersion=HDFVersion_5 )
+    print *, 'Closed TempFile id ', TempfileID
+    print *, Status
+    if ( Status /= 0 ) then
+      print *, 'Error in ending hdf access to file'
+      stop
+    endif
+
 !debug
 !call dump(Temperature%values, 'beforedivide')
 
@@ -328,6 +393,7 @@ contains ! =====     Public Procedures     =============================
     endif
     call trace_end ( 'NeuralNet_m.NeuralNet', &
       & cond=toggle(gen) .and. levels(gen) > 1 )
+    stop
   end subroutine NeuralNet
 
   ! ------------------ Private ---------------------------------
@@ -403,6 +469,8 @@ contains ! =====     Public Procedures     =============================
               & radiances%value3(chanNum, MIFs(MIF), MAF)
           enddo
         enddo
+      case  default
+        print *, 'Failed to recognize: ', Capitalize(signalStr)
       end select
     end subroutine AssembleNNMeasurement
 
@@ -689,6 +757,9 @@ end module NeuralNet_m
 
 !
 ! $Log$
+! Revision 2.4  2021/03/05 00:55:30  pwagner
+! A tiny bit of progress
+!
 ! Revision 2.3  2021/02/19 00:28:08  pwagner
 ! repaired many bugs; still unsatisfactory imo
 !
