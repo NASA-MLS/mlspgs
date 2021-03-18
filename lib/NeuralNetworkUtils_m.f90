@@ -9,14 +9,28 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 
-! This module contains the utility code to be used when calculating
-! species using Frank Werner's Neural Network solutions. At the time
-! of this writing (2021/01/20) only Temperature is being retrieved,
-! but the code should be able to do any species, provided the correct
-! training data is provided. 
+  ! ----------------------------------------------------------------------------
+  ! This module contains the utility code to be used when calculating
+  ! species using Frank Werner's Neural Network solutions. At the time
+  ! of this writing (2021/01/20) only Temperature is being retrieved,
+  ! but the code should be able to do any species, provided the correct
+  ! training data is provided. 
 
-! To adapt to other species, we must revisit the hardcoded use of some
-! signal names, arrays sizes, etc. both here and in l2/NeuralNet_m.f90
+  ! To adapt to other species, we must revisit the hardcoded use of some
+  ! signal names, arrays sizes, etc. both here and in l2/NeuralNet_m.f90
+  !
+  ! Note that it currently supports only the retrieval of Temperature
+  ! Also it assumes Bands 1, 8, and 22 are supplied
+  ! The current weights file format is hard-coded here. 
+  ! It would require changes and testing if that format should ever change.
+  ! We also assume the weights are stored in a manner consistent
+  ! with the following order for the "collapsed" measurement vector:
+  !   [b1c1m1,b1c2m1,..,b1c1m2,b1c2m2,..,b2c1m1,..,..,b22c1m1,..]
+  ! where
+  !   bk is Band k
+  !   cj is channel j
+  !   mi is MIF i
+  ! ----------------------------------------------------------------------------
 
 MODULE NeuralNetUtils_M
 
@@ -24,6 +38,7 @@ MODULE NeuralNetUtils_M
   use HighOutput, only: OutputNamedValue
   use MLSCommon, only: MLSFile_T
   use MLSHDF5, only: SaveAsHDF5DS
+  use MLSFinds, only: FindFirst
   use MLSKinds, only: R4, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use Output_M, only: Output
@@ -83,6 +98,9 @@ MODULE NeuralNetUtils_M
      ! band 22 [channel X MIF]
      real(R8), dimension(:), allocatable :: Standardization_Brightness_Temperature_Mean
      real(r8), dimension(:), allocatable :: Standardization_Brightness_Temperature_Std
+     ! Just for debugging
+     real(r8), dimension(:,:), allocatable :: Stddevs
+     real(r8), dimension(:,:), allocatable :: Means
 
   END TYPE NeuralNetCoeffs_T
 
@@ -122,52 +140,218 @@ MODULE NeuralNetUtils_M
 !---------------------------------------------------------------------------
 
 
-CONTAINS 
-  subroutine CompareStandardizedRads ( TempFileID, MAF, Rads, standardized )
+contains 
+  subroutine CheckBinNums ( TempFileID, MAFRange, nnCoeffs )
+    ! Compare with the standardized rads written to the TempFile by
+    ! Frank's python script
+    ! This comparison seeks to find which bin number he most likely used
+    use Intrinsic, only: L_HDF
+    use MLSHDF5, only: LoadFromHDF5DS
+    use MLSFiles, only: HDFVersion_5
+    ! Dummy args
+    integer, intent(in)                  :: TempFileID ! For optional comparisons
+    integer, dimension(:), intent(in)    :: MAFRange ! For optional comparisons
+    TYPE (NeuralNetCoeffs_T), intent(in) :: nnCoeffs
+    ! Internal variables
+    integer                                :: binNum
+    integer                                :: j
+    integer                                :: MAF
+    type (MLSFile_T)                       :: TempFile
+    real(r4), allocatable, dimension(:,:)  :: ratios2
+    real(r4), allocatable, dimension(:)    :: recalc
+    real(r4), allocatable, dimension(:,:)  :: values2
+    ! Executable
+    call outputNamedValue( 'Range of MAFs to check bin numbers', MAFRange )
+    TempFile%FileID%f_id = TempFileID
+    TempFile%StillOpen = .true.
+    TempFile%type = l_hdf
+    TempFile%hdfVersion = HDFVersion_5
+    ! Recalculate ratios using Frank's own radiances, means, and stddevs
+    ! Then check against the ratios he wrote out to TempFile
+    allocate ( ratios2(7575, 3495) )
+    allocate ( values2(7575, 3495) )
+    call LoadFromHDF5DS ( TempFile, &
+      & "Brightness_Temps_Matrix", &
+      & values2 )
+    call LoadFromHDF5DS ( TempFile, &
+      & "Standardized_Brightness_Temps_Matrix", &
+      & ratios2 )
+    do MAF = MAFRange(1), MAFRange(2)
+      allocate ( recalc(18) )
+      do binNum=1, 18
+        recalc(binNum) = &
+          & (values2(1, MAF) - nnCoeffs%means(binNum,1)) &
+          & / &
+          & nnCoeffs%stddevs(binNum,1)
+      enddo
+      ! Now for the musical question:
+      ! which binNum most closely approximates Frank's ratio?
+      binNum = FindFirst ( abs(ratios2(1,MAF)-recalc(:)) < 1.e-4 )
+      if ( binNum < 1 ) then
+        call output ( 'No matching binNum found in Franks file', advance='yes' )
+      else
+        call outputNamedValue ( 'MAF, Bin num matched', (/MAF, BinNum /) )
+        call outputNamedValue ( 'Frank,me', (/ratios2(1,MAF),recalc(binNum) /) )
+        j = 1 + mod(binNum,18)
+        call outputNamedValue ( 'if wrong Bin', recalc(j)  )
+        ! Check if a second bin number also matches
+        if ( binNum < 18 ) then
+          binNum = FindFirst ( abs(ratios2(1,MAF)-recalc(binNum+1:)) < 1.e-4 )
+          if ( binNum > 0 ) then
+            call outputNamedValue ( 'A 2nd match found at 1st +', BinNum )
+            stop
+          endif
+        endif
+        ! We match at the first MIF, channel, and Band. How about all the rest?
+        deallocate ( recalc )
+        allocate ( recalc(7575) )
+        do j=1, 7575
+          recalc(j) = &
+            & (values2(j, MAF) - nnCoeffs%means(binNum,j)) &
+            & / &
+            & nnCoeffs%stddevs(binNum,j)
+        enddo
+        call outputNamedValue ( 'max diff over all MIFs, etc.', &
+          & maxval( abs(ratios2(:,MAF)-recalc(:)) ) )
+      endif
+      deallocate ( recalc )
+    enddo
+
+  end subroutine CheckBinNums
+
+  subroutine CompareStandardizedRads ( TempFileID, MAFRange, Rads, &
+    & standardized, MatchingMAF, Recalculate, mean, stddev )
     ! Compare with the standardized rads written to the TempFile by
     ! Frank's python script
     use Intrinsic, only: L_HDF
     use MLSHDF5, only: LoadFromHDF5DS
     use MLSFiles, only: HDFVersion_5
     ! Dummy args
-    integer, intent(in) :: TempFileID ! For optional comparisons
-    integer, intent(in) :: MAF ! For optional comparisons
+    integer, intent(in)                :: TempFileID ! For optional comparisons
+    integer, dimension(:), intent(in)  :: MAFRange ! For optional comparisons
     real(r8), intent(in), dimension(:) :: Rads
-    logical, intent(in) :: standardized
+    logical, intent(in)                :: standardized
+    integer, intent(out), optional     :: MatchingMAF
+    logical, intent(in), optional      :: Recalculate
+    real(r8), dimension(:), intent(in), optional :: Mean
+    real(r8), dimension(:), intent(in), optional :: StdDev
     !
     type (MLSFile_T)                       :: TempFile
+    real(r4), allocatable, dimension(:,:)  :: ratios2
+    real(r4), allocatable, dimension(:)    :: recalc
     real(r4), allocatable, dimension(:,:)  :: values2
     real(r4), dimension(size(Rads))        :: diffs
     character(len=32)                      :: radianceType
+    integer                                :: j
+    integer                                :: MAF
+    integer                                :: MIF
+    logical                                :: DEEBug
+    logical                                :: myRecalculate
     ! Executable
+    if ( present(MatchingMAF) ) MatchingMAF = 0
+    myRecalculate = .false.
+    if ( present(Recalculate) ) myRecalculate = Recalculate
+    call outputNamedValue( 'Range of MAFs to compare', MAFRange )
     TempFile%FileID%f_id = TempFileID
     TempFile%StillOpen = .true.
     TempFile%type = l_hdf
     TempFile%hdfVersion = HDFVersion_5
+    if ( myRecalculate ) then
+      call output ( 'Recalculating the standardized brightness Temps in Franks file', &
+        & advance='yes' )
+      ! Recalculate ratios using Frank's own radiances, means, and stddevs
+      ! Then check against the ratios he wrote out to TempFile
+      allocate ( ratios2(7575, 3495) )
+      allocate ( recalc(7575) )
+      allocate ( values2(7575, 3495) )
+      call LoadFromHDF5DS ( TempFile, &
+        & "Brightness_Temps_Matrix", &
+        & values2 )
+      call LoadFromHDF5DS ( TempFile, &
+        & "Standardized_Brightness_Temps_Matrix", &
+        & ratios2 )
+      do MAF = MAFRange(1), MAFRange(2)
+        do j=1, size(mean)
+          recalc(j) = (values2(j, MAF) - mean(j)) / stddev(j)
+        enddo
+        diffs = recalc - ratios2(:,MAF)
+        call ShowDiffs ( MAF )
+      enddo
+      return
+    endif
     allocate ( values2(7575, 3495) )
     if ( standardized ) then
       call LoadFromHDF5DS ( TempFile, &
         & "Standardized_Brightness_Temps_Matrix", &
         & values2 )
       radianceType = 'standardized'
+      DEEBug = .true. ! .false.
     else
       call LoadFromHDF5DS ( TempFile, &
         & "Brightness_Temps_Matrix", &
         & values2 )
       radianceType = 'original'
+      DEEBug = .true.
     endif
-    diffs = Rads - values2(:, MAF)
+!     call output( '     ------------------', advance='yes' )
+!     call output( '   (Full matrix for last MAF)', advance='yes' )
+!     call Dump ( diffs, 'diffs' )
+    if ( .not. DEEBug ) return
+    do MAF = MAFRange(1), MAFRange(2)
+      call ShowDiffs ( MAF )
+    enddo
     call output( '     ------------------', advance='yes' )
-    call output( '     (As we compute them)', advance='yes' )
-    call outputNamedValue ( trim(radianceType) // 'Rad min', minval(Rads) )
-    call outputNamedValue ( trim(radianceType) // 'Rad max', maxval(Rads) )
-    call output( '     (As read from Franks file)', advance='yes' )
-    call outputNamedValue ( trim(radianceType) // 'Rad min', minval(values2(:, MAF)) )
-    call outputNamedValue ( trim(radianceType) // 'Rad max', maxval(values2(:, MAF)) )
-    call outputNamedValue ( 'min diff', minval(diffs) )
-    call outputNamedValue ( 'max diff', maxval(diffs) )
-    call Dump ( diffs, 'diffs', options='@' )
-    call output( '     ------------------', advance='yes' )
+    MAF = FindFirst ( abs(Rads(1)-values2(1,:)) < 1.e-4     )
+    if ( present(MatchingMAF) ) MatchingMAF = MAF
+    if ( MAF < 1 ) then
+      call output( 'No matching MAF found', advance='yes' )
+      call outputNamedValue( 'Closest we come is', &
+        & minval(abs(Rads(1)-values2(1,:))) )
+      call outputNamedValue( 'at MAF', &
+        & minloc(abs(Rads(1)-values2(1,:))) )
+      return
+    else
+      call outputNamedValue( 'Matching MAF in Franks file', MAF )
+      call output ( (/ Real(rads(1), r4), values2(1,MAF) /) )
+      call output( '     ------------------', advance='yes' )
+      call ShowDiffs ( MAF )
+      ! Could the indexes be jumbled?
+      MIF = FindFirst ( abs(Rads(2)-values2(:,MAF)) < 1.e-4     )
+      if ( MIF < 1 ) then
+        call output( 'No matching MIF found for our 2', advance='yes' )
+      else
+        call outputNamedValue( 'Matching MIF in Franks file for MIF=2', MIF )
+        call output ( (/ Real(rads(2), r4), values2(MIF,MAF) /) )
+        call output( '     ------------------', advance='yes' )
+      endif
+    endif
+    MAF = FindFirst ( abs(Rads(1)-values2(1,MAF+1:)) < 1.e-4     )
+    if ( MAF >0 ) then
+      call outputNamedValue( '2nd Matching MAF in Franks file', MAF )
+    else
+      call output( 'No 2nd matching MAF found', advance='yes' )
+    endif    
+    contains
+      subroutine ShowDiffs ( MAF )
+        integer, intent(in)          :: MAF
+        ! Executable
+        if ( .not. present(Recalculate) ) then
+          call output( '     ------------------', advance='yes' )
+          call outputNamedValue ( 'MAF used for comparison', MAF )
+          call output( '     (As we compute them)', advance='yes' )
+          call outputNamedValue ( trim(radianceType) // 'Rad min', minval(Rads) )
+          call outputNamedValue ( trim(radianceType) // 'Rad max', maxval(Rads) )
+          call output( '     (As read from Franks file)', advance='yes' )
+          call outputNamedValue ( trim(radianceType) // 'Rad min', minval(values2(:, MAF)) )
+          call outputNamedValue ( trim(radianceType) // 'Rad max', maxval(values2(:, MAF)) )
+          diffs = Rads - values2(:, MAF)
+        endif
+        call outputNamedValue ( 'min diff', minval(diffs) )
+        call outputNamedValue ( 'max diff', maxval(diffs) )
+        call Dump ( diffs, 'diffs', options='@' )
+        call output( '     ------------------', advance='yes' )
+      end subroutine ShowDiffs
+      
   end subroutine CompareStandardizedRads
 
   subroutine Dump_Coeffs ( Coeffs, Details )
@@ -251,6 +435,7 @@ CONTAINS
     real(r8) :: y_pred
 
     integer :: c,n,m,jj,s,v! various counters
+    integer :: MatchingMAF
     integer, dimension(2) :: dims2
 
 
@@ -300,24 +485,24 @@ CONTAINS
     jj=1
 
     ! Load band1
-    DO c=1,nChans(1)
-      DO m=1,nMIFs
+    DO m=1,nMIFs
+      DO c=1,nChans(1)
         working_space( jj ) = nnInputData%Band_1_Radiances%Values(c,m)
         jj = jj + 1
       END DO
     END DO
 
     ! Load band8
-    DO c=1,nChans(1)
-      DO m=1,nMIFs
+    DO m=1,nMIFs
+      DO c=1,nChans(1)
         working_space( jj ) = nnInputData%Band_8_Radiances%Values(c,m)
         jj = jj + 1
       END DO
     END DO
 
     ! load band 22
-    DO c=1,nChans(2)
-      DO m=1,nMIFs
+    DO m=1,nMIFs
+      DO c=1,nChans(2)
         working_space( jj ) = nnInputData%Band_22_Radiances%Values(c,m)
         jj = jj + 1
       END DO
@@ -337,8 +522,13 @@ CONTAINS
     ! Optionally save this dataset for comparison with
     ! PyThon or iDl or whaTeVer you guys use these daYs
     if ( present(TempFileID) ) &
-      & call CompareStandardizedRads ( TempFileID, MAF, working_space(1:jj-1), &
-      & standardized=.true. )
+      & call CompareStandardizedRads ( TempFileID, &
+      & (/ MAF, MAF /), working_space(1:jj-1), &
+      & standardized=.true., MatchingMAF=MatchingMAF )
+    if ( MatchingMAF > 0 ) then
+      call OutputNamedValue ( 'Matching MAF', MatchingMAF )
+      call OutputNamedValue ( 'Compared to', MAF )
+    endif
 
     ! unlike the IDL code, this routine will only ever see 1 MAF
     ! (sample) at a time, so we don't need the IDL loop over `samples'
@@ -413,7 +603,7 @@ CONTAINS
   subroutine StandardizeRadiances ( nnInputData, &
               & Mean, &
               & StdDev, &
-              & TempFileID, MAF )
+              & TempFileID, MAF, nnCoeffs )
     ! Compute the ratio
     !       values - mean
     !       --------------
@@ -424,11 +614,13 @@ CONTAINS
     real(r8), dimension(:), intent(in)                    :: StdDev
     integer, optional, intent(in) :: TempFileID ! For optional comparisons
     integer, optional, intent(in) :: MAF ! For optional comparisons
+    TYPE (NeuralNetCoeffs_T), optional, intent(in)        :: nnCoeffs
     ! Internal variables
     real(r8), dimension(:), allocatable                   :: ratio
     real(r8), dimension(:), allocatable                   :: values
     integer                                               :: channel
     integer                                               :: j ! index into mean
+    integer                                               :: MatchingMAF
     integer                                               :: MIF
     integer                                               :: n ! how many overall
     ! Executable
@@ -470,15 +662,28 @@ CONTAINS
     do j=1, n
       ratio(j) = ( values(j) - mean(j) ) / stddev(j)
     enddo
-    call Dump( values, 'values' )
-    call Dump( mean ,  'mean  ' )
-    call Dump( stddev, 'stddev' )
-    call Dump( ratio , 'ratio ' )
+    if ( .false. ) then
+      call Dump( values, 'values' )
+      call Dump( mean ,  'mean  ' )
+      call Dump( stddev, 'stddev' )
+      call Dump( ratio , 'ratio ' )
+    endif
+    call OutputNamedValue ( '1st(values)', values(1) )
+    call OutputNamedValue ( 'max(values)', maxval(values) )
+    call OutputNamedValue ( '1st(mean  )', mean(1) )
+    call OutputNamedValue ( 'max(mean  )', maxval(mean) )
+    call OutputNamedValue ( '1st(stddev)', stddev(1) )
+    call OutputNamedValue ( 'max(stddev)', maxval(stddev) )
+    call OutputNamedValue ( '1st(Ratio )', ratio(1) )
     call OutputNamedValue ( 'min(Ratio)', minval(ratio) )
     call OutputNamedValue ( 'max(Ratio)', maxval(ratio) )
-    if ( present(TempFileID) ) &
-      & call CompareStandardizedRads ( TempFileID, MAF, values, &
-      & standardized=.false. )
+    if ( present(TempFileID) ) then
+      call CompareStandardizedRads ( TempFileID, &
+      & (/ MAF, MAF /), values, &
+      & standardized=.false., MatchingMAF=MatchingMAF )
+      call OutputNamedValue ( 'Matching MAF', MatchingMAF )
+      call OutputNamedValue ( 'Compared to', MAF )
+    endif
     ! Now use these standardized radiances to replace the measurement's values
     j = 0
     ! Band _1_
@@ -508,6 +713,15 @@ CONTAINS
     enddo
     print *, 'j: ', j
     print *, ratio(j)
+    !
+    if ( .not. present(TempFileID) ) return
+    call CompareStandardizedRads ( TempFileID, &
+    & (/ MAF, MAF /), values, &
+    & standardized=.true., recalculate=.true., mean=mean, stddev=stddev )
+    
+    ! What if the binNum we used was different from Frank's?
+    if ( present(nnCoeffs) ) &
+      & call CheckBinNums ( TempFileID, (/ MAF, MAF /), nnCoeffs )
   end subroutine StandardizeRadiances
 
   ! Dot product.
@@ -545,6 +759,9 @@ CONTAINS
 
 END MODULE NeuralNetUtils_M
 ! $Log$
+! Revision 2.3  2021/03/05 00:53:34  pwagner
+! Some progress but still wrong
+!
 ! Revision 2.2  2021/02/19 00:29:46  pwagner
 ! repaired many bugs; still unsatisfactory imo
 !
