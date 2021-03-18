@@ -39,10 +39,24 @@ module NeuralNet_m              ! Use Neural Net Model to Retrieve State
     & Dump, &
     & Vector_T, &
     & VectorValue_T
+  ! ----------------------------------------------------------------------------
   ! This module performs the NeuralNet operation in the Level 2 software.
   ! This takes a measurement vector, 
   ! then returns a state vector with values calculated
   ! using a file of weight coefficients.
+  !
+  ! Note that it currently supports only the retrieval of Temperature
+  ! Also it assumes Bands 1, 8, and 22 are supplied
+  ! The current weights file format is hard-coded here. 
+  ! It would require changes and testing if that format should ever change.
+  ! We also assume the weights are stored in a manner consistent
+  ! with the following order for the "collapsed" measurement vector:
+  !   [b1c1m1,b1c2m1,..,b1c1m2,b1c2m2,..,b2c1m1,..,..,b22c1m1,..]
+  ! where
+  !   bk is Band k
+  !   cj is channel j
+  !   mi is MIF i
+  ! ----------------------------------------------------------------------------
 
   implicit none
   private
@@ -64,7 +78,7 @@ module NeuralNet_m              ! Use Neural Net Model to Retrieve State
   private :: not_used_here
 !---------------------------------------------------------------------------
 
-  ! The following must someday also be read from the file of n-n coefficients
+  ! The following must someday also be read from the file of weight coefficients
   integer, parameter              :: NumHiddenLayers  = 2
   character(len=*), parameter     :: switchOver       = 'tanh' ! or 'sigmoid'
   integer, parameter              :: NumChnnelsBand1  = 25
@@ -283,8 +297,8 @@ contains ! =====     Public Procedures     =============================
     ! These are absolute profile numbers, i.e. they start at '1' only
     ! for the first chunk
     call Dump ( Chunk )
-    firstProfile = L1MAFToL2Profile ( Chunk%firstMAFIndex, FileDatabase )
-    lastProfile  = L1MAFToL2Profile ( Chunk%lastMAFIndex , FileDatabase )
+    firstProfile = L1MAFToL2Profile ( Chunk%firstMAFIndex, FileDatabase, MIF=36 )
+    lastProfile  = L1MAFToL2Profile ( Chunk%lastMAFIndex , FileDatabase, MIF=36 )
     print *, 'firstProfile ', firstProfile
     print *, 'lastProfile  ',  lastProfile
     allocate(TemperatureValues(NumLevels))
@@ -294,6 +308,8 @@ contains ! =====     Public Procedures     =============================
     maxLat = mlsmax( temperature%template%geodLat(1,:) )
     firstBin = FindLast ( BinArray - minLat < 0._r4 )
     lastBin  = FindFirst ( BinArray - maxLat > 0._r4 )
+    print *, 'minLat ', minLat
+    print *, 'maxLat ', maxLat
     print *, 'firstBin ', firstBin
     print *, 'lastBin  ',  lastBin
     do BinNum = firstBin, lastBin
@@ -312,7 +328,7 @@ contains ! =====     Public Procedures     =============================
           & ) &
           & cycle
         thisProfile = profile + firstProfile - 1
-        thisMAF = L2ProfileToL1MAF ( thisProfile, fileDatabase )
+        thisMAF = L2ProfileToL1MAF ( thisProfile, fileDatabase, MIF=36 )
         MAF = thisMAF - Chunk%firstMAFIndex + 1
         print *, 'binNum, profile, MAF ', binNum, profile, MAF
         print *, 'thisprofile, thisMAF ', thisprofile, thisMAF
@@ -320,10 +336,13 @@ contains ! =====     Public Procedures     =============================
         print *, 'Temperature radiometer ', Temperature%template%radiometer
         ! MAF and profile are indices inside the chunk, not absolute indices
         do j = 1, measurements%template%noQuantities
-          call Dump ( measurements%quantities(j)%template )
+          ! call Dump ( measurements%quantities(j)%template )
           if ( measurements%quantities(j)%template%quantityType /= l_radiance ) cycle
           !
-          print *, 'Qty radiometer ', measurements%quantities(j)%template%radiometer
+          call outputNamedValue ( 'Qty radiometer ', measurements%quantities(j)%template%radiometer )
+          call outputNamedValue ( 'latitude', measurements%quantities(j)%template%Phi(1,MAF) )
+          call outputNamedValue ( 'longitude', measurements%quantities(j)%template%lon(1,MAF) )
+          call outputNamedValue ( 'geodLat', measurements%quantities(j)%template%GeodLat(1,MAF) )
           ! Because there is no radiometer defined for Temperature,
           ! we can hardly compare it to whatever radiometer the measurement
           ! quantity uses
@@ -331,7 +350,7 @@ contains ! =====     Public Procedures     =============================
           !
           radiances => measurements%quantities(j)
           signal = measurements%quantities(j)%template%signal
-          print *, 'Calling AssembleNNMeasurement'
+          print *, 'Calling AssembleNNMeasurement for MAF ', thisMAF
           call AssembleNNMeasurement ( NNMeasurements, &
             & radiances, signal, &
             & Coeffs%MIFs, Coeffs%Channels_In_Each_Band, MAF )
@@ -344,10 +363,12 @@ contains ! =====     Public Procedures     =============================
         if ( all(NNMeasurements%Band_22_Radiances%values == 0._r8) ) &
           print *, 'All band 22 radiances vanish'
         if ( StandardizeRadiancesHere ) then
+          print *, 'thisProfile, thisMAF, thisBin ', &
+            & thisprofile, thisMAF, binNum
           call StandardizeRadiances ( NNMeasurements, &
             & Coeffs%Standardization_Brightness_Temperature_Mean, &
             & Coeffs%Standardization_Brightness_Temperature_Std, &
-            & TempFileID, thisMAF)
+            & TempFileID, thisMAF, Coeffs )
         endif
 !         call RunNeuralNet ( NNMeasurements, c, MyNeuralNet )
         print *, 'Calling NeuralNetFit'
@@ -440,6 +461,7 @@ contains ! =====     Public Procedures     =============================
       integer                         :: chanNum
       integer                         :: MIF
       character(len=32)               :: SignalStr  ! its string value
+      logical, parameter              :: DeeBug = .true.
       ! Executable
       call GetSignalName ( signal, signalStr )
       signalStr = ReplaceNonAscii( signalStr, ' ' )
@@ -452,7 +474,8 @@ contains ! =====     Public Procedures     =============================
               & radiances%value3(chanNum, MIFs(MIF), MAF)
           enddo
         enddo
-        
+        if ( DeeBug ) call OutputNamedValue ( 'Band 1 rad', &
+          & NNMeasurements%Band_1_Radiances%values(1,1) )
       case ('R3:240.B8F:PT.S3.FB25-8')
         do MIF = 1, NumMIFs
           do channel = 1, NumChnnelsBand8
@@ -461,6 +484,8 @@ contains ! =====     Public Procedures     =============================
               & radiances%value3(chanNum, MIFs(MIF), MAF)
           enddo
         enddo
+        if ( DeeBug ) call OutputNamedValue ( 'Band 8 rad', &
+          & NNMeasurements%Band_8_Radiances%values(1,1) )
       case ('R1A:118.B22D:PT.S0.DACS-4')
         do MIF = 1, NumMIFs
           do channel = 1, NumChnnelsBand22
@@ -469,6 +494,8 @@ contains ! =====     Public Procedures     =============================
               & radiances%value3(chanNum, MIFs(MIF), MAF)
           enddo
         enddo
+        if ( DeeBug ) call OutputNamedValue ( 'Band 22 rad', &
+          & NNMeasurements%Band_22_Radiances%values(1,1) )
       case  default
         print *, 'Failed to recognize: ', Capitalize(signalStr)
       end select
@@ -528,6 +555,9 @@ contains ! =====     Public Procedures     =============================
         allocate ( Coeffs%Standardization_Brightness_Temperature_Std (7575) )
         allocate ( Coeffs%MIFs(75) )
         allocate ( Coeffs%Bands(3) )
+        ! Just for debugging
+        allocate ( Coeffs%Means(18,7575) )
+        allocate ( Coeffs%Stddevs (18,7575) )
       endif
       if ( .not. allocated(Coeffs%Channels_In_Each_Band) ) &
         & call announce_error(0, &
@@ -656,6 +686,8 @@ contains ! =====     Public Procedures     =============================
         & values2 )
         Coeffs%Standardization_Brightness_Temperature_Mean = &
           values2(binNum,:)
+        Coeffs%Means = &
+          values2
 
       print *, 'Standardization_Brightness_Temperatures_Mean'
 
@@ -664,6 +696,8 @@ contains ! =====     Public Procedures     =============================
         & values2 )
         Coeffs%Standardization_Brightness_Temperature_Std = &
           values2(binNum,:)
+        Coeffs%Stddevs = &
+          values2
       print *, 'Standardization_Brightness_Temperatures_Std'
 
       deallocate ( values3 )
@@ -757,6 +791,9 @@ end module NeuralNet_m
 
 !
 ! $Log$
+! Revision 2.5  2021/03/18 23:48:18  pwagner
+! Fixed some more errors; added more debugging aids
+!
 ! Revision 2.4  2021/03/05 00:55:30  pwagner
 ! A tiny bit of progress
 !
