@@ -77,7 +77,7 @@ contains
   ! Given a MAF, returns the closest profile
   ! Return -1 if something goes wrong
   ! Remember--MAFs start at 0, not 1
-  function L1MAFToL2Profile ( MAF, fileDatabase ) result( profile )
+  function L1MAFToL2Profile ( MAF, fileDatabase, MIF ) result( profile )
     use L1BData, only: L1BData_t, &
       & AssembleL1BQtyName, DeallocateL1BData, &
       & ReadL1BData 
@@ -90,8 +90,9 @@ contains
     use MLSNumerics, only: ClosestElement
     use MLSStringLists, only: GetStringElement
     ! Args
-    integer, intent(in) :: MAF
-    type (MLSFile_T), pointer :: FILEDATABASE(:)
+    integer, intent(in)                 :: MAF
+    type (MLSFile_T), pointer           :: FILEDATABASE(:)
+    integer, optional, intent(in)       :: MIF ! Not for MAFStartTimeTAI
     integer :: profile
     ! Internal variables
     integer, dimension(1) :: indices
@@ -100,12 +101,17 @@ contains
     type (L1BData_T) :: l1bField   ! L1B data
     type(MLSFile_T), pointer :: L1BFile, L2GPFile
     type (L2GPData_T) :: l2gp
+    integer :: myMIF ! To be used in diagnostic dumps
     integer :: LISTSIZE, NOMAFS, NOSWATHS
     character (len=namelen) :: QUANTITY
     character (len=L2GPNameLen) :: swath
     character (len=MAXSWATHNAMESBUFSIZE) :: SwathList
+    logical, parameter          :: DEEBug = .true.
+    logical, parameter          :: DumpLats = .true.
     ! Executable
     profile = -1
+    myMIF = 1
+    if ( present(MIF) ) myMIF = MIF
     ! 1st--read the MAF times
     L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
     if ( .not. associated(L1BFile) ) then
@@ -125,22 +131,58 @@ contains
            & hdfVersion=HDFVERSION_5 )
     call GetStringElement (trim(swathList), swath, 1, countEmpty )
     call ReadL2GPData ( L2GPFile, trim(swath), l2gp )
-    call ClosestElement( l1bField%dpField(1,1,MAF+1)*1._r8, l2gp%time, indices )
     if ( DEEBUG ) call outputNamedValue( 'shape(l2gp%time)', shape(l2gp%time) )
     if ( DEEBUG ) call outputNamedValue( 'shape(l1bField%dpField)', shape(l1bField%dpField) )
     if ( DEEBUG ) call outputNamedValue( 'lbound(l1bField%dpField(1,1,:))', lbound(l1bField%dpField(1,1,:)) )
+    call ClosestElement( l1bField%dpField(1,1,MAF+1)*1._r8, l2gp%time, indices )
     profile = indices(1)
-    if ( DEEBUG ) call outputNamedValue( 'l2gpvalue', l2gp%time(profile) )
-    if ( DEEBUG ) call outputNamedValue( 'l1bvalue', l1bField%dpField(1,1,MAF) )
-    if ( DEEBUG ) call outputNamedValue( 'l1bvalue[+1]', l1bField%dpField(1,1,MAF+1) )
+    if ( DEEBUG ) then
+      call outputNamedValue( 'l2gp profile', profile )
+      call outputNamedValue( 'l1b MAF', MAF )
+      call output ( '-----------', advance='yes' )
+      call output ( 'MAFStartTimesTAI', advance='yes' )
+      call outputNamedValue( 'l2gpvalue', l2gp%time(profile) )
+      call outputNamedValue( 'l1bvalue', l1bField%dpField(1,1,MAF) )
+      call outputNamedValue( 'l1bvalue[+1]', l1bField%dpField(1,1,MAF+1) )
+      call output ( '-----------', advance='yes' )
+    endif
     call deallocatel1bdata( l1bfield )
+    if ( DEEBug .and. DumpLats ) then
+      call ReadL1BData ( L1BFile, '/GHz/GeodAngle', l1bField, noMAFs, &
+        & l1bFlag, dontPad=.true.)
+      call output ( '-----------', advance='yes' )
+      call output ( 'Geod Angles', advance='yes' )
+      call outputNamedValue( 'shape(l1b)', shape(l1bField%dpField) )
+      call outputNamedValue( 'l2gpvalues', &
+        & (/ l2gp%GeodAngle(profile) /) )
+      call outputNamedValue( 'MAFs', &
+        & (/ MAF, MAF+1, MAF+2 /) )
+      call outputNamedValue( 'l1bvalues', &
+        & (/ l1bField%dpField(1,myMIF,MAF-1), l1bField%dpField(1,myMIF,MAF), &
+        & l1bField%dpField(1,myMIF,MAF+1), l1bField%dpField(1,myMIF,MAF+2) /)  )
+      call output ( '-----------', advance='yes' )
+
+      call deallocatel1bdata( l1bfield )
+      
+      call ReadL1BData ( L1BFile, '/GHz/GeodLat', l1bField, noMAFs, &
+        & l1bFlag, dontPad=.true.)
+      call output ( '-----------', advance='yes' )
+      call output ( 'Geod Lats', advance='yes' )
+      call outputNamedValue( 'shape(l1b)', shape(l1bField%dpField) )
+      call outputNamedValue( 'l2gpvalues', &
+        & (/ l2gp%Latitude(profile) /) )
+      call outputNamedValue( 'l1bvalues', &
+        & (/ l1bField%dpField(1,myMIF,MAF-1), l1bField%dpField(1,myMIF,MAF), &
+        & l1bField%dpField(1,myMIF,MAF+1), l1bField%dpField(1,myMIF,MAF+2) /)  )
+      call output ( '-----------', advance='yes' )
+    endif
     call destroyl2gpcontents( l2gp )
   end function L1MAFToL2Profile
 
   ! Given a profile, returns the closest MAF
   ! Return -1 if something goes wrong
   ! Remember--MAFs start at 0, not 1
-  function L2ProfileToL1MAF ( profile, fileDatabase ) result( MAF )
+  function L2ProfileToL1MAF ( profile, fileDatabase, MIF ) result( MAF )
     use Dump_0, only: Dump
     use L1BData, only: L1BData_T, NameLen, &
       & AssembleL1BQtyName, DeallocateL1BData, &
@@ -154,8 +196,9 @@ contains
     use MLSNumerics, only: ClosestElement
     use MLSStringLists, only: GetStringElement
     ! Args
-    integer, intent(in) :: profile
-    type (MLSFile_T), pointer :: FILEDATABASE(:)
+    integer, intent(in)                 :: profile
+    type (MLSFile_T), pointer           :: FILEDATABASE(:)
+    integer, intent(in), optional       :: MIF
     integer :: MAF
     ! Internal variables
     integer, dimension(1) :: indices
@@ -164,12 +207,15 @@ contains
     type (L1BData_T) :: l1bField   ! L1B data
     type(MLSFile_T), pointer :: L1BFile, L2GPFile
     type (L2GPData_T) :: l2gp
+    integer :: myMIF ! To be used in diagnostic dumps
     integer :: LISTSIZE, NOMAFS, NOSWATHS
     character (len=namelen) :: QUANTITY
     character (len=L2GPNameLen) :: swath
     character (len=MAXSWATHNAMESBUFSIZE) :: SwathList
     ! Executable
     MAF = -1
+    myMIF = 1
+    if ( present(MIF) ) myMIF = MIF
     ! 1st--read the MAF times
     L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
     if ( .not. associated(L1BFile) ) then
@@ -1364,6 +1410,9 @@ contains
 end module Global_Settings
 
 ! $Log$
+! Revision 2.180  2021/02/05 05:20:06  pwagner
+! Avoids unassocialed L2GPData
+!
 ! Revision 2.179  2019/04/18 16:30:10  pwagner
 ! Overwrite GlobalAttributes%PGEVersion only if currently blank
 !
