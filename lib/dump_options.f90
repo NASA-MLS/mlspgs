@@ -13,7 +13,7 @@ module Dump_Options
   use HighOutput, only: Banner, BlanksToColumn, Headline, OutputNamedValue
   use Machine, only: Crash_Burn
   use MLSStrings, only: LowerCase
-  use output_m, only: StampOptions, Blanks, &
+  use Output_m, only: StampOptions, Blanks, &
     & GetOutputStatus, Newline, Output
 
   ! Options for Dump_0, Dump_1, Diff_1, and maybe others.
@@ -175,24 +175,36 @@ module Dump_Options
   logical :: NameHasBeenPrinted = .false.
   logical :: OldNeverStamp
 
+! ---------------------------------------------------------------------------
 !     (parameters)
-! CollapseOptions          options determining what and how to dump collapsed
-!                           representations of multidimensional arrays
-! CrashAtBeginning         if set to crash on dump, crash at beginning not end
-! DefaultDiffOptions       switches to set default DIFF values for CLEAN, TRIM, etc.
-! DefaultDumpOptions       same as above, but for DUMP
-! DiffRMSMeansRMS          print abs min, max, etc. when DIFF has RMS set TRUE
-! DontDumpIfAllEqual       don't dump every element of a constant array
-! DumpTableSide            what side to place headers when dumping tables
-! FilterFillsFromRMS       exclude fill values when calculating rms, etc.
+! ---------------------------------------------------------------------------
+! Default values can be overriden for the following public data
+! To see the current values, call DumpDumpOptions
+! To restore the "factory settings" call RestoreDumpConfig
+! ---------------------------------------------------------------------------
+! CollapseOptions          Options determining what and how to dump multi-
+!                           dimensional arrays collapsed into lower-dimensions
+!                           (see the Collapse family in the HyperSlabs module)
+! CrashAtBeginning         If set to crash on dump, crash at beginning not end
+! DefaultDiffOptions       Switches to set default DIFF values for CLEAN, TRIM,
+!                           etc.
+! DefaultDumpOptions       Same as above, but for DUMP
+! DefaultWidth             How many elements to print per line
+!                            (for char-valued arrays only)
+!                            (Should we have similar for s.p. and d.p.?)
+! DiffRMSMeansRMS          Print abs min, max, etc. when DIFF has RMS set TRUE
+! DontDumpIfAllEqual       Don't dump every element of a constant array
+! DumpTableSide            What side to place headers when dumping tables
+! FilterFillsFromRMS       Exclude fill values when calculating rms, etc.
 !                           (not implemented yet)
 ! IntPlaces                How many places to print when dumping integer values
 ! MaxNumNANS               How many NaNs can we show where they are
-! NameOnEachLine           item name to print on each output line
-! PCTFormat                use this format to print % with '-s' diff option
-! RMSFormat                use this format to print min, max, rms, etc.
-! SDFormatDefault          use this format to print s.p., d.p. by default
-! StatsOnOneLine           stats, rms each printed on a single line
+! NameOnEachLine           Item name to print on each output line
+! PCTFormat                Use this format to print % with '-s' diff option
+! RMSFormat                Use this format to print min, max, rms, etc.
+! SDFormatDefault          Use this format to print s.p., d.p.
+! StatsOnOneLine           Stats, rms each printed all on a single line
+!                           instead of splitting across two lines
 
   ! The following character strings can include one or more options listed above
   ! E.g., '-crt' turns on Clean, RMS, and TrimIt
@@ -228,6 +240,12 @@ module Dump_Options
   character(*), parameter :: SDFormatDefaultCmplx = &
     & '(1x,"(",1pg13.6,",",1pg13.6,")")'
 
+! ---------------------------------------------------------------------------
+! The dump options data type
+! You may set it directly by assignment like this
+!    Dopts(whatever) = .true.
+! However the usual method is instead to parse the optional arg options using
+! subroutine Set_Options (see below)
   type :: Option_T
     character(10) :: Name  ! Option's name
     character :: Char      ! Character that selects option
@@ -535,6 +553,9 @@ contains
 end module Dump_Options
 
 ! $Log$
+! Revision 2.14  2021/04/01 23:44:21  pwagner
+! Light housekeeping; clarified some options
+!
 ! Revision 2.13  2019/07/22 22:18:10  pwagner
 ! Improved DumpDumpOptions
 !
