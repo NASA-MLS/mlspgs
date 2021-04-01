@@ -76,8 +76,22 @@ contains
 
   ! Given a MAF, returns the closest profile
   ! Return -1 if something goes wrong
-  ! Remember--MAFs start at 0, not 1
-  function L1MAFToL2Profile ( MAF, fileDatabase, MIF ) result( profile )
+  ! Remember--MAFs start at 0, not 1 (?)
+  !
+  ! Does anyone really think that having MAFs start at 0 wasn't a mistake?
+  ! It's probably too late to reverse that decision, but
+  ! because profiles, MIFs, and every other geolocation index start at 1
+  ! "singling" out MAFs and treating them in a manner inconsistent with
+  ! with normal expectations is a recipe for .. mistakes.
+  ! **
+  ! Here's a good software design rule:
+  ! Given a choice between 2 designs, where one design is more likely
+  ! to lead to mistakes and the other is less likely to lead to mistakes
+  !    ===>   choose the design less likely to lead to mistakes    <===
+  ! **
+  !
+  function L1MAFToL2Profile ( MAF, fileDatabase, &
+    & MIF, Debugging, Phi, Lat ) result( profile )
     use L1BData, only: L1BData_t, &
       & AssembleL1BQtyName, DeallocateL1BData, &
       & ReadL1BData 
@@ -85,7 +99,7 @@ contains
       & ReadL2GPData, DestroyL2GPContents
     use MLSFiles, only: HDFVersion_5, &
       & MLS_InqSwath, GetMLSFileByType
-    use MLSKinds, only: R8
+    use MLSKinds, only: R4, R8
     use MLSMessageModule, only: MLSMSG_Warning
     use MLSNumerics, only: ClosestElement
     use MLSStringLists, only: GetStringElement
@@ -93,6 +107,9 @@ contains
     integer, intent(in)                 :: MAF
     type (MLSFile_T), pointer           :: FILEDATABASE(:)
     integer, optional, intent(in)       :: MIF ! Not for MAFStartTimeTAI
+    logical, optional, intent(in)       :: Debugging
+    real(r4), optional, intent(out)     :: Phi
+    real(r4), optional, intent(out)     :: Lat
     integer :: profile
     ! Internal variables
     integer, dimension(1) :: indices
@@ -106,9 +123,12 @@ contains
     character (len=namelen) :: QUANTITY
     character (len=L2GPNameLen) :: swath
     character (len=MAXSWATHNAMESBUFSIZE) :: SwathList
-    logical, parameter          :: DEEBug = .true.
+    ! logical, parameter          :: DEEBug = .true.
+    logical                     :: DEEBug
     logical, parameter          :: DumpLats = .true.
     ! Executable
+    DeeBug = .false.
+    if ( present(Debugging) ) DeeBug = Debugging
     profile = -1
     myMIF = 1
     if ( present(MIF) ) myMIF = MIF
@@ -147,9 +167,10 @@ contains
       call output ( '-----------', advance='yes' )
     endif
     call deallocatel1bdata( l1bfield )
-    if ( DEEBug .and. DumpLats ) then
+    if ( (DEEBug .and. DumpLats) .or. present(Phi) ) then
       call ReadL1BData ( L1BFile, '/GHz/GeodAngle', l1bField, noMAFs, &
         & l1bFlag, dontPad=.true.)
+      if ( DeeBug ) then
       call output ( '-----------', advance='yes' )
       call output ( 'Geod Angles', advance='yes' )
       call outputNamedValue( 'shape(l1b)', shape(l1bField%dpField) )
@@ -160,12 +181,18 @@ contains
       call outputNamedValue( 'l1bvalues', &
         & (/ l1bField%dpField(1,myMIF,MAF-1), l1bField%dpField(1,myMIF,MAF), &
         & l1bField%dpField(1,myMIF,MAF+1), l1bField%dpField(1,myMIF,MAF+2) /)  )
+      call outputNamedValue( 'their MAFs', &
+        & (/ MAF-1, MAF, &
+        & MAF+1, MAF+2 /)  )
       call output ( '-----------', advance='yes' )
+      endif
+      if ( present(Phi) ) Phi = l1bField%dpField(1,myMIF,MAF)
 
       call deallocatel1bdata( l1bfield )
       
       call ReadL1BData ( L1BFile, '/GHz/GeodLat', l1bField, noMAFs, &
         & l1bFlag, dontPad=.true.)
+      if ( DeeBug ) then
       call output ( '-----------', advance='yes' )
       call output ( 'Geod Lats', advance='yes' )
       call outputNamedValue( 'shape(l1b)', shape(l1bField%dpField) )
@@ -174,7 +201,12 @@ contains
       call outputNamedValue( 'l1bvalues', &
         & (/ l1bField%dpField(1,myMIF,MAF-1), l1bField%dpField(1,myMIF,MAF), &
         & l1bField%dpField(1,myMIF,MAF+1), l1bField%dpField(1,myMIF,MAF+2) /)  )
+      call outputNamedValue( 'their MAFs', &
+        & (/ MAF-1, MAF, &
+        & MAF+1, MAF+2 /)  )
       call output ( '-----------', advance='yes' )
+      endif
+      if ( present(Lat) ) Lat = l1bField%dpField(1,myMIF,MAF)
     endif
     call destroyl2gpcontents( l2gp )
   end function L1MAFToL2Profile
@@ -1410,6 +1442,9 @@ contains
 end module Global_Settings
 
 ! $Log$
+! Revision 2.181  2021/03/19 15:20:49  pwagner
+! Added the optional arg MIF to MAF v. profile functions
+!
 ! Revision 2.180  2021/02/05 05:20:06  pwagner
 ! Avoids unassocialed L2GPData
 !
