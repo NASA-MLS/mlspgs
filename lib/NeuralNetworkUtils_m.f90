@@ -39,7 +39,7 @@ MODULE NeuralNetUtils_M
   use MLSCommon, only: MLSFile_T
   use MLSHDF5, only: SaveAsHDF5DS
   use MLSFinds, only: FindFirst
-  use MLSKinds, only: R4, R8
+  use MLSKinds, only: R4, R8, Rv
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use Output_M, only: Output
   implicit none
@@ -123,8 +123,16 @@ MODULE NeuralNetUtils_M
   interface Dump
     module procedure Dump_Coeffs !, Dump_Radiance, Dump_InputData
   end interface
+  
+  ! In case we're checking against Frank's results
+  ! These are purely for debugging against matched results
+  ! Comment them out, and references o them, when you're
+  ! satisfied our results match.
+  real(r8), dimension(7575), public, save :: matchedStdRadiances = 0
+  integer, public, save                   :: matchedbinNum       = 0
+  integer, public, save                   :: matchedMAF          = 0
 
-  PUBLIC :: Dump, &
+  PUBLIC :: CheckMAFs, Dump, &
        & NeuralNetInputData_T, & 
        & NeuralNetCoeffs_T, & 
        & NeuralNetFit, & 
@@ -141,6 +149,75 @@ MODULE NeuralNetUtils_M
 
 
 contains 
+  subroutine CheckTemperatures ( TempFileID, ProfileRange, TemperatureValues )
+    ! Compare with the Temperature values written to the TempFile by
+    ! Frank's python script
+    use Intrinsic, only: L_HDF
+    use MLSHDF5, only: LoadFromHDF5DS
+    use MLSFiles, only: HDFVersion_5
+    ! Dummy args
+    integer, intent(in)                  :: TempFileID ! For optional comparisons
+    integer, dimension(:), intent(in)    :: ProfileRange ! For optional comparisons
+    real(Rv),  dimension(:)              :: TemperatureValues
+    ! Internal variables
+    integer                                :: profile
+    type (MLSFile_T)                       :: TempFile
+    real(r4), allocatable, dimension(:,:)  :: values2
+    ! Executable
+    call outputNamedValue( 'Range of profiles to read Temperatures', ProfileRange )
+    TempFile%FileID%f_id = TempFileID
+    TempFile%StillOpen = .true.
+    TempFile%type = l_hdf
+    TempFile%hdfVersion = HDFVersion_5
+    allocate ( values2(55, 3495) )
+    call LoadFromHDF5DS ( TempFile, &
+      & "ANN_Prediction", &
+      & values2 )
+    do profile = ProfileRange(1), ProfileRange(2)
+      TemperatureValues = values2(:, profile)
+    enddo
+  end subroutine CheckTemperatures 
+
+  function CheckMafs ( TempFileID, StdRadiances ) result ( MAF )
+    ! Compare with the standardized rads written to the TempFile by
+    ! Frank's python script
+    ! This comparison seeks to find which MAF he most likely used
+    use Intrinsic, only: L_HDF
+    use MLSHDF5, only: LoadFromHDF5DS
+    use MLSFiles, only: HDFVersion_5
+    ! Dummy args
+    integer, intent(in)                    :: TempFileID ! For optional comparisons
+    real(r8), dimension(:), intent(in)     :: StdRadiances
+    integer                                :: MAF
+    ! Internal variables
+    integer                                :: j
+    type (MLSFile_T)                       :: TempFile
+    real(r4), allocatable, dimension(:,:)  :: ratios2
+    real(r4), allocatable, dimension(:)    :: recalc
+    ! Executable
+    TempFile%FileID%f_id = TempFileID
+    TempFile%StillOpen = .true.
+    TempFile%type = l_hdf
+    TempFile%hdfVersion = HDFVersion_5
+    ! Recalculate ratios using Frank's own radiances, means, and stddevs
+    ! Then check against the ratios he wrote out to TempFile
+    allocate ( ratios2(7575, 3495) )
+    call LoadFromHDF5DS ( TempFile, &
+      & "Standardized_Brightness_Temps_Matrix", &
+      & ratios2 )
+    MAF = FindFirst ( &
+      & (StdRadiances(1)-ratios2(1,:))**2 &
+      &  + &
+      & (StdRadiances(2)-ratios2(2,:))**2 &
+      & < 1.e-6 )
+    call OutputNamedValue ( 'min std rads', minval(StdRadiances) )
+    call OutputNamedValue ( 'max std rads', maxval(StdRadiances) )
+    call OutputNamedValue ( 'min matched rads', minval(matchedStdRadiances) )
+    call OutputNamedValue ( 'max matched rads', maxval(matchedStdRadiances) )
+    call OutputNamedValue ( 'min rads(matchedMAF)', minval(ratios2(:,matchedMAF)) )
+    call OutputNamedValue ( 'max rads(matchedMAF)', maxval(ratios2(:,matchedMAF)) )
+  end function CheckMafs
+
   subroutine CheckBinNums ( TempFileID, MAFRange, nnCoeffs )
     ! Compare with the standardized rads written to the TempFile by
     ! Frank's python script
@@ -151,9 +228,10 @@ contains
     ! Dummy args
     integer, intent(in)                  :: TempFileID ! For optional comparisons
     integer, dimension(:), intent(in)    :: MAFRange ! For optional comparisons
-    TYPE (NeuralNetCoeffs_T), intent(in) :: nnCoeffs
+    type (NeuralNetCoeffs_T), intent(in) :: nnCoeffs
     ! Internal variables
     integer                                :: binNum
+    integer                                :: binNum2
     integer                                :: j
     integer                                :: MAF
     type (MLSFile_T)                       :: TempFile
@@ -196,12 +274,13 @@ contains
         call outputNamedValue ( 'if wrong Bin', recalc(j)  )
         ! Check if a second bin number also matches
         if ( binNum < 18 ) then
-          binNum = FindFirst ( abs(ratios2(1,MAF)-recalc(binNum+1:)) < 1.e-4 )
-          if ( binNum > 0 ) then
-            call outputNamedValue ( 'A 2nd match found at 1st +', BinNum )
+          binNum2 = FindFirst ( abs(ratios2(1,MAF)-recalc(binNum+1:)) < 1.e-4 )
+          if ( binNum2 > 0 ) then
+            call outputNamedValue ( 'A 2nd match found at 1st', BinNum+BinNum2 )
             stop
           endif
         endif
+        matchedBinNum = binNum
         ! We match at the first MIF, channel, and Band. How about all the rest?
         deallocate ( recalc )
         allocate ( recalc(7575) )
@@ -256,20 +335,20 @@ contains
     TempFile%StillOpen = .true.
     TempFile%type = l_hdf
     TempFile%hdfVersion = HDFVersion_5
+    allocate ( ratios2(7575, 3495) )
+    call LoadFromHDF5DS ( TempFile, &
+      & "Standardized_Brightness_Temps_Matrix", &
+      & ratios2 )
     if ( myRecalculate ) then
       call output ( 'Recalculating the standardized brightness Temps in Franks file', &
         & advance='yes' )
       ! Recalculate ratios using Frank's own radiances, means, and stddevs
       ! Then check against the ratios he wrote out to TempFile
-      allocate ( ratios2(7575, 3495) )
       allocate ( recalc(7575) )
       allocate ( values2(7575, 3495) )
       call LoadFromHDF5DS ( TempFile, &
         & "Brightness_Temps_Matrix", &
         & values2 )
-      call LoadFromHDF5DS ( TempFile, &
-        & "Standardized_Brightness_Temps_Matrix", &
-        & ratios2 )
       do MAF = MAFRange(1), MAFRange(2)
         do j=1, size(mean)
           recalc(j) = (values2(j, MAF) - mean(j)) / stddev(j)
@@ -301,7 +380,9 @@ contains
       call ShowDiffs ( MAF )
     enddo
     call output( '     ------------------', advance='yes' )
-    MAF = FindFirst ( abs(Rads(1)-values2(1,:)) < 1.e-4     )
+    ! MAF = FindFirst ( abs(Rads(1)-values2(1,:)) < 1.e-4     )
+    MAF = FindFirst ( (Rads(1)-values2(1,:))**2 + &
+      & (Rads(2)-values2(2,:))**2 < 1.e-8     )
     if ( present(MatchingMAF) ) MatchingMAF = MAF
     if ( MAF < 1 ) then
       call output( 'No matching MAF found', advance='yes' )
@@ -312,19 +393,26 @@ contains
       return
     else
       call outputNamedValue( 'Matching MAF in Franks file', MAF )
-      call output ( (/ Real(rads(1), r4), values2(1,MAF) /) )
+      call output ( (/ Real(rads(1), r4), values2(1,MAF) /), advance='yes' )
       call output( '     ------------------', advance='yes' )
       call ShowDiffs ( MAF )
-      ! Could the indexes be jumbled?
+      ! Could the MIF indexes be jumbled?
       MIF = FindFirst ( abs(Rads(2)-values2(:,MAF)) < 1.e-4     )
       if ( MIF < 1 ) then
         call output( 'No matching MIF found for our 2', advance='yes' )
       else
         call outputNamedValue( 'Matching MIF in Franks file for MIF=2', MIF )
-        call output ( (/ Real(rads(2), r4), values2(MIF,MAF) /) )
+        call output ( (/ Real(rads(2), r4), values2(MIF,MAF) /), advance='yes' )
         call output( '     ------------------', advance='yes' )
       endif
     endif
+    ! Are we saving the matched valus for comparisons and debugging?
+    matchedMAF = MAF
+    matchedStdRadiances = ratios2(:,MAF)
+    call OutputNamedValue ( 'min matched rads', minval(matchedStdRadiances) )
+    call OutputNamedValue ( 'max matched rads', maxval(matchedStdRadiances) )
+    if ( MAF+1 > size(values2,2) ) return
+    ! Check for a 2nd matching MAF
     MAF = FindFirst ( abs(Rads(1)-values2(1,MAF+1:)) < 1.e-4     )
     if ( MAF >0 ) then
       call outputNamedValue( '2nd Matching MAF in Franks file', MAF )
@@ -384,14 +472,13 @@ contains
     endif
     
     call outputNamedValue ( 'Number of neurons', size(Coeffs%Intercepts_Hidden_Layer_1) )
-    
+    if ( myDetails < 0 ) return    
     if ( myDetails > 0 ) then
     call dump ( Coeffs%Intercepts_Hidden_Layer_1, 'Intercepts layer 1' )
     
     call dump ( Coeffs%Intercepts_Hidden_Layer_2, 'Intercepts layer 2' )
     endif
     
-    call outputNamedValue ( 'Number of neurons', size(Coeffs%Intercepts_Hidden_Layer_1) )
     call outputNamedValue ( 'shape(WHLL)', shape(Coeffs%Weights_Hidden_Labels_Layer ) )
     call outputNamedValue ( 'shape(WHL1)', shape(Coeffs%Weights_Hidden_Layer_1      ) )
     call outputNamedValue ( 'shape(WHL2)', shape(Coeffs%Weights_Hidden_Layer_2      ) )
@@ -408,7 +495,8 @@ contains
   end subroutine Dump_Coeffs
 
   FUNCTION NeuralNetFit( nnInputData, nnCoeffs, nHL, TYPE, &
-    & RadFileID, TempFileID, MAF, profile ) RESULT(prediction)
+    & RadFileID, TempFileID, MAF, profile, Debugging, StdRadiances ) &
+    & RESULT(prediction)
 
     ! Fortran version of the IDL code in `example_idl.pro' from Frank
 
@@ -421,6 +509,8 @@ contains
     integer, optional, intent(in) :: TempFileID ! For optional comparisons
     integer, optional, intent(in) :: MAF ! For optional comparisons
     integer, optional, intent(in) :: profile ! For optional comparisons
+    logical, optional, intent(in) :: Debugging
+    real(r8), optional, dimension(:), intent(in) :: StdRadiances
 
     ! Local variables
     logical,save :: first = .TRUE.
@@ -437,13 +527,17 @@ contains
     integer :: c,n,m,jj,s,v! various counters
     integer :: MatchingMAF
     integer, dimension(2) :: dims2
+    logical                     :: DEEBug
 
 
-    ! ----------- executable statements -----------------
+    ! Executable
+    DeeBug = .false.
+    if ( present(Debugging) ) DeeBug = Debugging
 
-    ! make sure TYPE is correct.
+    ! make sure TYPE is one of the recognized types
     IF ( TRIM(TYPE) .NE. 'tanh' .AND. &
          & TRIM(TYPE) .NE. 'sigmoid' ) THEN 
+       call OutputNamedValue (  'Unrecognized type', trim(type) )
        CALL MLSMessage(MLSMSG_error, ModuleName, &
            & "input var TYPE must equal either 'tanh' or 'sigmoid'")
     ENDIF
@@ -452,8 +546,10 @@ contains
            & "NHL must equal either 1 or 2")
      ENDIF
 
-
-    call Dump ( nnCoeffs )
+    if ( DeeBug ) then
+      call output ( 'Dumping n-n weights', advance='yes' )
+      call Dump ( nnCoeffs, Details=-1 )
+    endif
 
     ! These are fixed for the run
     IF (FIRST) THEN 
@@ -468,6 +564,7 @@ contains
       first=.FALSE.
     ENDIF
 
+    if ( DeeBug ) call output ( 'Allocating', advance='yes' )
     ! allocate space
     ! nMIFs=75 for all bands (so far)
     ! nVars = 2*Chanels(bands 1&8) *  nMIFs + nChans(22)*nMIFs
@@ -479,40 +576,53 @@ contains
     neuronValues = 0.0
     prediction = 0.0
 
-    ! load the data into the working_space. The data is arranged as
-    ! the radiances in MIF, then channel order for band 1, band 8 and
-    ! then band 22
-    jj=1
+    ! Did we pass the already-standardized radiances as an optional arg?
+    if ( .not. present(StdRadiances) ) then
+      ! load the data into the working_space. The data is arranged as
+      ! the radiances in MIF, then channel order for band 1, band 8 and
+      ! then band 22
+      jj=1
 
-    ! Load band1
-    DO m=1,nMIFs
-      DO c=1,nChans(1)
-        working_space( jj ) = nnInputData%Band_1_Radiances%Values(c,m)
-        jj = jj + 1
+      ! Load band1
+      DO m=1,nMIFs
+        DO c=1,nChans(1)
+          working_space( jj ) = nnInputData%Band_1_Radiances%Values(c,m)
+          jj = jj + 1
+        END DO
       END DO
-    END DO
 
-    ! Load band8
-    DO m=1,nMIFs
-      DO c=1,nChans(1)
-        working_space( jj ) = nnInputData%Band_8_Radiances%Values(c,m)
-        jj = jj + 1
+      ! Load band8
+      DO m=1,nMIFs
+        DO c=1,nChans(1)
+          working_space( jj ) = nnInputData%Band_8_Radiances%Values(c,m)
+          jj = jj + 1
+        END DO
       END DO
-    END DO
 
-    ! load band 22
-    DO m=1,nMIFs
-      DO c=1,nChans(2)
-        working_space( jj ) = nnInputData%Band_22_Radiances%Values(c,m)
-        jj = jj + 1
+      ! load band 22
+      DO m=1,nMIFs
+        DO c=1,nChans(2)
+          working_space( jj ) = nnInputData%Band_22_Radiances%Values(c,m)
+          jj = jj + 1
+        END DO
       END DO
-    END DO
+    else
+      if ( DeeBug ) call output( 'Using optional stdRadiances', advance='yes' )
+      jj = size(StdRadiances)
+      working_space(1:jj) = StdRadiances
+      jj = jj + 1 ! to synchronize with its value after the nested loops we skipped
+    endif
 
-
-    call OutputNamedValue ( 'nVars', nVars )
-    call OutputNamedValue ( 'shape(WHL1)', shape(nnCoeffs%Weights_Hidden_Layer_1) )
-    call OutputNamedValue ( 'min(Rads)', minval(working_space(1:jj-1)) )
-    call OutputNamedValue ( 'max(Rads)', maxval(working_space(1:jj-1)) )
+    if ( DeeBug ) then
+      call OutputNamedValue ( 'nVars', nVars )
+      call OutputNamedValue ( 'jj-1', jj-1 )
+      call OutputNamedValue ( 'min(Rads)', minval(working_space(1:jj-1)) )
+      call OutputNamedValue ( 'max(Rads)', maxval(working_space(1:jj-1)) )
+      call OutputNamedValue ( '1st,last(Rads)', (/ &
+        & working_space(1), working_space(jj-1) &
+        & /)&
+        & )
+    endif
     
     ! Optionally save this dataset for comparison with
     ! PyThon or iDl or whaTeVer you guys use these daYs
@@ -549,9 +659,10 @@ contains
            & nnCoeffs%Intercepts_Hidden_Layer_1, neuronValues)
 
     ENDIF
-    
-    call OutputNamedValue ( 'num neurons', nNeurons )
-    call OutputNamedValue ( 'shape(WHLL)', shape(nnCoeffs%Weights_Hidden_Labels_Layer) )
+    if ( DeeBug ) then
+      call OutputNamedValue ( 'num neurons', nNeurons )
+      call OutputNamedValue ( 'shape(WHLL)', shape(nnCoeffs%Weights_Hidden_Labels_Layer) )
+    endif
 
 
     neuronValues2=0.0
@@ -603,7 +714,7 @@ contains
   subroutine StandardizeRadiances ( nnInputData, &
               & Mean, &
               & StdDev, &
-              & TempFileID, MAF, nnCoeffs )
+              & TempFileID, MAF, nnCoeffs, Debugging )
     ! Compute the ratio
     !       values - mean
     !       --------------
@@ -615,15 +726,19 @@ contains
     integer, optional, intent(in) :: TempFileID ! For optional comparisons
     integer, optional, intent(in) :: MAF ! For optional comparisons
     TYPE (NeuralNetCoeffs_T), optional, intent(in)        :: nnCoeffs
+    logical, optional, intent(in)       :: Debugging
     ! Internal variables
     real(r8), dimension(:), allocatable                   :: ratio
     real(r8), dimension(:), allocatable                   :: values
     integer                                               :: channel
+    logical                                               :: DeeBug
     integer                                               :: j ! index into mean
     integer                                               :: MatchingMAF
     integer                                               :: MIF
     integer                                               :: n ! how many overall
     ! Executable
+    DeeBug = .false.
+    if ( present(Debugging) ) DeeBug = Debugging
     if ( size(mean) /= size(stddev) ) then
          CALL MLSMessage( MLSMSG_error, ModuleName, &
              & "input arrays mean and stddev must have the same size" )
@@ -722,6 +837,7 @@ contains
     ! What if the binNum we used was different from Frank's?
     if ( present(nnCoeffs) ) &
       & call CheckBinNums ( TempFileID, (/ MAF, MAF /), nnCoeffs )
+    
   end subroutine StandardizeRadiances
 
   ! Dot product.
@@ -759,6 +875,9 @@ contains
 
 END MODULE NeuralNetUtils_M
 ! $Log$
+! Revision 2.4  2021/03/18 23:47:41  pwagner
+! Fixed some more errors; added more debugging aids
+!
 ! Revision 2.3  2021/03/05 00:53:34  pwagner
 ! Some progress but still wrong
 !
