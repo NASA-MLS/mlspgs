@@ -261,7 +261,7 @@ contains
     call theDumpBegins ( options )
     myFillValue = ' '
     if ( present(FillValue) ) myFillValue = FillValue
-    MyWidth = DEFAULTWidth ! 10
+    MyWidth = DefaultWidth ! 10
     if ( present(width) ) MyWidth = width
 
     lon = len(array(1))
@@ -619,7 +619,7 @@ contains
     end if
     myFillValue = ' '
     if ( present(FillValue) ) myFillValue = FillValue
-    MyWidth = 10
+    MyWidth = DefaultWidth ! 10
     if ( present(width) ) MyWidth = width
     lon = len(array(1,1))
     if ( dopts(trimIt)%v ) lon = maxval(len_trim(array))
@@ -1221,7 +1221,7 @@ contains
     lon = len(array(1,1,1))
     if ( dopts(trimIt)%v ) lon = maxval(len_trim(array))
     if ( present(maxlon) ) lon = min(lon, maxlon)
-    MyWidth = 10
+    MyWidth = DefaultWidth ! 10
     if ( present(width) ) MyWidth = width
 
     numZeroRows = 0
@@ -1979,6 +1979,9 @@ contains
 end module Dump_0
 
 ! $Log$
+! Revision 2.162  2021/04/01 23:45:18  pwagner
+! DefaultWidth allplied consistently to all character-values
+!
 ! Revision 2.161  2019/10/25 20:54:58  pwagner
 ! Dump full row of zeros if narrower than my width
 !
