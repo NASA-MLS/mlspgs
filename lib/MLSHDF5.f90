@@ -202,10 +202,13 @@ module MLSHDF5
 ! MLSStringLists
 !
 ! Bugs and Gotchas:
-! How do we know where the wildcard "*" can appear in a field 
-!    and where it is forrbidden?
-! For which procedures can the arg be an MLSFile_T? Shouldn't you make it
+! (1) How do we know where the wildcard "*" can appear in a field 
+!    and where it is forbidden?
+! (2) For which procedures can the arg be an MLSFile_T? Shouldn't you make it
 !    all of them?
+! (3) Beware that start uses the c position that array indexes start at 0, not 1.
+!    It might be better named "offset". As it is, start is an unfortunate
+!    misnomer that will probably continue to confuse.
 !                      
 ! === (end of api) ===
   interface CpHDF5Attribute
@@ -6158,6 +6161,7 @@ contains ! ======================= Public Procedures =========================
                                  ! Starting coordinatess of hyperslab
     ! Local variables
     integer :: Me = -1                  ! String index for trace cacheing
+    ! logical, parameter :: DeeBug = .true.
 
     ! Begin execution
     call trace_begin ( me, 'MLS_hyperslab', cond=.false. )
@@ -6459,6 +6463,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.150  2021/04/01 23:50:02  pwagner
+! Strong words now warn of mis-named 'start' array
+!
 ! Revision 2.149  2021/02/05 05:13:15  pwagner
 ! Prints more if rank too large
 !
