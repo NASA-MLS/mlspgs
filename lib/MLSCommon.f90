@@ -279,6 +279,39 @@ module MLSCommon                ! Common definitions for the MLS software
   real(r4), public, save      :: UndefinedValue        = DefaultUnDefinedValue
   ! --------------------------------------------------------------------------
 
+  !----------------------------------------------------------------------
+  !         What do we mean by the start array?
+  ! The hdf library, and any libraries based on hdf, were written with
+  ! the c language in mind. So they treat the first element of an array
+  ! as index number "0" instead of "1". Therefore, start[k]=0
+  ! means the first element. To a Fortran mentality, start functions not like
+  ! an array of first indexes but like an array of offsets. We have then two
+  ! choices of how to treat the start array when not calling an hdf procedure:
+  ! (1) Fort_Indx: treat start as the first element
+  ! (2) Offset:    adopt the hdf convention, and treat it as an offset
+  ! The choice we make is set by the MLS_HyperStart parameter below.
+  integer, parameter             :: Fort_Indx            = 1
+  integer, parameter             :: Offset               = 0
+  integer, parameter, public     :: MLS_HyperStart       = Fort_Indx
+  ! When used in a procedure that interfaces directly with hdf, nothing
+  ! changes. Just remember that start[k]=0 means the first element.
+  !
+  ! When used with an mls procedure out of Hyperslabs.f90, or when used with
+  ! L2GPData/ExtractL2GPRecord, the following hold
+  ! MLS_HyperStart                 start[k]=this 
+  !                                means the first element
+  ! ----------                 ---------------------------
+  ! Fort_Indx                             1
+  ! Offset                                0
+  !
+  ! Up to the time of this writing (2021-04-02) we have allowed
+  ! MLS_HyperStart == Fort_Index
+  ! While intuitive for a Fortran user, it is inconsistent with the usage
+  ! in the hdf library. Therefore, we may someday switch to 
+  ! MLS_HyperStart == Offset
+  !----------------------------------------------------------------------
+
+  !----------------------------------------------------------------------
   ! A type to hold the hdf file ids
   ! (Should we make it recursive in case dataset path something like
   ! "/grp_1/grp_2/../grp_n/sd"?)
@@ -742,6 +775,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.59  2021/04/15 22:42:28  pwagner
+! Added MLS_HyperStart; should it be here?
+!
 ! Revision 2.58  2020/07/09 23:51:12  pwagner
 ! Added Start,EndTime components to MLSChunk_T
 !
