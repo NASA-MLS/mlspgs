@@ -32,13 +32,13 @@
         do JJ=1, count(2)
           do II=1, count(1)
             do k=1, block(3)
-              n3 = start(3) - 1 + (KK-1)*stride(3) + k
+              n3 = start(3) - MLS_HyperStart + (KK-1)*stride(3) + k
               m3 = (KK-1)*block(3) + k
               do j=1, block(2)
-                n2 = start(2) - 1 + (JJ-1)*stride(2) + j
+                n2 = start(2) - MLS_HyperStart + (JJ-1)*stride(2) + j
                 m2 = (JJ-1)*block(2) + j
-                n1 = start(1) - 1 + (II-1)*stride(1) + 1
-                n1b = start(1) - 1 + (II-1)*stride(1) + block(1)
+                n1 = start(1) - MLS_HyperStart + (II-1)*stride(1) + 1
+                n1b = start(1) - MLS_HyperStart + (II-1)*stride(1) + block(1)
                 m1 = (II-1)*block(1) + 1
                 m1b = (II-1)*block(1) + block(1)
                 array(n1:n1b, n2, n3) = slab(m1:m1b, m2, m3)
@@ -57,13 +57,13 @@
         do JJ=1, count(2)
           do II=1, count(1)
             do k=1, block(3)
-              n3 = start(3) - 1 + (KK-1)*stride(3) + k
+              n3 = start(3) - MLS_HyperStart + (KK-1)*stride(3) + k
               m3 = (KK-1)*block(3) + k
               do j=1, block(2)
-                n2 = start(2) - 1 + (JJ-1)*stride(2) + j
+                n2 = start(2) - MLS_HyperStart + (JJ-1)*stride(2) + j
                 m2 = (JJ-1)*block(2) + j
-                n1 = start(1) - 1 + (II-1)*stride(1) + 1
-                n1b = start(1) - 1 + (II-1)*stride(1) + block(1)
+                n1 = start(1) - MLS_HyperStart + (II-1)*stride(1) + 1
+                n1b = start(1) - MLS_HyperStart + (II-1)*stride(1) + block(1)
                 m1 = (II-1)*block(1) + 1
                 m1b = (II-1)*block(1) + block(1)
                 slab(m1:m1b, m2, m3) = array(n1:n1b, n2, n3)
@@ -77,6 +77,9 @@
       & ModuleName, "direction neither embedding nor extracting" )
     end select
 ! $Log$
+! Revision 1.6  2015/10/06 17:53:09  pwagner
+! Replace innermost do loop with array section
+!
 ! Revision 1.5  2014/09/04 23:52:32  vsnyder
 ! Add allocate/deallocate size tracking
 !

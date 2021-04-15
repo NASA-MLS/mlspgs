@@ -27,7 +27,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use HighOutput, only: BeVerbose, OutputNamedValue, StyledOutput
   use Intrinsic ! "units" Type Literals, Beginning With L
   use MLSCommon, only: DefaultUndefinedValue, Interval_T, &
-    & MLSFile_T, L2MetaData_T, UndefinedIntegerValue
+    & MLSFile_T, L2MetaData_T, MLS_HyperStart, UndefinedIntegerValue
   use MLSFiles, only: FileNotFound, &
     & HDFVersion_4, HDFversion_5, WildcardHDFversion, &
     & Dump, InitializeMLSFile, MLS_CloseFile, MLS_Exists, MLS_OpenFile, &
@@ -3179,14 +3179,14 @@ contains ! =====     Public Procedures     =============================
     myFreqs(2) = max( myFreqs(2), myFreqs(1) )
     myLevels(2) = max( myLevels(2), myLevels(1) )
     ! convert to hyperslab params start, count, stride, block
-    start(1) = myFreqs(1)
-    start(2) = mylevels(1)
-    start(3) = myTimes(1)
+    start(1) = myFreqs(1) + MLS_HyperStart -1 
+    start(2) = mylevels(1) + MLS_HyperStart -1 
+    start(3) = myTimes(1) + MLS_HyperStart -1 
     count(1) = myFreqs(2) - myFreqs(1) + 1
     count(2) = mylevels(2) - mylevels(1) + 1
     count(3) = myTimes(2) - myTimes(1) + 1
     if ( ol2gp%nFreqs < 1 ) then
-      start(1) = 1
+      start(1) = MLS_HyperStart
       count(1) = 1
     endif
     call ExtractArray ( l2gp%pressures    , ol2gp%pressures    , start(2:2), count(2:2), stride(2:2), block(2:2) )
@@ -5654,6 +5654,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.247  2020/07/17 16:16:14  pwagner
+! Avoid reading hdf5 MissingValue attribute from hdf4 files
+!
 ! Revision 2.246  2020/06/30 23:20:18  pwagner
 ! ConvertL2GPToQuantity copies pressures, hopefulyy w/o crashing
 !
