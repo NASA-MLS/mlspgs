@@ -15,6 +15,7 @@ module HyperSlabs              ! .. and array gymnastics
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use MLSFillValues, only: FilterValues
+  use MLSCommon, only: MLS_HyperStart
   use MLSFinds, only: FindAll, FindFirst, FindLast
   use MLSKinds ! Everything
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -61,7 +62,7 @@ module HyperSlabs              ! .. and array gymnastics
 ! ExtractArray      Extract a hyperslab of elements from the larger array
 !                     (optionally allocates slab first)
 ! Extremum          Returns the value farther from 0
-! GatherBloc       Gather a subset of elements from a larger array
+! GatherBloc        Gather a subset of elements from a larger array
 ! HalfWaves         Count consecutive values with same sign
 ! Repopulate        Restores non-zero values in presumably
 !                     sparse array to their proper locations
@@ -95,11 +96,11 @@ module HyperSlabs              ! .. and array gymnastics
 !
 ! More Notes:
 ! (1) For the meaning of start, count, stride, and block, see
-! the wiki page https://mls.jpl.nasa.gov/team/wiki/index.php/Hyperslab
-! or the comments accompanying subroutine Gather in the FillUtils module
+!     the wiki page https://mls.jpl.nasa.gov/team/wiki/index.php/Hyperslab
+!     or the comments accompanying subroutine Gather in the l2/FillUtils module
 ! (2) In the case of GatherBloc of this module, which1, which2, ..
-! are the indices of components 1, 2, .. of the larger array to be
-! collected and returned in the smaller bloc
+!     are the indices of components 1, 2, .. of the larger array to be
+!     collected and returned in the smaller bloc
 ! === (end of api) ===                                                 
   interface BandWidth
     module procedure BandWidth_1dr4, BandWidth_1dr8, BandWidth_1dint
@@ -980,6 +981,9 @@ end module HyperSlabs
 
 !
 ! $Log$
+! Revision 2.2  2021/04/15 22:44:27  pwagner
+! Now uses MLS_HyperStart
+!
 ! Revision 2.1  2017/11/03 19:55:09  pwagner
 ! First commit
 !
