@@ -43,6 +43,18 @@ include $(CONFDIR)/$(MLSCFILE)
 f9h_sources := $(shell ${REECHO} *.f9*)
 tex_sources := $(shell ${REECHO} *.tex)
 
+ifdef LATEXPATH
+   BIBTEX=$(LATEXPATH)/bibtex
+   LATEX=$(LATEXPATH)/latex
+   DVIPDF=$(LATEXPATH)/dvipdfm
+   PDFLATEX=$(LATEXPATH)/pdflatex
+else
+   BIBTEX=bibtex
+   LATEX=latex
+   DVIPDF=dvipdfm
+   PDFLATEX=pdflatex
+endif
+
 # Set paths for finding source files
 
 DVIDIR = ./dvi/
@@ -64,13 +76,14 @@ vpath %.pdf $(PDFDIR)
 .SUFFIXES:
 .SUFFIXES: .tex .dvi .pdf
 .tex.dvi:
-	latex $<
-	latex $<
+	$(LATEX) $<
+	$(LATEX) $<
 	mv $@ $(DVIDIR)
 	mv $*.log $(LOGDIR)
 
 .dvi.pdf:
-	dvipdf $(DVIDIR)/$*.dvi
+	# $(DVIPDF) $(DVIDIR)/$*.dvi
+	$(PDFLATEX) $*.tex
 	mv $@ $(PDFDIR)
 
 # Bugs and limitations:
@@ -136,6 +149,9 @@ update:
 
 # ========================================================================
 # $Log$
+# Revision 1.5  2020/04/08 21:48:17  pwagner
+# Gets settings from .configure; corrected dependencies
+#
 # Revision 1.4  2019/06/27 21:08:56  pwagner
 # make clean more thorough
 #

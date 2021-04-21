@@ -518,12 +518,12 @@ wvs-095-eta.eps: wvs-095-eta.obj
 wvs-095-eta.pdf: wvs-095-eta.obj
 
 wvs-095.dvi: wvs-095.tex wvs-095-eta.eps
-#	latex wvs-095
-#	latex wvs-095
+#	$(LATEX) wvs-095
+#	$(LATEX) wvs-095
 
 wvs-095.pdf: wvs-095.tex wvs-095-eta.pdf
-#	pdflatex wvs-095
-#	pdflatex wvs-095
+#	pdf$(LATEX) wvs-095
+#	pdf$(LATEX) wvs-095
 
 wvs-111-MinLambda-not=0.eps: wvs-111-MinLambda-not=0.jpg
 
@@ -728,10 +728,10 @@ wvs-149-1.txp: $(INSTALLDIR)/wvs-149
 	$(INSTALLDIR)/wvs-149
 
 wvs-149.aux: wvs-149.tex
-	latex wvs-149.tex
+	$(LATEX) wvs-149.tex
 
 wvs-149.bbl: wvs-149.bib wvs-149.aux
-	bibtex wvs-149
+	$(BIBTEX) wvs-149
 
 wvs-149-1.600gf: wvs-149-1.txp
 	mf '\mode=localfont; ' input wvs-149-1
@@ -843,31 +843,34 @@ wvs-160.pdf: wvs-146.pdf
 wvs-160.dvi: wvs-146.dvi
 
 wvs-128.aux: wvs-128.tex
-	latex wvs-128.tex
+	$(LATEX) wvs-128.tex
 
 iy-005.aux: iy-005.tex
-	latex iy-005.tex
+	$(LATEX) iy-005.tex
 
 iy-005.dvi: iy-005.tex iy-005.bbl
 
 iy-005.pdf: iy-005.tex iy-005.bbl
 
 iy-005.bbl: yanovsky.bib iy-005.aux
-	bibtex iy-005
+	$(BIBTEX) iy-005
 
 iy-006.aux: iy-006.tex
-	latex iy-006.tex
+	$(LATEX) iy-006.tex
 
 iy-006.dvi: iy-006.tex iy-006.bbl
 
 iy-006.pdf: iy-006.tex iy-006.bbl
 
 iy-006.bbl: yanovsky.bib iy-006.aux
-	bibtex iy-006
+	$(BIBTEX) iy-006
 
 
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.52  2020/06/10 21:01:51  pwagner
+# Builds wvs-160 OK, now
+#
 # Revision 1.51  2020/04/21 23:14:08  pwagner
 # Added more interdependencies among wvs in doc
 #

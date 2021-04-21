@@ -106,6 +106,18 @@ else
    INSTALLDIR=$(CONFDIR)/bin/$(MLSCONFG)
 endif
 
+ifdef LATEXPATH
+   BIBTEX=$(LATEXPATH)/bibtex
+   LATEX=$(LATEXPATH)/latex
+   DVIPDF=$(LATEXPATH)/dvipdfm
+   PDFLATEX=$(LATEXPATH)/pdflatex
+else
+   BIBTEX=bibtex
+   LATEX=latex
+   DVIPDF=dvipdfm
+   PDFLATEX=pdflatex
+endif
+
 TESTSDIR=$(CONFDIR)/tests
 
 # Set paths for finding source files
@@ -132,22 +144,24 @@ vpath %.jpg $(DOCDIR)
 .SUFFIXES:
 .SUFFIXES: .o .tex .dvi .pdf .eps .f .jpg .obj
 .tex.dvi:
+	echo "LATEXPATH $(LATEXPATH)"
+	echo "LATEX $(LATEX)"
 	echo "\def\dvidir{../dvi}" | cat - $< > $*.temp
 	echo "\def\logdir{$(LOGDIR)}" | cat - $*.temp > $*.temp2
 	echo "\def\pdfdir{../pdf}" | cat - $*.temp2 > $(TEXDIR)/$<
-	echo "\end" | latex $(TEXDIR)/$<; \
-	echo "\end" | latex $(TEXDIR)/$<
+	echo "\end" | $(LATEX) $(TEXDIR)/$<; \
+	echo "\end" | $(LATEX) $(TEXDIR)/$<
 	mv $@ $(DVIDIR)
 
 .dvi.pdf:
 	# dvipdf $(DVIDIR)/$<
 	if [ "$*" != "index" ]; then \
-	  echo "\end" | latex $(TEXDIR)/$*.tex; \
-	  echo "\end" | latex $(TEXDIR)/$*.tex; \
+	  echo "\end" | $(LATEX) $(TEXDIR)/$*.tex; \
+	  echo "\end" | $(LATEX) $(TEXDIR)/$*.tex; \
+	  $(DVIPDF) $*.dvi; \
 	  mv $*.dvi $(DVIDIR); \
-	  dvipdf $(DVIDIR)/$*.dvi; \
 	else \
-	  pdflatex $(TEXDIR)/$*.tex; \
+	  $(PDFLATEX) $(TEXDIR)/$*.tex; \
 	fi
 	mv $@ $(PDFDIR)
 	mv `${REECHO} $*.log $*.aux $*.out $*.nav` $(LOGDIR)
@@ -252,6 +266,9 @@ update:
 
 # ========================================================================
 # $Log$
+# Revision 1.12  2020/06/09 22:58:09  pwagner
+# Attempt to fix problems caused by upgrading LaTeX and .nav files
+#
 # Revision 1.11  2020/04/21 00:08:57  pwagner
 # externaldocument directed toward LOGDIR instead of cwd
 #

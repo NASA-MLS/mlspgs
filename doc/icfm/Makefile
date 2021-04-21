@@ -31,6 +31,18 @@ REECHO=$(UTILDIR)/reecho.sh
 pro_sources := $(shell ${REECHO} *.pro)
 tex_sources := $(shell ${REECHO} *.tex)
 
+ifdef LATEXPATH
+   BIBTEX=$(LATEXPATH)/bibtex
+   LATEX=$(LATEXPATH)/latex
+   DVIPDF=$(LATEXPATH)/dvipdfm
+   PDFLATEX=$(LATEXPATH)/pdflatex
+else
+   BIBTEX=bibtex
+   LATEX=latex
+   DVIPDF=dvipdfm
+   PDFLATEX=pdflatex
+endif
+
 # Set paths for finding source files
 
 DVIDIR = ./dvi/
@@ -52,13 +64,14 @@ vpath %.pdf $(PDFDIR)
 .SUFFIXES:
 .SUFFIXES: .tex .dvi .pdf
 .tex.dvi:
-	latex $<
-	latex $<
+	$(LATEX) $<
+	$(LATEX) $<
 	mv $@ $(DVIDIR)
 	mv $*.log $(LOGDIR)
 
 .dvi.pdf:
-	dvipdf $(DVIDIR)/$*.dvi
+	# $(DVIPDF) $(DVIDIR)/$*.dvi
+	$(PDFLATEX) $*.tex
 	mv $@ $(PDFDIR)
 
 # Bugs and limitations:
@@ -124,6 +137,9 @@ update:
 
 # ========================================================================
 # $Log$
+# Revision 1.3  2019/06/27 21:09:08  pwagner
+# make clean more thorough
+#
 # Revision 1.2  2019/06/24 17:45:48  pwagner
 # Works more reliably like this
 #
