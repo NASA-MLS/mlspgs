@@ -99,6 +99,7 @@ module MLSStringLists               ! Module to treat string lists
 ! Unwrap             Unwrap a multi-line string to a single line
 ! Wrap               Wrap a string to fit within prescribed width
 !                      using separator as newline
+! WriteIntsToList    Write an array of ints as a string list
 ! === (end of toc) ===
 
 ! === (start of api) ===
@@ -182,6 +183,7 @@ module MLSStringLists               ! Module to treat string lists
 ! wrap ( char* str, char* outstr, int width, [char inseparator], &
 !   & [char break], [char mode], [char* quotes], [int addedLines], &
 !   & [log dontSqueeze] )
+! WriteIntsToList( int ints(:), strlist List )
 
 ! in the above, a string list is a string of elements (usu. comma-separated)
 ! e.g., units='cm,m,in,ft'
@@ -288,7 +290,7 @@ module MLSStringLists               ! Module to treat string lists
     & ReplaceSubstring, ReverseList, ReverseStrings, &
     & SnipList, SortArray, SortList, StringElement, StringElementNum, &
     & SwitchDetail, &
-    & Unquote, Unwrap, Wrap
+    & Unquote, Unwrap, Wrap, WriteIntsToList
 
 ! A private type
   type :: Index_Stack_t
@@ -3142,7 +3144,8 @@ contains
   ! --------------------------------------------------  ReadIntsFromList  -----
   subroutine ReadIntsFromList ( inList, ints, error )
     ! Takes a list and reads it as an array of ints
-    ! E.g., given '1 2 2 3 4 4'  returns (/ 1, 2, 2, 3, 4, 5 /)
+    ! E.g., given '1 2 2 3 4 5'  returns (/ 1, 2, 2, 3, 4, 5 /)
+    ! (Inverse of WriteIntsToList)
     !--------Argument--------!
     character (len=*), intent(in)      :: inList
     integer, dimension(:), intent(out) :: ints
@@ -5006,6 +5009,21 @@ contains
     if ( present(lastPos) ) lastPos = myLastPos
   end subroutine wrap_noQuotes
 
+  ! --------------------------------------------------  WriteIntsToList  -----
+  subroutine WriteIntsToList ( ints, List )
+    ! Takes an array of ints and writes it as a string list
+    ! E.g., given (/ 1, 2, 2, 3, 4, 5 /) returns '1 2 2 3 4 5'
+    ! (Inverse of ReadIntsFromList)
+    !--------Argument--------!
+    character (len=*), intent(out)     :: List
+    integer, dimension(:), intent(in)  :: ints
+    ! Method:
+    ! Use writeIntsToChars
+    character(len=32), dimension(size(ints)) :: strs
+    call WriteIntsToChars( ints, strs )
+    call Array2List ( strs, List )
+  end subroutine WriteIntsToList
+
 !============================ Private ==============================
 ! ---------------------------------------  Deallocate_Index_Stack  -----
   subroutine Deallocate_Index_Stack
@@ -5129,6 +5147,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.90  2021/04/29 22:52:13  pwagner
+! Added WriteIntsToList
+!
 ! Revision 2.89  2020/06/24 20:52:33  pwagner
 ! BooleanValue_log now respects precedence of 'and' over 'or'
 !
