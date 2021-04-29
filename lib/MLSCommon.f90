@@ -292,7 +292,7 @@ module MLSCommon                ! Common definitions for the MLS software
   ! The choice we make is set by the MLS_HyperStart parameter below.
   integer, parameter             :: Fort_Indx            = 1
   integer, parameter             :: Offset               = 0
-  integer, parameter, public     :: MLS_HyperStart       = Fort_Indx
+  integer, parameter, public     :: MLS_HyperStart       = Offset
   ! When used in a procedure that interfaces directly with hdf, nothing
   ! changes. Just remember that start[k]=0 means the first element.
   !
@@ -775,6 +775,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.60  2021/04/29 22:51:07  pwagner
+! Makes MLS_HyperStart conform with hdf
+!
 ! Revision 2.59  2021/04/15 22:42:28  pwagner
 ! Added MLS_HyperStart; should it be here?
 !
