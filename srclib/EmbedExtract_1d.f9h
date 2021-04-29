@@ -20,7 +20,7 @@
     integer, dimension(:), intent(in)     :: block
     character(len=*), intent(in), optional :: options
     ! Local variables
-    integer :: i, ii, n1, m1, n1b, m1b
+    integer :: ii, n1, m1, n1b, m1b
     character(len=4) :: myOptions
     ! Executable
     myOptions = ''
@@ -53,6 +53,9 @@
       & ModuleName, "direction neither embedding nor extracting" )
     end select
 ! $Log$
+! Revision 1.5  2021/04/15 22:45:08  pwagner
+! Now uses MLS_HyperStart
+!
 ! Revision 1.4  2015/10/06 17:52:45  pwagner
 ! Replace do loop with array section
 !
