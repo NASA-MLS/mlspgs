@@ -19,7 +19,7 @@ module HyperSlabs              ! .. and array gymnastics
   use MLSFinds, only: FindAll, FindFirst, FindLast
   use MLSKinds ! Everything
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  use MLSStringLists, only: ExtractSubstring
+  use MLSStringLists, only: ExtractSubstring, WriteIntsToList
   use MLSStrings, only: Lowercase
   use Output_M, only: Blanks, Output
 
@@ -29,6 +29,7 @@ module HyperSlabs              ! .. and array gymnastics
 
   public :: Bandwidth, Collapse, Depopulate, Repopulate
   public :: EmbedArray, EssentiallyEqual, ExtractArray
+  public :: HyperTrace
   public :: Extremum
   public :: GatherBloc
   public :: HalfWaves
@@ -64,6 +65,8 @@ module HyperSlabs              ! .. and array gymnastics
 ! Extremum          Returns the value farther from 0
 ! GatherBloc        Gather a subset of elements from a larger array
 ! HalfWaves         Count consecutive values with same sign
+! HyperTrace        Show where a hyperslab of elements fit in the larger array
+!                     as a string list of indexes
 ! Repopulate        Restores non-zero values in presumably
 !                     sparse array to their proper locations
 ! === (end of toc) ===                                                   
@@ -87,6 +90,8 @@ module HyperSlabs              ! .. and array gymnastics
 ! GatherBloc ( bloc, array, int which1[:], &
 !   [int which2(:)], [int which3(:), [char* options] )
 ! halfWaves( nprec array[:], int lengths[:], [int nWaves] )
+! HyperTrace ( slab, &
+!   int start[2], int count[2], int stride[2], int block[2], [char* options] )
 ! Repopulate ( array[:], int i[:], int n, &
 !   & [nprec values[:], [char* options] )
 ! Repopulate ( array[:,:], int i[:], int j[:], int n, &
@@ -125,6 +130,12 @@ module HyperSlabs              ! .. and array gymnastics
     module procedure EmbedArray_2d_r4, EmbedArray_2d_r8
     module procedure EmbedArray_3d_r4, EmbedArray_3d_r8
     module procedure EmbedArray_1d_int
+  end interface
+
+  interface HyperTrace
+    module procedure HyperTrace_1d
+    module procedure HyperTrace_2d
+    module procedure HyperTrace_3d
   end interface
 
   interface EssentiallyEqual
@@ -556,6 +567,144 @@ contains
     include 'EmbedExtract_3d.f9h'
   end subroutine ExtractArray_3d_r8
 
+  ! ---------------------------------------------  HyperTrace  -----
+  ! Write as a string list the indexes inside the larger array
+  ! corresponding to each element in the hyperslab
+  ! if performing an Embed or Extract operation.
+  !
+  ! E.g.,
+  ! Say the larger array is rank 3, with shape (5,5,4)
+  ! (although those particular values are not relevant in what follows)
+  !
+  ! Now if a hyperlab of array is selected by setting
+  ! 
+  ! start  = (/ 0,0,0 /)
+  ! count  = (/ 2,2,2 /)
+  ! stride = (/ 2,2,1 /)
+  ! block  = (/ 1,1,1 /)
+  !
+  ! then slab would be returned as the 2x2x2 3d matrix of stringlists
+  !     1   1   1# 1,1,1             1,1,2                        
+  !     1   2   1# 1,3,1             1,3,2                       
+  !     2   1   1# 3,1,1             3,1,2            
+  !     2   2   1# 3,3,1             3,3,2            
+  ! (which as been flattened by dump into the 2 2x2 matrices shown above)
+  
+  subroutine HyperTrace_1d ( slab, start, count, stride, block )
+    character(len=*), dimension(:)        :: slab
+    integer, dimension(:), intent(in)     :: start
+    integer, dimension(:), intent(in)     :: count
+    integer, dimension(:), intent(in)     :: stride
+    integer, dimension(:), intent(in)     :: block
+    ! Local variables
+    integer                                :: II
+    integer                                :: k
+    integer                                :: n1
+    ! integer                                :: n1b
+    integer                                :: m
+    integer                                :: m1
+    ! integer                                :: m1b
+    ! Executable
+    do II=1, count(1)
+      n1 = start(1) - MLS_HyperStart + (II-1)*stride(1) + 1
+      ! n1b = start(1) - MLS_HyperStart + (II-1)*stride(1) + block(1)
+      m1 = (II-1)*block(1) + 1
+      ! m1b = (II-1)*block(1) + block(1)
+      do m=0, block(1) - 1
+        call WriteIntsToList ( &
+          & (/ n1 + m /), &
+          & slab( m1 + m ) )
+      enddo
+    enddo
+  end subroutine HyperTrace_1d
+
+  subroutine HyperTrace_2d ( slab, start, count, stride, block )
+    character(len=*), dimension(:,:)      :: slab
+    integer, dimension(:), intent(in)     :: start
+    integer, dimension(:), intent(in)     :: count
+    integer, dimension(:), intent(in)     :: stride
+    integer, dimension(:), intent(in)     :: block
+    ! Local variables
+    integer                                :: II
+    integer                                :: JJ
+    integer                                :: j
+    integer                                :: k
+    integer                                :: n1
+    ! integer                                :: n1b
+    integer                                :: n2
+    integer                                :: m
+    integer                                :: m1
+    ! integer                                :: m1b
+    integer                                :: m2
+    ! Executable
+    do JJ=1, count(2)
+      do II=1, count(1)
+        do j=1, block(2)
+          n2 = start(2) - MLS_HyperStart + (JJ-1)*stride(2) + j
+          m2 = (JJ-1)*block(2) + j
+          n1 = start(1) - MLS_HyperStart + (II-1)*stride(1) + 1
+          ! n1b = start(1) - MLS_HyperStart + (II-1)*stride(1) + block(1)
+          m1 = (II-1)*block(1) + 1
+          ! m1b = (II-1)*block(1) + block(1)
+          do k=0, block(1) - 1
+            call WriteIntsToList ( &
+              & (/ n1 + k, n2 /), &
+              & slab(m1 + k, m2 ) )
+          enddo
+        enddo
+      enddo
+    enddo
+  end subroutine HyperTrace_2d
+
+  subroutine HyperTrace_3d ( slab, start, count, stride, block )
+    character(len=*), dimension(:,:,:)    :: slab
+    integer, dimension(:), intent(in)     :: start
+    integer, dimension(:), intent(in)     :: count
+    integer, dimension(:), intent(in)     :: stride
+    integer, dimension(:), intent(in)     :: block
+    ! Local variables
+    integer                                :: II
+    integer                                :: JJ
+    integer                                :: KK
+    integer                                :: j
+    integer                                :: k
+    integer                                :: p
+    integer                                :: n1
+    ! integer                                :: n1b
+    integer                                :: n2
+    integer                                :: n3
+    integer                                :: m
+    integer                                :: m1
+    ! integer                                :: m1b
+    integer                                :: m2
+    integer                                :: m3
+    ! Executable
+    do KK=1, count(3)
+      do JJ=1, count(2)
+        do II=1, count(1)
+          do k=1, block(3)
+            n3 = start(3) - MLS_HyperStart + (KK-1)*stride(3) + k
+            m3 = (KK-1)*block(3) + k
+            do j=1, block(2)
+              n2 = start(2) - MLS_HyperStart + (JJ-1)*stride(2) + j
+              m2 = (JJ-1)*block(2) + j
+              n1 = start(1) - MLS_HyperStart + (II-1)*stride(1) + 1
+              ! n1b = start(1) - MLS_HyperStart + (II-1)*stride(1) + block(1)
+              m1 = (II-1)*block(1) + 1
+              ! m1b = (II-1)*block(1) + block(1)
+              ! slab(m1:m1b, m2, m3) = array(n1:n1b, n2, n3)
+              do p=0, block(1) - 1
+                call WriteIntsToList ( &
+                  & (/ n1 + p, n2, n3 /), &
+                  & slab(m1 + p, m2, m3 ) )
+              enddo
+            enddo
+          enddo
+        enddo
+      enddo
+    enddo
+  end subroutine HyperTrace_3d
+
 ! ---------------------------------------------  EssentiallyEqual  -----
 
   ! This family of routines checks to see if two reals are essentially
@@ -981,6 +1130,9 @@ end module HyperSlabs
 
 !
 ! $Log$
+! Revision 2.3  2021/04/29 22:52:55  pwagner
+! Added HyperTrace
+!
 ! Revision 2.2  2021/04/15 22:44:27  pwagner
 ! Now uses MLS_HyperStart
 !
