@@ -65,7 +65,7 @@ module FillUtils_1                     ! Procedures used by Fill
   use MatrixModule_1, only: Dump, FindBlock, Matrix_Spd_T, UpdateDiagonal
   ! Note: If You Ever Want To Include Defined Assignment For Matrices, Please
   ! Carefully Check Out The Code Around The Call To Snoop.
-  use MLSCommon, only: MLSFile_T, DefaultUndefinedValue
+  use MLSCommon, only: MLSFile_T, DefaultUndefinedValue, MLS_HyperStart
   use MLSFiles, only: Hdfversion_5, Dump, GetMLSFileByType
   use MLSFillValues, only: IsFillValue, IsFinite, &
     & Monotonize, RemoveFillValues
@@ -126,7 +126,7 @@ module FillUtils_1                     ! Procedures used by Fill
   ! -999.99 ! Same as %template%badvalue
   real, parameter ::    UNDEFINED_VALUE = DEFAULTUNDEFINEDVALUE
 
-  ! Error codes for "announce_error"
+  ! Error codes for "Announce_Error"
   integer, parameter, public :: No_Error_code = 0
   integer, parameter, public :: CantFromL2AUX = No_Error_code + 1
   integer, parameter, public :: CantFromL1B = cantFromL2AUX + 1
@@ -236,7 +236,7 @@ contains ! =====     Public Procedures     =============================
       ! First check that things are OK.
       if ( .not. ignoreTemplate .and. .not. FillableChiSq ( quantity, &
         & sourceQuantity, noiseQty ) ) then
-        call Announce_error ( key, No_Error_code, &
+        call Announce_Error ( key, No_Error_code, &
         & 'Incompatibility among vector quantities adding noise'  )
         go to 9
       end if
@@ -286,9 +286,15 @@ contains ! =====     Public Procedures     =============================
         & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine AddGaussianNoise
 
-    ! ---------------------------------------------  ANNOUNCE_ERROR  -----
-    subroutine ANNOUNCE_ERROR ( WhereWasIt, CODE, &
-      & EXTRAMESSAGE, QTY, EXTRAINFO, QUITNOW )
+    ! ---------------------------------------------  Announce_Error  -----
+    ! How Fill and FillUtils ought to handle errors.
+    ! This is a model for coding other modules, too.
+    ! Note that by default we merely print a message w/o quitting.
+    !
+    ! We set FillError and pass control back up the calling tree, leaving
+    ! the decision to quit or not to the caller or caller's caller or ..
+    subroutine Announce_Error ( WhereWasIt, Code, &
+      & Extramessage, Qty, Extrainfo, Quitnow )
 
       use Moretree, only: Get_Field_Id, Starterrormessage
 
@@ -297,9 +303,11 @@ contains ! =====     Public Procedures     =============================
       character (len=*), intent(in), optional :: EXTRAMESSAGE
       type (VectorValue_T), optional, intent(in) :: QTY
       integer, intent(in), dimension(:), optional :: EXTRAINFO
-      logical, intent(in), optional :: QUITNOW
+      logical, intent(in), optional :: QUITNOW ! If present and TRUE, stop
+      ! Internal variables
 
       integer :: I
+      ! Executable
 
       fillerror = max(fillerror,1)
       if ( present(extraMessage) ) then
@@ -307,7 +315,7 @@ contains ! =====     Public Procedures     =============================
         & trim(extraMessage) )
       else
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & 'Calling ANNOUNCE_ERROR' )
+        & 'Calling Announce_Error' )
       end if
       call StartErrorMessage ( WhereWasIt )
       L2CFErrorNode = WhereWasIt
@@ -432,7 +440,7 @@ contains ! =====     Public Procedures     =============================
           & call MLSMessage ( MLSMSG_Error, ModuleName, &
           & trim(extraMessage) )
       end if
-    end subroutine ANNOUNCE_ERROR
+    end subroutine Announce_Error
 
     ! ------------------------------------------- ApplyBaseline ----------
     subroutine ApplyBaseline ( key, quantity, baselineQuantity, &
@@ -693,7 +701,7 @@ contains ! =====     Public Procedures     =============================
           do k = 1, noValues
             call expr_check ( subtree(k+1,valuesNode) , unitAsArray, valueAsArray, &
               & (/testUnit, PHYQ_Dimensionless/), unitsError )
-            if ( unitsError ) call Announce_error ( valuesNode, wrongUnits, &
+            if ( unitsError ) call Announce_Error ( valuesNode, wrongUnits, &
               & extraInfo=(/unitAsArray(1), testUnit, PHYQ_Dimensionless/) )
             values ( k ) = valueAsArray(1)
           end do
@@ -702,18 +710,18 @@ contains ! =====     Public Procedures     =============================
           do k = 1, noValues, 3
             call expr_check ( subtree(k+1,valuesNode) , unitAsArray, valueAsArray, &
               & (/testUnit, PHYQ_Dimensionless/), unitsError )
-            if ( unitsError ) call Announce_error ( valuesNode, wrongUnits, &
+            if ( unitsError ) call Announce_Error ( valuesNode, wrongUnits, &
               & extraInfo=(/unitAsArray(1), testUnit, PHYQ_Dimensionless/) )
             values ( k ) = valueAsArray(1)
             ! Next two quantities have to be angles
             call expr_check ( subtree(k+2,valuesNode) , unitAsArray, valueAsArray, &
               & (/PHYQ_Angle/), unitsError )
-            if ( unitsError ) call Announce_error ( valuesNode, wrongUnits, &
+            if ( unitsError ) call Announce_Error ( valuesNode, wrongUnits, &
               & extraInfo=(/unitAsArray(1), PHYQ_Angle/) )
             values (k+1) = deg2rad * valueAsArray(1)
             call expr_check ( subtree(k+3,valuesNode) , unitAsArray, valueAsArray, &
               & (/PHYQ_Angle/), unitsError )
-            if ( unitsError ) call Announce_error ( valuesNode, wrongUnits, &
+            if ( unitsError ) call Announce_Error ( valuesNode, wrongUnits, &
               & extraInfo=(/unitAsArray(1), PHYQ_Angle/) )
             values (k+2) = deg2rad * valueAsArray(1)
             values(k:k+2) = values(k) * (/ cos(values(k+1))*cos(values(k+2)), &
@@ -732,12 +740,12 @@ contains ! =====     Public Procedures     =============================
       end if
 
       if ( quantity%template%noSurfs < 1 ) then
-        call announce_error ( valuesNode, no_error_code, &
+        call Announce_Error ( valuesNode, no_error_code, &
           & 'Bad value for quantity%template%noSurfs' )
         go to 9
       end if
       if ( quantity%template%noCrossTrack < 1 ) then
-        call announce_error ( valuesNode, no_error_code, &
+        call Announce_Error ( valuesNode, no_error_code, &
           & 'Bad value for quantity%template%noCrossTrack' )
         go to 9
       end if
@@ -750,7 +758,7 @@ contains ! =====     Public Procedures     =============================
         call outputNamedValue( 'noCrossTrack', quantity%template%noCrossTrack)
         call outputNamedValue( 'numChans', numChans )
         call outputNamedValue( 'instanceLen', quantity%template%instanceLen )
-        call announce_error ( valuesNode, no_Error_Code, &
+        call Announce_Error ( valuesNode, no_Error_Code, &
           & 'Inconsistent template instance length' )
       end if
       ! Now loop through the quantity
@@ -899,12 +907,12 @@ contains ! =====     Public Procedures     =============================
         & cond=toggle(gen) .and. levels(gen) > 1 )
       if ( .not. ignoreTemplate ) then
         if ( quantity%template%quantityType /= l_singleChannelRadiance ) &
-          & call announce_error ( key, no_Error_Code, 'Quantity to fill must be of type singleChannelRadiance' )
+          & call Announce_Error ( key, no_Error_Code, 'Quantity to fill must be of type singleChannelRadiance' )
         if ( all ( sourceQuantity%template%quantityType /= (/ l_cloudInducedRadiance, l_radiance /) ) ) &
-          & call announce_error ( key, no_Error_Code, 'source quantity for fill must be of type [cloudInduced]radiance' )
+          & call Announce_Error ( key, no_Error_Code, 'source quantity for fill must be of type [cloudInduced]radiance' )
         if ( quantity%template%signal /= sourceQuantity%template%signal .or. &
           & quantity%template%sideband /= sourceQuantity%template%sideband ) &
-          & call announce_error ( key, no_Error_Code, 'quantity/sourceQuantity must be same signal/sideband' )
+          & call Announce_Error ( key, no_Error_Code, 'quantity/sourceQuantity must be same signal/sideband' )
         if ( .not. sourceQuantity%template%regular ) &
           & call Announce_Error ( key, no_Error_Code, 'source quantity must be regular' )
       end if
@@ -977,7 +985,7 @@ contains ! =====     Public Procedures     =============================
         ! Anything goes
       else if ( .not. ValidateVectorQuantity ( qty, &
         & quantityType=(/l_chiSqChan/), majorFrame=.true.) ) then
-        call Announce_error ( key, No_Error_code, &
+        call Announce_Error ( key, No_Error_code, &
         & 'Attempting to fill wrong quantity with chi^2 channelwise'  )
         if ( DEEBUG ) then
           call output('major frame? ', advance = 'no')
@@ -989,12 +997,12 @@ contains ! =====     Public Procedures     =============================
         end if
         go to 9
       else if ( .not. FillableChiSq ( qty, measQty, modelQty, noiseQty ) ) then
-        call Announce_error ( key, No_Error_code, &
+        call Announce_Error ( key, No_Error_code, &
         & 'Incompatibility among vector quantities filling chi^2 channelwise'  )
         go to 9
       else if ( any ( noiseQty%values == 0.0) .and. &
         & .not. (ignoreZero .or. .not. dontMask) ) then
-        call Announce_error ( key, No_Error_code, &
+        call Announce_Error ( key, No_Error_code, &
         & 'A vanishing error filling chi^2 channelwise'  )
         go to 9
       end if
@@ -1116,7 +1124,7 @@ contains ! =====     Public Procedures     =============================
         ! Anything goes
       else if ( .not. ValidateVectorQuantity ( qty, &
         & quantityType=(/l_chiSqMMaf/), majorFrame=.true.) ) then
-        call Announce_error ( key, No_Error_code, &
+        call Announce_Error ( key, No_Error_code, &
         & 'Attempting to fill wrong quantity with chi^2 MMAFwise'  )
         if ( DEEBUG ) then
           call output('major frame? ', advance = 'no')
@@ -1128,12 +1136,12 @@ contains ! =====     Public Procedures     =============================
         end if
         go to 9
       else if ( .not. FillableChiSq ( qty, measQty, modelQty, noiseQty ) ) then
-        call Announce_error ( key, No_Error_code, &
+        call Announce_Error ( key, No_Error_code, &
         & 'Incompatibility among vector quantities filling chi^2 MMAFwise'  )
         go to 9
       else if ( any ( noiseQty%values == 0.0) .and. &
         & .not. (ignoreZero .or. .not. dontMask) ) then
-        call Announce_error ( key, No_Error_code, &
+        call Announce_Error ( key, No_Error_code, &
         & 'A vanishing noise filling chi^2 MMAFwise'  )
         go to 9
       end if
@@ -1259,7 +1267,7 @@ contains ! =====     Public Procedures     =============================
         ! Anything goes
       else if ( .not. ValidateVectorQuantity ( qty, &
         & quantityType=(/l_chiSqMMif/), minorFrame=.true.) ) then
-        call Announce_error ( key, No_Error_code, &
+        call Announce_Error ( key, No_Error_code, &
         & 'Attempting to fill wrong quantity with chi^2 MMIFwise'  )
         if ( DEEBUG ) then
           call output('minor frame? ', advance = 'no')
@@ -1271,12 +1279,12 @@ contains ! =====     Public Procedures     =============================
         end if
         go to 9
       else if ( .not. FillableChiSq ( qty, measQty, modelQty, noiseQty ) ) then
-        call Announce_error ( key, No_Error_code, &
+        call Announce_Error ( key, No_Error_code, &
         & 'Incompatibility among vector quantities filling chi^2 MMIFwise'  )
         go to 9
       else if ( any ( noiseQty%values == 0.0) .and. &
         & .not. (ignoreZero .or. .not. dontMask) ) then
-        call Announce_error ( key, No_Error_code, &
+        call Announce_Error ( key, No_Error_code, &
         & 'A vanishing noise filling chi^2 MMIFwise'  )
         go to 9
       end if
@@ -1390,22 +1398,22 @@ contains ! =====     Public Procedures     =============================
         ! Anything goes
       else if ( .not. ValidateVectorQuantity ( qty, &
         & quantityType=(/l_dnwt_chiSqRatio/) ) ) then
-        call Announce_error ( key, No_Error_code, &
+        call Announce_Error ( key, No_Error_code, &
         & 'Attempting to fill wrong quantity with chi^2 ratio'  )
         go to 9
       else if ( .not. ValidateVectorQuantity ( normqty, &
         & quantityType=(/l_dnwt_chiSqNorm/) ) ) then
-        call Announce_error ( key, No_Error_code, &
+        call Announce_Error ( key, No_Error_code, &
         & 'Attempting to fill using wrong norm quantity with chi^2 ratio'  )
         go to 9
       else if ( .not. ValidateVectorQuantity ( minnormqty, &
         & quantityType=(/l_dnwt_chiSqMinNorm/) ) ) then
-        call Announce_error ( key, No_Error_code, &
+        call Announce_Error ( key, No_Error_code, &
         & 'Attempting to fill using wrong min norm quantity with chi^2 ratio'  )
         go to 9
       else if ( .not. ValidateVectorQuantity ( flagqty, &
         & quantityType=(/l_dnwt_flag/) ) ) then
-        call Announce_error ( key, No_Error_code, &
+        call Announce_Error ( key, No_Error_code, &
         & 'Attempting to fill using wrong flag quantity with chi^2 ratio'  )
         go to 9
       end if
@@ -1535,25 +1543,25 @@ contains ! =====     Public Procedures     =============================
       else if ( (qty%template%quantityType /= l_columnAbundance) .or. &
         &  (bndPressQty%template%quantityType /= l_boundaryPressure) .or. &
         &  (vmrQty%template%quantityType /= l_vmr) ) then
-        call Announce_error ( key, No_Error_code, &
+        call Announce_Error ( key, No_Error_code, &
           & 'Wrong quantity type found while filling column abundance'  )
         go to 9
       else if ( qty%template%molecule /= vmrQty%template%molecule ) then
-        call Announce_error ( key, No_Error_code, &
+        call Announce_Error ( key, No_Error_code, &
           & 'Attempt to fill column abundance with different molecule'  )
         go to 9
       else if ( .not. ( DoHgridsMatch( qty, vmrQty ) .and. &
         & DoHgridsMatch( qty, bndPressQty ) ) ) then
-        call Announce_error ( key, No_Error_code, &
+        call Announce_Error ( key, No_Error_code, &
           & 'Attempt to fill column abundance with different HGrids'  )
         go to 9
       else if ( .not. any(vmrQty%template%verticalCoordinate == &
         & (/l_zeta/)) ) then
-        call Announce_error ( key, No_Error_code, &
+        call Announce_Error ( key, No_Error_code, &
           & 'Fill column abundance, but vmr not on zeta surfs.'  )
         go to 9
       else if ( vmrQty%template%noSurfs < 2 ) then
-        call Announce_error ( key, No_Error_code, &
+        call Announce_Error ( key, No_Error_code, &
           & 'Fill column abundance, but too few vmr surfaces'  )
         go to 9
       end if
@@ -1565,7 +1573,7 @@ contains ! =====     Public Procedures     =============================
       case (l_molcm2)
         INVERMG = INVERMGMOLCM2
       case default
-        call Announce_error ( key, No_Error_code, &
+        call Announce_Error ( key, No_Error_code, &
           & 'Fill column abundance, but wrong units.'  )
       end select
       ! Work out what to do with the first and last Instance information
@@ -1600,7 +1608,7 @@ contains ! =====     Public Procedures     =============================
         if ( thisBndPress <= 0.0 ) &
           & thisBndPress = 10.0 ** ( - vmrQty%template%surfs(1,1) )
         if ( thisBndPress <= 0._r8 ) then
-          call Announce_error ( key, No_Error_code, &
+          call Announce_Error ( key, No_Error_code, &
           & 'Fill column abundance, illegal bound. pr. at this instance' )
         end if
         zeta = -log10 ( thisBndPress )
@@ -1732,9 +1740,9 @@ contains ! =====     Public Procedures     =============================
         & cond=toggle(gen) .and. levels(gen) > 1 )
       ! Do some sanity checking
       if ( .not. ignoreTemplate ) then
-        if ( quantity%template%quantityType /= l_quality ) call Announce_error ( key, no_error_code, &
+        if ( quantity%template%quantityType /= l_quality ) call Announce_Error ( key, no_error_code, &
           & 'Convergence quantity must be quality' )
-        if ( sourceQuantity%template%quantityType /= l_dnwt_chisqRatio ) call Announce_error ( &
+        if ( sourceQuantity%template%quantityType /= l_dnwt_chisqRatio ) call Announce_Error ( &
           & key, no_error_code, 'sourceQuantity must be of type chisqRatio' )
       end if
       if ( UNIFORMCHISQRATIO ) then
@@ -2375,7 +2383,7 @@ contains ! =====     Public Procedures     =============================
     ! --------------------------------------------- Gather ---
     ! The most barbaric of Fill methods:
     ! Go through the source quantity's values, gathering
-    ! them into the quanity's values
+    ! them into the quantity's values
     ! according to the start, stride, block, and count arrays
     ! No checking is done
 
@@ -2401,6 +2409,18 @@ contains ! =====     Public Procedures     =============================
     ! The count is (2,4)
     ! Note: if the 2nd index of block is 0, then do all instances
     ! and just hyperslabify the first index
+    
+    ! We recently (re)-discovered that hdf5 actually interprets the
+    ! start array as if it meant "offset" instead of the starting index
+    ! as this subroutine does. And as the Scatter subroutine does,
+    ! for that matter. We have added the parameter MLS_HyperStart to
+    ! MLSCommon. It determines whether Embeds and Extracts as implemented
+    ! in the Hyperslabs module treat the start array as starting indexes
+    ! or as offsets.
+    ! Should we do the same here?
+    
+    ! We will for the present favor continuity over consistency
+    ! by interpreting start to mean the starting index instead of the offset.
     subroutine Gather ( quantity, sourceQuantity, start, count, stride, block )
       type (VectorValue_T), intent(inout) :: QUANTITY
       type (VectorValue_T), pointer :: SOURCEQUANTITY
@@ -2587,7 +2607,7 @@ contains ! =====     Public Procedures     =============================
           call GetGPHPrecision ( tempPrecisionQuantity, refGPHPrecisionQuantity, quantity%values )
         end if
       case default
-        call Announce_error ( 0, no_error_code, 'GPH precision needed for result of GPHPrecision' )
+        call Announce_Error ( 0, no_error_code, 'GPH precision needed for result of GPHPrecision' )
       end select
 
     9 call trace_end( 'FillUtils_1.GPHPrecision', &
@@ -2847,11 +2867,11 @@ contains ! =====     Public Procedures     =============================
         if ( .not. ValidateVectorQuantity ( temperature, &
           & quantityType=(/l_temperature/), coherent=.true., stacked=.true., &
           & frequencyCoordinate=(/l_none/), verticalCoordinate=(/l_zeta/) ) ) &
-          & call Announce_error ( key, no_error_code, 'Problem with temperature quantity for phiTan fill' )
+          & call Announce_Error ( key, no_error_code, 'Problem with temperature quantity for phiTan fill' )
         if ( .not. ValidateVectorQuantity ( H2O, &
           & quantityType=(/l_vmr/), molecule=(/l_H2O/), coherent=.true., stacked=.true., &
           & frequencyCoordinate=(/l_none/), verticalCoordinate=(/l_zeta/) ) ) &
-          & call Announce_error ( key, no_error_code, 'Problem with H2O quantity for phiTan fill' )
+          & call Announce_Error ( key, no_error_code, 'Problem with H2O quantity for phiTan fill' )
         if ( .not. ValidateVectorQuantity ( refGPH, &
           & quantityType = (/l_refGPH/), coherent=.true., stacked=.true., &
           & verticalCoordinate=(/l_zeta/), frequencyCoordinate=(/l_none/), noSurfs=(/1/) ) ) &
@@ -2942,11 +2962,11 @@ contains ! =====     Public Procedures     =============================
         if ( .not. ValidateVectorQuantity ( temperature, &
           & quantityType=(/l_temperature/), coherent=.true., stacked=.true., &
           & frequencyCoordinate=(/l_none/), verticalCoordinate=(/l_zeta/) ) ) &
-          & call Announce_error ( key, no_error_code, 'Problem with temperature quantity for phiTan fill' )
+          & call Announce_Error ( key, no_error_code, 'Problem with temperature quantity for phiTan fill' )
         if ( .not. ValidateVectorQuantity ( H2O, &
           & quantityType=(/l_vmr/), molecule=(/l_H2O/), coherent=.true., stacked=.true., &
           & frequencyCoordinate=(/l_none/), verticalCoordinate=(/l_zeta/) ) ) &
-          & call Announce_error ( key, no_error_code, 'Problem with H2O quantity for phiTan fill' )
+          & call Announce_Error ( key, no_error_code, 'Problem with H2O quantity for phiTan fill' )
         if ( .not. ValidateVectorQuantity ( refGPH, &
           & quantityType = (/l_refGPH/), coherent=.true., stacked=.true., &
           & verticalCoordinate=(/l_zeta/), frequencyCoordinate=(/l_none/), noSurfs=(/1/) ) ) &
@@ -3723,22 +3743,22 @@ contains ! =====     Public Procedures     =============================
         & cond=toggle(gen) .and. levels(gen) > 1 )
       if ( .not. ignoreTemplate ) then
         if ( .not. DoQtysDescribeSameThing ( qty, source ) ) then
-          call Announce_error ( key, no_error_code, &
+          call Announce_Error ( key, no_error_code, &
             & 'Mismatch in quantities' )
           go to 9
         end if
         if ( .not. doHGridsMatch ( qty, source ) .and. .not. present(ptan) ) then
-          call Announce_error ( key, no_error_code, &
+          call Announce_Error ( key, no_error_code, &
             & 'Mismatch in horizontal grid' )
           go to 9
         end if
         if ( qty%template%noInstances /= source%template%noInstances ) then
-          call Announce_error ( key, no_error_code, &
+          call Announce_Error ( key, no_error_code, &
             & 'Mismatch in num of instances' )
           go to 9
         end if
         if ( .not. doFGridsMatch ( qty, source )  .and. .not. present(ptan) ) then
-          call Announce_error ( key, no_error_code, &
+          call Announce_Error ( key, no_error_code, &
             & 'Mismatch in frequency grid' )
           go to 9
         end if
@@ -3755,11 +3775,11 @@ contains ! =====     Public Procedures     =============================
         if ( present(ptan) ) then
           ! Very (too?) forgiving
         else if ( qty%template%noChans /= 1) then
-          call Announce_error ( key, no_error_code, &
+          call Announce_Error ( key, no_error_code, &
             & 'Code cannot (yet?) interpolate multi channel quantities' )
           go to 9
         else if ( .not. all ( (/ qty%template%coherent, source%template%coherent /) ) ) then
-          call Announce_error ( key, no_error_code, &
+          call Announce_Error ( key, no_error_code, &
             & 'Code cannot (yet?) interpolate incoherent quantities' )
           go to 9
         end if
@@ -3819,7 +3839,7 @@ contains ! =====     Public Procedures     =============================
             if ( source%template%coherent .and. qty%template%minorFrame ) then
               if ( source%template%noChans > 1 .or. &
                  & qty%template%noChans > 1 ) then
-                call announce_error ( key, no_error_code, &
+                call Announce_Error ( key, no_error_code, &
                   & 'Cannot interpolate regular-to-irregular with more than one channel' )
                 go to 9
               end if
@@ -4836,7 +4856,7 @@ contains ! =====     Public Procedures     =============================
           call Announce_Error ( key, nonConformingHydrostatic )
         end if
       case default
-        call Announce_error ( 0, no_error_code, &
+        call Announce_Error ( 0, no_error_code, &
           & 'Trying to use Hydrostatic_GPH for non-GPH quantity' )
       end select
 
@@ -4923,7 +4943,7 @@ contains ! =====     Public Procedures     =============================
           & phiTanQuantity, geocAltitudeQuantity, maxIterations, &
           & phiWindow, phiWindowUnits, chunkNo )
       case default
-        call Announce_error ( 0, no_error_code, &
+        call Announce_Error ( 0, no_error_code, &
           & 'Trying to use Hydrostatic_PTan for non-PTan quantity' )
         go to 9
       end select
@@ -5005,7 +5025,7 @@ contains ! =====     Public Procedures     =============================
     ! --------------------------------------------- Scatter ---
     ! The equally-most barbaric of Fill methods:
     ! Go through the source quantity's values, Scattering
-    ! them into the quanity's values
+    ! them into the quantity's values
     ! according to the start, stride, block, and count arrays
     ! No checking is done
 
@@ -5031,6 +5051,8 @@ contains ! =====     Public Procedures     =============================
     ! The count is (2,4)
     ! Note: if the 2nd index of block is 0, then do all instances
     ! and just hyperslabify the first index
+    ! (See warning note following gather comments about how hdf5 interprets
+    ! start array.)
     subroutine Scatter ( quantity, sourceQuantity, start, count, stride, block )
       type (VectorValue_T), intent(inout) :: QUANTITY
       type (VectorValue_T), pointer :: SOURCEQUANTITY
@@ -5306,7 +5328,7 @@ contains ! =====     Public Procedures     =============================
       do i = 0, nsons ( termsNode ) - 2
         call expr_check ( subtree(i+2,termsNode), unitAsArray, valueAsArray, &
           & (/PHYQ_Temperature/), unitsError )
-        if ( unitsError ) call Announce_error ( termsNode, wrongUnits, &
+        if ( unitsError ) call Announce_Error ( termsNode, wrongUnits, &
           & extraInfo=(/unitAsArray(1), PHYQ_Temperature/) )
         ! Add in this coefficient
         if ( i == 0 ) then
@@ -5622,11 +5644,11 @@ contains ! =====     Public Procedures     =============================
         & cond=toggle(gen) .and. levels(gen) > 1 )
       ! Do some sanity checking
       if ( .not. ignoreTemplate ) then
-        if ( quantity%template%quantityType /= l_quality ) call Announce_error ( key, no_error_code, &
+        if ( quantity%template%quantityType /= l_quality ) call Announce_Error ( key, no_error_code, &
           & 'Quality quantity must be quality' )
-        if ( sourceQuantity%template%quantityType /= l_chisqBinned ) call Announce_error ( &
+        if ( sourceQuantity%template%quantityType /= l_chisqBinned ) call Announce_Error ( &
           & key, no_error_code, 'sourceQuantity must be of type chisqBinned' )
-        if ( .not. DoHGridsMatch ( quantity, sourceQuantity ) ) call Announce_error ( &
+        if ( .not. DoHGridsMatch ( quantity, sourceQuantity ) ) call Announce_Error ( &
           & key, no_error_code, 'quantity and sourceQuantity do not have matching hGrids' )
       end if
       ! Work out the height
@@ -5635,7 +5657,7 @@ contains ! =====     Public Procedures     =============================
           & 'Only one height can be supplied for quality fill' )
         call expr_check ( subtree(2,heightNode) , unitAsArray, valueAsArray, &
           & (/PHYQ_Pressure/), unitsError )
-        if ( unitsError ) call Announce_error ( heightNode, wrongUnits, &
+        if ( unitsError ) call Announce_Error ( heightNode, wrongUnits, &
           & extraInfo=(/unitAsArray(1), PHYQ_Pressure/) )
         height = - log10 ( valueAsArray(1) )
         call Hunt ( sourceQuantity%template%surfs(:,1), height, surface, nearest=.true. )
@@ -5677,10 +5699,10 @@ contains ! =====     Public Procedures     =============================
         & cond=toggle(gen) .and. levels(gen) > 1 )
       ! Do some sanity checking
       if ( .not. ignoreTemplate ) then
-        if ( quantity%template%quantityType /= l_status ) call Announce_error ( key, no_error_code, &
+        if ( quantity%template%quantityType /= l_status ) call Announce_Error ( key, no_error_code, &
           & 'status quantity must be status' )
         if ( .not. DoHGridsMatch ( quantity, sourceQuantity ) ) &
-          & call Announce_error ( &
+          & call Announce_Error ( &
           & key, no_error_code, 'quantity and sourceQuantity do not have matching hGrids' )
       end if
       ! Work out the height
@@ -5691,7 +5713,7 @@ contains ! =====     Public Procedures     =============================
           & call Announce_Error ( key, no_error_code, 'Bad vertical coordinate for sourceQuantity' )
         call expr_check ( subtree(2,heightNode) , unitAsArray, valueAsArray, &
           & (/PHYQ_Pressure/), unitsError )
-        if ( unitsError ) call Announce_error ( heightNode, wrongUnits, &
+        if ( unitsError ) call Announce_Error ( heightNode, wrongUnits, &
           & extraInfo=(/unitAsArray(1), PHYQ_Pressure/) )
         height = - log10 ( valueAsArray(1) )
         call Hunt ( sourceQuantity%template%surfs(:,1), height, surface, nearest=.true. )
@@ -6433,7 +6455,7 @@ contains ! =====     Public Procedures     =============================
         if ( associated(ptan) ) heightUnit = PHYQ_Zeta
         if ( exprUnit(1) /= heightUnit .and. exprUnit(1) /= PHYQ_Dimensionless &
           & .and. .not. ( exprUnit(1) == PHYQ_Pressure .and. heightUnit == PHYQ_Zeta ) ) &
-          & call Announce_error ( valuesNode, no_Error_Code, 'Bad height units for profile fill' )
+          & call Announce_Error ( valuesNode, no_Error_Code, 'Bad height units for profile fill' )
         ! Store height
         if ( heightUnit == PHYQ_Zeta ) then
           ! Assume zeta coordinates are expressed in mb
@@ -6443,7 +6465,7 @@ contains ! =====     Public Procedures     =============================
         end if
         ! Check value unit OK
         if ( all ( exprUnit(2) /= (/ testUnit, PHYQ_Dimensionless /) ) ) &
-          & call Announce_error ( valuesNode, no_error_code, 'Bad units for profile fill' )
+          & call Announce_Error ( valuesNode, no_error_code, 'Bad units for profile fill' )
         ! Store value
         values ( i ) = exprValue(2)
       end do
@@ -6996,7 +7018,7 @@ contains ! =====     Public Procedures     =============================
         call expr_check ( subtree( i+1, multiplierNode ), exprUnit, exprValue, &
           & (/PHYQ_Dimensionless/), unitsError )
         if ( unitsError ) then
-          call Announce_error ( multiplierNode, wrongUnits, &
+          call Announce_Error ( multiplierNode, wrongUnits, &
             & extraMessage="for scaleOverlaps fill", &
             & extraInfo=(/exprUnit(1), PHYQ_Dimensionless/) )
           go to 9
@@ -7018,7 +7040,7 @@ contains ! =====     Public Procedures     =============================
         call expr_check ( subtree( j+1, multiplierNode ), exprUnit, exprValue, &
           & (/PHYQ_Dimensionless/), unitsError )
         if ( unitsError ) then
-          call Announce_error ( multiplierNode, wrongUnits, &
+          call Announce_Error ( multiplierNode, wrongUnits, &
             & extraMessage="for scaleOverlaps fill", &
             & extraInfo=(/exprUnit(1), PHYQ_Dimensionless/) )
           go to 9
@@ -7410,7 +7432,7 @@ contains ! =====     Public Procedures     =============================
       do i = 1, noTerms
         call expr_check ( subtree(i+1,termsNode), unitAsArray, valueAsArray, &
           & (/PHYQ_Dimensionless/), unitsError )
-        if ( unitsError ) call Announce_error ( termsNode, wrongUnits, &
+        if ( unitsError ) call Announce_Error ( termsNode, wrongUnits, &
           & extraInfo=(/unitAsArray(1), PHYQ_Temperature/) )
         myTerms(i) = valueAsArray(1)
       end do
@@ -7695,7 +7717,7 @@ contains ! =====     Public Procedures     =============================
       if ( present(noiseQty) ) then
         aok = associated(noiseQty%values)
         if ( DEEBUG .and. .not. associated(noiseQty%values) ) &
-          & call announce_error( no_Error_Code, No_Error_code, &
+          & call Announce_Error( no_Error_Code, No_Error_code, &
           & 'Noise values unassociated in FillableChiSq')
       end if
       aok = aok .and. &
@@ -7705,13 +7727,13 @@ contains ! =====     Public Procedures     =============================
 
       if ( DEEBUG ) then
         if ( .not. associated(qty%values) ) &
-          & call announce_error( no_Error_Code, No_Error_code, &
+          & call Announce_Error( no_Error_Code, No_Error_code, &
           & 'Quantity values unassociated in FillableChiSq')
         if ( .not. associated(measQty%values) ) &
-          & call announce_error( no_Error_Code, No_Error_code, &
+          & call Announce_Error( no_Error_Code, No_Error_code, &
           & 'Measurements values unassociated in FillableChiSq')
         if ( .not. associated(modelQty%values) ) &
-          & call announce_error( no_Error_Code, No_Error_code, &
+          & call Announce_Error( no_Error_Code, No_Error_code, &
           & 'Model values unassociated in FillableChiSq')
       end if
 
@@ -7980,7 +8002,7 @@ contains ! =====     Public Procedures     =============================
         & 'Only one height can be supplied for explicit fill' )
       call expr_check ( subtree(2,node) , unitAsArray, valueAsArray, &
         & (/PHYQ_Pressure/), unitsError )
-      if ( unitsError ) call Announce_error ( node, wrongUnits, &
+      if ( unitsError ) call Announce_Error ( node, wrongUnits, &
         & extraInfo=(/unitAsArray(1), PHYQ_Pressure/) )
       height = - log10 ( valueAsArray(1) )
       call Hunt ( heights, height, surface, nearest=.true. )
@@ -8004,6 +8026,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.151  2021/05/13 23:26:37  pwagner
+! Minor housekeeping; more comments about the start array
+!
 ! Revision 2.150  2020/01/27 18:03:13  pwagner
 ! Worked around the error that made instrumentModuleName allcaps
 !
