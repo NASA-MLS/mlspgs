@@ -652,13 +652,9 @@ contains ! =====     Public Procedures     =============================
         & 'Allocation failed somehow' )
       ! Now read each dataset, 
       ! using a rank 2 or rank 3 temporary as appropriate
-      ! Sadly, our implementation of hyperslabs seems to be buggy.
+      ! Remember: 
+      ! hyperslabs in hdf5 treat the "start" array as if it means "offset"
       !
-      !  For an example of how to do it right, see
-      ! /software/toolkit/ifc17/hdf5/fortran/examples//hyperslab.f90
-      !
-      ! Until we repair the hyperslab in LoadFromHDF5DS, we must resort to
-      ! reading all 18 latitude bins every time (oof!)
       
       ! Bands
       allocate( Bands(3) )
@@ -709,10 +705,10 @@ contains ! =====     Public Procedures     =============================
       if ( DeeBug ) print *, 'Channels in each band'
 
       !
-      start = (/ binNum, 1, 0 /)
-      stride = (/ 1, 1, 1 /)
-      count = (/ 1, 5078, 0 /)
-      block = (/ 1, 1, 0 /)
+!       start = (/ binNum-1, 0, 0 /)
+!       stride = (/ 1, 1, 1 /)
+!       count = (/ 1, 5078, 0 /)
+!       block = (/ 1, 1, 0 /)
 !       print *, start(1:1), count(1:1), stride(1:1), block(1:1)
 !       call LoadFromHDF5DS ( CoeffsFile, &
 !         & "Intercepts_Hidden_Layer_1", &
@@ -723,12 +719,18 @@ contains ! =====     Public Procedures     =============================
 !           values2(1,1:count(2))
       deallocate ( values2 )
 
-      allocate ( values2(18, 42) )
+      start = (/ binNum-1, 0, 0 /)
+      stride = (/ 1, 1, 1 /)
+      count = (/ 1, 42, 0 /)
+      block = (/ 1, 1, 0 /)
+      allocate ( values2(1, 42) )
       call LoadFromHDF5DS ( CoeffsFile, &
         & "Intercepts_Hidden_Labels_Layer", &
-        & values2 )
+        & values2, &
+        & start(1:2), count(1:2), stride(1:2), block(1:2) )
+!       & values2 )
         Coeffs%Intercepts_Hidden_Labels_Layer = &
-          values2(binNum,:)
+          values2(1,:)
       if ( DeeBug ) print *, 'Intercepts_Hidden_Labels_Layer'
 
       deallocate ( values1 )
@@ -742,12 +744,17 @@ contains ! =====     Public Procedures     =============================
 
       deallocate ( values2 )
 
-      allocate ( values2(18, 5078) )
+      start = (/ binNum-1, 0, 0 /)
+      stride = (/ 1, 1, 1 /)
+      count = (/ 1, 5078, 0 /)
+      block = (/ 1, 1, 0 /)
+      allocate ( values2(1, 5078) )
       call LoadFromHDF5DS ( CoeffsFile, &
         & "Intercepts_Hidden_Layer_1", &
-        & values2 )
+        & values2, &
+        & start(1:2), count(1:2), stride(1:2), block(1:2) )
         Coeffs%Intercepts_Hidden_Layer_1 = &
-          values2(binNum,:)
+          values2(1,:)
 
       if ( DeeBug ) print *, 'Loaded Intercepts_Hidden_Layer_1'
 !       call LoadFromHDF5DS ( CoeffsFile, &
@@ -759,44 +766,76 @@ contains ! =====     Public Procedures     =============================
 ! 
       call LoadFromHDF5DS ( CoeffsFile, &
         & "Intercepts_Hidden_Layer_2", &
-        & values2 )
+        & values2, &
+        & start(1:2), count(1:2), stride(1:2), block(1:2) )
         Coeffs%Intercepts_Hidden_Layer_2 = &
-          values2(binNum,:)
+          values2(1,:)
 
       if ( DeeBug ) print *, 'Loaded Intercepts_Hidden_Layer_2'
 
       deallocate ( values2 )
 
+      ! Just for debugging
+      start = (/ 0, 0, 0 /)
+      stride = (/ 1, 1, 1 /)
+      count = (/ 18, 7575, 0 /)
+      block = (/ 1, 1, 0 /)
       allocate ( values2(18, 7575) )
 
       call LoadFromHDF5DS ( CoeffsFile, &
         & "Standardization_Brightness_Temperatures_Mean", &
-        & values2 )
-        Coeffs%Standardization_Brightness_Temperature_Mean = &
-          values2(binNum,:)
+        & values2, &
+        & start(1:2), count(1:2), stride(1:2), block(1:2) )
         Coeffs%Means = &
           values2
+
+      call LoadFromHDF5DS ( CoeffsFile, &
+        & "Standardization_Brightness_Temperatures_Std", &
+        & values2, &
+        & start(1:2), count(1:2), stride(1:2), block(1:2) )
+        Coeffs%Stddevs = &
+          values2
+
+      if ( DeeBug ) print *, 'Loaded means, Stddevs for debugging'
+
+      ! Back to stuff just for this bin
+      deallocate ( values2 )
+      start = (/ binNum-1, 0, 0 /)
+      stride = (/ 1, 1, 1 /)
+      count = (/ 1, 7575, 0 /)
+      block = (/ 1, 1, 0 /)
+      allocate ( values2(1, 7575) )
+
+      call LoadFromHDF5DS ( CoeffsFile, &
+        & "Standardization_Brightness_Temperatures_Mean", &
+        & values2, &
+        & start(1:2), count(1:2), stride(1:2), block(1:2) )
+        Coeffs%Standardization_Brightness_Temperature_Mean = &
+          values2(1,:)
 
       if ( DeeBug ) print *, 'Standardization_Brightness_Temperatures_Mean'
 
       call LoadFromHDF5DS ( CoeffsFile, &
         & "Standardization_Brightness_Temperatures_Std", &
-        & values2 )
+        & values2, &
+        & start(1:2), count(1:2), stride(1:2), block(1:2) )
         Coeffs%Standardization_Brightness_Temperature_Std = &
-          values2(binNum,:)
-        Coeffs%Stddevs = &
-          values2
+          values2(1,:)
       if ( DeeBug ) print *, 'Standardization_Brightness_Temperatures_Std'
 
       deallocate ( values3 )
 
-      allocate ( values3(18, 42,5078) )
+      start = (/ binNum-1, 0, 0 /)
+      stride = (/ 1, 1, 1 /)
+      count = (/ 1, 42, 5078 /)
+      block = (/ 1, 1, 1 /)
+      allocate ( values3(1, 42, 5078) )
       shp = (/ 5078, 42 /)
       call LoadFromHDF5DS ( CoeffsFile, &
         & "Weights_Hidden_Labels_Layer", &
-        & values3 )
+        & values3, start, count, stride, block )
         Coeffs%Weights_Hidden_Labels_Layer = &
-          Reshape( values3(binNum,:,:), shp, order=(/2,1/) )
+          Reshape( values3(1,:,:), shp, order=(/2,1/) )
       if ( DeeBug ) then
         print *, 'Weights_Hidden_Labels_Layer'
         print *, shape(values3)
@@ -806,42 +845,56 @@ contains ! =====     Public Procedures     =============================
 
       deallocate ( values3 )
 
-      allocate ( values3(18, 5078, 7575) )
+      start = (/ binNum-1, 0, 0 /)
+      stride = (/ 1, 1, 1 /)
+      count = (/ 1, 5078, 7575 /)
+      block = (/ 1, 1, 1 /)
+      allocate ( values3(1, 5078, 7575) )
       shp = (/ 7575, 5078 /)
 
       call LoadFromHDF5DS ( CoeffsFile, &
         & "Weights_Hidden_Layer_1", &
-        & values3 )
+        & values3, start, count, stride, block )
         Coeffs%Weights_Hidden_Layer_1 = &
-          Reshape( values3(binNum,:,:), shp, order=(/2,1/) )
+          Reshape( values3(1,:,:), shp, order=(/2,1/) )
       if ( DeeBug ) print *, 'Weights_Hidden_Layer_1'
 
       deallocate ( values3 )
 
-      allocate ( values3(18, 5078, 5078) )
+      start = (/ binNum-1, 0, 0 /)
+      stride = (/ 1, 1, 1 /)
+      count = (/ 1, 5078, 5078 /)
+      block = (/ 1, 1, 1 /)
+      allocate ( values3(1, 5078, 5078) )
       shp = (/ 5078, 5078 /)
       call LoadFromHDF5DS ( CoeffsFile, &
         & "Weights_Hidden_Layer_2", &
-        & values3 )
+        & values3, start, count, stride, block )
         Coeffs%Weights_Hidden_Layer_2 = &
-          Reshape( values3(binNum,:,:), shp, order=(/2,1/) )
+          Reshape( values3(1,:,:), shp, order=(/2,1/) )
       if ( DeeBug ) print *, 'Weights_Hidden_Layer_2'
 
       deallocate ( values2 )
 
-      allocate ( values2(18, 42) )
+      start = (/ binNum-1, 0, 0 /)
+      stride = (/ 1, 1, 1 /)
+      count = (/ 1, 42, 0 /)
+      block = (/ 1, 1, 0 /)
+      allocate ( values2(1, 42) )
       call LoadFromHDF5DS ( CoeffsFile, &
         & "Normalization_Labels_Max", &
-        & values2 )
+        & values2, start(1:2), count(1:2), &
+        & stride(1:2), block(1:2) )
         Coeffs%Normalization_Labels_Max = &
-          values2(binNum, :)
+          values2(1, :)
       if ( DeeBug ) print *, 'Normalization_Labels_Max'
 
       call LoadFromHDF5DS ( CoeffsFile, &
         & "Normalization_Labels_Min", &
-        & values2 )
+        & values2, start(1:2), count(1:2), &
+        & stride(1:2), block(1:2) )
         Coeffs%Normalization_Labels_Min = &
-          values2(binNum, :)
+          values2(1, :)
       if ( DeeBug ) print *, 'Normalization_Labels_Min'
     end subroutine ReadCoeffsFile
 
@@ -881,6 +934,9 @@ end module NeuralNet_m
 
 !
 ! $Log$
+! Revision 2.7  2021/05/18 15:53:56  pwagner
+! Many bugs fixed; still in debug mode
+!
 ! Revision 2.6  2021/04/01 23:52:57  pwagner
 ! Debugging til the cows come home (moo)
 !
