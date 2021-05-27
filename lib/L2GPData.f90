@@ -1750,6 +1750,7 @@ contains ! =====     Public Procedures     =============================
     logical :: myVerbose
     logical :: ShapesDontMatch
     logical :: skipGeos
+    logical :: ForceThrough
     ! Executable code
     nameOnEachLine = ' '
     if ( .not. isL2GPSetUp(l2gp1) ) then
@@ -1770,6 +1771,8 @@ contains ! =====     Public Procedures     =============================
     if ( present(options) ) myVerbose = index(options, 'v') > 0
     goldbrick = .false.
     if ( present(options) ) goldbrick = index(options, '@') > 0
+    ForceThrough = .false.
+    if ( present(options) ) ForceThrough = index(options, 'F') > 0
 
     myNumDiffs = 0
 
@@ -1859,11 +1862,16 @@ contains ! =====     Public Procedures     =============================
       call doneHere
       return
     endif
-    if ( ShapesDontMatch ) then
-      call output('Skipping further details because shapes dont match',&
-        & advance='yes')
-      call doneHere
-      return
+    if ( ShapesDontMatch  ) then
+      if ( ForceThrough ) then
+        call output('Some fields wont be diffed because shapes dont match',&
+          & advance='yes')
+      else
+        call output('Skipping further details because shapes dont match',&
+          & advance='yes')
+        call doneHere
+        return
+      endif
     endif
 
     badChunks = badChunks .or. &
@@ -1942,7 +1950,7 @@ contains ! =====     Public Procedures     =============================
       ! call outputNamedValue( 'nameOnEachLine', trim(nameOnEachLine) )
       call diffGeoLocations( l2gp1, l2gp2Temp )
     endif
-    if ( myDetails < 1 )  then
+    if ( myDetails < 1 .or. ShapesDontMatch )  then
       call doneHere
       return
     endif
@@ -2015,108 +2023,128 @@ contains ! =====     Public Procedures     =============================
       type(L2GPData_T) :: l2gp1
       type(L2GPData_T) :: l2gp2
       ! Executable
-      NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%pressure', ' ', statsOnOneLine )
-      if ( any(l2gp1%pressures /= l2gp2%pressures) .and. &
-        & SwitchDetail(lowercase(myFields), 'pressure', '-fc') > -1 ) then
-          call diff ( l2gp1%pressures, 'l2gp%pressures', &
-            &         l2gp2%pressures, ' ', &
-            & options=options )
-        myNumDiffs = myNumDiffs + count( l2gp1%pressures /= l2gp2%pressures )
-      endif
-      NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%latitude', ' ', statsOnOneLine )
-      if ( any(l2gp1%latitude /= l2gp2%latitude) .and. &
-        & SwitchDetail(lowercase(myFields), 'lat', '-fc') > -1 ) then
-          call diff ( l2gp1%latitude, 'latitude', &
-            &         l2gp2%latitude, ' ', &
-            & options=options )
-        myNumDiffs = myNumDiffs + count( l2gp1%latitude /= l2gp2%latitude )
-      endif
-      NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%longitude', ' ', statsOnOneLine )
-      if ( any(l2gp1%longitude /= l2gp2%longitude) .and. &
-        & SwitchDetail(lowercase(myFields), 'lon', '-fc') > -1 ) then
-        if ( goldbrick ) then
-          call diff ( l2gp1%longitude, 'longitude', &
-            &         l2gp2%longitude, ' ', &
-            & options=options )
-        else
-          call dump ( &
-            & diff_fun( l2gp1%longitude, l2gp2%longitude, &
-            &         auxvalue=360._rgp, &
-            &         options=AddOntoOptions('p',options) ), &
-            & 'longitude', &
-            & options=options )
+      if ( all(shape(l2gp1%pressures) == shape(l2gp2%pressures)) ) then
+        NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%pressure', ' ', statsOnOneLine )
+        if ( any(l2gp1%pressures /= l2gp2%pressures) .and. &
+          & SwitchDetail(lowercase(myFields), 'pressure', '-fc') > -1 ) then
+            call diff ( l2gp1%pressures, 'l2gp%pressures', &
+              &         l2gp2%pressures, ' ', &
+              & options=options )
+          myNumDiffs = myNumDiffs + count( l2gp1%pressures /= l2gp2%pressures )
         endif
-        myNumDiffs = myNumDiffs + count( l2gp1%longitude /= l2gp2%longitude )
       endif
-      NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%solartime', ' ', statsOnOneLine )
-      if ( any(l2gp1%solarTime /= l2gp2%solarTime) .and. &
-        & SwitchDetail(lowercase(myFields), 'solartime', '-fc') > -1 ) then
-        if ( goldbrick ) then
-          call diff ( l2gp1%solarTime, 'solarTime', &
-            &         l2gp2%solarTime, ' ', &
-            & options=options )
-        else
-          call dump ( &
-            & diff_fun( l2gp1%solarTime, l2gp2%solarTime, &
-            &         auxvalue=24._rgp, &
-            &         options=AddOntoOptions('p',options) ), &
-            & 'solarTime', &
-            & options=options )
+      if ( all(shape(l2gp1%latitude) == shape(l2gp2%latitude)) ) then
+        NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%latitude', ' ', statsOnOneLine )
+        if ( any(l2gp1%latitude /= l2gp2%latitude) .and. &
+          & SwitchDetail(lowercase(myFields), 'lat', '-fc') > -1 ) then
+            call diff ( l2gp1%latitude, 'latitude', &
+              &         l2gp2%latitude, ' ', &
+              & options=options )
+          myNumDiffs = myNumDiffs + count( l2gp1%latitude /= l2gp2%latitude )
         endif
-        myNumDiffs = myNumDiffs + count( l2gp1%solarTime /= l2gp2%solarTime )
       endif
-      NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%solarzenith', ' ', statsOnOneLine )
-      CrashAtBeginning = .true.
-      if ( any(l2gp1%solarZenith /= l2gp2%solarZenith) .and. &
-        & SwitchDetail(lowercase(myFields), 'solarzenith', '-fc') > -1 ) then
-          call diff ( l2gp1%solarZenith, 'solarZenith', &
-            &         l2gp2%solarZenith, ' ', &
-            & options=trim(options) )
-        badChunks = .true.
-        myNumDiffs = myNumDiffs + count( l2gp1%solarZenith /= l2gp2%solarZenith )
+      if ( all(shape(l2gp1%longitude) == shape(l2gp2%longitude)) ) then
+        NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%longitude', ' ', statsOnOneLine )
+        if ( any(l2gp1%longitude /= l2gp2%longitude) .and. &
+          & SwitchDetail(lowercase(myFields), 'lon', '-fc') > -1 ) then
+          if ( goldbrick ) then
+            call diff ( l2gp1%longitude, 'longitude', &
+              &         l2gp2%longitude, ' ', &
+              & options=options )
+          else
+            call dump ( &
+              & diff_fun( l2gp1%longitude, l2gp2%longitude, &
+              &         auxvalue=360._rgp, &
+              &         options=AddOntoOptions('p',options) ), &
+              & 'longitude', &
+              & options=options )
+          endif
+          myNumDiffs = myNumDiffs + count( l2gp1%longitude /= l2gp2%longitude )
+        endif
       endif
-      NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%losangle', ' ', statsOnOneLine )
-      if ( any(l2gp1%losAngle /= l2gp2%losAngle) .and. &
-        & SwitchDetail(lowercase(myFields), 'losangle', '-fc') > -1 ) then
-          call diff ( l2gp1%losAngle, 'losAngle', &
-            &         l2gp2%losAngle, ' ', &
-            & options=options )
-        myNumDiffs = myNumDiffs + count( l2gp1%losAngle /= l2gp2%losAngle )
+      if ( all(shape(l2gp1%solarTime) == shape(l2gp2%solarTime)) ) then
+        NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%solartime', ' ', statsOnOneLine )
+        if ( any(l2gp1%solarTime /= l2gp2%solarTime) .and. &
+          & SwitchDetail(lowercase(myFields), 'solartime', '-fc') > -1 ) then
+          if ( goldbrick ) then
+            call diff ( l2gp1%solarTime, 'solarTime', &
+              &         l2gp2%solarTime, ' ', &
+              & options=options )
+          else
+            call dump ( &
+              & diff_fun( l2gp1%solarTime, l2gp2%solarTime, &
+              &         auxvalue=24._rgp, &
+              &         options=AddOntoOptions('p',options) ), &
+              & 'solarTime', &
+              & options=options )
+          endif
+          myNumDiffs = myNumDiffs + count( l2gp1%solarTime /= l2gp2%solarTime )
+        endif
       endif
-      NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%geodangle', ' ', statsOnOneLine )
-      if ( any(l2gp1%geodAngle /= l2gp2%geodAngle) .and. &
-        & SwitchDetail(lowercase(myFields), 'geodangle', '-fc') > -1 ) then
-          call diff ( l2gp1%geodAngle, 'geodAngle', &
-            &         l2gp2%geodAngle, ' ', &
-            & options=options )
-        ! badChunks = .true.
-        myNumDiffs = myNumDiffs + count( l2gp1%geodAngle /= l2gp2%geodAngle )
+      if ( all(shape(l2gp1%solarZenith) == shape(l2gp2%solarZenith)) ) then
+        NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%solarzenith', ' ', statsOnOneLine )
+        CrashAtBeginning = .true.
+        if ( any(l2gp1%solarZenith /= l2gp2%solarZenith) .and. &
+          & SwitchDetail(lowercase(myFields), 'solarzenith', '-fc') > -1 ) then
+            call diff ( l2gp1%solarZenith, 'solarZenith', &
+              &         l2gp2%solarZenith, ' ', &
+              & options=trim(options) )
+          badChunks = .true.
+          myNumDiffs = myNumDiffs + count( l2gp1%solarZenith /= l2gp2%solarZenith )
+        endif
       endif
-      NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%time', ' ', statsOnOneLine )
-      if ( any(l2gp1%time /= l2gp2%time) .and. &
-        & SwitchDetail(lowercase(myFields), 'time', '-fc') > -1 ) then
-          call diff ( l2gp1%time, ' time', &
-            &         l2gp2%time, ' ', &
-            & options=options )
-        ! badChunks = .true.
-        myNumDiffs = myNumDiffs + count( l2gp1%time /= l2gp2%time )
+      if ( all(shape(l2gp1%losAngle) == shape(l2gp2%losAngle)) ) then
+        NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%losangle', ' ', statsOnOneLine )
+        if ( any(l2gp1%losAngle /= l2gp2%losAngle) .and. &
+          & SwitchDetail(lowercase(myFields), 'losangle', '-fc') > -1 ) then
+            call diff ( l2gp1%losAngle, 'losAngle', &
+              &         l2gp2%losAngle, ' ', &
+              & options=options )
+          myNumDiffs = myNumDiffs + count( l2gp1%losAngle /= l2gp2%losAngle )
+        endif
       endif
-      NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%chunknumber', ' ', statsOnOneLine )
-      if ( any(l2gp1%chunkNumber /= l2gp2%chunkNumber) .and. &
-        & SwitchDetail(lowercase(myFields), 'chunknumber', '-fc') > -1 ) then
-        call diff ( l2gp1%chunkNumber, 'chunkNumber', &
-          &         l2gp2%chunkNumber, ' ', &
-            & options=options )
-        myNumDiffs = myNumDiffs + count( l2gp1%chunkNumber /= l2gp2%chunkNumber )
+      if ( all(shape(l2gp1%geodAngle) == shape(l2gp2%geodAngle)) ) then
+        NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%geodangle', ' ', statsOnOneLine )
+        if ( any(l2gp1%geodAngle /= l2gp2%geodAngle) .and. &
+          & SwitchDetail(lowercase(myFields), 'geodangle', '-fc') > -1 ) then
+            call diff ( l2gp1%geodAngle, 'geodAngle', &
+              &         l2gp2%geodAngle, ' ', &
+              & options=options )
+          ! badChunks = .true.
+          myNumDiffs = myNumDiffs + count( l2gp1%geodAngle /= l2gp2%geodAngle )
+        endif
+      endif
+      if ( all(shape(l2gp1%time) == shape(l2gp2%time)) ) then
+        NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%time', ' ', statsOnOneLine )
+        if ( any(l2gp1%time /= l2gp2%time) .and. &
+          & SwitchDetail(lowercase(myFields), 'time', '-fc') > -1 ) then
+            call diff ( l2gp1%time, ' time', &
+              &         l2gp2%time, ' ', &
+              & options=options )
+          ! badChunks = .true.
+          myNumDiffs = myNumDiffs + count( l2gp1%time /= l2gp2%time )
+        endif
+      endif
+      if ( all(shape(l2gp1%chunkNumber) == shape(l2gp2%chunkNumber)) ) then
+        NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%chunknumber', ' ', statsOnOneLine )
+        if ( any(l2gp1%chunkNumber /= l2gp2%chunkNumber) .and. &
+          & SwitchDetail(lowercase(myFields), 'chunknumber', '-fc') > -1 ) then
+          call diff ( l2gp1%chunkNumber, 'chunkNumber', &
+            &         l2gp2%chunkNumber, ' ', &
+              & options=options )
+          myNumDiffs = myNumDiffs + count( l2gp1%chunkNumber /= l2gp2%chunkNumber )
+        endif
       endif
       
       if ( associated(l2gp1%frequency) .and.  associated(l2gp2%frequency)) then
-        if ( any(l2gp1%frequency /= l2gp2%frequency) .and. &
-          & SwitchDetail(lowercase(myFields), 'freq', '-fc') > -1 ) then
-          call diff ( l2gp1%frequency, 'frequency', &
-            &         l2gp2%frequency, ' ', &
-            & options=options )
-        myNumDiffs = myNumDiffs + count( l2gp1%frequency /= l2gp2%frequency )
+        if ( all(shape(l2gp1%frequency) == shape(l2gp2%frequency)) ) then
+          if ( any(l2gp1%frequency /= l2gp2%frequency) .and. &
+            & SwitchDetail(lowercase(myFields), 'freq', '-fc') > -1 ) then
+            call diff ( l2gp1%frequency, 'frequency', &
+              &         l2gp2%frequency, ' ', &
+              & options=options )
+          myNumDiffs = myNumDiffs + count( l2gp1%frequency /= l2gp2%frequency )
+          endif
         endif
       endif
     end subroutine diffGeoLocations
@@ -5654,6 +5682,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.248  2021/04/15 22:43:22  pwagner
+! Now uses MLS_HyperStart
+!
 ! Revision 2.247  2020/07/17 16:16:14  pwagner
 ! Avoid reading hdf5 MissingValue attribute from hdf4 files
 !
