@@ -16,14 +16,16 @@ module NeuralNet_m              ! Use Neural Net Model to Retrieve State
   use Chunks_m, only: Dump
   use Global_Settings, only: L1MAFToL2Profile, L2ProfileToL1MAF
   use HDF, only: DFAcc_Create, DFAcc_RDOnly
+  use HGridsDatabase, only: L1BGeolocation
   use HighOutput, only: BeVerbose, Dump, LetsDebug, OutputNamedValue
+  use Hunt_M, only: Hunt
   use MLSCommon, only: MLSChunk_T, MLSFile_T
   use MLSFiles, only: MLS_CloseFile, MLS_OpenFile, MLS_SFEnd, MLS_SFStart, &
     & AddInitializeMLSFile, Dump, HDFVersion_5
   use MLSFinds, only: FindFirst, FindLast
-  use MLSKinds, only: R4, R8, Rv
+  use MLSKinds, only: R4, R8, Rv, Rk => R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-  use MLSSignals_M, only: DisplayRadiometer, GetSignalName
+  use MLSSignals_M, only: GetSignalName
   use MLSStats1, only: MLSMax, MLSMin
   use MLSStrings, only: Capitalize, ReplaceNonAscii
   use MoreTree, only: Get_Field_Id
@@ -57,6 +59,8 @@ module NeuralNet_m              ! Use Neural Net Model to Retrieve State
   !   bk is Band k
   !   cj is channel j
   !   mi is MIF i
+  !
+  ! Another wrinkle is the infamous decision that MAFs start at 0 rather than 1
   ! ----------------------------------------------------------------------------
 
   implicit none
@@ -88,8 +92,8 @@ module NeuralNet_m              ! Use Neural Net Model to Retrieve State
   integer, parameter              :: NumMIFs          = 75
   integer, parameter              :: NumLevels        = 42
   
-  Logical, parameter              :: StandardizeRadiancesHere = .true.
-  Logical, parameter              :: UseMatchedRadiances      = .true.
+  Logical, parameter              :: StandardizeRadiancesHere = .false.
+  Logical, parameter              :: UseMatchedRadiances      = .false.
 
 contains ! =====     Public Procedures     =============================
 
@@ -113,6 +117,7 @@ contains ! =====     Public Procedures     =============================
     integer :: File
     integer :: FirstBin
     integer :: FirstProfile
+    integer :: GSON                    ! Tree node
     integer :: I                      ! Loop counter
     integer :: J                      ! Tree index
     integer :: LastBin
@@ -146,10 +151,14 @@ contains ! =====     Public Procedures     =============================
     type(NeuralNetCoeffs_T)         :: Coeffs
     type(NeuralNetInputData_T)      :: NNMeasurements
     character (len=1024)            :: FileName
+    real(rk), dimension(:,:), pointer :: GeodAngle
+    ! The next file holds the coefficients
+    ! although we should try to supply the filename in the l2cf/PCF
     character (len=*), parameter    :: DefaultFileName = &
       & '/users/fwerner/Documents/database/trained_neural_nets/temperature/v1.14/1/' &
       & // &
       & 'Temperature_trained_neural_net.h5' ! For coefficients
+    ! These next two are for debugging the date 2019d001
     character (len=*), parameter    :: DefaultRadiances = &
       & '/users/pwagner/' &
       & // &
@@ -173,16 +182,19 @@ contains ! =====     Public Procedures     =============================
     call trace_begin ( me, 'NeuralNet_m.NeuralNet', key, &
       & cond=toggle(gen) .and. levels(gen) > 1 )
     NeededBands = .false.
+    nullify ( GeodAngle )
 
-    RadfileID = mls_sfstart ( trim(DefaultRadiances), DFAcc_Create, &
-        &                                          hdfVersion=HDFVersion_5 )
-    TempfileID = mls_sfstart ( trim(DefaultTemperatures), DFAcc_RDOnly, &
-        &                                          hdfVersion=HDFVersion_5 )
-    print *, 'Opened RadFile id ', RadfileID
-    print *, 'Opened TempFile id ', TempfileID
-    if ( RadfileID < 0 ) then
-      call announce_error ( key, &
-        & 'Failed to Open/Create Radiances File: ' // trim(DefaultRadiances) )
+    if ( StandardizeRadiancesHere ) then
+      RadfileID = mls_sfstart ( trim(DefaultRadiances), DFAcc_Create, &
+          &                                          hdfVersion=HDFVersion_5 )
+      TempfileID = mls_sfstart ( trim(DefaultTemperatures), DFAcc_RDOnly, &
+          &                                          hdfVersion=HDFVersion_5 )
+      print *, 'Opened RadFile id ', RadfileID
+      print *, 'Opened TempFile id ', TempfileID
+      if ( RadfileID < 0 ) then
+        call announce_error ( key, &
+          & 'Failed to Open/Create Radiances File: ' // trim(DefaultRadiances) )
+      endif
     endif
 !       RadiancesFile => AddInitializeMLSFile ( FileDatabase, name=DefaultRadiances, &
 !         & shortName='Radiances', access=Dfacc_Create,  &
@@ -190,6 +202,8 @@ contains ! =====     Public Procedures     =============================
 
     do i = 2, nsons(key)
       son = subtree(i,key)
+      gson = subtree(i,key) ! The argument
+      if ( nsons(gson) > 1) gson = subtree(2,gson) ! Now value of said argument
       field = get_field_id(son)
       select case ( field )
       case ( f_measurements )
@@ -197,18 +211,22 @@ contains ! =====     Public Procedures     =============================
       case ( f_state )
         state => VectorsDatabase(decoration(decoration(subtree(2,son))))
       case ( f_file )
-        file = sub_rosa(subtree(2,son))
+        file = sub_rosa(gson)
+        call outputNamedValue ( 'Processing file field', file )
       end select
     end do ! i = 2, nsons(key)
 
     if ( file > 0 ) then
       call get_string ( file, filename, strip=.true. )
+      print *, 'filename read: ', trim(filename)
       myFile =  FileNameToID( trim(filename), FileDataBase ) 
     else
       myFile = 0
+      print *, 'No filename read'
     end if
     if ( myFile < 1 ) then
       filename = defaultFileName
+      print *, 'Must use default filename: ', trim(defaultFileName)
     endif
     if ( DeeBug ) then
       call outputNamedValue ( 'filename', trim(filename) )
@@ -305,12 +323,30 @@ contains ! =====     Public Procedures     =============================
     ! These are absolute profile numbers, i.e. they start at '1' only
     ! for the first chunk
     call Dump ( Chunk )
-    firstProfile = L1MAFToL2Profile ( &
-      & Chunk%firstMAFIndex, FileDatabase, MIF=36, Debugging=.true. &
-      & )
-    lastProfile  = L1MAFToL2Profile ( &
-      & Chunk%lastMAFIndex , FileDatabase, MIF=36, Debugging=.false. &
-      & )
+    if ( .false. ) then
+      firstProfile = L1MAFToL2Profile ( &
+        & Chunk%firstMAFIndex, FileDatabase, MIF=36, Debugging=.true. &
+        & )
+      lastProfile  = L1MAFToL2Profile ( &
+        & Chunk%lastMAFIndex , FileDatabase, MIF=36, Debugging=.false. &
+        & )
+    else
+      call L1BGeoLocation ( filedatabase, 'GHz/GeodAngle    ', &
+        & 'GHz', values2d=GeodAngle )
+      ! We'll use the Geod angles directly
+      call Hunt ( temperature%template%phi(1,:),  &
+        & GeodAngle(36,Chunk%firstMAFIndex+1), firstProfile, &
+        & allowTopValue=.true. )
+      call Hunt ( temperature%template%phi(1,:),  &
+        & GeodAngle(36,Chunk%lastMAFIndex+1), lastProfile, &
+        & allowTopValue=.true. )
+      ! Now we actually want the profile numbers in the entire
+      ! precessing range, not just this chunk
+      firstProfile = firstprofile + chunk%hGridOffsets(1)
+      lastProfile  = lastprofile  + chunk%hGridOffsets(1)
+    endif
+    print *, 'chunkNumber  ', chunk%ChunkNumber
+    print *, 'HGrid offset  ', chunk%hGridOffsets(1)
     print *, 'firstProfile ', firstProfile
     print *, 'lastProfile  ',  lastProfile
     allocate(TemperatureValues(NumLevels))
@@ -321,6 +357,7 @@ contains ! =====     Public Procedures     =============================
     maxLat = mlsmax( temperature%template%geodLat(1,:) )
     firstBin = FindLast ( BinArray - minLat < 0._r4 )
     lastBin  = FindFirst ( BinArray - maxLat > 0._r4 )
+    if ( lastBin < firstBin ) lastBin = firstBin ! In case firstBin == NumBins
     print *, 'minLat ', minLat
     print *, 'maxLat ', maxLat
     print *, 'firstBin ', firstBin
@@ -345,10 +382,18 @@ contains ! =====     Public Procedures     =============================
           & ) &
           & cycle
         thisProfile = profile + firstProfile - 1
-        thisMAF = L2ProfileToL1MAF ( thisProfile, fileDatabase, MIF=36 )
-        MAF = thisMAF - Chunk%firstMAFIndex + 1
-        print *, 'binNum, profile, MAF ', binNum, profile, MAF
+        if ( .false. ) then
+          thisMAF = L2ProfileToL1MAF ( thisProfile, fileDatabase, MIF=36 )
+        else
+          ! We'll use the Geod angles directly
+          call Hunt ( GeodAngle(36,:), &
+            & temperature%template%phi(1,profile), thisMaf, &
+            & allowTopValue=.true. )
+        endif
+        MAF = thisMAF - Chunk%firstMAFIndex ! + 1
         print *, 'thisprofile, thisMAF ', thisprofile, thisMAF
+        print *, 'firstProfile, firstMAFIndex ', firstProfile, Chunk%firstMAFIndex
+        print *, 'binNum, profile, MAF ', binNum, profile, MAF
         print *, 'Num measurement quantities ', measurements%template%noQuantities
         print *, 'Temperature radiometer ', Temperature%template%radiometer
         ! MAF and profile are indices inside the chunk, not absolute indices
@@ -358,9 +403,9 @@ contains ! =====     Public Procedures     =============================
           !
           call outputNamedValue ( 'j ', j )
           call outputNamedValue ( 'Qty radiometer ', measurements%quantities(j)%template%radiometer )
-          call outputNamedValue ( 'Phi', measurements%quantities(j)%template%Phi(1,MAF) )
-          call outputNamedValue ( 'longitude', measurements%quantities(j)%template%lon(1,MAF) )
-          call outputNamedValue ( 'latitude', measurements%quantities(j)%template%GeodLat(1,MAF) )
+          call outputNamedValue ( 'Phi', measurements%quantities(j)%template%Phi(1,MAF+1) )
+          call outputNamedValue ( 'longitude', measurements%quantities(j)%template%lon(1,MAF+1) )
+          call outputNamedValue ( 'latitude', measurements%quantities(j)%template%GeodLat(1,MAF+1) )
           ! Because there is no radiometer defined for Temperature,
           ! we can hardly compare it to whatever radiometer the measurement
           ! quantity uses
@@ -391,35 +436,41 @@ contains ! =====     Public Procedures     =============================
             & FranksValues )
           
         endif
-!         call RunNeuralNet ( NNMeasurements, c, MyNeuralNet )
+        ! stop
         print *, 'Calling NeuralNetFit'
-        print *, 'Rad FileID: ', RadfileID
+        if ( StandardizeRadiancesHere ) &
+          & print *, 'Rad FileID: ', RadfileID
         ! Temperature%values(8:49, profile) = NeuralNetFit ( NNMeasurements, &
         !   & Coeffs, NumHiddenLayers, switchOver )
-        TemperatureValues = NeuralNetFit ( NNMeasurements, &
-          & Coeffs, NumHiddenLayers, switchOver, &
-          & RadfileID, TempFileID, thisMAF, thisProfile, Debugging=.false. )
+        if ( StandardizeRadiancesHere ) then
+          TemperatureValues = NeuralNetFit ( NNMeasurements, &
+            & Coeffs, NumHiddenLayers, switchOver, &
+            & RadfileID, TempFileID, thisMAF, thisProfile, Debugging=.false. )
+        else
+          TemperatureValues = NeuralNetFit ( NNMeasurements, &
+            & Coeffs, NumHiddenLayers, switchOver, Debugging=.false. )
+        endif
         do j=1, NumLevels
           Temperature%values(Coeffs%Output_Pressure_Levels_Indices(j), profile) = &
             & TemperatureValues(j)
         enddo
-        call OutputNamedValue ( 'Our profile num', thisProfile )
-        call OutputNamedValue ( 'MAF ours and Franks', (/thisMAF, matchedMAF/) )
-        call OutputNamedValue ( 'Bin Number ours and Franks', (/BinNum, matchedBinNum/) )
-        j  = L1MAFToL2Profile ( &
-          & thisMAF , FileDatabase, MIF=36, Debugging=.false., &
-          & Phi=Phi, Lat=Lat )
-        call OutputNamedValue ( 'Our phi, lat', (/Phi, Lat/) )
-        j = FindFirst ( BinArray - Lat > 0._r4 )
-        call OutputNamedValue ( 'Our bin', j )
-        j  = L1MAFToL2Profile ( &
-          & matchedMAF , FileDatabase, MIF=36, Debugging=.false., &
-          & Phi=Phi, Lat=Lat )
-        ! call OutputNamedValue ( 'Franks phi, lat', (/Phi, Lat/) )
-        j = FindFirst ( BinArray - Lat > 0._r4 )
-        call OutputNamedValue ( 'Franks bin', j )
-        call Dump ( Temperature%values(:, profile), 'Temps (nn)', Width=5 )
         if ( StandardizeRadiancesHere ) then
+          call OutputNamedValue ( 'Our profile num', thisProfile )
+          call OutputNamedValue ( 'MAF ours and Franks', (/thisMAF, matchedMAF/) )
+          call OutputNamedValue ( 'Bin Number ours and Franks', (/BinNum, matchedBinNum/) )
+          j  = L1MAFToL2Profile ( &
+            & thisMAF , FileDatabase, MIF=36, Debugging=.false., &
+            & Phi=Phi, Lat=Lat )
+          call OutputNamedValue ( 'Our phi, lat', (/Phi, Lat/) )
+          j = FindFirst ( BinArray - Lat > 0._r4 )
+          call OutputNamedValue ( 'Our bin', j )
+          j  = L1MAFToL2Profile ( &
+            & matchedMAF , FileDatabase, MIF=36, Debugging=.false., &
+            & Phi=Phi, Lat=Lat )
+          ! call OutputNamedValue ( 'Franks phi, lat', (/Phi, Lat/) )
+          j = FindFirst ( BinArray - Lat > 0._r4 )
+          call OutputNamedValue ( 'Franks bin', j )
+          call Dump ( Temperature%values(:, profile), 'Temps (nn)', Width=5 )
           ! do j=1, NumLevels
           !  Temperature%values(Coeffs%Output_Pressure_Levels_Indices(j), profile) = &
           !     & FranksValues(j)
@@ -468,23 +519,25 @@ contains ! =====     Public Procedures     =============================
     enddo ! Loop of BinNums
     call MLS_CloseFile( CoeffsFile, Status )
 
-    Status = MLS_SFEnd( RadfileID, hdfVersion=HDFVersion_5 )
-    print *, 'Closed RadFile id ', RadfileID
-    print *, Status
-    if ( Status /= 0 ) then
-      print *, 'Error in ending hdf access to file'
-      stop
+    if ( StandardizeRadiancesHere ) then
+      Status = MLS_SFEnd( RadfileID, hdfVersion=HDFVersion_5 )
+      print *, 'Closed RadFile id ', RadfileID
+      print *, Status
+      if ( Status /= 0 ) then
+        print *, 'Error in ending hdf access to file'
+        stop
+      endif
+
+      Status = MLS_SFEnd( TempfileID, hdfVersion=HDFVersion_5 )
+      print *, 'Closed TempFile id ', TempfileID
+      print *, Status
+      if ( Status /= 0 ) then
+        print *, 'Error in ending hdf access to file'
+        stop
+      endif
     endif
 
-    Status = MLS_SFEnd( TempfileID, hdfVersion=HDFVersion_5 )
-    print *, 'Closed TempFile id ', TempfileID
-    print *, Status
-    if ( Status /= 0 ) then
-      print *, 'Error in ending hdf access to file'
-      stop
-    endif
-
-    stop
+    ! stop
 !debug
 !call dump(Temperature%values, 'beforedivide')
 
@@ -537,7 +590,7 @@ contains ! =====     Public Procedures     =============================
       integer                         :: SIGNAL    ! the signal we're looking for
       integer, dimension(:)           :: MIFs      ! MIF numbers in radiances
       integer, dimension(:,:)         :: ChannelNums! channel numbers in radiances
-      integer                         :: MAF
+      integer                         :: MAF ! Remember--1st MAF is 0
       logical, intent(in)             :: DeeBug
       ! Local variables
       integer                         :: channel
@@ -554,7 +607,7 @@ contains ! =====     Public Procedures     =============================
           do channel = 1, NumChnnelsBand1
             chanNum = ChannelNums(channel, 1)
             NNMeasurements%Band_1_Radiances%values(channel,MIF) = &
-              & radiances%value3(chanNum, MIFs(MIF), MAF)
+              & radiances%value3(chanNum, MIFs(MIF), MAF+1)
           enddo
         enddo
         if ( DeeBug ) call OutputNamedValue ( 'Band 1 rad', &
@@ -564,7 +617,7 @@ contains ! =====     Public Procedures     =============================
           do channel = 1, NumChnnelsBand8
             chanNum = ChannelNums(channel, 2)
             NNMeasurements%Band_8_Radiances%values(channel,MIF) = &
-              & radiances%value3(chanNum, MIFs(MIF), MAF)
+              & radiances%value3(chanNum, MIFs(MIF), MAF+1)
           enddo
         enddo
         if ( DeeBug ) call OutputNamedValue ( 'Band 8 rad', &
@@ -574,7 +627,7 @@ contains ! =====     Public Procedures     =============================
           do channel = 1, NumChnnelsBand22
             chanNum = ChannelNums(channel, 3)
             NNMeasurements%Band_22_Radiances%values(channel,MIF) = &
-              & radiances%value3(chanNum, MIFs(MIF), MAF)
+              & radiances%value3(chanNum, MIFs(MIF), MAF+1)
           enddo
         enddo
         if ( DeeBug ) call OutputNamedValue ( 'Band 22 rad', &
@@ -899,24 +952,64 @@ contains ! =====     Public Procedures     =============================
     end subroutine ReadCoeffsFile
 
   !------------------------------------------  FileNameToID  -----
-  function FileNameToID ( fileName, DataBase )  result(ID)
-
-    ! Given filename, returns index; if name not found in db, returns 0
+  ! Given a file name or a fragment of a file name found in the PCF
+  ! return its index number into the file database.
+  ! If the file is not found in the database, add it to the database.
+  function FileNameToID ( fileName, DataBase )  result( ID )
+    use Hdf, only: Dfacc_Rdonly
+    use Intrinsic, only: L_HDF
+    use MLSCommon, only: MLSFile_T
+    use MLSFiles, only: HDFVersion_5, &
+      & AddInitializeMLSFile, GetPCFromRef
+    use MLSL2Options, only: Toolkit
+    use MLSPCF2, only: MLSPCF_L2NeurNet_Start, MLSPCF_L2NeurNet_End
 
     ! Dummy arguments
     type (MLSFile_T), dimension(:), pointer :: DATABASE
-    character(len=*), intent(in)            :: FileName
-    integer                                 :: ID
+    character(len=*), intent(in)            :: FileName ! full name or fragment
+    integer                                 :: ID ! Index of file in database
 
     ! Local variables
+    integer :: lun
+    type (MLSFile_T), pointer   :: MLSFile
+    integer :: mypcfEndCode
+    integer :: PCBottom
+    integer :: PCTop
+    character(len=255) :: PCFFileName
+    integer :: returnStatus
+    integer :: Version
     ! Executable
+    mypcfEndCode = 0
+    lun = 0
+    version = 1
     id = 0
-    if ( .not. associated(dataBase) .or. len_trim(filename) < 1 ) return
-    do id =1, size(database)
-      if ( fileName == dataBase(id)%Name ) exit
-      if ( fileName == dataBase(id)%ShortName ) exit
-    enddo
-    if ( id > size(database) ) id = 0
+    PCBottom = MLSPCF_L2NeurNet_Start
+    PCTop    = MLSPCF_L2NeurNet_End
+    print *, 'associated database: ', associated(dataBase)
+    print *, 'len_trim(filename): ', len_trim(filename)
+    ! if ( .not. associated(dataBase) .or. len_trim(filename) < 1 ) return
+    if ( associated(database) ) then
+      do id =1, size(database)
+        if ( fileName == dataBase(id)%Name ) exit
+        if ( fileName == dataBase(id)%ShortName ) exit
+      enddo
+      if ( id > size(database) ) id = 0
+      if ( id > 0 ) return
+    endif
+    ! Must add file to database
+    lun = GetPCFromRef( fileName, PCBottom, &
+      & PCTop, &
+      & TOOLKIT, returnStatus, Version, .false., &
+      & exactName=PCFFileName )
+    MLSFile => AddInitializeMLSFile( database, &
+      & content='NeuralNetCoeffs', &
+      & name=PCFFilename, shortName=fileName, &
+      & type=l_hdf, access=dfacc_rdonly, HDFVersion=HDFVERSION_5 )
+    call Dump ( MLSFile )
+    ! Because we just now added a new item to the database, id is its new size
+    id = size(database)
+    print *, 'id: ', id
+    print *, 'len_trim(exact filename): ', len_trim(PCFfilename)
   end function FileNameToID
 
 !--------------------------- end bloc --------------------------------------
@@ -934,6 +1027,9 @@ end module NeuralNet_m
 
 !
 ! $Log$
+! Revision 2.8  2021/05/27 23:52:30  pwagner
+! Now gets coeffs file from PCF; MAF index starts at 0; avoid use of L1MAF To and From functions in favor of L1BGeoLocation
+!
 ! Revision 2.7  2021/05/18 15:53:56  pwagner
 ! Many bugs fixed; still in debug mode
 !
