@@ -43,17 +43,17 @@ MODULE NeuralNetUtils_M
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use Output_M, only: Output 
 
-  IMPLICIT NONE
+  implicit none
 
-  TYPE radiance_T
+  type radiance_T
      character(len=64) :: signal
-     !INTEGER :: NumMAFS ! <----- it's only ever going to be one MAF, right?
-     INTEGER :: NumChannels
-     INTEGER :: NumMIFs
-     real(r8),  dimension(:,:),ALLOCATABLE :: values
-  END TYPE radiance_T
+     !integer :: NumMAFS ! <----- it's only ever going to be one MAF, right?
+     integer :: NumChannels
+     integer :: NumMIFs
+     real(r8), dimension(:,:), allocatable :: values
+  end type radiance_T
 
-  TYPE NeuralNetCoeffs_T
+  type NeuralNetCoeffs_T
      ! Will be allocated in the caller. 
      ! [3]  Number of Bands
      character(len=32),  dimension(:), allocatable :: Bands
@@ -80,7 +80,7 @@ MODULE NeuralNetUtils_M
      real(r8),  dimension(:),allocatable :: Intercepts_Hidden_Layer_2
 
      ! [5078, 42] = [nNeurons, nLevs]
-     real(r8),  dimension(:,:),ALLOCATABLE :: Weights_Hidden_Labels_Layer
+     real(r8),  dimension(:,:),allocatable :: Weights_Hidden_Labels_Layer
      ! [7575,5078] = [nVars, nNeurons]
      real(r8),  dimension(:,:),allocatable :: Weights_Hidden_Layer_1
      ! [nNeurons, nNeurons]
@@ -104,10 +104,10 @@ MODULE NeuralNetUtils_M
      ! Just for debugging
      real(r8),  dimension(:,:), allocatable :: Stddevs
      real(r8),  dimension(:,:), allocatable :: Means
-  END TYPE NeuralNetCoeffs_T
+  end type NeuralNetCoeffs_T
 
 
-  TYPE NeuralNetInputData_T
+  type NeuralNetInputData_T
      ! I'm assuming that will have been corrected for the baseline and
      ! reduced to the appropriate MIFs, 22-96 for all bands, all 25
      ! channels for Bands 1 and 8 and channels 40-90 for Band
@@ -116,24 +116,24 @@ MODULE NeuralNetUtils_M
      ! All of these will end up having 
      ! These will be allocated in the caller.
 
-     TYPE (Radiance_T) :: Band_1_Radiances 
-     TYPE (Radiance_T) :: Band_8_Radiances
-     TYPE (Radiance_T) :: Band_22_Radiances 
+     type (Radiance_T) :: Band_1_Radiances 
+     type (Radiance_T) :: Band_8_Radiances
+     type (Radiance_T) :: Band_22_Radiances 
 
-  END TYPE NeuralNetInputData_T
+  end type NeuralNetInputData_T
 
   ! Paul; I used this type to pass info out of the routine. In the
   ! final configutation, all you'll need is `prediction', so you could
   ! modify the type to use just that variable, or comment it out
   ! entirely and just put `prediction' directly into the interface for
   ! NeuralNetFit. 
-  TYPE NeuralNetOutputData_T
-     real(r8),  dimension(:),ALLOCATABLE::prediction, &
+  type NeuralNetOutputData_T
+     real(r8),  dimension(:),allocatable::prediction, &
           &  working_space, &
           & neuronValues, &
           & neuronValues2, &
           & y_pred
-  END TYPE NeuralNetOutputData_T
+  end type NeuralNetOutputData_T
 
   interface Dump
     module procedure Dump_Coeffs !, Dump_Radiance, Dump_InputData
@@ -142,13 +142,13 @@ MODULE NeuralNetUtils_M
 
   ! In case we're checking against Frank's results
   ! These are purely for debugging against matched results
-  ! Comment them out, and references o them, when you're
+  ! Comment them out, and references to them, when you're
   ! satisfied our results match.
   real(r8),  dimension(7575), public, save :: matchedStdRadiances = 0
-  integer, public, save                   :: matchedbinNum       = 0
-  integer, public, save                   :: matchedMAF          = 0
+  integer, public, save                    :: matchedbinNum       = 0
+  integer, public, save                    :: matchedMAF          = 0
 
-  PUBLIC :: CheckMAFs, Dump, &
+  public :: CheckMAFs, Dump, &
        & NeuralNetInputData_T, & 
        & NeuralNetCoeffs_T, & 
        & NeuralNetFit, & 
@@ -201,12 +201,12 @@ contains
     use MLSHDF5, only: LoadFromHDF5DS
     use MLSFiles, only: HDFVersion_5
     ! Dummy args
-    integer, intent(in)                    :: TempFileID ! For optional comparisons
+    integer, intent(in)                     :: TempFileID ! For optional comparisons
     real(r8),  dimension(:), intent(in)     :: StdRadiances
-    integer                                :: MAF
+    integer                                 :: MAF ! Remember--starts at 0
     ! Internal variables
-    integer                                :: j
-    type (MLSFile_T)                       :: TempFile
+    integer                                 :: j
+    type (MLSFile_T)                        :: TempFile
     real(r4), allocatable,  dimension(:,:)  :: ratios2
     real(r4), allocatable,  dimension(:)    :: recalc
     ! Executable
@@ -224,13 +224,13 @@ contains
       & (StdRadiances(1)-ratios2(1,:))**2 &
       &  + &
       & (StdRadiances(2)-ratios2(2,:))**2 &
-      & < 1.e-6 )
+      & < 1.e-6 ) - 1
     call OutputNamedValue ( 'min std rads', minval(StdRadiances) )
     call OutputNamedValue ( 'max std rads', maxval(StdRadiances) )
     call OutputNamedValue ( 'min matched rads', minval(matchedStdRadiances) )
     call OutputNamedValue ( 'max matched rads', maxval(matchedStdRadiances) )
-    call OutputNamedValue ( 'min rads(matchedMAF)', minval(ratios2(:,matchedMAF)) )
-    call OutputNamedValue ( 'max rads(matchedMAF)', maxval(ratios2(:,matchedMAF)) )
+    call OutputNamedValue ( 'min rads(matchedMAF)', minval(ratios2(:,matchedMAF+1)) )
+    call OutputNamedValue ( 'max rads(matchedMAF)', maxval(ratios2(:,matchedMAF+1)) )
   end function CheckMafs
 
   subroutine CheckBinNums ( TempFileID, MAFRange, nnCoeffs )
@@ -248,7 +248,7 @@ contains
     integer                                :: binNum
     integer                                :: binNum2
     integer                                :: j
-    integer                                :: MAF
+    integer                                :: MAF ! Remember--MAFs start at 0
     type (MLSFile_T)                       :: TempFile
     real(r4), allocatable,  dimension(:,:)  :: ratios2
     real(r4), allocatable,  dimension(:)    :: recalc
@@ -273,23 +273,23 @@ contains
       allocate ( recalc(18) )
       do binNum=1, 18
         recalc(binNum) = &
-          & (values2(1, MAF) - nnCoeffs%means(binNum,1)) &
+          & (values2(1, MAF+1) - nnCoeffs%means(binNum,1)) &
           & / &
           & nnCoeffs%stddevs(binNum,1)
       enddo
       ! Now for the musical question:
       ! which binNum most closely approximates Frank's ratio?
-      binNum = FindFirst ( abs(ratios2(1,MAF)-recalc(:)) < 1.e-4 )
+      binNum = FindFirst ( abs(ratios2(1,MAF+1)-recalc(:)) < 1.e-4 )
       if ( binNum < 1 ) then
         call output ( 'No matching binNum found in Franks file', advance='yes' )
       else
         call outputNamedValue ( 'MAF, Bin num matched', (/MAF, BinNum /) )
-        call outputNamedValue ( 'Frank,me', (/ratios2(1,MAF),recalc(binNum) /) )
+        call outputNamedValue ( 'Frank,me', (/ratios2(1,MAF+1),recalc(binNum) /) )
         j = 1 + mod(binNum,18)
         call outputNamedValue ( 'if wrong Bin', recalc(j)  )
         ! Check if a second bin number also matches
         if ( binNum < 18 ) then
-          binNum2 = FindFirst ( abs(ratios2(1,MAF)-recalc(binNum+1:)) < 1.e-4 )
+          binNum2 = FindFirst ( abs(ratios2(1,MAF+1)-recalc(binNum+1:)) < 1.e-4 )
           if ( binNum2 > 0 ) then
             call outputNamedValue ( 'A 2nd match found at 1st', BinNum+BinNum2 )
             stop
@@ -301,12 +301,12 @@ contains
         allocate ( recalc(7575) )
         do j=1, 7575
           recalc(j) = &
-            & (values2(j, MAF) - nnCoeffs%means(binNum,j)) &
+            & (values2(j, MAF+1) - nnCoeffs%means(binNum,j)) &
             & / &
             & nnCoeffs%stddevs(binNum,j)
         enddo
         call outputNamedValue ( 'max diff over all MIFs, etc.', &
-          & maxval( abs(ratios2(:,MAF)-recalc(:)) ) )
+          & maxval( abs(ratios2(:,MAF+1)-recalc(:)) ) )
       endif
       deallocate ( recalc )
     enddo
@@ -321,26 +321,26 @@ contains
     use MLSHDF5, only: LoadFromHDF5DS
     use MLSFiles, only: HDFVersion_5
     ! Dummy args
-    integer, intent(in)                :: TempFileID ! For optional comparisons
+    integer, intent(in)                 :: TempFileID ! For optional comparisons
     integer,  dimension(:), intent(in)  :: MAFRange ! For optional comparisons
     real(r8), intent(in),  dimension(:) :: Rads
-    logical, intent(in)                :: standardized
-    integer, intent(out), optional     :: MatchingMAF
-    logical, intent(in), optional      :: Recalculate
+    logical, intent(in)                 :: standardized
+    integer, intent(out), optional      :: MatchingMAF ! starts at 0
+    logical, intent(in), optional       :: Recalculate
     real(r8),  dimension(:), intent(in), optional :: Mean
     real(r8),  dimension(:), intent(in), optional :: StdDev
     !
-    type (MLSFile_T)                       :: TempFile
+    type (MLSFile_T)                        :: TempFile
     real(r4), allocatable,  dimension(:,:)  :: ratios2
     real(r4), allocatable,  dimension(:)    :: recalc
     real(r4), allocatable,  dimension(:,:)  :: values2
     real(r4),  dimension(size(Rads))        :: diffs
-    character(len=32)                      :: radianceType
-    integer                                :: j
-    integer                                :: MAF
-    integer                                :: MIF
-    logical                                :: DEEBug
-    logical                                :: myRecalculate
+    character(len=32)                       :: radianceType
+    integer                                 :: j
+    integer                                 :: MAF ! Remember--starts at 0
+    integer                                 :: MIF
+    logical                                 :: DEEBug
+    logical                                 :: myRecalculate
     ! Executable
     if ( present(MatchingMAF) ) MatchingMAF = 0
     myRecalculate = .false.
@@ -366,10 +366,10 @@ contains
         & values2 )
       do MAF = MAFRange(1), MAFRange(2)
         do j=1, size(mean)
-          recalc(j) = (values2(j, MAF) - mean(j)) / stddev(j)
+          recalc(j) = (values2(j, MAF+1) - mean(j)) / stddev(j)
         enddo
-        diffs = recalc - ratios2(:,MAF)
-        call ShowDiffs ( MAF )
+        diffs = recalc - ratios2(:,MAF+1)
+        call ShowDiffs ( MAF+1 )
       enddo
       return
     endif
@@ -378,13 +378,13 @@ contains
       call LoadFromHDF5DS ( TempFile, &
         & "Standardized_Brightness_Temps_Matrix", &
         & values2 )
-      radianceType = 'standardized'
+      radiancetype = 'standardized'
       DEEBug = .true. ! .false.
     else
       call LoadFromHDF5DS ( TempFile, &
         & "Brightness_Temps_Matrix", &
         & values2 )
-      radianceType = 'original'
+      radiancetype = 'original'
       DEEBug = .true.
     endif
 !     call output( '     ------------------', advance='yes' )
@@ -397,9 +397,9 @@ contains
     call output( '     ------------------', advance='yes' )
     ! MAF = FindFirst ( abs(Rads(1)-values2(1,:)) < 1.e-4     )
     MAF = FindFirst ( (Rads(1)-values2(1,:))**2 + &
-      & (Rads(2)-values2(2,:))**2 < 1.e-8     )
+      & (Rads(2)-values2(2,:))**2 < 1.e-8     ) - 1 ! Remember--MAFs start at 0
     if ( present(MatchingMAF) ) MatchingMAF = MAF
-    if ( MAF < 1 ) then
+    if ( MAF < 0 ) then
       call output( 'No matching MAF found', advance='yes' )
       call outputNamedValue( 'Closest we come is', &
         & minval(abs(Rads(1)-values2(1,:))) )
@@ -408,28 +408,28 @@ contains
       return
     else
       call outputNamedValue( 'Matching MAF in Franks file', MAF )
-      call output ( (/ real(rads(1), r4), values2(1,MAF) /), advance='yes' )
+      call output ( (/ real(rads(1), r4), values2(1,MAF+1) /), advance='yes' )
       call output( '     ------------------', advance='yes' )
       call ShowDiffs ( MAF )
       ! Could the MIF indexes be jumbled?
-      MIF = FindFirst ( abs(Rads(2)-values2(:,MAF)) < 1.e-4     )
+      MIF = FindFirst ( abs(Rads(2)-values2(:,MAF+1)) < 1.e-4     )
       if ( MIF < 1 ) then
         call output( 'No matching MIF found for our 2', advance='yes' )
       else
         call outputNamedValue( 'Matching MIF in Franks file for MIF=2', MIF )
-        call output ( (/ real(rads(2), r4), values2(MIF,MAF) /), advance='yes' )
+        call output ( (/ real(rads(2), r4), values2(MIF,MAF+1) /), advance='yes' )
         call output( '     ------------------', advance='yes' )
       endif
     endif
     ! Are we saving the matched valus for comparisons and debugging?
     matchedMAF = MAF
-    matchedStdRadiances = ratios2(:,MAF)
+    matchedStdRadiances = ratios2(:,MAF+1)
     call OutputNamedValue ( 'min matched rads', minval(matchedStdRadiances) )
     call OutputNamedValue ( 'max matched rads', maxval(matchedStdRadiances) )
     if ( MAF+1 > size(values2,2) ) return
     ! Check for a 2nd matching MAF
-    MAF = FindFirst ( abs(Rads(1)-values2(1,MAF+1:)) < 1.e-4     )
-    if ( MAF >0 ) then
+    MAF = FindFirst ( abs(Rads(1)-values2(1,MAF+2:)) < 1.e-4     )
+    if ( MAF > 0 ) then
       call outputNamedValue( '2nd Matching MAF in Franks file', MAF )
     else
       call output( 'No 2nd matching MAF found', advance='yes' )
@@ -445,9 +445,9 @@ contains
           call outputNamedValue ( trim(radianceType) // 'Rad min', minval(Rads) )
           call outputNamedValue ( trim(radianceType) // 'Rad max', maxval(Rads) )
           call output( '     (As read from Franks file)', advance='yes' )
-          call outputNamedValue ( trim(radianceType) // 'Rad min', minval(values2(:, MAF)) )
-          call outputNamedValue ( trim(radianceType) // 'Rad max', maxval(values2(:, MAF)) )
-          diffs = Rads - values2(:, MAF)
+          call outputNamedValue ( trim(radianceType) // 'Rad min', minval(values2(:, MAF+1)) )
+          call outputNamedValue ( trim(radianceType) // 'Rad max', maxval(values2(:, MAF+1)) )
+          diffs = Rads - values2(:, MAF+1)
         endif
         call outputNamedValue ( 'min diff', minval(diffs) )
         call outputNamedValue ( 'max diff', maxval(diffs) )
@@ -518,10 +518,10 @@ contains
 
     ! Fortran version of the IDL code in `example_idl.pro' from Frank
 
-    TYPE (NeuralNetInputData_T),intent(in):: nnInputData
-    TYPE (NeuralNetCoeffs_T), intent(in)  :: nnCoeffs
+    type (NeuralNetInputData_T),intent(in):: nnInputData
+    type (NeuralNetCoeffs_T), intent(in)  :: nnCoeffs
     integer,intent(in) :: nHL ! number of hidden layers. Will probably always be 2
-    CHARACTER(len=*),intent(in) :: TYPE ! type  may be either 'tanh' or 'sigmoid'
+    CHARACTER(len=*),intent(in) :: type ! type  may be either 'tanh' or 'sigmoid'
     real(r8),  dimension(:), allocatable :: prediction
     integer, optional, intent(in) :: RadFileID ! For optionally saving Datasets
     integer, optional, intent(in) :: TempFileID ! For optional comparisons
@@ -535,20 +535,20 @@ contains
 
     ! Local variables
     LOGICAL,SAVE :: first = .TRUE.
-    INTEGER, SAVE:: nMIFs
-    INTEGER, SAVE,  dimension(2) :: nChans
-    INTEGER, SAVE :: nSurfs, nVars, nNeurons
+    integer, SAVE:: nMIFs
+    integer, SAVE,  dimension(2) :: nChans
+    integer, SAVE :: nSurfs, nVars, nNeurons
 
     ! Various working space arrays
-    real(r8), dimension(:),ALLOCATABLE :: working_space
-    real(r8),  dimension(:), ALLOCATABLE  :: NeuronValues, NeuronValues2
+    real(r8), dimension(:),allocatable :: working_space
+    real(r8),  dimension(:), allocatable  :: NeuronValues, NeuronValues2
 
     real(r8) :: y_pred2
 
-    INTEGER :: c,n,m,jj,s,k,v ! various counters
-    integer:: istat
-    integer:: status
-    INTEGER,  dimension(2) :: dims2
+    integer :: c, n, m, jj, s, v ! various counters
+    integer :: istat
+    integer :: status
+    integer, dimension(2) :: dims2
     logical :: debug
 
 
@@ -568,10 +568,10 @@ contains
        ENDIF
      ENDIF
 
-    ! make sure TYPE is correct.
+    ! make sure type is correct.
     IF ( TRIM(TYPE) .NE. 'tanh' .AND. &
          & TRIM(TYPE) .NE. 'sigmoid' ) THEN 
-      PRINT *,"input var TYPE must equal either 'tanh' or 'sigmoid'"
+      PRINT *,"input var type must equal either 'tanh' or 'sigmoid'"
     ENDIF
     IF (NHL /=  1 .AND. NHL /= 2) THEN 
       PRINT *,"NHL must equal either 1 or 2"
@@ -698,7 +698,7 @@ contains
       WRITE(7,iostat=istat) neuronValues
     ENDIF
     !print *,'k = ',k ! 8
-    k=k+1
+    ! k=k+1
 
     
     IF (TRIM(TYPE) .EQ. 'tanh') THEN 
@@ -728,7 +728,7 @@ contains
 
 
     !print *,'k = ',k ! 9
-    k=k+1
+    ! k=k+1
 
 
     !PRINT *,'nHL = ',nHL
@@ -836,7 +836,7 @@ contains
     status=1
 
     !print *,'k = ',k ! 10
-    k=k+1
+    ! k=k+1
 
     if (debug) CLOSE(7)
 
@@ -851,12 +851,12 @@ contains
     !       --------------
     !           StdDev
     ! and use it to replace corresponding values in NNMeasurements.
-    type (NeuralNetInputData_T),intent(inout)             :: nnInputData
+    type (NeuralNetInputData_T),intent(inout)              :: nnInputData
     real(r8),  dimension(:), intent(in)                    :: Mean
     real(r8),  dimension(:), intent(in)                    :: StdDev
     integer, optional, intent(in) :: TempFileID ! For optional comparisons
-    integer, optional, intent(in) :: MAF ! For optional comparisons
-    TYPE (NeuralNetCoeffs_T), optional, intent(in)        :: nnCoeffs
+    integer, optional, intent(in) :: MAF ! For optional comparisons; starts at 0
+    type (NeuralNetCoeffs_T), optional, intent(in)        :: nnCoeffs
     logical, optional, intent(in)       :: Debugging
     ! Internal variables
     real(r8),  dimension(:), allocatable                   :: ratio
@@ -975,7 +975,7 @@ contains
   ! (Not used)
   real(r8) function dot(X,Y)
     real(r8), dimension(:), intent(in):: x,y
-    INTEGER :: i,nn
+    integer :: i,nn
     dot=0
     nn=size(x)
     IF (nn .NE. SIZE(y)) THEN 
@@ -1007,6 +1007,9 @@ contains
 
 END MODULE NeuralNetUtils_M
 ! $Log$
+! Revision 2.6  2021/05/18 15:52:46  pwagner
+! Many bugs fixed
+!
 ! Revision 2.5  2021/04/01 23:46:21  pwagner
 ! many more (too many?) debugging options
 !
