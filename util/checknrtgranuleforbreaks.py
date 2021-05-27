@@ -1,7 +1,10 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import os, sys, re
 import optparse as op
 import subprocess as sp
+
+
 #import glob
 
 # this routine depends on teh IDL runtime saveset
@@ -67,8 +70,8 @@ status of 0 and if the file has 1 or more breaks, the status is 1
   verbose=opts.verbose
 
   if len(args) == 0:
-    print usage
-    print "Need file!"
+    print(usage)
+    print("Need file!")
     sys.exit(-1)
 
 
@@ -87,28 +90,34 @@ status of 0 and if the file has 1 or more breaks, the status is 1
     spargs.append('nocatch=1')
   if verbose:
     spargs.append('verbose=1')
-    print "Calling IDL with the following arguments"
-    print " ".join(spargs)
+    print("Calling IDL with the following arguments")
+    print(" ".join(spargs))
   
   pp=sp.Popen(spargs,stdout=sp.PIPE,stderr=sp.PIPE)
   (out,err)=pp.communicate()
   retcode=pp.returncode
   if retcode == -1:
-    if verbose:
-      print "Error in the IDL runtime!"
-      print "=================== STDOUT =============== "
-      print out
-      print "=================== STDERR =============== "
-      print err
+    print("Error in the IDL runtime!")
+    print("=================== STDOUT =============== ")
+    print( out)
+    print( "=================== STDERR =============== ")
+    print( err)
     sys.exit(1)
   elif retcode == 1:
-    if verbose: print "File has break!"
+    if verbose: print( "File has break!")
   elif retcode == 0:
     if verbose: 
-      print "File is okay!"
-      print "retcode = ",retcode
+      print( "File is okay!")
+      print("retcode = %d" % retcode)
   else:
-    if verbose: print "Some other error occurred"
+    print( "Some other error occurred")
+    print("Error code = %d" % retcode)
+    print( "STDOUT/STDERR = ")
+    print( "=================== STDOUT =============== ")
+    print( out)
+    print( "=================== STDERR =============== ")
+    print( err)
+    
   sys.exit(retcode)
 
           
@@ -121,6 +130,19 @@ status of 0 and if the file has 1 or more breaks, the status is 1
 #
 # Modifications:
 # $Log$
+# Revision 1.7  2021/05/17 18:08:37  whdaffer
+# Added from __future__ import print_function
+#
+# Revision 1.6  2021/05/05 14:28:16  whdaffer
+# python 3 upgrade
+#
+# Revision 1.5  2017/06/26 22:31:30  whdaffer
+# Took out dependency on verbose when the return status from the IDL is
+# other than [-1, 0, 2]
+#
+# Revision 1.4  2017/06/26 21:12:52  whdaffer
+# Added some more reportage to the `some other error occurred' message
+#
 # Revision 1.3  2017/05/18 23:06:29  whdaffer
 # Added another branch to the test of return code from subprocess to
 # handle any other error
