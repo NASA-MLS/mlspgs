@@ -132,14 +132,18 @@ contains
     profile = -1
     myMIF = 1
     if ( present(MIF) ) myMIF = MIF
-    ! 1st--read the MAF times
+    ! 1st--read the MAF times (or geodAngle if that's what you're matching)
     L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
     if ( .not. associated(L1BFile) ) then
       call MLSL2Message ( MLSMSG_Warning, ModuleName // 'L1MAFToL2Profile', &                      
       & 'l1boa File not found--hope you dont need one' )
       return
     endif
-    quantity = 'MAFStartTimeTAI'
+    if ( myMIF == 1 ) then
+      quantity = 'MAFStartTimeTAI'
+    else
+      quantity = 'GHz/GeodAngle'
+    endif
     l1bItemName = AssembleL1BQtyName ( quantity, HDFVERSION_5, .false. )
     call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
       & l1bFlag, dontPad=.true.)
@@ -154,7 +158,15 @@ contains
     if ( DEEBUG ) call outputNamedValue( 'shape(l2gp%time)', shape(l2gp%time) )
     if ( DEEBUG ) call outputNamedValue( 'shape(l1bField%dpField)', shape(l1bField%dpField) )
     if ( DEEBUG ) call outputNamedValue( 'lbound(l1bField%dpField(1,1,:))', lbound(l1bField%dpField(1,1,:)) )
-    call ClosestElement( l1bField%dpField(1,1,MAF+1)*1._r8, l2gp%time, indices )
+    if ( myMIF == 1 ) then
+      call ClosestElement( l1bField%dpField(1,myMIF,MAF+1)*1._r8, &
+        & l2gp%time, indices )
+    else
+      call ClosestElement( l1bField%dpField(1,myMIF,MAF+1), &
+        & l2gp%geodAngle*1._r8, indices )
+      call OutputNamedValue( 'phi(MAF)', l1bField%dpField(1,myMIF,MAF+1) )
+      call OutputNamedValue( 'phi(nearestprofile)', l2gp%geodAngle(indices(1)) )
+    endif
     profile = indices(1)
     if ( DEEBUG ) then
       call outputNamedValue( 'l2gp profile', profile )
@@ -248,14 +260,18 @@ contains
     MAF = -1
     myMIF = 1
     if ( present(MIF) ) myMIF = MIF
-    ! 1st--read the MAF times
+    ! 1st--read the MAF times (or geodAngle if that's what you're matching)
     L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
     if ( .not. associated(L1BFile) ) then
       call MLSL2Message ( MLSMSG_Warning, ModuleName // 'L2ProfileToL1MAF', &                      
       & 'l1boa File not found--hope you dont need one' )
       return
     end if
-    quantity = 'MAFStartTimeTAI'
+    if ( myMIF == 1 ) then
+      quantity = 'MAFStartTimeTAI'
+    else
+      quantity = 'GHz/GeodAngle'
+    endif
     l1bItemName = AssembleL1BQtyName ( quantity, HDFVERSION_5, .false. )
     call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
       & l1bFlag, dontPad=.true.)
@@ -278,7 +294,15 @@ contains
       call destroyl2gpcontents( l2gp )
       return
     end if
-    call ClosestElement( l2gp%time(profile), l1bField%dpField(1,1,:)*1._r8, indices )
+    if ( myMIF == 1 ) then
+      call ClosestElement( l2gp%time(profile), &
+        & l1bField%dpField(1,myMIF,:)*1._r8, indices )
+    else
+      call ClosestElement( l2gp%geodAngle(profile)*1._r8, &
+        & l1bField%dpField(1,myMIF,:), indices )
+      call OutputNamedValue( 'phi(profile)', l2gp%geodAngle(profile) )
+      call OutputNamedValue( 'phi(nearest MAF)', l1bField%dpField(1,myMIF,indices(1)) )
+    endif
     MAF = indices(1) - 1
     if ( DEEBUG ) call outputNamedValue( 'size(time)', size(l2gp%time) )
     if ( DEEBUG ) call outputNamedValue( 'time(l2gp)', l2gp%time(profile) )
@@ -1442,6 +1466,9 @@ contains
 end module Global_Settings
 
 ! $Log$
+! Revision 2.182  2021/04/01 23:51:37  pwagner
+! L1MAFToL2Profile may return matching Lat and Phi
+!
 ! Revision 2.181  2021/03/19 15:20:49  pwagner
 ! Added the optional arg MIF to MAF v. profile functions
 !
