@@ -621,6 +621,11 @@ contains ! ======================= Public Procedures =========================
     if ( verbose ) call outputNamedValue( 'DW L2GP qty name', trim(sdName) )
     ! call usleep ( delay ) ! Should we make this parallel%delay?
     call usleep ( parallel%delay ) ! Done!
+    if ( present(createSwath) ) then
+      print *, 'create swath? ', createSwath
+    else
+      print *, 'create swath not present '
+    endif
     call AppendL2GPData( l2gp, l2gpFile, &
       & sdName, offset, lastprofile=lastInstance, &
       & TotNumProfs=TotalProfs, createSwath=createSwath, &
@@ -1917,6 +1922,21 @@ contains ! ======================= Public Procedures =========================
     endif
     if ( all(l2gp%chunkNumber == -999) ) &
       & call output( 'all converted chunk numbers are -999', advance='yes' )
+    if ( associated(quantity%BinNumber) ) then
+      allocate( l2gp%BinNumber(1:lastProfile) )
+      l2gp%BinNumber(1:lastProfile) = &
+        & quantity%BinNumber(useFirstInstance:useLastInstance)
+      if ( DEEBUG ) call Dump( l2gp%BinNumber, 'l2gp bin numbers' )
+    else
+      call output( 'Bin numbers not allocated', advance='yes' )
+    endif
+    if ( associated(quantity%MAF) ) then
+      allocate( l2gp%MAF(1:lastProfile) )
+      l2gp%MAF(1:lastProfile) = quantity%MAF(useFirstInstance:useLastInstance)
+      if ( DEEBUG ) call Dump( l2gp%MAF, 'l2gp MAFs' )
+    else
+      call output( 'MAFs not allocated', advance='yes' )
+    endif
   end subroutine vectorValue_to_l2gp
 
   ! ---------------------------------------------  ANNOUNCE_ERROR  -----
@@ -1965,6 +1985,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.97  2021/06/10 23:47:44  pwagner
+! When creating l2gps from qties, copy their BinNumber and MAF, too
+!
 ! Revision 2.96  2020/03/04 21:27:32  pwagner
 ! Skip Warnings about Column amounts: already know they lack vertical coords
 !
