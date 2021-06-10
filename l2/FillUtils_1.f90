@@ -2090,7 +2090,9 @@ contains ! =====     Public Procedures     =============================
       integer :: instanceLen
       integer :: noInstances
       integer :: surf
+      logical :: verbose
       ! Executable
+      verbose = ( switchDetail(switches, 'fill') > 0 ) ! -Sfill1
       noInstances = Quantity%template%noInstances
       if ( associated ( ptan ) .and. interpolate ) then
         call FromInterpolatedQty ( quantity, sourceQuantity, &
@@ -2181,6 +2183,18 @@ contains ! =====     Public Procedures     =============================
           quantity%values = sourceQuantity%values
         end if
       end if
+      if ( associated( sourceQuantity%BinNumber ) ) then
+        allocate( quantity%BinNumber(sourceQuantity%template%NoInstances) )
+        quantity%BinNumber = sourceQuantity%BinNumber
+      elseif ( verbose ) then
+        call output( 'source%BinNumber not allocated', advance='yes' )
+      endif
+      if ( associated( sourceQuantity%MAF ) ) then
+        allocate( quantity%MAF(sourceQuantity%template%NoInstances) )
+        quantity%MAF = sourceQuantity%MAF
+      elseif ( verbose ) then
+        call output( 'source%MAF not allocated', advance='yes' )
+      endif
 
     end subroutine FromAnother
 
@@ -3739,6 +3753,7 @@ contains ! =====     Public Procedures     =============================
 
       ! Executable code
       verbose = ( switchDetail(switches, 'fill') > 0 ) ! -Sfill1
+      ! call Dump( source )
       call trace_begin ( me, 'FillUtils_1.FromInterpolatedQty', key, &
         & cond=toggle(gen) .and. levels(gen) > 1 )
       if ( .not. ignoreTemplate ) then
@@ -3763,6 +3778,18 @@ contains ! =====     Public Procedures     =============================
           go to 9
         end if
       end if
+      if ( associated( source%BinNumber ) ) then
+        allocate( qty%BinNumber(source%template%NoInstances) )
+        qty%BinNumber = source%BinNumber
+      elseif ( verbose ) then
+        call output( 'source%BinNumber not allocated', advance='yes' )
+      endif
+      if ( associated( source%MAF ) ) then
+        allocate( qty%MAF(source%template%NoInstances) )
+        qty%MAF = source%MAF
+      elseif ( verbose ) then
+        call output( 'source%MAF not allocated', advance='yes' )
+      endif
 
       ! Two cases here, one where we have to interpolate vertically (has to be
       ! single channel quantity).  The other where we don't.  Most of the latter
@@ -7180,7 +7207,17 @@ contains ! =====     Public Procedures     =============================
           if ( .not. any( streq(names, qName, options='-cf' ) )  ) cycle
         end if
         if ( verboser .and. n > 0 ) call output( 'Transferring quantities named ' // trim(qName), advance='yes' )
-        if ( .not. skipValues ) dq%values = sq%values
+        if ( .not. skipValues ) then
+          dq%values = sq%values
+          if ( associated(sq%BinNumber) ) then
+            allocate(dq%BinNumber(dq%template%NoInstances) )
+            dq%BinNumber = sq%BinNumber
+          endif
+          if ( associated(sq%MAF) ) then
+            allocate(dq%MAF(dq%template%NoInstances) )
+            dq%MAF = sq%MAF
+          endif
+        endif
         if ( .not. skipMask ) then
           if ( associated(sq%Mask) ) then
             if ( .not. associated(dq%Mask)) call CreateMask ( dq )
@@ -8026,6 +8063,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.152  2021/06/10 23:46:06  pwagner
+! When copying vector qties, copy their BinNumber and MAF, too
+!
 ! Revision 2.151  2021/05/13 23:26:37  pwagner
 ! Minor housekeeping; more comments about the start array
 !
