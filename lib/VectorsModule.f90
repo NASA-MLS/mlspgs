@@ -361,6 +361,9 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     ! example a swath name.  Often used in conjunction with the 'batch'
     ! approach to direct writes.
     character(len=40) :: AllocationName = 'None'
+    ! These fields apply only to products of a neural network model
+    integer, pointer, dimension(:)    :: BinNumber => NULL()
+    integer, pointer, dimension(:)    :: MAF => NULL()
   end type VectorValue_T
 
   character(len=16), dimension(7), parameter :: maskBitNames = (/ &
@@ -984,6 +987,14 @@ contains ! =====     Public Procedures     =============================
       call createMask ( z )
       z%mask = x%mask
     end if
+    if ( associated(x%BinNumber) ) then
+      allocate ( z%BinNumber(x%template%NoInstances) )
+      z%BinNumber = x%BinNumber
+    end if
+    if ( associated(x%MAF) ) then
+      allocate ( z%MAF(x%template%NoInstances) )
+      z%MAF = x%MAF
+    end if
     z%label = x%label
   end subroutine CloneVectorQuantity
 
@@ -1359,6 +1370,14 @@ contains ! =====     Public Procedures     =============================
     if ( present(destroyTemplate) ) then
       if ( destroyTemplate ) call DestroyQuantityTemplateContents ( value%template )
     end if
+    if ( associated(value%BinNumber) ) then
+      deallocate(value%BinNumber)
+      nullify(value%BinNumber)
+    endif
+    if ( associated(value%MAF) ) then
+      deallocate(value%MAF)
+      nullify(value%MAF)
+    endif
   end subroutine DestroyVectorQuantityValue
 
   ! ------------------------------  DestroyVectorTemplateDatabase  -----
@@ -2294,6 +2313,16 @@ contains ! =====     Public Procedures     =============================
       if ( .not. associated(qty%mask ) ) call output ( 'out' )
       call output ( ' mask', advance='yes' )
     end if
+    if ( associated(qty%BinNumber) ) then
+      call Dump( qty%BinNumber, 'Bin Numbers' )
+    else
+      call output( 'Qty BinNumber not associated', advance='yes' )
+    endif
+    if ( associated(qty%MAF) ) then
+      call Dump( qty%MAF, 'MAFs' )
+    else
+      call output( 'Qty MAF not associated', advance='yes' )
+    endif
     if ( myDetails > 1 ) call dump ( qty%template, details=myDetails-1 )
     MLSMessageConfig%Info = oldInfo
   end subroutine Dump_Vector_Quantity
@@ -3498,6 +3527,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.210  2018/05/11 21:26:27  pwagner
+! Moved M_ mask bit fields to MLSCommon
+!
 ! Revision 2.209  2018/02/27 00:50:33  livesey
 ! Added the supportedInstrumentModule argument to the various search routines to support A-SMLS
 !
