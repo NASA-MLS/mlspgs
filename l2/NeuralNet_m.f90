@@ -92,8 +92,9 @@ module NeuralNet_m              ! Use Neural Net Model to Retrieve State
   integer, parameter              :: NumMIFs          = 75
   integer, parameter              :: NumLevels        = 42
   
-  Logical, parameter              :: StandardizeRadiancesHere = .false.
-  Logical, parameter              :: UseMatchedRadiances      = .false.
+  Logical, parameter              :: StandardizeRadiancesHere = .true.
+  Logical, parameter              :: UseMatchedRadiances      = .true.
+  Logical, parameter              :: UseMatchedTemps          = .true.
 
 contains ! =====     Public Procedures     =============================
 
@@ -127,6 +128,7 @@ contains ! =====     Public Procedures     =============================
     real(r4):: MaxLat
     real(r4):: MinLat
     integer :: MyFile                 ! FileDatabase index
+    integer :: NumMAFs                ! In this chunk
     real(r4):: Phi
     integer :: Profile
     integer :: RadfileID
@@ -159,13 +161,17 @@ contains ! =====     Public Procedures     =============================
       & // &
       & 'Temperature_trained_neural_net.h5' ! For coefficients
     ! These next two are for debugging the date 2019d001
+!     character (len=*), parameter    :: DefaultRadiances = &
+!       & '/users/pwagner/' &
+!       & // &
+!       & 'Radiances_used_in_nn.h5' ! For radiances
     character (len=*), parameter    :: DefaultRadiances = &
-      & '/users/pwagner/' &
-      & // &
       & 'Radiances_used_in_nn.h5' ! For radiances
+!     character (len=*), parameter    :: DefaultTemperatures = &
+!       & '/users/fwerner/Documents/database/trained_neural_nets/test_data/temperature/v1.13/' &
+!       & // &
+!       & 'Temperature_20190101.h5' ! For results to compare with
     character (len=*), parameter    :: DefaultTemperatures = &
-      & '/users/fwerner/Documents/database/trained_neural_nets/test_data/temperature/v1.13/' &
-      & // &
       & 'Temperature_20190101.h5' ! For results to compare with
     ! Beware if the following ever change
     ! For we will then need to read them from the file of coefficients
@@ -246,7 +252,11 @@ contains ! =====     Public Procedures     =============================
       Temperature => state%quantities(i)
       Temperature%values = 0.0_rv
       ! Now go through all the bands in the measurement vector that are in this radiometer
-    end do                          ! End loop over bands
+    end do                          ! End loop over state quantities
+    if ( .not. associated(Temperature%BinNumber) ) &
+      & allocate(Temperature%BinNumber(Temperature%template%NoInstances) )
+    if ( .not. associated(Temperature%MAF) ) &
+      & allocate(Temperature%MAF(Temperature%template%NoInstances) )
 
     do j = 1, measurements%template%noQuantities
       if ( measurements%quantities(j)%template%quantityType /= l_radiance ) then
@@ -264,6 +274,7 @@ contains ! =====     Public Procedures     =============================
 !       endif
       radiances => measurements%quantities(j)
       signal = measurements%quantities(j)%template%signal
+      NumMAFs = measurements%quantities(j)%template%NoInstances
       call GetSignalName ( signal, signalStr )
       signalStr = ReplaceNonAscii( signalStr, ' ' )
       select case (Capitalize(signalStr) )
@@ -304,6 +315,10 @@ contains ! =====     Public Procedures     =============================
     if ( .not. any(NeededBands) ) then
       call announce_error ( key, &
         & 'Must have all 3 needed bands; check your l2cf' )
+    endif
+    if ( UseMatchedTemps .and. .not. StandardizeRadiancesHere ) then
+      call announce_error ( key, &
+        & 'If UseMatchedTemps then must StandardizeRadiancesHere' )
     endif
     if ( myFile > 0 ) then
       CoeffsFile => FileDatabase(myFile)
@@ -357,7 +372,16 @@ contains ! =====     Public Procedures     =============================
     maxLat = mlsmax( temperature%template%geodLat(1,:) )
     firstBin = FindLast ( BinArray - minLat < 0._r4 )
     lastBin  = FindFirst ( BinArray - maxLat > 0._r4 )
-    if ( lastBin < firstBin ) lastBin = firstBin ! In case firstBin == NumBins
+    ! if ( lastBin < firstBin ) lastBin = firstBin ! In case firstBin == NumBins
+    ! *** We ought to be careful to handle all anomalous cases ***
+    if ( firstBin < 1 ) then
+      firstBin = NumBins
+      lastBin = NumBins
+    elseif ( lastBin < 1 ) then
+      lastBin = NumBins
+    elseif ( firstBin > lastBin ) then
+      lastBin = firstBin
+    endif
     print *, 'minLat ', minLat
     print *, 'maxLat ', maxLat
     print *, 'firstBin ', firstBin
@@ -373,14 +397,14 @@ contains ! =====     Public Procedures     =============================
         call outputNamedValue ( 'profile ', profile )
 !         call InitializeNNMeasurements ( NNMeasurements )
         ! Does this profile fall within this bin num?
-        print *, 'lat of profile ', profile, ' ', temperature%template%geodLat(1,profile)
-        print *, 'bin range ', BinArray(BinNum), BinArray(BinNum)+BinSz
         if ( &
           & temperature%template%geodLat(1,profile) < BinArray(BinNum) &
           & .or. &
           & temperature%template%geodLat(1,profile) > BinArray(BinNum) + BinSz &
           & ) &
           & cycle
+        print *, 'lat of profile ', profile, ' ', temperature%template%geodLat(1,profile)
+        print *, 'bin range ', BinArray(BinNum), BinArray(BinNum)+BinSz
         thisProfile = profile + firstProfile - 1
         if ( .false. ) then
           thisMAF = L2ProfileToL1MAF ( thisProfile, fileDatabase, MIF=36 )
@@ -389,13 +413,22 @@ contains ! =====     Public Procedures     =============================
           call Hunt ( GeodAngle(36,:), &
             & temperature%template%phi(1,profile), thisMaf, &
             & allowTopValue=.true. )
+          call OutputNamedValue ( 'Hunt returned MAF', thisMAF )
         endif
         MAF = thisMAF - Chunk%firstMAFIndex ! + 1
+        ! Must constrain MAF to be within range
+        !   [0, NumMAFs-1]
+        MAF = max( MAF, 0 )
+        MAF = min( MAF, NumMAFs - 1 )
+        thisMAF = MAF + Chunk%firstMAFIndex
         print *, 'thisprofile, thisMAF ', thisprofile, thisMAF
         print *, 'firstProfile, firstMAFIndex ', firstProfile, Chunk%firstMAFIndex
-        print *, 'binNum, profile, MAF ', binNum, profile, MAF
+        print *, 'binNum, profile, MAF, chunk ', binNum, profile, MAF, Chunk%ChunkNumber
+        print *, 'binNum, thisprofile, thisMAF, chunk ', binNum, thisprofile, thisMAF, Chunk%ChunkNumber
         print *, 'Num measurement quantities ', measurements%template%noQuantities
         print *, 'Temperature radiometer ', Temperature%template%radiometer
+        Temperature%BinNumber(profile) = binNum
+        Temperature%MAF(profile)       = thisMAF
         ! MAF and profile are indices inside the chunk, not absolute indices
         do j = 1, measurements%template%noQuantities
           ! call Dump ( measurements%quantities(j)%template )
@@ -406,6 +439,7 @@ contains ! =====     Public Procedures     =============================
           call outputNamedValue ( 'Phi', measurements%quantities(j)%template%Phi(1,MAF+1) )
           call outputNamedValue ( 'longitude', measurements%quantities(j)%template%lon(1,MAF+1) )
           call outputNamedValue ( 'latitude', measurements%quantities(j)%template%GeodLat(1,MAF+1) )
+          call outputNamedValue ( 'bin latitude', BinArray(BinNum) )
           ! Because there is no radiometer defined for Temperature,
           ! we can hardly compare it to whatever radiometer the measurement
           ! quantity uses
@@ -458,28 +492,36 @@ contains ! =====     Public Procedures     =============================
           call OutputNamedValue ( 'Our profile num', thisProfile )
           call OutputNamedValue ( 'MAF ours and Franks', (/thisMAF, matchedMAF/) )
           call OutputNamedValue ( 'Bin Number ours and Franks', (/BinNum, matchedBinNum/) )
-          j  = L1MAFToL2Profile ( &
-            & thisMAF , FileDatabase, MIF=36, Debugging=.false., &
-            & Phi=Phi, Lat=Lat )
-          call OutputNamedValue ( 'Our phi, lat', (/Phi, Lat/) )
-          j = FindFirst ( BinArray - Lat > 0._r4 )
-          call OutputNamedValue ( 'Our bin', j )
-          j  = L1MAFToL2Profile ( &
-            & matchedMAF , FileDatabase, MIF=36, Debugging=.false., &
-            & Phi=Phi, Lat=Lat )
-          ! call OutputNamedValue ( 'Franks phi, lat', (/Phi, Lat/) )
-          j = FindFirst ( BinArray - Lat > 0._r4 )
-          call OutputNamedValue ( 'Franks bin', j )
+!           j  = L1MAFToL2Profile ( &
+!             & thisMAF , FileDatabase, MIF=36, Debugging=.false., &
+!             & Phi=Phi, Lat=Lat )
+!           call OutputNamedValue ( 'Our phi, lat', (/Phi, Lat/) )
+!           j = FindFirst ( BinArray - Lat > 0._r4 )
+!           call OutputNamedValue ( 'Our bin', j )
+!           j  = L1MAFToL2Profile ( &
+!             & matchedMAF , FileDatabase, MIF=36, Debugging=.false., &
+!             & Phi=Phi, Lat=Lat )
+!           ! call OutputNamedValue ( 'Franks phi, lat', (/Phi, Lat/) )
+!           j = FindFirst ( BinArray - Lat > 0._r4 )
+!           call OutputNamedValue ( 'Matched bin using Franks l1boa Latitude', j )
           call Dump ( Temperature%values(:, profile), 'Temps (nn)', Width=5 )
           ! do j=1, NumLevels
           !  Temperature%values(Coeffs%Output_Pressure_Levels_Indices(j), profile) = &
           !     & FranksValues(j)
           ! enddo
           call Dump ( FranksValues, 'Temps (Franks ANN)', Width=5 )
+          if ( UseMatchedTemps ) then
+            do j=1, Temperature%template%NoSurfs
+              Temperature%values(j, profile) = &
+                & FranksValues(j)
+            enddo
+            Temperature%BinNumber(profile) = matchedBinNum
+            Temperature%MAF(profile)       = matchedMAF
+          endif
         endif
         ! if ( StandardizeRadiancesHere ) &
         !  & call Dump ( FranksValues, 'Temps (Franks ANN)' )
-        if ( UseMatchedRadiances ) then
+        if ( UseMatchedRadiances .and. .not. UseMatchedTemps ) then
           if ( CheckMAFs( TempFileID, matchedStdRadiances ) /= matchedMAF ) &
             & call announce_error ( key, &
             & 'Inconsistent matched MAF number' )
@@ -541,7 +583,8 @@ contains ! =====     Public Procedures     =============================
 !debug
 !call dump(Temperature%values, 'beforedivide')
 
-
+    call Dump( Temperature%BinNumber, 'BinNumbers' )
+    call Dump( Temperature%MAF, 'MAFs' )
 
     if ( BeVerbose( 'neu', 0 ) .or. DeeBug ) then
       call Dump( Temperature%values )
@@ -1027,6 +1070,9 @@ end module NeuralNet_m
 
 !
 ! $Log$
+! Revision 2.9  2021/06/10 23:49:11  pwagner
+! Store BinNumber and MAF for retrieved qty
+!
 ! Revision 2.8  2021/05/27 23:52:30  pwagner
 ! Now gets coeffs file from PCF; MAF index starts at 0; avoid use of L1MAF To and From functions in favor of L1BGeoLocation
 !
