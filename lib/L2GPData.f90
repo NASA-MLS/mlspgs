@@ -353,6 +353,9 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
      real (rgp), pointer, dimension(:) :: quality=>NULL()
      real (rgp), pointer, dimension(:) :: convergence=>NULL()
      
+     ! These fields applies only to products of a neural network model
+     integer, pointer, dimension(:)    :: BinNumber=>NULL()
+     integer, pointer, dimension(:)    :: MAF=>NULL()
      ! We have deprecated this field
      integer, pointer, dimension(:)    :: AscDescMode=>NULL()
      ! All the above dimensioned (nTimes)
@@ -367,7 +370,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     ! integer :: verticalCoordinate ! The vertical coordinate used.  These
                                   ! are l_lits of the type t_VGridCoord
                                   ! defined in Init_Tables_Module.
-  ! The following final method caused he sids tests
+  ! The following final method caused the sids tests
   ! in the nightly gold brick to bomb. A symptom of a deeper problem?
   ! contains
     ! final :: DestroyL2GPContents
@@ -1129,7 +1132,11 @@ contains ! =====     Public Procedures     =============================
           myTimes(1) = 1
           myTimes(2) = l2gp%nTimes
         endif
+        if ( DEEBUG ) call Dump( l2gp%BinNumber, 'Full l2gp BinNumber' )
+        if ( DEEBUG ) call Dump( l2gp%MAF      , 'Full l2gp MAF' )
         call ExtractL2GPRecord ( l2gp, reducedl2gp, myFreqs, myLevels, myTimes )
+        if ( DEEBUG ) call Dump( reducedl2gp%BinNumber, 'Reduced BinNumber' )
+        if ( DEEBUG ) call Dump( reducedl2gp%MAF      , 'Reduced l2gp MAF' )
         call WriteL2GPData(reducedl2gp, file2, trim(swath2), &
           & hdfVersion=hdfVersion2, &
           & notUnlimited=notUnlimited)
@@ -2854,6 +2861,14 @@ contains ! =====     Public Procedures     =============================
       & call dump ( l2gp%AscDescMode, 'AscDescMode :', &
         & width=width, options=options )
       
+    if ( showMe(myDetails > 0, myFields, 'BinNumber') .and. associated(l2gp%BinNumber) ) &
+      & call dump ( l2gp%BinNumber, 'BinNumber:', &
+        & options=options )
+      
+    if ( showMe(myDetails > 0, myFields, 'MAF') .and. associated(l2gp%MAF) ) &
+      & call dump ( l2gp%MAF, 'MAF:', &
+        & options=options )
+      
   contains
     logical function showMe(detailsOK, fields, field)
       ! Determine whether this field should be dumped or not
@@ -3239,6 +3254,18 @@ contains ! =====     Public Procedures     =============================
         l2gp%AscDescMode(i) = ol2gp%AscDescMode(myTimes(1) + i - 1)
       enddo
     endif
+    if ( associated(ol2gp%BinNumber) ) then
+      allocate(l2gp%BinNumber(1:count(3)))
+      do i=1, count(3)
+        l2gp%BinNumber(i) = ol2gp%BinNumber(myTimes(1) + i - 1)
+      enddo
+    endif
+    if ( associated(ol2gp%MAF) ) then
+      allocate(l2gp%MAF(1:count(3)))
+      do i=1, count(3)
+        l2gp%MAF(i) = ol2gp%MAF(myTimes(1) + i - 1)
+      enddo
+    endif
   end subroutine ExtractL2GPRecord_range
 
   subroutine ExtractL2GPRecord_which ( ol2gp, l2gp, &
@@ -3331,6 +3358,18 @@ contains ! =====     Public Procedures     =============================
     if ( AscDescModeIsField ) then
       do i=1, numTimes
         l2gp%AscDescMode(i) = ol2gp%AscDescMode(whichTimes(i))
+      enddo
+    endif
+    if ( associated(ol2gp%BinNumber) ) then
+      allocate(l2gp%BinNumber(1:count(3)))
+      do i=1, numTimes
+        l2gp%BinNumber(i) = ol2gp%BinNumber(whichTimes(i))
+      enddo
+    endif
+    if ( associated(ol2gp%MAF) ) then
+      allocate(l2gp%MAF(1:numTimes))
+      do i=1, numTimes
+        l2gp%MAF(i) = ol2gp%MAF(whichTimes(i))
       enddo
     endif
     if ( usefreqs == 0 ) then
@@ -3511,53 +3550,69 @@ contains ! =====     Public Procedures     =============================
       l2gp%pressures    = proto%pressures    
       l2gp%frequency    = proto%frequency
       if ( useNTimes > proto%nTimes ) then
-      l2gp%latitude       (1:nn) = proto%latitude     
-      l2gp%longitude      (1:nn) = proto%longitude    
-      l2gp%solarTime      (1:nn) = proto%solarTime    
-      l2gp%solarZenith    (1:nn) = proto%solarZenith  
-      l2gp%losAngle       (1:nn) = proto%losAngle     
-      l2gp%geodAngle      (1:nn) = proto%geodAngle    
-      l2gp%time           (1:nn) = proto%time         
-      l2gp%chunkNumber    (1:nn) = proto%chunkNumber  
-      l2gp%l2gpValue      (:,:,1:nn) = proto%l2gpValue    
-      l2gp%l2gpPrecision  (:,:,1:nn) = proto%l2gpPrecision
-      l2gp%status         (1:nn) = proto%status       
-      l2gp%quality        (1:nn) = proto%quality      
-      l2gp%convergence    (1:nn) = proto%convergence  
-      if ( AscDescModeIsField ) &
-        & l2gp%AscDescMode      (1:nn) = proto%AscDescMode  
+        l2gp%latitude       (1:nn) = proto%latitude     
+        l2gp%longitude      (1:nn) = proto%longitude    
+        l2gp%solarTime      (1:nn) = proto%solarTime    
+        l2gp%solarZenith    (1:nn) = proto%solarZenith  
+        l2gp%losAngle       (1:nn) = proto%losAngle     
+        l2gp%geodAngle      (1:nn) = proto%geodAngle    
+        l2gp%time           (1:nn) = proto%time         
+        l2gp%chunkNumber    (1:nn) = proto%chunkNumber  
+        l2gp%l2gpValue      (:,:,1:nn) = proto%l2gpValue    
+        l2gp%l2gpPrecision  (:,:,1:nn) = proto%l2gpPrecision
+        l2gp%status         (1:nn) = proto%status       
+        l2gp%quality        (1:nn) = proto%quality      
+        l2gp%convergence    (1:nn) = proto%convergence  
+        if ( AscDescModeIsField ) &
+          & l2gp%AscDescMode      (1:nn) = proto%AscDescMode  
+        if ( associated(proto%BinNumber) ) then
+          allocate( l2gp%BinNumber(useNTimes) )
+          l2gp%BinNumber    (1:nn) = proto%BinNumber 
+        endif
+        if ( associated(proto%MAF) ) then
+          allocate( l2gp%MAF(useNTimes) )
+          l2gp%MAF    (1:nn) = proto%MAF 
+        endif
       elseif ( present( which ) ) then
-      l2gp%latitude     = proto%latitude     (which)
-      l2gp%longitude    = proto%longitude    (which)
-      l2gp%solarTime    = proto%solarTime    (which)
-      l2gp%solarZenith  = proto%solarZenith  (which)
-      l2gp%losAngle     = proto%losAngle     (which) 
-      l2gp%geodAngle    = proto%geodAngle    (which) 
-      l2gp%time         = proto%time         (which) 
-      l2gp%chunkNumber  = proto%chunkNumber  (which) 
-      l2gp%l2gpValue    = proto%l2gpValue    (:,:,which)
-      l2gp%l2gpPrecision= proto%l2gpPrecision(:,:,which)
-      l2gp%status       = proto%status       (which)
-      l2gp%quality      = proto%quality      (which)
-      l2gp%convergence  = proto%convergence  (which)
-      if ( AscDescModeIsField ) &
-        & l2gp%AscDescMode    = proto%AscDescMode  (which)
+        l2gp%latitude     = proto%latitude     (which)
+        l2gp%longitude    = proto%longitude    (which)
+        l2gp%solarTime    = proto%solarTime    (which)
+        l2gp%solarZenith  = proto%solarZenith  (which)
+        l2gp%losAngle     = proto%losAngle     (which) 
+        l2gp%geodAngle    = proto%geodAngle    (which) 
+        l2gp%time         = proto%time         (which) 
+        l2gp%chunkNumber  = proto%chunkNumber  (which) 
+        l2gp%l2gpValue    = proto%l2gpValue    (:,:,which)
+        l2gp%l2gpPrecision= proto%l2gpPrecision(:,:,which)
+        l2gp%status       = proto%status       (which)
+        l2gp%quality      = proto%quality      (which)
+        l2gp%convergence  = proto%convergence  (which)
+        if ( AscDescModeIsField ) &
+          & l2gp%AscDescMode    = proto%AscDescMode  (which)
       else
-      l2gp%latitude     = proto%latitude     
-      l2gp%longitude    = proto%longitude    
-      l2gp%solarTime    = proto%solarTime    
-      l2gp%solarZenith  = proto%solarZenith
-      l2gp%losAngle     = proto%losAngle     
-      l2gp%geodAngle    = proto%geodAngle    
-      l2gp%time         = proto%time         
-      l2gp%chunkNumber  = proto%chunkNumber  
-      l2gp%l2gpValue    = proto%l2gpValue    
-      l2gp%l2gpPrecision= proto%l2gpPrecision
-      l2gp%status       = proto%status       
-      l2gp%quality      = proto%quality      
-      l2gp%convergence  = proto%convergence  
-      if ( AscDescModeIsField ) &
-        & l2gp%AscDescMode    = proto%AscDescMode  
+        l2gp%latitude     = proto%latitude     
+        l2gp%longitude    = proto%longitude    
+        l2gp%solarTime    = proto%solarTime    
+        l2gp%solarZenith  = proto%solarZenith
+        l2gp%losAngle     = proto%losAngle     
+        l2gp%geodAngle    = proto%geodAngle    
+        l2gp%time         = proto%time         
+        l2gp%chunkNumber  = proto%chunkNumber  
+        l2gp%l2gpValue    = proto%l2gpValue    
+        l2gp%l2gpPrecision= proto%l2gpPrecision
+        l2gp%status       = proto%status       
+        l2gp%quality      = proto%quality      
+        l2gp%convergence  = proto%convergence  
+        if ( AscDescModeIsField ) &
+          & l2gp%AscDescMode    = proto%AscDescMode  
+        if ( associated(proto%BinNumber) ) then
+          allocate( l2gp%BinNumber(useNTimes) )
+          l2gp%BinNumber  = proto%BinNumber 
+        endif
+        if ( associated(proto%MAF) ) then
+          allocate( l2gp%MAF(useNTimes) )
+          l2gp%MAF        = proto%MAF 
+        endif
       endif
     endif
   end subroutine SetupNewL2GPRecord
@@ -3588,6 +3643,8 @@ contains ! =====     Public Procedures     =============================
     call deallocate_test ( l2gp%quality,       "l2gp%quality",       ModuleName )
     call deallocate_test ( l2gp%convergence,   "l2gp%convergence",   ModuleName )
     call deallocate_test ( l2gp%AscDescMode,   "l2gp%AscDescMode",   ModuleName )
+    call deallocate_test ( l2gp%BinNumber,     "l2gp%BinNumber",     ModuleName )
+    call deallocate_test ( l2gp%MAF,           "l2gp%MAF        ",   ModuleName )
     l2gp%nTimes = 0
     l2gp%nTimesTotal = 0
     l2gp%nLevels = 0
@@ -4002,11 +4059,13 @@ contains ! =====     Public Procedures     =============================
     real(r4), pointer, dimension(:) :: REALSURF
     real(r4), pointer, dimension(:) :: REALPROF
     real(r4), pointer, dimension(:,:,:) :: REAL3
+    logical :: deeBugHere
     logical :: dontfail
     logical :: ReadingConvergence
     logical :: ReadingAscDescMode
     logical :: ReadingData
-    logical :: deeBugHere
+    logical :: ReadingBinNumber
+    logical :: ReadingMAF
     real(rgp), dimension(1) :: MissingValue
     ! Executable code
     call trace_begin ( me,  'ReadL2GPData_MF_hdf', cond=.false. )
@@ -4021,6 +4080,8 @@ contains ! =====     Public Procedures     =============================
     if ( present(ReadData) ) ReadingData = ReadData
     ReadingConvergence = .false.
     ReadingAscDescMode = .false.
+    ReadingBinNumber   = .false.
+    ReadingMAF         = .false.
     ! Attach to the swath for reading
     l2gp%Name = swathname
     ! We have suffered surprises when hefeos character fields 
@@ -4074,7 +4135,9 @@ contains ! =====     Public Procedures     =============================
       if ( nDims < MAXDIMSIZE ) dims(nDims+1:) = 0 ! Just to make sure they're defined, not junk
       nFlds = HE5_SWinqdflds( swid, fieldlist, ranks, types )
       ReadingConvergence = isInList( lowerCase(fieldList), 'convergence', '-fc' )
-      ReadingAscDescMode = isInList( lowerCase(fieldList), 'AscDescMode ', '-fc' )
+      ReadingAscDescMode = isInList( lowerCase(fieldList), 'AscDescMode', '-fc' )
+      ReadingBinNumber   = isInList( lowerCase(fieldList), 'BinNumber'  , '-fc' )
+      ReadingMAF         = isInList( lowerCase(fieldList), 'MAF'        , '-fc' )
     endif
     if ( deeBugHere ) print *, 'HMOT: ', HMOT
     if ( deeBugHere ) print *, 'swathName: ', l2gp%name
@@ -4084,6 +4147,10 @@ contains ! =====     Public Procedures     =============================
     if ( deeBugHere ) print *, 'DF_Precision: ',DF_Precision
     if ( deeBugHere ) print *, 'DATA_FIELD1: ', DATA_FIELD1
     if ( deeBugHere ) print *, 'dims: ', dims
+    if ( deeBugHere ) print *, 'swathName: ', l2gp%name
+    if ( deeBugHere ) print *, 'fieldlist: ', trim(fieldlist)
+    if ( deeBugHere ) print *, 'ReadBin:   ', ReadingBinNumber
+    if ( deeBugHere ) print *, 'ReadMAF:   ', ReadingMAF      
     if (nDims == -1) call MLSMessage(MLSMSG_Error, ModuleName, &
       & 'Failed to get dimension information on hdfeos5 swath ' // &
       & trim(swathname), MLSFile=L2GPFile)
@@ -4331,6 +4398,18 @@ contains ! =====     Public Procedures     =============================
       if ( ReadingAscDescMode ) &
         & status = mls_swrdfld( swid, 'AscDescMode ',start(3:3),stride(3:3),edge(3:3),&
         & l2gp%AscDescMode, hdfVersion=hdfVersion, dontfail=.true. )
+    endif
+
+    if ( ReadingBinNumber ) then
+      allocate( l2gp%BinNumber(myNumProfs) )
+      status = mls_swrdfld( swid, 'BinNumber',start(3:3),stride(3:3),edge(3:3),&
+      & l2gp%BinNumber, hdfVersion=hdfVersion, dontfail=.true. )
+    endif
+
+    if ( ReadingMAF ) then
+      allocate( l2gp%MAF(myNumProfs) )
+      status = mls_swrdfld( swid, 'MAF',start(3:3),stride(3:3),edge(3:3),&
+      & l2gp%MAF, hdfVersion=hdfVersion, dontfail=.true. )
     endif
 
     ! Deallocate local variables
@@ -4644,6 +4723,24 @@ contains ! =====     Public Procedures     =============================
       & hdfVersion=hdfVersion, iFill=int(l2gp%MissingValue) )
     endif
 
+    if ( associated(l2gp%BinNumber) ) then
+      chunk_rank=1
+      chunk_dims(1)=CHUNKTIMES
+      status = mls_dfldsetup(swid, 'BinNumber ', 'nTimes', &
+      & MYDIM1, &
+      & DFNT_INT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
+      & hdfVersion=hdfVersion, iFill=int(l2gp%MissingValue) )
+    endif
+
+    if ( associated(l2gp%MAF) ) then
+      chunk_rank=1
+      chunk_dims(1)=CHUNKTIMES
+      status = mls_dfldsetup(swid, 'MAF ', 'nTimes', &
+      & MYDIM1, &
+      & DFNT_INT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
+      & hdfVersion=hdfVersion, iFill=int(l2gp%MissingValue) )
+    endif
+
     ! Detach from the HE5_SWath interface.This stores the swath info within the
     ! file and must be done before writing or reading data to or from the
     ! swath. (May be un-necessary for HDF5 -- test program works OK without.)
@@ -4887,6 +4984,16 @@ contains ! =====     Public Procedures     =============================
     if ( AscDescModeIsField ) then
       status = mls_SWwrfld(swid, 'AscDescMode ', start(3:3), stride(3:3), edge(3:3), &
          l2gp%AscDescMode, hdfVersion=hdfVersion)
+    endif
+
+    if ( associated(l2gp%BinNumber) ) then
+      status = mls_SWwrfld(swid, 'BinNumber ', start(3:3), stride(3:3), edge(3:3), &
+         l2gp%BinNumber, hdfVersion=hdfVersion)
+    endif
+
+    if ( associated(l2gp%MAF) ) then
+      status = mls_SWwrfld(swid, 'MAF ', start(3:3), stride(3:3), edge(3:3), &
+         l2gp%MAF, hdfVersion=hdfVersion)
     endif
 
     if ( DEEBUG ) then
@@ -5682,6 +5789,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.249  2021/05/27 23:39:09  pwagner
+! Added 'F' option to print diffs for compatible datasets
+!
 ! Revision 2.248  2021/04/15 22:43:22  pwagner
 ! Now uses MLS_HyperStart
 !
