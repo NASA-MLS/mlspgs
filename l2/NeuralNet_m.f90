@@ -93,8 +93,9 @@ module NeuralNet_m              ! Use Neural Net Model to Retrieve State
   integer, parameter              :: NumLevels        = 42
   
   Logical, parameter              :: StandardizeRadiancesHere = .true.
-  Logical, parameter              :: UseMatchedRadiances      = .true.
-  Logical, parameter              :: UseMatchedTemps          = .true.
+  Logical, parameter              :: CheckTempsAndRads        = .false.
+  Logical, parameter              :: UseMatchedRadiances      = .false.
+  Logical, parameter              :: UseMatchedTemps          = .false.
 
 contains ! =====     Public Procedures     =============================
 
@@ -190,7 +191,7 @@ contains ! =====     Public Procedures     =============================
     NeededBands = .false.
     nullify ( GeodAngle )
 
-    if ( StandardizeRadiancesHere ) then
+    if ( CheckTempsAndRads ) then
       RadfileID = mls_sfstart ( trim(DefaultRadiances), DFAcc_Create, &
           &                                          hdfVersion=HDFVersion_5 )
       TempfileID = mls_sfstart ( trim(DefaultTemperatures), DFAcc_RDOnly, &
@@ -316,9 +317,9 @@ contains ! =====     Public Procedures     =============================
       call announce_error ( key, &
         & 'Must have all 3 needed bands; check your l2cf' )
     endif
-    if ( UseMatchedTemps .and. .not. StandardizeRadiancesHere ) then
+    if ( UseMatchedTemps .and. .not. CheckTempsAndRads ) then
       call announce_error ( key, &
-        & 'If UseMatchedTemps then must StandardizeRadiancesHere' )
+        & 'If UseMatchedTemps then must CheckTempsAndRads' )
     endif
     if ( myFile > 0 ) then
       CoeffsFile => FileDatabase(myFile)
@@ -392,9 +393,9 @@ contains ! =====     Public Procedures     =============================
         & Coeffs, &
         & BinNum==firstBin ) ! MustAllocate Coeffs arrays on the 1st time through
       print *, 'Done reading Coeffs file'
-      call OutputNamedValue ( 'Num profiles', temperature%template%NoInstances )
+      ! call OutputNamedValue ( 'Num profiles', temperature%template%NoInstances )
       do profile = 1, temperature%template%NoInstances ! firstProfile, lastProfile
-        call outputNamedValue ( 'profile ', profile )
+        call outputNamedValue ( 'instance number in chunk ', profile )
 !         call InitializeNNMeasurements ( NNMeasurements )
         ! Does this profile fall within this bin num?
         if ( &
@@ -434,12 +435,14 @@ contains ! =====     Public Procedures     =============================
           ! call Dump ( measurements%quantities(j)%template )
           if ( measurements%quantities(j)%template%quantityType /= l_radiance ) cycle
           !
+          if ( .false. ) then
           call outputNamedValue ( 'j ', j )
           call outputNamedValue ( 'Qty radiometer ', measurements%quantities(j)%template%radiometer )
           call outputNamedValue ( 'Phi', measurements%quantities(j)%template%Phi(1,MAF+1) )
           call outputNamedValue ( 'longitude', measurements%quantities(j)%template%lon(1,MAF+1) )
           call outputNamedValue ( 'latitude', measurements%quantities(j)%template%GeodLat(1,MAF+1) )
           call outputNamedValue ( 'bin latitude', BinArray(BinNum) )
+          endif
           ! Because there is no radiometer defined for Temperature,
           ! we can hardly compare it to whatever radiometer the measurement
           ! quantity uses
@@ -447,7 +450,7 @@ contains ! =====     Public Procedures     =============================
           !
           radiances => measurements%quantities(j)
           signal = measurements%quantities(j)%template%signal
-          print *, 'Calling AssembleNNMeasurement for MAF ', thisMAF
+          ! print *, 'Calling AssembleNNMeasurement for MAF ', thisMAF
           call AssembleNNMeasurement ( NNMeasurements, &
             & radiances, signal, &
             & Coeffs%MIFs, Coeffs%Channels_In_Each_Band, MAF, DeeBug )
@@ -460,27 +463,34 @@ contains ! =====     Public Procedures     =============================
         if ( all(NNMeasurements%Band_22_Radiances%values == 0._r8) ) &
           print *, 'All band 22 radiances vanish'
         if ( StandardizeRadiancesHere ) then
-          call StandardizeRadiances ( NNMeasurements, &
-            & Coeffs%Standardization_Brightness_Temperature_Mean, &
-            & Coeffs%Standardization_Brightness_Temperature_Std, &
-            & TempFileID, thisMAF, Coeffs )
-          print *, 'As we know them: thisProfile, thisMAF, thisBin ', &
-            & thisprofile, thisMAF, binNum
-          call CheckTemperatures( TempFileID, (/ thisProfile, thisProfile /), &
-            & FranksValues )
-          
+          if ( CheckTempsAndRads ) then
+            call StandardizeRadiances ( NNMeasurements, &
+              & Coeffs%Standardization_Brightness_Temperature_Mean, &
+              & Coeffs%Standardization_Brightness_Temperature_Std, &
+              & TempFileID, thisMAF, Coeffs )
+            print *, 'As we know them: thisProfile, thisMAF, thisBin ', &
+              & thisprofile, thisMAF, binNum
+            call CheckTemperatures( TempFileID, (/ thisProfile, thisProfile /), &
+              & FranksValues )
+          else
+            call StandardizeRadiances ( NNMeasurements, &
+              & Coeffs%Standardization_Brightness_Temperature_Mean, &
+              & Coeffs%Standardization_Brightness_Temperature_Std )
+          endif
         endif
         ! stop
-        print *, 'Calling NeuralNetFit'
-        if ( StandardizeRadiancesHere ) &
+        ! print *, 'Calling NeuralNetFit'
+        if ( CheckTempsAndRads ) &
           & print *, 'Rad FileID: ', RadfileID
         ! Temperature%values(8:49, profile) = NeuralNetFit ( NNMeasurements, &
         !   & Coeffs, NumHiddenLayers, switchOver )
-        if ( StandardizeRadiancesHere ) then
+        if ( CheckTempsAndRads ) then
+          print *, 'Calling NeuralNetFit with diagn rad and temp files'
           TemperatureValues = NeuralNetFit ( NNMeasurements, &
             & Coeffs, NumHiddenLayers, switchOver, &
             & RadfileID, TempFileID, thisMAF, thisProfile, Debugging=.false. )
         else
+          print *, 'Using NeuralNetFit with our own raw Radiances'
           TemperatureValues = NeuralNetFit ( NNMeasurements, &
             & Coeffs, NumHiddenLayers, switchOver, Debugging=.false. )
         endif
@@ -488,7 +498,7 @@ contains ! =====     Public Procedures     =============================
           Temperature%values(Coeffs%Output_Pressure_Levels_Indices(j), profile) = &
             & TemperatureValues(j)
         enddo
-        if ( StandardizeRadiancesHere ) then
+        if ( CheckTempsAndRads ) then
           call OutputNamedValue ( 'Our profile num', thisProfile )
           call OutputNamedValue ( 'MAF ours and Franks', (/thisMAF, matchedMAF/) )
           call OutputNamedValue ( 'Bin Number ours and Franks', (/BinNum, matchedBinNum/) )
@@ -561,7 +571,7 @@ contains ! =====     Public Procedures     =============================
     enddo ! Loop of BinNums
     call MLS_CloseFile( CoeffsFile, Status )
 
-    if ( StandardizeRadiancesHere ) then
+    if ( CheckTempsAndRads ) then
       Status = MLS_SFEnd( RadfileID, hdfVersion=HDFVersion_5 )
       print *, 'Closed RadFile id ', RadfileID
       print *, Status
@@ -1070,6 +1080,9 @@ end module NeuralNet_m
 
 !
 ! $Log$
+! Revision 2.10  2021/06/18 15:18:25  pwagner
+! Distinguish StandardizeRadiancesHere (should always) from CheckTempsAndRads (optional)
+!
 ! Revision 2.9  2021/06/10 23:49:11  pwagner
 ! Store BinNumber and MAF for retrieved qty
 !
