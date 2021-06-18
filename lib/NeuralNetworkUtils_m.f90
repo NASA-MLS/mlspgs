@@ -241,18 +241,18 @@ contains
     use MLSHDF5, only: LoadFromHDF5DS
     use MLSFiles, only: HDFVersion_5
     ! Dummy args
-    integer, intent(in)                  :: TempFileID ! For optional comparisons
-    integer,  dimension(:), intent(in)    :: MAFRange ! For optional comparisons
-    type (NeuralNetCoeffs_T), intent(in) :: nnCoeffs
+    integer, intent(in)                    :: TempFileID ! For optional comparisons
+    integer,  dimension(:), intent(in)     :: MAFRange ! For optional comparisons
+    type (NeuralNetCoeffs_T), intent(in)   :: nnCoeffs
     ! Internal variables
     integer                                :: binNum
     integer                                :: binNum2
     integer                                :: j
     integer                                :: MAF ! Remember--MAFs start at 0
     type (MLSFile_T)                       :: TempFile
-    real(r4), allocatable,  dimension(:,:)  :: ratios2
-    real(r4), allocatable,  dimension(:)    :: recalc
-    real(r4), allocatable,  dimension(:,:)  :: values2
+    real(r4), allocatable,  dimension(:,:) :: ratios2 
+    real(r4), allocatable,  dimension(:,:) :: recalc  
+    real(r4), allocatable,  dimension(:,:) :: values2 
     ! Executable
     call outputNamedValue( 'Range of MAFs to check bin numbers', MAFRange )
     TempFile%FileID%f_id = TempFileID
@@ -269,44 +269,46 @@ contains
     call LoadFromHDF5DS ( TempFile, &
       & "Standardized_Brightness_Temps_Matrix", &
       & ratios2 )
-    do MAF = MAFRange(1), MAFRange(2)
-      allocate ( recalc(18) )
+    do MAF = MAFRange(1), min(MAFRange(2), size(values2, 2) - 1)
+      allocate ( recalc(18,2) )
       do binNum=1, 18
-        recalc(binNum) = &
-          & (values2(1, MAF+1) - nnCoeffs%means(binNum,1)) &
+        recalc(binNum,1:2) = &
+          & (values2(1:2, MAF+1) - nnCoeffs%means(binNum,1:2)) &
           & / &
-          & nnCoeffs%stddevs(binNum,1)
+          & nnCoeffs%stddevs(binNum,1:2)
       enddo
       ! Now for the musical question:
       ! which binNum most closely approximates Frank's ratio?
-      binNum = FindFirst ( abs(ratios2(1,MAF+1)-recalc(:)) < 1.e-4 )
+      binNum = FindFirst ( (ratios2(1,MAF+1)-recalc(:,1))**2 + &
+        &  (ratios2(2,MAF+1)-recalc(:,2))**2 < 1.e-8 )
       if ( binNum < 1 ) then
         call output ( 'No matching binNum found in Franks file', advance='yes' )
       else
         call outputNamedValue ( 'MAF, Bin num matched', (/MAF, BinNum /) )
-        call outputNamedValue ( 'Frank,me', (/ratios2(1,MAF+1),recalc(binNum) /) )
+        call outputNamedValue ( 'Frank,me', (/ratios2(1,MAF+1),recalc(binNum,1) /) )
         j = 1 + mod(binNum,18)
-        call outputNamedValue ( 'if wrong Bin', recalc(j)  )
+        call outputNamedValue ( 'if wrong Bin', recalc(j,2)  )
         ! Check if a second bin number also matches
         if ( binNum < 18 ) then
-          binNum2 = FindFirst ( abs(ratios2(1,MAF+1)-recalc(binNum+1:)) < 1.e-4 )
+          binNum2 = FindFirst ( (ratios2(1,MAF+1)-recalc(binNum+1:,1))**2 + &
+            & (ratios2(2,MAF+1)-recalc(binNum+1:,2))**2 < 1.e-8 )
           if ( binNum2 > 0 ) then
-            call outputNamedValue ( 'A 2nd match found at 1st', BinNum+BinNum2 )
-            stop
+            call outputNamedValue ( 'A 2nd match found after 1st', BinNum+BinNum2 )
+            ! stop
           endif
         endif
         matchedBinNum = binNum
         ! We match at the first MIF, channel, and Band. How about all the rest?
         deallocate ( recalc )
-        allocate ( recalc(7575) )
+        allocate ( recalc(7575,1) )
         do j=1, 7575
-          recalc(j) = &
+          recalc(j,1) = &
             & (values2(j, MAF+1) - nnCoeffs%means(binNum,j)) &
             & / &
             & nnCoeffs%stddevs(binNum,j)
         enddo
         call outputNamedValue ( 'max diff over all MIFs, etc.', &
-          & maxval( abs(ratios2(:,MAF+1)-recalc(:)) ) )
+          & maxval( abs(ratios2(:,MAF+1)-recalc(:,1)) ) )
       endif
       deallocate ( recalc )
     enddo
@@ -364,7 +366,7 @@ contains
       call LoadFromHDF5DS ( TempFile, &
         & "Brightness_Temps_Matrix", &
         & values2 )
-      do MAF = MAFRange(1), MAFRange(2)
+      do MAF = MAFRange(1), min(MAFRange(2), size(values2, 2) - 1)
         do j=1, size(mean)
           recalc(j) = (values2(j, MAF+1) - mean(j)) / stddev(j)
         enddo
@@ -391,7 +393,7 @@ contains
 !     call output( '   (Full matrix for last MAF)', advance='yes' )
 !     call Dump ( diffs, 'diffs' )
     if ( .not. DEEBug ) return
-    do MAF = MAFRange(1), MAFRange(2)
+    do MAF = MAFRange(1), min(MAFRange(2), size(values2, 2) - 1)
       call ShowDiffs ( MAF )
     enddo
     call output( '     ------------------', advance='yes' )
@@ -444,10 +446,16 @@ contains
           call output( '     (As we compute them)', advance='yes' )
           call outputNamedValue ( trim(radianceType) // 'Rad min', minval(Rads) )
           call outputNamedValue ( trim(radianceType) // 'Rad max', maxval(Rads) )
+          if ( MAF+1 > size(values2,2) ) then
+            call outputNamedValue ( 'MAF too big', MAF )
+            call output( '     ------------------', advance='yes' )
+            return
+          else
           call output( '     (As read from Franks file)', advance='yes' )
           call outputNamedValue ( trim(radianceType) // 'Rad min', minval(values2(:, MAF+1)) )
           call outputNamedValue ( trim(radianceType) // 'Rad max', maxval(values2(:, MAF+1)) )
           diffs = Rads - values2(:, MAF+1)
+          endif
         endif
         call outputNamedValue ( 'min diff', minval(diffs) )
         call outputNamedValue ( 'max diff', maxval(diffs) )
@@ -1007,6 +1015,9 @@ contains
 
 END MODULE NeuralNetUtils_M
 ! $Log$
+! Revision 2.7  2021/05/27 23:41:00  pwagner
+! Corrected errors traced to MAF index starting at 0; removed undefined variable 'k'
+!
 ! Revision 2.6  2021/05/18 15:52:46  pwagner
 ! Many bugs fixed
 !
