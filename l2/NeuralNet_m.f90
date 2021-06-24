@@ -120,6 +120,12 @@ contains ! =====     Public Procedures     =============================
     integer :: FirstBin
     integer :: FirstProfile
     integer :: GSON                    ! Tree node
+    ! These set how we match MAF numbers to the profile
+    ! 3  methods are possible: Hunt, minloc, and FindFirst
+    integer, parameter :: MMinLoc    = 1
+    integer, parameter :: MHunt      = 2
+    integer, parameter :: MFindFirst = 3
+    integer, parameter :: howMatched = MMinLoc
     integer :: I                      ! Loop counter
     integer :: J                      ! Tree index
     integer :: LastBin
@@ -140,6 +146,7 @@ contains ! =====     Public Procedures     =============================
     real(Rv), allocatable, dimension(:) :: FranksValues
     real(Rv), allocatable, dimension(:) :: TemperatureValues
     integer :: TempfileID
+    integer, dimension(3) :: theseMAFs
     integer :: thisMAF
     integer :: thisProfile
 
@@ -155,6 +162,7 @@ contains ! =====     Public Procedures     =============================
     type(NeuralNetInputData_T)      :: NNMeasurements
     character (len=1024)            :: FileName
     real(rk), dimension(:,:), pointer :: GeodAngle
+    real(rk), dimension(:,:), pointer :: GeodLat
     ! The next file holds the coefficients
     ! although we should try to supply the filename in the l2cf/PCF
     character (len=*), parameter    :: DefaultFileName = &
@@ -189,7 +197,7 @@ contains ! =====     Public Procedures     =============================
     call trace_begin ( me, 'NeuralNet_m.NeuralNet', key, &
       & cond=toggle(gen) .and. levels(gen) > 1 )
     NeededBands = .false.
-    nullify ( GeodAngle )
+    nullify ( GeodAngle, GeodLat )
 
     if ( CheckTempsAndRads ) then
       RadfileID = mls_sfstart ( trim(DefaultRadiances), DFAcc_Create, &
@@ -349,6 +357,8 @@ contains ! =====     Public Procedures     =============================
     else
       call L1BGeoLocation ( filedatabase, 'GHz/GeodAngle    ', &
         & 'GHz', values2d=GeodAngle )
+      call L1BGeoLocation ( filedatabase, 'GHz/GeodLat    ', &
+        & 'GHz', values2d=GeodLat )
       ! We'll use the Geod angles directly
       call Hunt ( temperature%template%phi(1,:),  &
         & GeodAngle(36,Chunk%firstMAFIndex+1), firstProfile, &
@@ -407,14 +417,39 @@ contains ! =====     Public Procedures     =============================
         print *, 'lat of profile ', profile, ' ', temperature%template%geodLat(1,profile)
         print *, 'bin range ', BinArray(BinNum), BinArray(BinNum)+BinSz
         thisProfile = profile + firstProfile - 1
+        ! Find thisMAF matching profile
         if ( .false. ) then
           thisMAF = L2ProfileToL1MAF ( thisProfile, fileDatabase, MIF=36 )
-        else
+        elseif ( .false. ) then
           ! We'll use the Geod angles directly
+          ! Alas, sometimes this Hunt returns the wrong answer
           call Hunt ( GeodAngle(36,:), &
             & temperature%template%phi(1,profile), thisMaf, &
             & allowTopValue=.true. )
           call OutputNamedValue ( 'Hunt returned MAF', thisMAF )
+        else
+          ! Choose which method by which to match MAF to profile
+          call Hunt ( GeodAngle(36,:), &
+            & temperature%template%phi(1,profile), thisMaf, &
+            & allowTopValue=.true. )
+          call OutputNamedValue ( 'Hunt returned MAF', thisMAF )
+          theseMAFs(2) = thisMAF
+          ! Do we need to scale?
+          theseMAFs(1:1) = minloc( &
+            & abs(GeodAngle(36,:)-temperature%template%phi(1,profile)) &
+            & + &
+            & abs(GeodLat(36,:)-temperature%template%GeodLat(1,profile)) &
+            & ) - 1
+          thisMAF = theseMAFs(1) ! minloc insists on returning an array 
+          call OutputNamedValue ( 'minloc returned MAF', thisMAF )
+          thisMAF = FindFirst( &
+            & (abs(GeodAngle(36,:)-temperature%template%phi(1,profile)) < 2.) &
+            & .and. &
+            & (abs(GeodLat(36,:)-temperature%template%GeodLat(1,profile)) < 1.) &
+            & )
+          call OutputNamedValue ( 'FindFirst returned MAF', thisMAF )
+          theseMAFs(3) = thisMAF
+          thisMAF = theseMAFs(howMatched)
         endif
         MAF = thisMAF - Chunk%firstMAFIndex ! + 1
         ! Must constrain MAF to be within range
@@ -1080,6 +1115,9 @@ end module NeuralNet_m
 
 !
 ! $Log$
+! Revision 2.11  2021/06/24 23:31:17  pwagner
+! Coded 3 different approaches to matching profile to MAF
+!
 ! Revision 2.10  2021/06/18 15:18:25  pwagner
 ! Distinguish StandardizeRadiancesHere (should always) from CheckTempsAndRads (optional)
 !
