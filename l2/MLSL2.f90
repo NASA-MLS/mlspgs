@@ -36,8 +36,8 @@ program MLSL2
   use MLSL2Options, only: AllocFile, Aura_L1BFiles, &
     & CheckL2CF, CheckLeak, CheckPaths, CountChunks, Current_Version_Id, &
     & Default_HDFVersion_Read, Default_HDFVersion_Write, Do_Dump, Dump_Tree, &
-    & DumpOptions, L2cf_Unit, Level1_HDFVersion, MaxChunkSize, Need_L1BFiles, &
-    & Normal_Exit_Status, NoteFile, NumSwitches, &
+    & DumpOptions, L2cf_Unit, Level1_HDFVersion, MaxChunkSize, MLSL2Message, &
+    & Need_L1BFiles, Normal_Exit_Status, NoteFile, NumSwitches, &
     & L2Options, OriginalOptions, &
     & Patch, PhasesToSkip, ProcessOptions, Quit_Error_Threshold, &
     & Recl, RestartWarnings, RunTimeValues, &
@@ -191,7 +191,7 @@ program MLSL2
   call time_now ( t0 )
   call MLS_H5Open ( error )
   if (error /= 0) then
-      call MLSMessage ( MLSMSG_Error, moduleName, &
+      call MLSL2Message ( MLSMSG_Error, moduleName, &
         & "Unable to MLS_H5Open" )
       if ( not_used_here() ) print *, "This never gets executed"
   end if
@@ -363,24 +363,24 @@ program MLSL2
   ! slave.
   if ( parallel%master ) call TransmitSlaveArguments
   if ( parallel%master .and. parallel%myTid <= 0 ) &
-    & call MLSMessage ( MLSMSG_Error, ModuleName, &
+    & call MLSL2Message ( MLSMSG_Error, ModuleName, &
     & 'master Tid <= 0; probably pvm trouble' )
   if ( parallel%fwmParallel .and. parallel%master .and. parallel%chunkRange == ' ' ) &
-    & call MLSMessage ( MLSMSG_Error, ModuleName, &
+    & call MLSL2Message ( MLSMSG_Error, ModuleName, &
     & 'fwmParallel mode can only be run for a single chunk' )
   if ( parallel%fwmParallel ) &
-    & call MLSMessage ( MLSMSG_Error, ModuleName, &
+    & call MLSL2Message ( MLSMSG_Error, ModuleName, &
     & 'The fwmParallel option is currently inoperative, it needs significant work to fix - NJL' )
   call init_tables
   status = 0
   if ( parallel%slave ) then
     if ( parallel%masterTid <= 0 ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & call MLSL2Message ( MLSMSG_Error, ModuleName, &
       & 'masterTid of this slave <= 0' )
     call dump_settings
     call InitParallel ( iChunks(1), slaveMAF )
     if ( parallel%myTid <= 0 ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & call MLSL2Message ( MLSMSG_Error, ModuleName, &
       & 'slave Tid <= 0; probably pvm trouble' )
   end if
   !---------------- Task (4) ------------------
@@ -401,7 +401,7 @@ program MLSL2
     end if
     if ( status /= 0 ) then
       call io_error ( "While opening L2CF", status, line )
-      call MLSMessage ( MLSMSG_Error, moduleName, &
+      call MLSL2Message ( MLSMSG_Error, moduleName, &
         & "Unable to open L2CF file: " // trim(line), MLSFile=MLSL2CF )
     else if(switchDetail(switches, 'pro') >= 0) then
       call announce_success( MLSL2CF%name, l2cf_unit )
@@ -417,7 +417,7 @@ program MLSL2
       call output( 'Non-zero status returned from open_MLSCF: ', &
       & advance='no')
       call output(status, advance='yes')
-      call MLSMessage ( MLSMSG_Error, moduleName, &
+      call MLSL2Message ( MLSMSG_Error, moduleName, &
         & "Unable to open L2CF file named in pcf", MLSFile=MLSL2CF )
     else if(switchDetail(switches, 'pro') >= 0) then
       call announce_success( MLSL2CF%name, inunit )
@@ -521,7 +521,7 @@ program MLSL2
     call add_to_section_timing( 'main', t2 )
 
     if(error /= 0) then
-       call MLSMessage( MLSMSG_Error, ModuleName, &
+       call MLSL2Message( MLSMSG_Error, ModuleName, &
        & 'error in check_tree: probably need to repair l2cf ', MLSFile=MLSL2CF )
     end if
 
@@ -604,7 +604,7 @@ program MLSL2
           & "We are a slave, unable to mls_*close in this version" )
       endif
       if (error /= 0) then
-         call MLSMessage ( MLSMSG_Error, moduleName, &
+         call MLSL2Message ( MLSMSG_Error, moduleName, &
           & "Unable to MLS_Close" )
       end if
     end if
@@ -905,6 +905,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.235  2021/07/08 23:34:08  pwagner
+! Wider use of MLSL2Message
+!
 ! Revision 2.234  2020/04/30 23:29:42  pwagner
 ! Add Final call to FinalMemoryReport at end
 !
