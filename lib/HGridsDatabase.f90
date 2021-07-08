@@ -488,7 +488,7 @@ contains ! =========== Public procedures ===================================
     integer :: noFreqs
     integer :: noChunkMAFs
     ! Executable
-    verbose = BeVerbose( 'hgrid', -1 ) ! .or. .true.
+    verbose = BeVerbose( 'hgrid', 1 ) ! .or. .true.
     noChunkMAFs = chunk%lastMAFIndex - chunk%firstMAFIndex + 1
     if ( verbose ) then
       call outputnamedValue( 'noChunkMAFs', noChunkMAFs )
@@ -809,6 +809,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.46  2021/07/08 23:30:38  pwagner
+! Require -SGrid2 for verbose
+!
 ! Revision 2.45  2020/01/27 18:30:44  pwagner
 ! Works wsith new AssembleL1BQtyName
 !
