@@ -22,7 +22,7 @@ module Open_Init
   use HighOutput, only: AddRow, AddRow_Divider, AddRow_Header, BeVerbose, &
     & OutputNamedValue, OutputTable, StartTable, StyledOutput
   use MLSCommon, only: FileNameLen, MLSFile_T, NameLen, TAI93_Range_T
-  use MLSL2Options, only: SpecialDumpFile, Toolkit
+  use MLSL2Options, only: MLSL2Message, SpecialDumpFile, Toolkit
   use MLSStringLists, only: Array2List, CatLists, &
     & SwitchDetail
   use Output_M, only: Blanks, NewLine, Output, SwitchOutput, RevertOutput
@@ -228,7 +228,7 @@ contains ! =====     Public Procedures     =============================
      if ( levels(gen) > 0 .or. switchDetail(switches,'pcf') > -1 ) then
        call output('====== No parameters or radiances read :: no pcf ======', &
          & advance='yes')
-       call output('====  (These must be supplied through the l2cf) ======', &
+       call output('======  These must be supplied through the l2cf  ======', &
          & advance='yes')
      end if
      call trace_end ( "OpenAndInitialize", cond=toggle(gen) )
@@ -326,7 +326,7 @@ contains ! =====     Public Procedures     =============================
       &  returnstatus /= PGSTD_E_NO_LEAP_SECS ) &
       & call announce_error ( "Could not convert UTC Start time to TAI" )
     if ( returnstatus == PGSTD_E_NO_LEAP_SECS ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & call MLSL2Message ( MLSMSG_Error, ModuleName, &
       & 'No leap second information' )
 
    ! Is CCSDSStartTime before tai93 onset?
@@ -438,7 +438,7 @@ contains ! =====     Public Procedures     =============================
       if ( returnStatus /= PGS_S_SUCCESS ) exit
     enddo
     if ( returnStatus /= PGS_S_SUCCESS ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      call MLSL2Message ( MLSMSG_Warning, ModuleName, &
         & 'Could not find DOIs in PCF file' )
     else
       call Array2List ( doiArray, l2pcf%spec_doinames )
@@ -480,12 +480,12 @@ contains ! =====     Public Procedures     =============================
     call FillTAI93Attribute
     
     ! Get name of Parallel Staging file (not any more)
-    call MLSMessage ( MLSMSG_Warning, ModuleName, &
+    call MLSL2Message ( MLSMSG_Warning, ModuleName, &
       & 'This version does not use staging file for slave Join commands' )
     ! version = 1
 
     if ( error /= 0 ) &
-      & call MLSMessage(MLSMSG_Error,ModuleName, &
+      & call MLSL2Message(MLSMSG_Error,ModuleName, &
         & 'Problem with open_init section')
 
    Details = switchDetail(switches, 'pcf') - 2 ! -3 means don't dump
@@ -738,6 +738,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.120  2021/07/22 23:16:01  pwagner
+! Use MLSL2Message to print error mesgs
+!
 ! Revision 2.119  2019/04/18 16:29:53  pwagner
 ! Overwrite GlobalAttributes%PGEVersion only if currently blank
 !
