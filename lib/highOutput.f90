@@ -966,14 +966,18 @@ contains
   ! Print blanks out to next tabstop
   ! (or else to tabstop number tabn)
   ! (or optionally that many copies of fillChar)
-  subroutine blanksToTab ( tabn, fillChar )
+  subroutine blanksToTab ( tabn, fillChar, MayStayIfAtTab )
     ! Args
-    integer, optional, intent(in) :: TABN
+    integer, optional, intent(in)          :: TABN
     character(len=*), intent(in), optional :: FILLCHAR  ! default is ' '
+    logical, intent(in), optional          :: MayStayIfAtTab
     ! Internal variables
     integer :: nColumn
     integer :: nTab
+    logical :: MayStay
     ! Executable
+    MayStay = .false.
+    if ( present(MayStayIfAtTab) ) MayStay = MayStayIfAtTab
     if ( getOutputStatus( 'physicalcolumn' ) == 1 ) then
       ! Don't double indent the line's first field
       nColumn = getOutputStatus( 'physicalcolumn' )
@@ -985,7 +989,11 @@ contains
       if ( nColumn < tabStops(tabn) ) &
         & call blanksToColumn( tabStops(tabn), fillChar )
     else
-      nTab = findFirst( tabStops > nColumn )
+      if ( MayStay ) then
+        nTab = findFirst( tabStops >= nColumn )
+      else
+        nTab = findFirst( tabStops > nColumn )
+      endif
       if ( nTab > 0 ) &
         & call blanksToColumn( tabStops(nTab), fillChar )
     end if
@@ -1652,8 +1660,9 @@ contains
     character(len=128), dimension(42) :: myNotes
     integer :: numRows
     integer :: numWeeks
+    logical :: PrintedDate
     integer :: row
-    logical :: today
+    logical :: today ! Print extra '|' around today's date
     integer :: wkdy
     character(len=MAXNOTELENGTH) :: wrappedNote
     integer :: year
@@ -1752,11 +1761,13 @@ contains
       do row=1, numRows
         col2 = 0
         do wkdy=1, 7
+          PrintedDate = .false.
           col1 = col2 + 1
           col2 = tabStops(wkdy)
           today = ( days(iwk, wkdy) == day )
           if ( today ) then
             call output_('||')
+            col2 = col2 - 1 ! Must scoot string one space to the lefts
           else
             call output_('|')
           end if
@@ -1766,10 +1777,12 @@ contains
             call writeIntsToChars( days(iwk, wkdy), dateString )
             dateString = adjustl(dateString)
             call AlignToFit( trim(dateString), (/ col1, col2-1 /), 'r' )
+            PrintedDate = .true.
           else if( row == numRows ) then
             call writeIntsToChars( daysOfYear(iwk, wkdy), dateString )
             dateString = adjustl(dateString)
             call AlignToFit( 'd' // trim(dateString), (/ col1, col2-1 /), 'r' )
+            PrintedDate = .true.
           else if( present(dateNote) .and. today ) then
             if ( myDontWrap ) then
               wrappedNote = dateNote
@@ -1799,9 +1812,10 @@ contains
           end if
           if ( today ) then
             call blanksToColumn(col2-1)
+            if ( .not. PrintedDate ) call Blanks( 1 )
             call output_('|')
           else
-            call blanksToTab
+            call blanksToTab ( MayStayIfAtTab=.true. )
           end if
         end do ! wkdy
         call output_('|')
@@ -2937,6 +2951,9 @@ contains
 end module HighOutput
 
 ! $Log$
+! Revision 2.41  2021/07/22 23:20:14  pwagner
+! Repair printing errors in Calendar
+!
 ! Revision 2.40  2020/06/30 23:18:07  pwagner
 ! Improved comments among toc and api blocs
 !
