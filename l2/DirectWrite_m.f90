@@ -41,7 +41,7 @@ module DirectWrite_m  ! Write l2gp and l2aux products out to files
   use MLSL2Options, only: L2Options, MLSL2Message, WriteFileAttributes
   use MLSStringLists, only: SwitchDetail
   use MLSStrings, only: LowerCase
-  use Output_M, only: Blanks, Output
+  use Output_M, only: Blanks, NewLine, Output
   use PCFHdr, only: GlobalAttributes
   use String_Table, only: Get_String
   use Toggles, only: Switches
@@ -588,14 +588,14 @@ contains ! ======================= Public Procedures =========================
       offset = max(0, min(offset, grandTotalInstances - noToWrite))
     endif
     if ( L2GPFile%access == DFACC_RDONLY )  &
-      & call MLSL2Message(MLSMSG_Error, ModuleName, &
-      & 'l2gp file is rdonly', MLSFile=L2GPFile)
+      & call MLSL2Message( MLSMSG_Error, ModuleName, &
+      & 'l2gp file is rdonly', MLSFile=L2GPFile )
     ! Convert vector quantity to l2gp
     call vectorValue_to_l2gp( quantity, &
       & precision, quality, status, convergence, AscDescMode, &
       & l2gp, &
       & sdname, chunkNo, offset=0, &
-      & firstInstance=firstInstance, lastInstance=lastInstance)
+      & firstInstance=firstInstance, lastInstance=lastInstance )
     ! Output the l2gp into the file
     ! if ( l2gp%name == 'Temperature-InitPtan' .and. deebug ) then
     if ( deebug ) then
@@ -1732,10 +1732,13 @@ contains ! ======================= Public Procedures =========================
     integer :: noSurfsInL2GP
     integer :: noFreqsInL2GP
     integer :: nProfiles
+    logical :: profiled  ! Print grep-able info about overlaps discarded
+    character(len=32)     :: QtyName
     integer :: useFirstInstance
     integer :: useLastInstance
     logical :: verbose
     ! Executable
+    profiled = BeVerbose ( 'profiled', -1 )
     verbose = BeVerbose ( 'direct', -1 )
     deebug = LetsDebug ( 'direct', 0 )
     
@@ -1779,8 +1782,27 @@ contains ! ======================= Public Procedures =========================
     endif
     nProfiles = useLastInstance - useFirstInstance + 1
     lastProfile = firstProfile - 1 + nProfiles
+
+    call get_string( lit_indices(quantity%template%QuantityType ), &
+      & QtyName, strip=.true. )      
+
     if ( DEEBUG ) print *, 'noFreqsInL2GP, noSurfsInL2GP, lastProfile: ', &
       & noFreqsInL2GP, noSurfsInL2GP, lastProfile
+      
+    if ( profiled ) then
+      call output ( '## ## ' // trim(QtyName)                , advance='no' )
+      call Blanks ( 2 )
+      call output ( ChunkNo                                  , advance='no' )
+      call Blanks ( 2 )
+      call output ( quantity%template%noInstancesLowerOverlap, advance='no' )
+      call Blanks ( 2 )
+      call output ( quantity%template%noInstancesUpperOverlap, advance='no' )
+      call Blanks ( 2 )
+      call output ( firstProfile                             , advance='no' )
+      call Blanks ( 2 )
+      call output ( lastProfile                              , advance='no' )
+      call NewLine
+    endif
     call SetupNewl2gpRecord ( l2gp, noFreqsInL2GP, noSurfsInL2GP, lastProfile )
     ! Setup the standard stuff, only pressure as it turns out.
     select case ( quantity%template%verticalCoordinate )
@@ -1985,6 +2007,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.98  2021/07/22 23:12:54  pwagner
+! Swicth setting -Sprofiled prints grepable info about chunk overlaps
+!
 ! Revision 2.97  2021/06/10 23:47:44  pwagner
 ! When creating l2gps from qties, copy their BinNumber and MAF, too
 !
