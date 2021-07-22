@@ -26,7 +26,7 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   use, Intrinsic :: ISO_Fortran_Env, only: Error_Unit
   use MLSCommon, only: MLSFile_T, MLSNamesAreDebug, MLSNamesAreVerbose
   use MLSFiles, only: WildCardHDFVersion, HDFVersion_4, HDFVersion_5, Dump
-  use MLSMEssageModule, only: MLSMessageConfig, &
+  use MLSMessageModule, only: MLSMessageConfig, &
     & MLSMsg_Error, MLSMsg_Info, MLSMsg_TestWarning, &
     & MLSMSG_Severity_To_Quit, MLSMsg_Severity_To_Walkback, MLSMsg_Warning, &
     & Bummer, SayMessage => MLSMessage
@@ -84,6 +84,10 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   ! when set higher, it allows program keep going despite errors
   ! when set lower, the program would quit even on warnings
   integer            :: Quit_error_threshold          = MLSMSG_Error
+
+  ! Set the following to MLSMSG_Error before delivering to sips;
+  ! when set lower, it prints chunknum and phasename for, e.g. warnings, too.
+  integer            :: Print_chunk_threshold         = MLSMSG_Warning
 
   ! Set the following to 2 before delivering to sips;
   ! If 0, you won't be able to distinguish normal termination
@@ -269,7 +273,7 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   
   ! The following public procedures are listed here for convenience only
-  ! since they are publi by default anyway
+  ! since they are public by default anyway
   public :: DumpOptions
   public :: DumpMacros
   public :: MLSL2Message
@@ -369,6 +373,20 @@ contains
       print *, 'DEFAULTLOGUNIT ', DEFAULTLOGUNIT
       print *, 'Config%logFileUnit ', logFileUnit
     end if
+    ! Do we have a current phase name?
+    if ( len_trim(L2Options%currentPhaseName) > 0 &
+      & .and. severity >= Print_chunk_threshold ) then
+      myMessage = ' (' // trim(L2Options%currentPhaseName) // ') ' // myMessage
+    end if
+    ! Do we have a current chunk number?
+    if ( severity >= Print_chunk_threshold ) then
+      if ( L2Options%CurrentChunkNumber > 0 ) then
+        call writeIntsToChars( L2Options%CurrentChunkNumber, chunkChars )
+        myMessage = ' (chunk ' // trim(chunkChars) // ') ' // myMessage
+      else
+        myMessage = ' (no chunks) ' //  myMessage
+      end if
+    end if
     ! For severity "info" just do the call and return
     ! For severity "warn" do the call and 
     ! check status to see if we need to skip printing
@@ -384,18 +402,6 @@ contains
     end if
     ! If severe enough an error, we will want to know more
     ! in hopes of figuring out what went wrong, where, and why
-    myMessage = message
-    ! Do we have a current phase name?
-    if ( len_trim(L2Options%currentPhaseName) > 0 &
-      & .and. severity >= MLSMSG_Severity_to_quit ) then
-      myMessage = ' (' // trim(L2Options%currentPhaseName) // ') ' // myMessage
-    end if
-    ! Do we have a current chunk number?
-    if ( L2Options%CurrentChunkNumber > 0 &
-      & .and. severity >= MLSMSG_Severity_to_quit ) then
-      call writeIntsToChars( L2Options%CurrentChunkNumber, chunkChars )
-      myMessage = ' (chunk ' // trim(chunkChars) // ') ' // myMessage
-    end if
     ! Do we have an l2cf node we were processing?
     if ( L2CFErrorNode /= 0 ) then
       call get_where ( where(L2CFErrorNode), myMessage, &
@@ -406,6 +412,7 @@ contains
     else
       myMessage = '(no tree node): ' // myMessage
     end if
+    ! Were we passed an item of a recognized MLS data type to Dump?
     if ( present(item) ) then
       call output ( '(Not ready to dump arbitrary datatypes yet) ', advance='yes' )
       select case ( item%dbType )
@@ -1576,6 +1583,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.134  2021/07/22 23:14:53  pwagner
+! May print chunknum, phase on warning mesgs
+!
 ! Revision 2.133  2020/04/09 23:19:20  pwagner
 ! Prevent L2Options from overriding --SkipRetrieval on cmdline or in opts file
 !
