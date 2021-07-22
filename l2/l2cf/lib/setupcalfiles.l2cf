@@ -147,7 +147,7 @@
   !defunlessdef(PFAFile1A,{!pfaPath/PFA_R1A_!pfaVersion.h5})
   !defunlessdef(PFAFileDACS,{!pfaPath/PFA_DACS_!pfaVersion.h5})
   !defunlessdef(PFAFiles, {!PFAFile5V,!PFAFile5H,!PFAFileR4,!PFAFileR3,!PFAFileR2,!PFAFile1B,!PFAFile1A,!PFAFileDACS})
-  !define(ElevOffsetHDF,{!calpath/MLS-Aura_L2Cal-ElevOffsets_v3-0-5_0000d000.h5})
+  !defunlessdef(ElevOffsetHDF,{!calpath/MLS-Aura_L2Cal-ElevOffsets_v3-0-5_0000d000.h5})
   !define(IsotopeRatioHDF,{!calpath/MLS-Aura_L2Cal-IsotopeRatios_v3-0-5_0000d000.h5})
   !defunlessdef(SBFractionHDF,{!calpath/MLS-Aura_L2Cal-SBFractions_v3-0-5_0000d000.h5})
   !define(SystemTemperatureHDF,{!calpath/MLS-Aura_L2Cal-SystemTemperatures_v3-0-5_0000d000.h5})
@@ -173,6 +173,7 @@ inpathgeos5pd:       !inpathgeos5pd
 inpathgeos5dd:       !inpathgeos5dd
 inpathgeos5pn:       !inpathgeos5pn
 inpathgeos5dn:       !inpathgeos5dn
+inpathtruthl2gp:     !inpathtruthl2gp
 
 signalsPath:         !signalsPath      
 spectroscopyPath:    !spectroscopyPath 
@@ -210,6 +211,9 @@ outpathtmp:          !outpathtmp
 !divert(-1)
 })
 ;$Log$
+;Revision 1.51  2020/03/05 23:52:32  pwagner
+;Cleaned quote-marks off macros; updated defaults for v5.00
+;
 ;Revision 1.50  2019/12/12 00:56:22  pwagner
 ;Makes use of new macros; prints if dee=bug
 ;
