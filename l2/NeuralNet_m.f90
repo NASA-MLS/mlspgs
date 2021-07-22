@@ -202,22 +202,6 @@ contains ! =====     Public Procedures     =============================
     NeededBands = .false.
     nullify ( GeodAngle, GeodLat )
 
-    if ( CheckTempsAndRads ) then
-      RadfileID = mls_sfstart ( trim(DefaultRadiances), DFAcc_Create, &
-          &                                          hdfVersion=HDFVersion_5 )
-      TempfileID = mls_sfstart ( trim(DefaultTemperatures), DFAcc_RDOnly, &
-          &                                          hdfVersion=HDFVersion_5 )
-      if ( verbose ) print *, 'Opened RadFile id ', RadfileID
-      if ( verbose ) print *, 'Opened TempFile id ', TempfileID
-      if ( RadfileID < 0 ) then
-        call announce_error ( key, &
-          & 'Failed to Open/Create Radiances File: ' // trim(DefaultRadiances) )
-      endif
-    endif
-!       RadiancesFile => AddInitializeMLSFile ( FileDatabase, name=DefaultRadiances, &
-!         & shortName='Radiances', access=Dfacc_Create,  &
-!         & type=l_hdf, content='NNRadiances', HDFVersion=HDFVersion_5 )
-
     do i = 2, nsons(key)
       son = subtree(i,key)
       gson = subtree(i,key) ! The argument
@@ -327,10 +311,6 @@ contains ! =====     Public Procedures     =============================
     if ( .not. any(NeededBands) ) then
       call announce_error ( key, &
         & 'Must have all 3 needed bands; check your l2cf' )
-    endif
-    if ( UseMatchedTemps .and. .not. CheckTempsAndRads ) then
-      call announce_error ( key, &
-        & 'If UseMatchedTemps then must CheckTempsAndRads' )
     endif
     if ( myFile > 0 ) then
       CoeffsFile => FileDatabase(myFile)
@@ -501,129 +481,25 @@ contains ! =====     Public Procedures     =============================
         if ( all(NNMeasurements%Band_22_Radiances%values == 0._r8) ) &
           print *, 'All band 22 radiances vanish'
         if ( StandardizeRadiancesHere ) then
-          if ( CheckTempsAndRads ) then
-            call StandardizeRadiances ( NNMeasurements, &
-              & Coeffs%Standardization_Brightness_Temperature_Mean, &
-              & Coeffs%Standardization_Brightness_Temperature_Std, &
-              & TempFileID, thisMAF, Coeffs )
-            if ( verbose ) print *, 'As we know them: thisProfile, thisMAF, thisBin ', &
-              & thisprofile, thisMAF, binNum
-            call CheckTemperatures( TempFileID, (/ thisProfile, thisProfile /), &
-              & FranksValues )
-          else
-            call StandardizeRadiances ( NNMeasurements, &
-              & Coeffs%Standardization_Brightness_Temperature_Mean, &
-              & Coeffs%Standardization_Brightness_Temperature_Std )
-          endif
+          call StandardizeRadiances ( NNMeasurements, &
+            & Coeffs%Standardization_Brightness_Temperature_Mean, &
+            & Coeffs%Standardization_Brightness_Temperature_Std )
         endif
         ! stop
         ! print *, 'Calling NeuralNetFit'
-        if ( CheckTempsAndRads ) &
-          & print *, 'Rad FileID: ', RadfileID
-        if ( CheckTempsAndRads ) then
-          print *, 'Calling NeuralNetFit with diagn rad and temp files'
-          TemperatureValues = NeuralNetFit ( NNMeasurements, &
-            & Coeffs, NumHiddenLayers, &
-            & RadfileID, TempFileID, thisMAF, thisProfile, Debugging=.false. )
-        else
-          if ( verbose ) print *, 'Using NeuralNetFit with our own raw Radiances'
-          TemperatureValues = NeuralNetFit ( NNMeasurements, &
-            & Coeffs, NumHiddenLayers, Debugging=.false. )
-        endif
+        if ( verbose ) print *, 'Using NeuralNetFit with our own raw Radiances'
+        TemperatureValues = NeuralNetFit ( NNMeasurements, &
+          & Coeffs, NumHiddenLayers, Debugging=.false. )
         do j=1, NumLevels
           Temperature%values(Coeffs%Output_Pressure_Levels_Indices(j), profile) = &
             & TemperatureValues(j)
         enddo
-        if ( CheckTempsAndRads ) then
-          call OutputNamedValue ( 'Our profile num', thisProfile )
-          call OutputNamedValue ( 'MAF ours and Franks', (/thisMAF, matchedMAF/) )
-          call OutputNamedValue ( 'Bin Number ours and Franks', (/BinNum, matchedBinNum/) )
-!           j  = L1MAFToL2Profile ( &
-!             & thisMAF , FileDatabase, MIF=36, Debugging=.false., &
-!             & Phi=Phi, Lat=Lat )
-!           call OutputNamedValue ( 'Our phi, lat', (/Phi, Lat/) )
-!           j = FindFirst ( BinArray - Lat > 0._r4 )
-!           call OutputNamedValue ( 'Our bin', j )
-!           j  = L1MAFToL2Profile ( &
-!             & matchedMAF , FileDatabase, MIF=36, Debugging=.false., &
-!             & Phi=Phi, Lat=Lat )
-!           ! call OutputNamedValue ( 'Franks phi, lat', (/Phi, Lat/) )
-!           j = FindFirst ( BinArray - Lat > 0._r4 )
-!           call OutputNamedValue ( 'Matched bin using Franks l1boa Latitude', j )
-          call Dump ( Temperature%values(:, profile), 'Temps (nn)', Width=5 )
-          ! do j=1, NumLevels
-          !  Temperature%values(Coeffs%Output_Pressure_Levels_Indices(j), profile) = &
-          !     & FranksValues(j)
-          ! enddo
-          call Dump ( FranksValues, 'Temps (Franks ANN)', Width=5 )
-          if ( UseMatchedTemps ) then
-            do j=1, Temperature%template%NoSurfs
-              Temperature%values(j, profile) = &
-                & FranksValues(j)
-            enddo
-            Temperature%BinNumber(profile) = matchedBinNum
-            Temperature%MAF(profile)       = matchedMAF
-          endif
-        endif
         ! if ( StandardizeRadiancesHere ) &
         !  & call Dump ( FranksValues, 'Temps (Franks ANN)' )
-        if ( UseMatchedRadiances .and. .not. UseMatchedTemps ) then
-          if ( CheckMAFs( TempFileID, matchedStdRadiances ) /= matchedMAF ) &
-            & call announce_error ( key, &
-            & 'Inconsistent matched MAF number' )
-          call ReadCoeffsFile ( CoeffsFile, matchedBinNum, &
-            & Coeffs, .false. ) ! MustAllocate Coeffs arrays on the 1st time through
-          FranksValues = NeuralNetFit ( NNMeasurements, &
-            & Coeffs, NumHiddenLayers, &
-            & MAF=matchedMAF, &
-            & Profile=thisProfile, Debugging=.false., &
-            & StdRadiances=matchedStdRadiances )
-          call OutputNamedValue ( 'his bin num', matchedBinNum )
-          do j=1, NumLevels
-            Temperature%values(Coeffs%Output_Pressure_Levels_Indices(j), profile) = &
-              & FranksValues(j)
-          enddo
-          call Dump ( Temperature%values(:, profile), &
-            & 'Temps (Matching Franks StdRads, his BinNum)', Width=5 )
-!          call Dump ( FranksValues, 'Temps (Matching Franks StdRads, his BinNum)' )
-
-          call ReadCoeffsFile ( CoeffsFile, BinNum, &
-            & Coeffs, .false. ) ! MustAllocate Coeffs arrays on the 1st time through
-          FranksValues = NeuralNetFit ( NNMeasurements, &
-            & Coeffs, NumHiddenLayers, &
-            & MAF=matchedMAF, &
-            & Profile=thisProfile, Debugging=.false., &
-            & StdRadiances=matchedStdRadiances )
-          do j=1, NumLevels
-            Temperature%values(Coeffs%Output_Pressure_Levels_Indices(j), profile) = &
-              & FranksValues(j)
-          enddo
-          call OutputNamedValue ( 'our bin num', BinNum )
-          call Dump ( Temperature%values(:, profile), &
-            & 'Temps (Matching Franks StdRads, our Bin Num)', Width=5 )
-!          call Dump ( FranksValues, 'Temps (Matching Franks StdRads, ourBinNum)' )
-        endif
       enddo ! Loop of profiles
     enddo ! Loop of BinNums
     call MLS_CloseFile( CoeffsFile, Status )
 
-    if ( CheckTempsAndRads ) then
-      Status = MLS_SFEnd( RadfileID, hdfVersion=HDFVersion_5 )
-      if ( verbose ) print *, 'Closed RadFile id ', RadfileID
-      if ( verbose ) print *, Status
-      if ( Status /= 0 ) then
-        print *, 'Error in ending hdf access to file'
-        stop
-      endif
-
-      Status = MLS_SFEnd( TempfileID, hdfVersion=HDFVersion_5 )
-      if ( verbose ) print *, 'Closed TempFile id ', TempfileID
-      if ( verbose ) print *, Status
-      if ( Status /= 0 ) then
-        print *, 'Error in ending hdf access to file'
-        stop
-      endif
-    endif
 
     ! stop
 !debug
@@ -1134,6 +1010,9 @@ end module NeuralNet_m
 
 !
 ! $Log$
+! Revision 2.13  2021/07/22 23:18:26  pwagner
+! Strip out extraordinary diagnostics relying on separate rad,temp files
+!
 ! Revision 2.12  2021/07/08 23:33:03  pwagner
 ! Read Activation_Function from weights file; obey new api for NeuralNetFit; housekeeping
 !
