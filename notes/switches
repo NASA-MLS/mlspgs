@@ -139,6 +139,7 @@ Switches (set by -S option in mlsl2's command line):
              n>0 => print pointing #, n>1 print frequency
  pro[n]  => Proclaim each product file l2gp, l2aux, l2dgg, l2pc, meta output
              and each file l2gp, l1brad, ncep, dao input; dump filedatabase
+ profiled=> Print a grepable list of lower and upper overlaps vs chunk number
  psct[n] => Print TScat table generation
  ptb     => Show perturbed quantities if used in Sids for Jacobean, Hessian
  qtmp    => Quantity templates being constructed, destroyed
@@ -240,6 +241,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will be ignored when responding to mlsl2 -S"?")
 
  $Log$
+ Revision 1.105  2020/05/01 20:37:00  pwagner
+ Added -S'trmem' switch to track memory allocates/deallocates
+
  Revision 1.104  2019/04/11 23:41:08  pwagner
  Correctd sp. error; clarified role of bookending equal-signs
 
