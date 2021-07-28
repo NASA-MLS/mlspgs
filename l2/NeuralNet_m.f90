@@ -614,7 +614,7 @@ contains ! =====     Public Procedures     =============================
       & Coeffs, &
       & MustAllocate, &
       & Debugging )
-      use MLSHDF5, only: LoadFromHDF5DS
+      use MLSHDF5, only: IsHDF5DSPresent, LoadFromHDF5DS
       use MLSStrings, only: Asciify
       
       type (MLSFile_T)                        :: CoeffsFile
@@ -916,6 +916,17 @@ contains ! =====     Public Procedures     =============================
         Coeffs%Normalization_Labels_Min = &
           values2(1, :)
       if ( DeeBug ) print *, 'Normalization_Labels_Min'
+      
+      ! The newer weights files include the dataset Activation_Function
+      ! Older ones did not
+      if ( .not. &
+        & IsHDF5DSPresent ( CoeffsFile%fileID%f_id, "Activation_Function" ) &
+        & ) then
+        Coeffs%Activation_Function = 'tanh'
+        if ( DeeBug ) print *, 'Activation_Function (default): ', &
+          & trim(Coeffs%Activation_Function)
+        return
+      endif
 
       start = (/ 0, 0, 0 /)
       stride = (/ 1, 1, 1 /)
@@ -1010,6 +1021,9 @@ end module NeuralNet_m
 
 !
 ! $Log$
+! Revision 2.14  2021/07/28 23:43:12  pwagner
+! Take care not to read Activation_Function unless it is present
+!
 ! Revision 2.13  2021/07/22 23:18:26  pwagner
 ! Strip out extraordinary diagnostics relying on separate rad,temp files
 !
