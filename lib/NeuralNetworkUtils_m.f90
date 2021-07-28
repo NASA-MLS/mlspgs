@@ -531,7 +531,6 @@ contains
     type (NeuralNetInputData_T),intent(in):: nnInputData
     type (NeuralNetCoeffs_T), intent(in)  :: nnCoeffs
     integer,intent(in) :: nHL ! number of hidden layers. Will probably always be 2
-    ! character(len=*),intent(in) :: type ! One of 'tanh', 'relu' or 'sigmoid'
     real(r8),  dimension(:), allocatable :: prediction
     integer, optional, intent(in) :: RadFileID ! For optionally saving Datasets
     integer, optional, intent(in) :: TempFileID ! For optional comparisons
@@ -582,6 +581,8 @@ contains
     ! make sure type is correct.
     IF ( index( 'relu,sigmoid,tanh', trim(type) ) < 1 ) then 
       PRINT *,"input var type must be one of 'relu', 'tanh' or 'sigmoid'"
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'Illegal activation type ' // trim(type) )
     ENDIF
     IF (NHL /=  1 .AND. NHL /= 2) THEN 
       PRINT *,"NHL must equal either 1 or 2"
@@ -707,25 +708,8 @@ contains
     ENDIF
     !print *,'k = ',k ! 8
     ! k=k+1
-
-    select case ( trim(type) )
-    case ( 'tanh' )  
-      ! In Frank's code he calls this `neuronValuesActivation', but I'm
-      ! just going to reuse  the variable.
-      print *, '*** tanh *** '
-      neuronValues = TANH( neuronValues + & 
+    neuronValues = Activation ( type, neuronValues + & 
            & nnCoeffs%Intercepts_Hidden_Layer_1 )
-    case ( 'sigmoid' )
-      print *, '*** sigmoid *** '
-      call sigmoid( neuronValues + & 
-           & nnCoeffs%Intercepts_Hidden_Layer_1, neuronValues )
-
-    case ( 'relu' )
-      print *, '*** relu *** '
-      neuronValues = max( 0._r8, neuronValues + & 
-           & nnCoeffs%Intercepts_Hidden_Layer_1, neuronValues )
-
-    end select
     IF (debug) THEN 
       PRINT *,'After ihl1'
       PRINT*,'intercepts_hidden_layer_[12]',size(nnCoeffs%Intercepts_Hidden_Layer_1)
@@ -791,11 +775,8 @@ contains
         PRINT *,'Writing size(neuronValues2) = ',SIZE(neuronValues2)
         WRITE(7,iostat=istat) neuronValues2
       ENDIF
-      IF (TRIM(TYPE) .EQ. 'tanh') THEN
-        neuronValues2 = TANH(neuronValues2 + nnCoeffs%Intercepts_Hidden_Layer_2)
-      ELSE IF(trim(TYPE) .EQ. 'sigmoid') THEN 
-        call SIGMOID(neuronValues2 + nnCoeffs%Intercepts_Hidden_Layer_2,neuronValues)
-      ENDIF
+      neuronValues2 = Activation ( type, neuronValues2 + & 
+           & nnCoeffs%Intercepts_Hidden_Layer_1 )
       IF (debug) THEN 
         PRINT *,'after applying ihl2: Writing size(neuronValues2) = ',SIZE(neuronValues2)
         WRITE(7,iostat=istat) neuronValues2
@@ -855,6 +836,30 @@ contains
     ! k=k+1
 
     if (debug) CLOSE(7)
+    contains
+      function Activation ( type, args ) result ( values )
+        ! Apply the activation function type to the args
+        ! returning the result in values
+        character(len=*), intent(in)           :: type
+        real(r8), dimension(:), intent(in)     :: args
+        real(r8), dimension(size(args))        :: values
+        ! Executable
+        select case ( trim(type) )
+        case ( 'tanh' )  
+          ! In Frank's code he calls this `neuronValuesActivation', but I'm
+          ! just going to reuse  the variable.
+          print *, '*** tanh *** '
+          Values = TANH( args )
+        case ( 'sigmoid' )
+          print *, '*** sigmoid *** '
+          call sigmoid( args, Values )
+
+        case ( 'relu' )
+          print *, '*** relu *** '
+          Values = max( 0._r8, args )
+
+        end select
+      end function Activation
 
   end function NeuralNetFit
 
@@ -1025,6 +1030,9 @@ contains
 
 end module NeuralNetUtils_M
 ! $Log$
+! Revision 2.9  2021/07/08 23:29:11  pwagner
+! New api for NeuralNetFit; new 'relu' type; housekeeping
+!
 ! Revision 2.8  2021/06/18 15:20:33  pwagner
 ! Refine search for matching bins; avoid array bounds error
 !
