@@ -110,7 +110,7 @@
 ;   'R5V',$
 ;   'DACS']})
   !defunlessdef(PFAFiles, {5V,5H,R4,R3,R2,1B,1A,DACS})
-  !define(ElevOffsetHDF,{ElevOffset})
+  !define(ElevOffsetHDF,{FOV})
   !define(IsotopeRatioHDF,{IsotopeRatio})
   !define(SBFractionHDF,{SBFraction})
   !define(SystemTemperatureHDF,{SystemTemperature})
@@ -211,6 +211,9 @@ outpathtmp:          !outpathtmp
 !divert(-1)
 })
 ;$Log$
+;Revision 1.52  2021/07/22 23:10:56  pwagner
+;Allow user to define macro ElevOffsetHDF
+;
 ;Revision 1.51  2020/03/05 23:52:32  pwagner
 ;Cleaned quote-marks off macros; updated defaults for v5.00
 ;
