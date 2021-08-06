@@ -192,7 +192,12 @@ l2dao: DAS.flk.asm.tsyn3d_mis_p.GEOS401.2003011800.2003011818.V01   100
 ;
 ; climatology
 ;
-l2clim: MLS-Aura_l2_v${VERSION}.clim   100
+l2clim: MLS-Aura_l2_v${VERSION}.clim   50
+;
+;
+; neural net coefficients
+;
+l2neurnet: MLS-Aura_l2_v${VERSION}.neurnet   50
 ;
 ;
 ; ascii
@@ -282,6 +287,9 @@ mobile_mcf_l2dgm: ML2DGM.001.MCF   1
 l3: eof   1
 ;
 ; $Log$
+; Revision 1.4  2017/08/07 23:05:57  pwagner
+; Added PCFid for ascii-formatted files, e.g. master.ident
+;
 ; Revision 1.3  2016/01/29 00:51:19  pwagner
 ; Added doinames and polygon file
 ;
