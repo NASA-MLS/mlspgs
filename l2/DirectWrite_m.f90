@@ -621,10 +621,12 @@ contains ! ======================= Public Procedures =========================
     if ( verbose ) call outputNamedValue( 'DW L2GP qty name', trim(sdName) )
     ! call usleep ( delay ) ! Should we make this parallel%delay?
     call usleep ( parallel%delay ) ! Done!
-    if ( present(createSwath) ) then
-      print *, 'create swath? ', createSwath
-    else
-      print *, 'create swath not present '
+    if ( DEEBUG ) then
+      if ( present(createSwath) ) then
+        print *, 'create swath? ', createSwath
+      else
+        print *, 'create swath not present '
+      endif
     endif
     call AppendL2GPData( l2gp, l2gpFile, &
       & sdName, offset, lastprofile=lastInstance, &
@@ -1949,14 +1951,14 @@ contains ! ======================= Public Procedures =========================
       l2gp%BinNumber(1:lastProfile) = &
         & quantity%BinNumber(useFirstInstance:useLastInstance)
       if ( DEEBUG ) call Dump( l2gp%BinNumber, 'l2gp bin numbers' )
-    else
+    elseif ( DEEBUG ) then
       call output( 'Bin numbers not allocated', advance='yes' )
     endif
     if ( associated(quantity%MAF) ) then
       allocate( l2gp%MAF(1:lastProfile) )
       l2gp%MAF(1:lastProfile) = quantity%MAF(useFirstInstance:useLastInstance)
       if ( DEEBUG ) call Dump( l2gp%MAF, 'l2gp MAFs' )
-    else
+    elseif ( DEEBUG ) then
       call output( 'MAFs not allocated', advance='yes' )
     endif
   end subroutine vectorValue_to_l2gp
@@ -2007,6 +2009,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.99  2021/08/06 17:15:11  pwagner
+! Print debugging stuff only if DEEBUG is true
+!
 ! Revision 2.98  2021/07/22 23:12:54  pwagner
 ! Swicth setting -Sprofiled prints grepable info about chunk overlaps
 !
