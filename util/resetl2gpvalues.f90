@@ -55,7 +55,7 @@ program resetL2GPValues ! resets values of L2GPData files, e.g. nrt
 ! then enter "make depends" followed by "make"
 
 ! Then run it something like this
-!    cd /nas/testing/workspace/pwagner/t1--t
+!    cd /testing/workspace/pwagner/t1--t
 !    /users/pwagner/mlspgs/tests/lib/NAG.Linux-CemtOS7/test \ 
 !       MLS-Aura_L2GP-Temperature_t1--t_1996d051.he5 > $cwd/Temp.out
 
@@ -74,6 +74,9 @@ program resetL2GPValues ! resets values of L2GPData files, e.g. nrt
     
     ! This next option is not currently used
     ! integer               :: spread = 10              ! Spread of profiles   
+
+    ! This next option lets us use fewer clusters
+    integer               :: NClusters = 0              ! If not all of them  
   end type options_T
   
   type ( options_T ) :: options
@@ -303,6 +306,7 @@ contains
     ! Executable
     ntimes = size(values, 1)
     if ( options%debug ) print *, 'shape values:', shape(values)
+    if ( options%NClusters > 0 ) ntimes = min (ntimes, options%NClusters )
     ! Unfortunately, the truth files may not have the same number of chunks
     ! as ntimes.
     ! Therefore we'll try to parcel out chunks evenly so they add up
@@ -388,6 +392,10 @@ contains
         call getarg ( i+1+hp, options%swathNames )
         i = i + 1
         exit
+      elseif ( filename(1:3) == '-nc' ) then
+        call igetarg ( i+1+hp, options%NClusters )
+        i = i + 1
+        exit
 !       elseif ( filename(1:3) == '-sp' ) then
 !         call igetarg ( i+1+hp, options%spread )
 !         i = i + 1
@@ -431,6 +439,8 @@ contains
       write (*,*) ' -debug        => switch on debug mode'
       write (*,*) ' -v            => switch on verbose mode'
       ! write (*,*) ' -spread n     => spread each value over n profiles'
+      write (*,*) ' -nc n         => use only the first n cluster profiles'
+      write (*,*) '                  (otherwise use all in the file)'
       write (*,*) ' -h            => print brief help'
       stop
   end subroutine print_help
@@ -462,3 +472,6 @@ end program resetL2GPValues
 !==================
 
 ! $Log$
+! Revision 1.1  2021/04/15 20:41:27  pwagner
+! First commit
+!
