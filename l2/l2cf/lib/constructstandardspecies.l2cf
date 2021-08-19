@@ -421,6 +421,19 @@ dtR3B9: Quantity, type=singleChannelRadiance, signal='R3:240.B9F:CO'
     radiometer=$1, hGrid=hGridStandard, vGrid=vGridExtinction, $
     fGrid=fGridExtinctionConstant!nl})
     })
+    
+  ; The nrt really, really doesn't like using hgridSingle for total extinction
+  ; so we'll just crudely redefine the function
+  !ifdef(flagNRT, {
+    !define(constructTOTALExtinction,{
+      totalextinction$1: Quantity, type=vmr, molecule=extinction, $
+      radiometer=$1, hGrid=hGridStandard, vGrid=vGridExtinction, $
+      fGrid=fGridExtinctionConstant!nl
+      totalextinctionv2$1: Quantity, type=vmr, molecule=extinctionv2, $
+      radiometer=$1, hGrid=hGridStandard, vGrid=vGridExtinction, $
+      fGrid=fGridExtinctionConstant!nl})
+   })
+  
   !forall(constructTOTALExtinction, !allRadiometers)
   !define(alltotalExtinctions,{!makelist({totalextinction},{},!allRadiometers),!makelist({totalextinctionv2},{},!allRadiometers)})
   
@@ -843,6 +856,9 @@ begin Fill
 end Fill
 !divert(-1)
 ;$Log$
+;Revision 1.132  2017/12/15 18:27:25  mmadatya
+;Added geoHeight as new quantity template
+;
 ;Revision 1.131  2017/06/16 17:07:45  pwagner
 ;camelCase profileNum similar to other qty names
 ;
