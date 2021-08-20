@@ -22,6 +22,7 @@ module Call_Stack_m
 !     (parameters)
 ! Say_Date                Display date at each push, pop
 ! Say_When                Display time at each push, pop
+! Show_Final_Summary      Display summary of allocates, deallocates, etc.
 ! Show_Sys_Memory         Display memory usage at each push, pop
 ! Sys_memory_ch           Memory usage units (e.g., 'kb')
 ! Sys_memory_convert      Memory usage units converted to kb
@@ -47,6 +48,7 @@ module Call_Stack_m
   public :: Deallocate_Stack, Dump_Stack, Get_Frame
   public :: Invert_Stack, Pop_Stack, Push_Stack, Stack_Depth, Top_Stack
   public :: Show_Sys_Memory, sys_memory_ch, sys_memory_convert, sys_memory_max
+  public :: Show_Final_Summary
 
   type :: Stack_t
     real :: Clock = 0.0                ! Whatever Time_Now returns (CPU or ?)
@@ -572,6 +574,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.39  2021/08/20 15:55:27  pwagner
+! Made Show_Final_Summary public
+!
 ! Revision 2.38  2021/02/05 05:09:40  pwagner
 ! Prevents index error if popping an empty stack
 !
