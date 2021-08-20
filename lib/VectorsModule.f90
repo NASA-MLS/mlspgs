@@ -2138,15 +2138,15 @@ contains ! =====     Public Procedures     =============================
 
     use Pointer_Rank_Remapping, only: Remap
 
-    type (VectorValue_T), intent(in) :: QTY
-    integer, intent(in), optional :: DETAILS ! <0  => Name only
+    type (VectorValue_T), intent(in) :: Qty
+    integer, intent(in), optional :: Details ! <0  => Name only
     !                                        ! <-1 => No newline after name
     !                                        ! =0  => No values
     !                                        ! >0  => Dump quantity values
     !                                        ! >1  => Dump template with details-1
     !                                        ! Default 1
-    character(len=*), intent(in), optional :: NAME
-    type (Vector_T), intent(in), optional :: Vector ! Only to get its name
+    character(len=*), intent(in), optional :: Name
+    type (Vector_T), intent(in), optional  :: Vector ! Only to get its name
     character(len=*), intent(in), optional :: Options ! E.g., '-sb'
     ! If options is present and
     ! contains        dump        but skip
@@ -2154,6 +2154,7 @@ contains ! =====     Public Procedures     =============================
     !    2            values     most template data
     !    3        values and template data
     ! Internal variables
+    logical, parameter :: deeBug = .false.  ! Should this also affect Details?
     logical :: Dot ! Use vector.quantity notation
     integer :: i
     character(len=32) :: oldInfo
@@ -2315,12 +2316,12 @@ contains ! =====     Public Procedures     =============================
     end if
     if ( associated(qty%BinNumber) ) then
       call Dump( qty%BinNumber, 'Bin Numbers' )
-    else
+    elseif ( deebug ) then
       call output( 'Qty BinNumber not associated', advance='yes' )
     endif
     if ( associated(qty%MAF) ) then
       call Dump( qty%MAF, 'MAFs' )
-    else
+    elseif ( deebug ) then
       call output( 'Qty MAF not associated', advance='yes' )
     endif
     if ( myDetails > 1 ) call dump ( qty%template, details=myDetails-1 )
@@ -3527,6 +3528,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.211  2021/06/10 23:43:11  pwagner
+! Added BinNumber and MAF components to vector qties
+!
 ! Revision 2.210  2018/05/11 21:26:27  pwagner
 ! Moved M_ mask bit fields to MLSCommon
 !
