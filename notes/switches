@@ -8,6 +8,7 @@ Switches (set by -S option in mlsl2's command line):
  0sl     => Warn about no lines or continuua, else silently ignored
  42      => Print to unit 42 when doing TScat
  alg     => Show work in Algebra module (hoping for partial credit)
+ alloc   => Report on memory usage while tracing execution
  ant     => Dump antenna patterns
  apr[n]  => Dump apriori file info 
  atb     => Dump ATb vector during Newton iteration
@@ -241,6 +242,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will be ignored when responding to mlsl2 -S"?")
 
  $Log$
+ Revision 1.106  2021/07/23 20:46:36  pwagner
+ Added -Sprofiled
+
  Revision 1.105  2020/05/01 20:37:00  pwagner
  Added -S'trmem' switch to track memory allocates/deallocates
 
