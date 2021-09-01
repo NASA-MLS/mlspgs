@@ -306,12 +306,14 @@ contains ! =====     Public Procedures     =============================
     call startTable
     call addRow_header ( 'Open_Init Settings', 'c' )
     call addRow_divider ( '-' )
-    GlobalAttributes%LastMAFCtr = FindMaxMAF ( L1BPtr, &
-      & GlobalAttributes%FirstMAFCtr )
-    ! call outputNamedValue ( 'Last MAF', GlobalAttributes%LastMAFCtr )
-    ! call outputNamedValue ( 'First MAF', GlobalAttributes%FirstMAFCtr )
-    call addRow ( 'Last MAF', GlobalAttributes%LastMAFCtr )
-    call addRow ( 'First MAF', GlobalAttributes%FirstMAFCtr )
+    if ( error == 0 ) then
+      GlobalAttributes%LastMAFCtr = FindMaxMAF ( L1BPtr, &
+        & GlobalAttributes%FirstMAFCtr )
+      ! call outputNamedValue ( 'Last MAF', GlobalAttributes%LastMAFCtr )
+      ! call outputNamedValue ( 'First MAF', GlobalAttributes%FirstMAFCtr )
+      call addRow ( 'Last MAF', GlobalAttributes%LastMAFCtr )
+      call addRow ( 'First MAF', GlobalAttributes%FirstMAFCtr )
+    endif
     ! Get the Start and End Times from PCF
 
     returnStatus = pgs_pc_getConfigData( mlspcf_l2_param_CCSDSStartId, &
@@ -696,9 +698,8 @@ contains ! =====     Public Procedures     =============================
     if ( .not. just_print_it ) then
       error = max(error,1)
       call output ( " The following error occurred:", advance='yes', &
-       & from_where=ModuleName)
-      call output ( trim(full_message), advance='yes', &
-        & from_where=ModuleName)
+       & from_where=ModuleName )
+      call StyledOutput ( trim(full_message), options='--Headline' )
       if ( present(error_number) ) then
         call output ( 'Error number ', advance='no' )
         call output ( error_number, places=9, advance='yes' )
@@ -711,7 +712,7 @@ contains ! =====     Public Procedures     =============================
         call output ( 'Error in module ' )
       endif
       call output ( ModuleName, advance='yes' )
-      call output ( trim(full_message), advance='yes' )
+      call StyledOutput ( trim(full_message), options='--Headline' )
       if ( present(error_number) ) then
         call output ( 'Error number ' )
         call output ( error_number, advance='yes' )
@@ -738,6 +739,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.121  2021/09/01 16:59:40  pwagner
+! Report absence of l1b files more gracefully
+!
 ! Revision 2.120  2021/07/22 23:16:01  pwagner
 ! Use MLSL2Message to print error mesgs
 !
