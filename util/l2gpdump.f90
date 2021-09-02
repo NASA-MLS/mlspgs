@@ -33,7 +33,7 @@ program L2GPDump ! dumps L2GPData files
    use MLSHDFeos, only: MLS_Isglatt, He5_Ehrdglatt
    use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
      & MLSMessage
-   use MLSStats1, only: StatsOnOneLine
+   use MLSStats1, only: MLSMean, StatsOnOneLine
    use MLSStringLists, only: CatLists, ExpandStringRange, &
      & GetStringElement, Intersection, NumStringElements, ReadIntsFromList, &
      & StringElement, StringElementNum
@@ -59,38 +59,40 @@ program L2GPDump ! dumps L2GPData files
   ! This is just the maximum num of chunks you wish
   ! to dump individually in case you don't want to dump them all
   ! It's not the actual maximum number of chunks.
-  integer, parameter :: MAXNCHUNKS = 50 
+  integer, parameter :: MaxNChunks = 50 
 
   type Options_T
-     character(len=255) ::  chunks = '*' ! wild card means 'all'
-     integer, dimension(2)::chunkRange = 0
-     real, dimension(2)  :: hoursRange = 0.
-     logical ::             debug = .true.
-     logical ::             verbose = .false.
-     logical ::             oneLine = .false.         ! Print on one line
-     logical ::             senseInquiry = .true.
-     logical ::             anyNaNs = .false. ! Just say if any NaNs
-     integer ::             details = 1
-     integer ::             width = 5
-     logical ::             columnsOnly = .false.
-     logical ::             attributesToo = .false.
-     character(len=16)  ::  dumpOptions = ''
-     character(len=16)  ::  format      = ''
-     character(len=255) ::  dsInquiry = ''
-     character(len=255) ::  attrInquiry = ''
-     character(len=255) ::  fields = ''
-     character(len=255) ::  swaths = '*' ! wildcard, meaning all swaths
-     character(len=255) ::  geoBoxNames = '' ! which geolocation names to box
-     character(len=8)   ::  precCutoffRelation = 'above'
-     integer            ::  nGeoBoxDims = 0
-     real, dimension(4) ::  geoBoxLowBound
-     real, dimension(4) ::  geoBoxHiBound
-     logical            ::  IgnorePrecisionForStatusBits = .true.
+     character(len=255) ::  Chunks = '*' ! wild card means 'all'
+     integer, dimension(2)::ChunkRange = 0
+     real, dimension(2)  :: HoursRange = 0.
+     logical ::             Debug = .true.
+     logical ::             Verbose = .false.
+     logical ::             OneLine = .false.         ! Print on one line
+     logical ::             SenseInquiry = .true.
+     logical ::             AnyNaNs = .false. ! Just say if any NaNs
+     integer ::             Details = 1
+     integer ::             Width = 5
+     logical ::             ColumnsOnly = .false.
+     logical ::             AttributesToo = .false.
+     character(len=16)  ::  DumpOptions = ''
+     character(len=16)  ::  Format      = ''
+     character(len=255) ::  DsInquiry = ''
+     character(len=255) ::  AttrInquiry = ''
+     character(len=255) ::  Fields = ''
+     character(len=255) ::  Swaths = '*' ! wildcard, meaning all swaths
+     character(len=255) ::  GeoBoxNames = '' ! which geolocation names to box
+     character(len=8)   ::  PrecCutoffRelation = 'above'
+     integer            ::  NGeoBoxDims = 0
+     real, dimension(4) ::  GeoBoxLowBound
+     real, dimension(4) ::  GeoBoxHiBound
+     logical            ::  IgnorePrecisionForStatusBits = .true. ! Any way to change this?
      real    ::             ConvergenceCutOff = -1. ! Show % above, below this
      real    ::             PrecisionCutOff = -1. ! Show % above, below this
      real    ::             QualityCutOff = -1. ! Show % above, below this
      logical ::             StatusBits = .false. ! Show % with various status bits set
-     logical ::             merge = .false. ! Show % after merging input files
+     logical ::             Merge = .false. ! Show % after merging input files
+     logical ::             IgnoreNegPrecisions = .false. ! Show min, max for pos Precs only
+     logical ::             Profile = .false. ! Show mean profile for precision
   end type Options_T
 
   type ( Options_T ) :: options
@@ -143,7 +145,7 @@ program L2GPDump ! dumps L2GPData files
        if ( options%verbose ) print *, 'Dumping swaths in ', trim(filename)
        call OutputNamedValue( 'Dumping L2GP File',  trim(filename), &
          & options='--Headline' )
-       call dump_one_file(trim(filename), options)
+       call dump_one_file( trim(filename), options )
      endif
      call resumeOutput
   enddo
@@ -246,6 +248,10 @@ contains
         read( filename, * ) options%geoBoxLowBound(options%nGeoBoxDims), &
           & options%geoBoxHiBound(options%nGeoBoxDims)
         i = i + 1
+      else if ( filename(1:8) == '-profile' ) then
+        options%Profile = .true.
+      else if ( filename(1:7) == '-ignore' ) then
+        options%IgnoreNegPrecisions = .true.
       else if ( filename(1:6) == '-inqat' ) then
         call getarg ( i+1+hp, options%attrInquiry )
         i = i + 1
@@ -254,6 +260,8 @@ contains
       else if ( filename(1:6) == '-inqds' ) then
         call getarg ( i+1+hp, options%dsInquiry )
         i = i + 1
+      else if ( filename(1:8) == '-nignore' ) then
+        options%IgnoreNegPrecisions = .false.
       else if ( filename(1:7) == '-ninqat' ) then
         options%senseInquiry = .false.
         call getarg ( i+1+hp, options%attrInquiry )
@@ -337,6 +345,9 @@ contains
       write (*,*) ' -one        => print statistics on one line (dont)'
       write (*,*) ' -form form  => format output using form'
       write (*,*) "                 e.g., '(1pg20.11)'"
+      write (*,*) ' -[n]ignore'
+      write (*,*) '             => print statistics of [neg, 0, and] pos precs'
+      write (*,*) ' -profile    => print mean profile values and precisions'
       write (*,*) ' -[n]inqattr attr'
       write (*,*) '             => print only if attribute attr [not] present'
       write (*,*) ' -[n]inqds ds'
@@ -452,7 +463,7 @@ contains
       & // ' in ' // trim(file), advance='yes' )
   end subroutine Respond
 
-   subroutine dump_one_file(filename, options)
+   subroutine dump_one_file( filename, options )
     ! Dummy args
     character(len=*), intent(in) :: filename          ! filename
     type ( Options_T ) :: options
@@ -525,12 +536,49 @@ contains
       elseif ( options%ConvergenceCutOff > -1. .or. options%QualityCutOff > -1. .or. &
         & options%PrecisionCutOff > -1. .or. options%statusBits ) then
         call myPcts( options, l2gp, swath )
+      elseif ( options%Profile ) then
+        call myMeanProfile( options, l2gp, swath )
       else
         call myDump( options, l2gp, swath )
       endif
       call DestroyL2GPContents ( l2gp )
     enddo
    end subroutine dump_one_file
+
+   subroutine myMeanProfile( options, inl2gp, swath, silent )
+     ! Args
+     type ( Options_T ), intent(in)  :: options
+     type (L2GPData_T), intent(in)   :: inl2gp
+     character(len=*), intent(in)    :: swath
+     logical, optional, intent(in)   :: silent
+     ! Internal variables
+     integer                         :: bitindex, i, n
+     type (L2GPData_T)               :: l2gp
+     logical                         :: mysilent
+     ! Executable
+     mysilent = Default ( silent, .false. ) 
+     call SetupNewL2GPRecord ( l2gp, proto=inl2gp, &
+       & nTimes=1 )
+     where ( inl2gp%L2GPPrecision <= 0._rgp )
+       inl2gp%L2GPPrecision = inl2gp%MissingValue
+     endwhere
+     do i=1, l2gp%nLevels
+       l2gp%L2GPValue(1,i,1) = &
+         & mlsmean( inl2gp%L2GPValue(1,i,:), FillValue=inl2gp%MissingL2GP )
+       l2gp%L2GPPrecision(1,i,1) = &
+         & mlsmean( inl2gp%L2GPPrecision(1,i,:), FillValue=inl2gp%MissingValue )
+     enddo
+     call output ( 'level          value            precision', advance='yes' )
+     do i=1, l2gp%nLevels
+       call output ( i, advance='no' )
+       call blanks ( 4 )
+       call output ( l2gp%L2GPValue(1,i,1), advance='no' )
+       call blanks ( 4 )
+       call output ( l2gp%L2GPPrecision(1,i,1), advance='yes' )
+     enddo
+     call Dump( l2gp%L2GPValue, 'values' )
+     call Dump( l2gp%L2GPPrecision, 'precisions' )
+   end subroutine myMeanProfile
 
    subroutine myPcts( options, inl2gp, swath, silent )
      ! Args
@@ -702,6 +750,11 @@ contains
      ! Dump the actual swath
      if ( options%verbose ) print *, 'swath: ', trim(swath)
      if ( options%verbose ) print *, 'dumpOptions: ', trim(options%dumpOptions)
+     if ( options%IgnoreNegPrecisions ) then
+       where ( l2gp%L2GPPrecision <= 0._rgp ) 
+         l2gp%L2GPPrecision = -999.99
+       endwhere
+     endif
      ! This just fills some integer counters
      call MyPcts ( options, l2gp, swath, silent=.true. )
      if ( options%nGeoBoxDims > 0 ) then
@@ -811,6 +864,9 @@ end program L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.27  2019/08/08 16:47:23  pwagner
+! -ls is now the cmdline option to dump a list of swathnames
+!
 ! Revision 1.26  2018/11/01 23:22:20  pwagner
 ! Housekeeping; try to keep Id from being optimized away
 !
