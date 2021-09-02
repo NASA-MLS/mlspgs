@@ -884,6 +884,7 @@ contains ! =====     Public Procedures     =============================
     elseif ( present(hoursInDay) ) then
       times = hoursInDayToTime( hoursInDay, ol2gp )
     endif
+    n = 0 ! We may need to further reduce useTimes
     if ( present(intimes) .or. present(hoursInDay) ) then
       if ( any(IsFillValue(times, real(ol2gp%MissingValue, r8))) ) then
         ! we do nothing
@@ -898,7 +899,11 @@ contains ! =====     Public Procedures     =============================
     elseif ( present(chunks) ) then
       call FindInRange( ol2gp%chunkNumber, chunks, tempTimes, n )
     endif
-    if ( present(intimes) .or. present(hoursInDay) .or. present(chunks) ) then
+    if ( &
+      & ( n > 0 ) &
+      & .and. &
+      & ( present(intimes) .or. present(hoursInDay) .or. present(chunks) ) &
+      & ) then
       intrsctn = Intersection( whichTimes(1:useTimes), tempTimes(1:n) )
       useTimes = size(intrsctn)
       whichTimes(1:useTimes) = intrsctn
@@ -5789,6 +5794,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.250  2021/06/10 23:44:09  pwagner
+! Added BinNumber and MAF components to the l2gp type
+!
 ! Revision 2.249  2021/05/27 23:39:09  pwagner
 ! Added 'F' option to print diffs for compatible datasets
 !
