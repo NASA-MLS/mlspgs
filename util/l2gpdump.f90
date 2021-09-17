@@ -15,6 +15,7 @@ program L2GPDump ! dumps L2GPData files
 
    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
    use Bitstuff, only: Isbitset
+   use Dump_0, only: AsExplicitValues
    use Dump_1, only: Dump
    use Dump_Options, only: SDFormatDefault, DumpDumpOptions
    use HDF, only: Dfacc_Read
@@ -578,6 +579,8 @@ contains
      enddo
      call Dump( l2gp%L2GPValue, 'values' )
      call Dump( l2gp%L2GPPrecision, 'precisions' )
+     call output ( '*** Mean Precision Profile ***', advance='yes' )
+     call AsExplicitValues ( l2gp%L2GPPrecision(1,:,1), 'K' )
    end subroutine myMeanProfile
 
    subroutine myPcts( options, inl2gp, swath, silent )
@@ -864,6 +867,9 @@ end program L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.28  2021/09/02 22:53:37  pwagner
+! Added new options -ignore and -profile
+!
 ! Revision 1.27  2019/08/08 16:47:23  pwagner
 ! -ls is now the cmdline option to dump a list of swathnames
 !
