@@ -2687,12 +2687,15 @@ contains ! =====     Public Procedures     =============================
     real(rgp), dimension(:), pointer :: hoursInDay
     integer :: i
     integer :: ierr
+    integer :: lastChunk
+    real(rgp) :: LastValue
     logical :: myColumnsOnly
     integer :: MYDETAILS
     character(len=Len(DATA_FIELDS)+Len(GEO_FIELDS)) :: myFields
     integer :: nUnique
     logical :: skipGeos
     real(rgp), dimension(:), pointer :: spacing
+    integer, dimension(1000) :: FirstProfInChunk
     integer, dimension(1000) :: uniqueVals
 
     ! Executable code
@@ -2817,6 +2820,31 @@ contains ! =====     Public Procedures     =============================
       if ( showMe(myDetails > -1, myFields, 'chunkNumber') ) &
         & call dump ( l2gp%chunkNumber, 'ChunkNumber:', &
         & width=width, options=options )
+
+      if ( showMe(myDetails > -1, myFields, 'FirstProfileNumber') ) then
+        ! Compute the first profile number in each chunk
+        call FindUnique ( l2gp%chunkNumber, uniqueVals, nUnique )
+        lastChunk = 0
+        do i = 1, nUnique
+          FirstProfInChunk(i) = FindFirst( l2gp%chunkNumber > lastChunk )
+          if ( FirstProfInChunk(i) > 0 ) &
+            & lastChunk = l2gp%chunkNumber( FirstProfInChunk(i) )
+        enddo
+        call dump ( FirstProfInChunk(1:nUnique), '1st profile in chunk:', &
+          & width=width, options=options )
+          
+        nUnique = 0
+        lastValue = l2gp%MissingValue
+        do i = 1, l2gp%NTimes
+          if ( abs( l2gp%l2gpValue(1,1,i)-lastValue ) > 1.d-12 ) then
+            nUnique = nUnique + 1
+            FirstProfInChunk(nUnique) = i
+            lastValue = l2gp%l2gpValue(1,1,i)
+          endif
+        enddo
+        call dump ( FirstProfInChunk(1:nUnique), '1st profile with next l2gpvalue:', &
+          & width=width, options=options )
+      endif
 
       if ( showMe(myDetails > -1, myFields, 'pressure') .and. &
         & associated(l2gp%frequency) ) &
@@ -5794,6 +5822,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.251  2021/09/02 22:44:38  pwagner
+! Fixed error in ContractL2GPRecord_opt
+!
 ! Revision 2.250  2021/06/10 23:44:09  pwagner
 ! Added BinNumber and MAF components to the l2gp type
 !
