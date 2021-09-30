@@ -2696,6 +2696,7 @@ contains ! =====     Public Procedures     =============================
     logical :: skipGeos
     real(rgp), dimension(:), pointer :: spacing
     integer, dimension(1000) :: FirstProfInChunk
+    integer, dimension(1000) :: FirstProfInUnique
     integer, dimension(1000) :: uniqueVals
 
     ! Executable code
@@ -2838,12 +2839,19 @@ contains ! =====     Public Procedures     =============================
         do i = 1, l2gp%NTimes
           if ( abs( l2gp%l2gpValue(1,1,i)-lastValue ) > 1.d-12 ) then
             nUnique = nUnique + 1
-            FirstProfInChunk(nUnique) = i
+            FirstProfInUnique(nUnique) = i
             lastValue = l2gp%l2gpValue(1,1,i)
           endif
         enddo
-        call dump ( FirstProfInChunk(1:nUnique), '1st profile with next l2gpvalue:', &
+        call dump ( FirstProfInUnique(1:nUnique), '1st profile with next l2gpvalue:', &
           & width=width, options=options )
+        call output ( 'Check if computing 1st profile agree', advance='yes' )
+        if ( all(FirstProfInChunk(1:nUnique) == FirstProfInUnique(1:nUnique) ) ) then
+          call output ( 'Both ways of computing 1st profile agree', advance='yes' )
+        else
+          call dump ( FirstProfInChunk(1:nUnique) - FirstProfInUnique(1:nUnique), &
+            & 'Their diff', width=width, options=options )
+        endif
       endif
 
       if ( showMe(myDetails > -1, myFields, 'pressure') .and. &
@@ -5822,6 +5830,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.252  2021/09/23 23:02:56  pwagner
+! Added FirstProfileNumber to fields that can be Dumped
+!
 ! Revision 2.251  2021/09/02 22:44:38  pwagner
 ! Fixed error in ContractL2GPRecord_opt
 !
