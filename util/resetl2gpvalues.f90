@@ -307,20 +307,21 @@ contains
     ntimes = size(values, 1)
     if ( options%debug ) print *, 'shape values:', shape(values)
     if ( options%NClusters > 0 ) ntimes = min (ntimes, options%NClusters )
-    ! Unfortunately, the truth files may not have the same number of chunks
-    ! as ntimes.
+    ! We added an option to spread constant values across more than one chunk.
     ! Therefore we'll try to parcel out chunks evenly so they add up
     !         ProfsPerChunk = L2GP%NTimes/ntimes
     ! Now that number might truncated, so we'll be careful
     ProfsPerChunk = (L2GP%NTimes-1)/ntimes + 1
-    if ( options%debug ) call OutputNamedValue ( 'ProfsPerChunk ', ProfsPerChunk )
+    if ( options%debug ) &
+      & call OutputNamedValue ( 'ProfsPerChunk ', ProfsPerChunk )
     chunk = 1
     nextprofile = 0
     do time = 1, ntimes
       profile = nextprofile + 1
       nextprofile = nextprofile + ProfsPerChunk
       nextprofile = min( nextprofile, L2GP%NTimes )
-      L2GP%ChunkNumber(profile:nextprofile) = time
+      if ( options%NClusters > 0 ) &
+        & L2GP%ChunkNumber(profile:nextprofile) = time
     enddo
     if ( options%debug ) call dump( L2GP%ChunkNumber, 'chunk numbers' )
     ! stop
@@ -472,6 +473,9 @@ end program resetL2GPValues
 !==================
 
 ! $Log$
+! Revision 1.2  2021/08/12 20:41:32  pwagner
+! News -nc aloows use of only first n clusters
+!
 ! Revision 1.1  2021/04/15 20:41:27  pwagner
 ! First commit
 !
