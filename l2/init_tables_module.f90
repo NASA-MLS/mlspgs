@@ -1742,6 +1742,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_neuralNet, & ! Must be AFTER s_forwardModel, s_quantity, 
                              !               s_vector and s_matrix
              begin, f+f_measurements, field_spec(s_vector,req=req), &
+             begin, f+f_outputSD, field_spec(s_vector,req=req), &
              begin, f+f_state, field_spec(s_vector,req=req), &
              begin, f+f_file, string(), np+n_spec_def &
              /) )
@@ -2184,6 +2185,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.659  2021/10/14 22:24:15  pwagner
+! The NeuralNet command now requires the field outputSD
+!
 ! Revision 2.658  2021/02/05 05:17:50  pwagner
 ! Must permit NeuralNet command in Retrieve section
 !
