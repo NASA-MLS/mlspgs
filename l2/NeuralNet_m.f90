@@ -19,7 +19,7 @@ module NeuralNet_m              ! Use Neural Net Model to Retrieve State
   use HGridsDatabase, only: L1BGeolocation
   use HighOutput, only: BeVerbose, Dump, LetsDebug, OutputNamedValue
   use Hunt_M, only: Hunt
-  use MLSCommon, only: MLSChunk_T, MLSFile_T
+  use MLSCommon, only: MLSChunk_T, MLSFile_T, UndefinedValue
   use MLSFiles, only: MLS_CloseFile, MLS_OpenFile, MLS_SFEnd, MLS_SFStart, &
     & AddInitializeMLSFile, Dump, HDFVersion_5
   use MLSFinds, only: FindFirst, FindLast
@@ -105,7 +105,7 @@ contains ! =====     Public Procedures     =============================
 
   subroutine NeuralNet ( Key, VectorsDatabase, Chunk, FileDatabase )
     use Init_Tables_Module, only: L_HDF, L_Temperature, L_Radiance
-    use Init_Tables_Module, only: F_State, F_Measurements, F_File
+    use Init_Tables_Module, only: F_State, F_Measurements, F_File, F_OutputSD
     integer, intent(in)                        :: Key
     type(vector_T), dimension(:), target       :: VectorsDatabase
     type (MLSChunk_T), intent(in)              :: Chunk
@@ -145,6 +145,7 @@ contains ! =====     Public Procedures     =============================
     character(len=32) :: SignalStr    ! its string value
     integer :: Status
     real(Rv), allocatable, dimension(:) :: FranksValues
+    real(Rv), allocatable, dimension(:) :: PrecisionValues
     real(Rv), allocatable, dimension(:) :: TemperatureValues
     integer :: TempfileID
     integer, dimension(3) :: theseMAFs
@@ -154,11 +155,13 @@ contains ! =====     Public Procedures     =============================
 
     type (Vector_T), pointer        :: Measurements ! The measurement vector
     type (Vector_T), pointer        :: State ! The state vector to fill
+    type (Vector_T), pointer        :: OutputSD ! The Precision vector to fill
 
     type (MLSFile_T), pointer       :: CoeffsFile
     type (MLSFile_T), pointer       :: RadiancesFile
     type (VectorValue_T), pointer   :: Radiances ! The radiances for this band
     type (VectorValue_T), pointer   :: Temperature ! The quantity to fill
+    type (VectorValue_T), pointer   :: TemperaturePrecision ! Another quantity to fill
     
     type(NeuralNetCoeffs_T)         :: Coeffs
     type(NeuralNetInputData_T)      :: NNMeasurements
@@ -212,6 +215,8 @@ contains ! =====     Public Procedures     =============================
         measurements => VectorsDatabase(decoration(decoration(subtree(2,son))))
       case ( f_state )
         state => VectorsDatabase(decoration(decoration(subtree(2,son))))
+      case ( f_outputSD )
+        outputSD => VectorsDatabase(decoration(decoration(subtree(2,son))))
       case ( f_file )
         file = sub_rosa(gson)
         call outputNamedValue ( 'Processing file field', file )
@@ -245,6 +250,7 @@ contains ! =====     Public Procedures     =============================
         if ( verbose ) print *, 'Skipping non-Temperature state quantity'
         cycle
       end if
+      TemperaturePrecision => OutputSD%quantities(i)
       Temperature => state%quantities(i)
       Temperature%values = 0.0_rv
       ! Now go through all the bands in the measurement vector that are in this radiometer
@@ -359,6 +365,7 @@ contains ! =====     Public Procedures     =============================
     if ( verbose ) print *, 'firstProfile ', firstProfile
     if ( verbose ) print *, 'lastProfile  ',  lastProfile
     allocate(TemperatureValues(NumLevels))
+    allocate(PrecisionValues(NumLevels))
     allocate(FranksValues(Temperature%template%NoSurfs))
     
     ! Here's something new: must find first and last latitude bins
@@ -488,12 +495,15 @@ contains ! =====     Public Procedures     =============================
         ! stop
         ! print *, 'Calling NeuralNetFit'
         if ( verbose ) print *, 'Using NeuralNetFit with our own raw Radiances'
-        TemperatureValues = NeuralNetFit ( NNMeasurements, &
-          & Coeffs, NumHiddenLayers, Debugging=.false. )
+        call NeuralNetFit ( NNMeasurements, &
+          & Coeffs, NumHiddenLayers, TemperatureValues, PrecisionValues, &
+          & Debugging=.false. )
         do j=1, NumLevels
           Temperature%values(Coeffs%Output_Pressure_Levels_Indices(j), profile) = &
             & TemperatureValues(j)
         enddo
+        if ( any(PrecisionValues == UndefinedValue) ) &
+          & TemperaturePrecision%values(:,profile) = UndefinedValue
         ! if ( StandardizeRadiancesHere ) &
         !  & call Dump ( FranksValues, 'Temps (Franks ANN)' )
       enddo ! Loop of profiles
@@ -1021,6 +1031,9 @@ end module NeuralNet_m
 
 !
 ! $Log$
+! Revision 2.15  2021/10/14 22:25:25  pwagner
+! Changes to acommodate setting precisions
+!
 ! Revision 2.14  2021/07/28 23:43:12  pwagner
 ! Take care not to read Activation_Function unless it is present
 !
