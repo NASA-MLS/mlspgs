@@ -1,0 +1,146 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{color}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.1in
+
+\newcommand{\docname}{wvs-168}
+\newcommand{\docdate}{1 November 2021}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+\fi
+\ifnum\pdfoutput>0
+  \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+  \hypersetup{%
+    hypertexnames=false,%
+    colorlinks=true,%
+    linktocpage=true,%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{pdftex}
+\else
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+
+\renewcommand{\b}{\mathbf}
+\renewcommand\d{\text{d}}
+\newcommand\T{\mathcal{T}}
+\newcommand{\M}{\mathcal{M}}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel Livesey, Bill Read, Paul Wagner, William Daffer\\
+Subject: \>Radiative Transfer Equation and Finite-Element Method\\
+From: \>Van Snyder\\
+References: \h{wvs-072}, \h{wvs-081}, \h{wvs-093}\\
+\end{tabbing}
+
+\parindent 0pt \parskip 4pt
+
+The radiative-transfer equation can be written
+
+\begin{equation}\label{one}
+\frac{\text{d} I(s)}{\text{d} s} = \alpha(s) \, ( B(s) - I(s) ) \,.
+\end{equation}
+
+If one multiplies by an arbitrary \emph{test function} $g(s)$ that is not
+identically zero everywhere, and integrates through the atmosphere, one has
+
+\begin{equation}\label{two}
+\int_a^b g(s)\, \frac{\text{d} I(s)}{\text{d} s}\, \text{d} s =
+\int_a^b g(s)\, \alpha(s) \, ( B(s) - I(s) )\, \text{d} s \,.
+\end{equation}
+
+A solution $I(s)$ of Equation (\ref{two}) is called a \emph{weak solution} of
+Equation (\ref{one}). If one integrates the left-hand side by parts, the result
+is
+
+\begin{equation}
+g(b) I(b) - g(a) I(a)
+-\int_a^b \frac{\text{d}g(s) }{\text{d} s} \, I(s)\, \text{d} s =
+\int_a^b g(s)\, \alpha(s) \, ( B(s) - I(s) )\, \text{d} s \,.
+\end{equation}
+
+This is called the \emph{Galerkin procedure}.
+
+If one now uses the same function as the test function and as an approximation
+for $I(s)$, say a $C^1$ cubic spline with knots on the pressure grid, one has
+
+\begin{equation}\label{four}
+g^2(b) - g^2(a)
+-\int_a^b g(s)\, \frac{\text{d}g(s) }{\text{d} s}\, \text{d} s =
+\int_a^b g(s) \,  \alpha(s) \, ( B(s) - g(s) )\, \text{d} s \,.
+\end{equation}
+
+This is called the \emph{Rayleigh-Ritz-Galerkin} or \emph{Finite Element}
+method. The integral on the left-hand side can be written explicitly as a
+sixth-order polynomial (assuming $g(s)$ is a cubic spline). The right-hand side
+is a one-dimensional quadrature, instead of a two-dimensional quadrature with
+the inner integral exponentiated. The result is a banded algebraic equation for
+the spline coefficients. It ought to require less time to solve than Equation
+(\ref{one}).
+
+The variational equations, to compute derivatives with respect to mixing ratios
+and temperature, which can be gotten from Equation (\ref{one}) by
+differentiating with respect to a parameter and exchanging the order of
+differentiation on the left-hand side (see part 7 in \h{wvs-093}), are of the
+same form. In the form of Equation (\ref{four}), the only nonlinear parameter is
+temperature (excluding species for which $\alpha(s)$ depends upon mixing ratio).
+With so much of the problem being linear, a separable method such as variable
+projection (see \h{wvs-072} and \h{wvs-081}) ought to be very effective. If a
+temperature solution is gotten in an early phase, and then not included in later
+phases, those later phases involve purely linear equations.
+
+One usually thinks of the finite-element method as a method to solve partial
+differental equations, but I see no reason why it would not work for ordinary
+differential equations.
+
+\vspace{-1pt} % Somehow, this causes lastpage not to be undefined
+\label{lastpage}
+\end{document}
+
+% $Log$
+
