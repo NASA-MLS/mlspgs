@@ -204,8 +204,8 @@ contains ! =====     Public Procedures     =============================
     interpolationFactor = 1.0
     lonNode = 0
     LosAngleNode = 0
-    maxLowerOverlap = -1
-    maxUpperOverlap = -1
+    maxLowerOverlap = 999 ! was -1 but now -1 is a legal value
+    maxUpperOverlap = 999 ! was -1 but ..
     QTM_level = 6             ! QTM level 6 gives 156 km resolution
     single = .false.
     solarTimeNode = 0
@@ -1248,8 +1248,9 @@ contains ! =====     Public Procedures     =============================
     use Diff_1, only: Selfdiff
     use EmpiricalGeometry, only: EmpiricalLongitude, ChooseOptimumLon0
     use Geometry, only: Phi_To_Lat_Deg
-    use HGridsDatabase, only: CreateEmptyHGrid, HGrid_T, TrimHGrid, FindClosestMatch
-    use HighOutput, only: LetsDebug, OutputNamedValue
+    use HGridsDatabase, only: CreateEmptyHGrid, HGrid_T, TrimHGrid, &
+      & FindClosestMatch
+    use HighOutput, only: BeVerbose, LetsDebug, OutputNamedValue
     use MLSFillValues, only: IsFillValue, Monotonize
     use MLSKinds, only: Rk => R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
@@ -1326,12 +1327,13 @@ contains ! =====     Public Procedures     =============================
     warnIfNoProfs = single ! .or. ChunkDivideConfig%maxLength < 2 ! .false.
     ! call outputNamedValue ( 'maxLength', ChunkDivideConfig%maxLength, options='--Banner' )
     ! call outputNamedValue ( 'warnIfNoProfs', warnIfNoProfs, options='--Banner' )
-    verbose = deebughere
+    verbose = BeVerbose ( 'hgrid', -1 ) ! deebughere
     if ( present(onlyComputingOffsets) ) then
       ! verbose = .not. onlyComputingOffsets
       warnIfNoProfs = warnIfNoProfs .or. onlyComputingOffsets
       deebughere = deebug .or. ( switchDetail(switches, 'hgrid') > 1 ) ! e.g., 'hgrid2' 
       ! verbose = verbose .or. deebughere
+      verbose = BeVerbose ( 'hgrid', 1 ) ! deebughere
     end if
     L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
     if ( .not. associated(L1BFile) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1355,7 +1357,7 @@ contains ! =====     Public Procedures     =============================
     endif
     noMAFs = chunk%lastMAFIndex - chunk%firstMAFIndex + 1
     noMIFs = size(GeodAngle2d(:,1))
-    if ( verbose ) then
+    if ( deebughere ) then
       call outputnamedValue ( 'noMAFs', noMAFs )
       call outputnamedValue ( 'noMIFs', noMIFs )
       call outputnamedValue ( 'shape(GeodAngle)', shape(GeodAngle) )
@@ -1382,13 +1384,13 @@ contains ! =====     Public Procedures     =============================
 
     ! Get or guess the start of the next chunk.
     i = noMAFs - chunk%noMAFsUpperOverlap + 1
-    if ( verbose ) then
+    if ( deebughere ) then
       call outputNamedValue( 'i', i )
       call outputNamedValue( 'NoMAFs', size(FullArray2d, 2) )
       call outputNamedValue( 'maxAngle + spacing', maxAngle + spacing )
     endif
     if ( i < 1 ) then
-      if ( verbose ) then
+      if ( deebughere ) then
         call output ( 'While constructing regular hGrid ', advance='yes' )
         call output ( 'minAngle: ' )
         call output ( minAngle, format='(F7.2)' )
@@ -1743,21 +1745,35 @@ contains ! =====     Public Procedures     =============================
        extra = hGrid%noProfs - 1
        left = extra / 2
        right = extra - left
-       if ( verbose ) call outputNamedValue( 'left, right', (/ left, right /) )
+       if ( verbose ) call outputNamedValue( '/single: left, right', (/ left, right /) )
        if ( left > 0 ) call TrimHGrid ( hGrid, -1, left )
        if ( right > 0 ) call TrimHGrid ( hGrid, 1, right )
     else if (hgrid%noProfs > 1) then
        if ( verbose ) call outputNamedValue( 'Before TrimHGrid', hGrid%noProfs )
        if ( maxLowerOverlap >= 0 .and. &
           & ( hGrid%noProfsLowerOverlap > maxLowerOverlap ) ) then
-          call outputNamedValue( 'Lower overlap too big', hGrid%noProfs )
+          if ( verbose ) call outputNamedValue( 'Lower overlap too big', hGrid%noProfs )
           call TrimHGrid ( hGrid, -1, hGrid%noProfsLowerOverlap - maxLowerOverlap )
        end if
        if ( maxUpperOverlap >= 0 .and. &
           & ( hGrid%noProfsUpperOverlap > maxUpperOverlap ) ) then
-          call outputNamedValue( 'Upper overlap too big', hGrid%noProfs )
+          if ( verbose ) call outputNamedValue( 'Upper overlap too big', hGrid%noProfs )
           call TrimHGrid ( hGrid, 1, hGrid%noProfsUpperOverlap - maxUpperOverlap )
        end if
+       ! Setting maxLowerOverlap to -m means we always trim away 
+       ! the first m profiles
+       if ( maxLowerOverlap < 0 .and. &
+         & (hgrid%noProfs > 2) ) then
+         if ( verbose ) call outputNamedValue( 'Trimmed away first m profile; m', -maxLowerOverlap )
+         call TrimHGrid ( hGrid, -1, -maxLowerOverlap )
+       endif
+       ! Setting maxUpperOverlap to -m means we always trim away 
+       ! the last m profiles
+       if ( maxUpperOverlap < 0 .and. &
+         & (hgrid%noProfs > 2) ) then
+         if ( verbose ) call outputNamedValue( 'Trimmed away last m profile; m', -maxUpperOverlap )
+         call TrimHGrid ( hGrid, 1, -maxUpperOverlap )
+       endif
     else ! if there is only one profile, then don't care about overlap
        hGrid%noProfsLowerOverlap = 0
        hGrid%noProfsUpperOverlap = 0
@@ -2767,6 +2783,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.157  2021/11/03 23:47:58  pwagner
+! maxLowerOverlap and -Upper many now be negative, meaning to trim away profiles from either end
+!
 ! Revision 2.156  2019/11/22 00:38:43  pwagner
 ! Be less prone to printing lots; show which chunks have no profiles
 !
