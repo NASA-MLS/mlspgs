@@ -32,7 +32,8 @@ module STRING_TABLE
   public :: display_string_list, dump_char_table, dump_inunit_stack, enter_string
 !   ifort v17 gets a seg fault if find_file is public.
 !   public :: find_file
-  public :: float_value, get_char, get_string, how_many_strings, include_stack_top
+  public :: float_value, get_char, get_string, Get_String_Char
+  public :: how_many_strings, include_stack_top
   public :: index, init_string_table, index_in_string, isStringInTable, len, lookup
   public :: lookup_and_insert, new_line, numerical_value, open_include, open_input
   public :: string_length, string_table_size, unget_char
@@ -729,6 +730,33 @@ contains
 !    if ( present(ierr) ) ierr=0 ! Already zeroed by call to test_string
     string_text(j+1:) = '' ! Fill the rest with blanks
   end subroutine GET_STRING
+  ! ======================================     GET_STRING_CHAR     =====
+
+  pure character function Get_String_Char ( S, I )
+
+    ! Return the I'th character of the string at S.
+
+    ! If I < 1 or I > String_Length(s) return blank
+
+    integer, intent(in) :: S
+
+    integer, intent(in) :: I
+
+    integer :: J
+
+    j = strings(s-1) + i
+
+    if ( i < 1 .or. j > strings(s) ) then
+
+      get_string_char = ' '
+
+    else
+
+      get_string_char = char(j)
+
+    end if
+
+  end function Get_String_Char
   ! =====================================     HOW_MANY_STRINGS     =====
   integer function HOW_MANY_STRINGS ()
   ! Returns the number of strings in the string table
@@ -1341,6 +1369,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.53  2021/11/03 23:48:44  pwagner
+! Added Get_String_Char
+!
 ! Revision 2.52  2019/07/31 20:03:24  vsnyder
 ! Add Dump_Char_Table, which might be useful for debugging
 !
