@@ -1256,9 +1256,10 @@ contains ! =====     Public Procedures     =============================
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSNumerics, only: Hunt, InterpolateValues
     use MLSStringLists, only: SwitchDetail
+    use MLSStrings, only: Lowercase
     use Monotone, only: IsMonotonic
-    use Output_M, only: Output
-    use String_Table, only: Display_String
+    use Output_M, only: Blanks, Newline, Output
+    use String_Table, only: Display_String, Get_String, IsStringInTable
     use Toggles, only: Gen, Levels, Switches, Toggle
     use Trace_M, only: Trace_Begin, Trace_End
 
@@ -1304,6 +1305,7 @@ contains ! =====     Public Procedures     =============================
     real(rk) :: MinAngle                ! Smallest angle in chunk
     real(rk) :: MinAngleLastMAF         ! Gives 'range' of last maf
     integer :: N                        ! Guess at number of profiles
+    character(len=64) :: Name
     integer :: NoMAFs                   ! How many in chunk
     integer :: NoMIFs
     real(rk) :: NextAngle               ! First non ovl. MAF for next chunk
@@ -1318,6 +1320,7 @@ contains ! =====     Public Procedures     =============================
     real(rk), dimension(:), pointer :: TmpAngle ! A temporary array for the single case
     logical :: Verbose
     logical :: WarnIfNoProfs
+    logical :: profiled  ! Print grep-able info about overlaps discarded
 
     ! Executable code
     deebug = LetsDebug ( 'hgrid', 1 )
@@ -1328,12 +1331,21 @@ contains ! =====     Public Procedures     =============================
     ! call outputNamedValue ( 'maxLength', ChunkDivideConfig%maxLength, options='--Banner' )
     ! call outputNamedValue ( 'warnIfNoProfs', warnIfNoProfs, options='--Banner' )
     verbose = BeVerbose ( 'hgrid', -1 ) ! deebughere
+    profiled = BeVerbose ( 'profiled', -1 )
     if ( present(onlyComputingOffsets) ) then
       ! verbose = .not. onlyComputingOffsets
       warnIfNoProfs = warnIfNoProfs .or. onlyComputingOffsets
       deebughere = deebug .or. ( switchDetail(switches, 'hgrid') > 1 ) ! e.g., 'hgrid2' 
       ! verbose = verbose .or. deebughere
       verbose = BeVerbose ( 'hgrid', 1 ) ! deebughere
+      profiled = .not. onlyComputingOffsets !.false.
+    end if
+    ! We may need the Grid's name
+    if ( isStringInTable(hgrid%name) ) then
+      call Get_String ( hgrid%name, name )
+      profiled = profiled .and. index(lowercase(name), 'standard') > 0
+    else
+      call output('(unknown)' )
     end if
     L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
     if ( .not. associated(L1BFile) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1766,6 +1778,10 @@ contains ! =====     Public Procedures     =============================
          & (hgrid%noProfs > 2) ) then
          if ( verbose ) call outputNamedValue( 'Trimmed away first m profile; m', -maxLowerOverlap )
          call TrimHGrid ( hGrid, -1, -maxLowerOverlap )
+         ! A trick!
+         ! May need to Trim again if the number of lower overlaps remains > 0
+         if ( hGrid%noProfsLowerOverlap == 1 ) &
+           & call TrimHGrid ( hGrid, -1, -maxLowerOverlap )
        endif
        ! Setting maxUpperOverlap to -m means we always trim away 
        ! the last m profiles
@@ -1778,6 +1794,16 @@ contains ! =====     Public Procedures     =============================
        hGrid%noProfsLowerOverlap = 0
        hGrid%noProfsUpperOverlap = 0
     end if
+    if ( profiled ) then
+      call output ( '### ### '                 , advance='no' )
+      call Blanks ( 2 )
+      call output ( chunk%chunkNumber                                  , advance='no' )
+      call Blanks ( 2 )
+      call output ( hGrid%noProfsLowerOverlap, advance='no' )
+      call Blanks ( 2 )
+      call output ( hGrid%noProfsUpperOverlap, advance='no' )
+      call Newline
+    endif
 
     if ( hGrid%noProfs == 0 ) then
       call dump(chunk)
@@ -2783,6 +2809,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.158  2021/11/18 18:11:28  pwagner
+! Re-Trim regular HGrid to remove unwanted stubby overlap
+!
 ! Revision 2.157  2021/11/03 23:47:58  pwagner
 ! maxLowerOverlap and -Upper many now be negative, meaning to trim away profiles from either end
 !
