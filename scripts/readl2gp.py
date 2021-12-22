@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/bin/env python3
 
 ################################################################
 ## readl2gp.py
@@ -29,6 +29,15 @@
 ## 
 ################################################################
 
+# -------------------------
+# Not tested under python3 yet
+# Who uses this script?
+# If you use it, and it fails (!)
+# please contact Paul Wagner
+# or, even better, repair it
+# and then commit the repaired
+# version to the cvs repository
+# -------------------------
 
 # REQUIREMENT: PyTables for HDF5 reading capabilities
 # http://www.pytables.org
@@ -257,6 +266,9 @@ ARGUMENTS:
 #
 # Modifications:
 # $Log$
+# Revision 1.3  2015/03/17 20:20:40  whdaffer
+# Small mods to documentation. Add a readme file
+#
 # Revision 1.2  2015/02/13 18:17:15  whdaffer
 # Added comments, removed commented out code
 #
