@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/python3
 # Copyright 2010, by the California Institute of Technology. ALL
 # RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 # commercial use must be negotiated with the Office of Technology Transfer
@@ -52,7 +52,7 @@ if len(sys.argv) > 4:
     # print "a: ", a
 # print string for m4 to grab
     if  len(a) > n - 1:
-      print a[n-1],
+      print(a[n-1], end=" ")
   elif sys.argv[1] == "-2":
 # usage (2)
     c = sys.argv[3]
@@ -62,7 +62,7 @@ if len(sys.argv) > 4:
     # print "c: ", c
     # print "a: ", a
     if c in a:
-      print a.index(c) + 1,
+      print(a.index(c) + 1, end=" ")
   elif sys.argv[1] == "-3":
 # usage (3)
     key = sys.argv[3]
@@ -76,9 +76,12 @@ if len(sys.argv) > 4:
     if key in keys:
       n = keys.index(key)
       if len(values) > n:
-        print values[n],
+        print(values[n], end=" ")
 
 # $Log$
+# Revision 1.1  2010/05/22 00:01:39  pwagner
+# First commit
+#
 # Revision 1.2  2010/05/15 00:30:45  pwagner
 # Added usages (2) and (3)
 #

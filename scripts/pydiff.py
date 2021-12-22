@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/python3
 # Copyright 2010, by the California Institute of Technology. ALL
 # RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 # commercial use must be negotiated with the Office of Technology Transfer
@@ -22,6 +22,7 @@
 # (3) pydiff.py -s b a
 #     treat s as the separator in (1) instead of ","
 #     (Note the "-" in front of s and reversal of a and b)
+#from __future__ import print_function
 import sys
 from pyutils import diff, mrClean
 
@@ -50,9 +51,16 @@ l = l.split(' ')
 u = u.split(' ')
 
 # print string for m4 to grab
-print diff(l,u),
+# print("l", file=sys.stderr, end="=")
+# print(l, file=sys.stderr)
+# print("u", file=sys.stderr, end="=")
+# print(u, file=sys.stderr)
+print(diff(l,u), end=" ")
 
 # $Log$
+# Revision 1.3  2010/05/21 23:54:31  pwagner
+# Use mrClean
+#
 # Revision 1.2  2010/05/15 00:30:45  pwagner
 # Added usages (2) and (3)
 #
