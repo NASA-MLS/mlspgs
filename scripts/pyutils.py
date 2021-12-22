@@ -1,3 +1,4 @@
+import sys
 # First, a useful housekeeping aid
 def mrClean(a, s):
   """Remove unwanted chars, replace separator with space"""
@@ -20,9 +21,32 @@ def diff(l,u):
    s = set(l) - set(u)
    #print s
    # remove unwanted chars from the result Set([<>])
-   w = str(s).split('[')[1].split(']')[0].replace("'","").replace(',','').split(' ')
+   # Why not tell us what chars are unwanted?
+   # print("split", file=sys.stderr, end="=")
+   # print(str(s).split('['), file=sys.stderr)
+   # print("[0]", file=sys.stderr, end="=")
+   # print(str(s).split('[')[0].replace('{','').replace('}',''), file=sys.stderr)
+   # print("[1]", file=sys.stderr, end="=")
+   # print(str(s).split('[')[1], file=sys.stderr)
+   # This next generates an "index out of range" error
+   # w = str(s).split('[')[1].split(']')[0].replace("'","").replace(',','').split(' ')
+
+   # Do we replaced it with this
+   w = str(s).split('[')[0].split(']')[0].replace("'","").replace(',','').split(' ')
+   # print("w(old)", file=sys.stderr, end="=")
+   # print(w, file=sys.stderr)
+   # or this
+   w = str(s).split('[')[0].replace('{','').replace('}','').replace("'","").replace(',','').split(' ')
+   # print("w(new)", file=sys.stderr, end="=")
+   # print(w, file=sys.stderr)
+   # ??? Doesn't work ???
+   # w = str(s).split('[')[0]
    w.sort()
+   # print("sorted", file=sys.stderr, end="=")
+   # print(w, file=sys.stderr)
    w = str(w).replace("'","").replace('[','').replace(']','')
+   # print("w", file=sys.stderr, end="=")
+   # print(w, file=sys.stderr)
    return w
 
 def uniq(a):
@@ -43,3 +67,5 @@ def uniq(a):
 #      set1 = set(list)
 #      list = [s for s in set1]
 #      return list
+
+# $Log$

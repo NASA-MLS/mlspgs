@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/python3
 # Copyright 2005, by the California Institute of Technology. ALL
 # RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 # commercial use must be negotiated with the Office of Technology Transfer
@@ -47,6 +47,9 @@ if casesense == False:
   a = a.upper()
 
 # print string for m4 to grab
-print uniq(a),
+print(uniq(a), end=" ")
 
 # $Log$
+# Revision 1.1  2010/05/15 00:31:11  pwagner
+# First commit
+#
