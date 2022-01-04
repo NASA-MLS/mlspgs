@@ -2373,7 +2373,7 @@ contains
     logical, parameter :: countEmpty = .true.
     integer :: i
     integer :: n
-    character(len=max(len(stringList), len(string))) :: element
+    character(len=MAXELEMENTLENGTH) :: element
     ! Executable
     itIs = .false.
     if ( .not. present(stringList) ) return
@@ -2691,14 +2691,14 @@ contains
     integer, optional, intent(in)             :: pattern
     character (len=1), dimension(2), optional, &
      & intent(in)                             :: delims
-    character (len=len(inList))               :: detail
+    character (len=MAXELEMENTLENGTH)               :: detail
     ! Local variables
     integer :: bloc
     logical, parameter :: COUNTEMPTY = .true.
     character :: cquotes, quotes
     integer :: k
-    character (len=len(inList)+2)           :: element
-    character (len=len(inList))             :: listBloc ! space-separated
+    character (len=MAXELEMENTLENGTH)           :: element
+    character (len=MAXELEMENTLENGTH)           :: listBloc ! space-separated
     logical :: multi
     integer :: myPattern
     character(len=16) :: test_multi
@@ -5147,6 +5147,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.91  2022/01/04 23:44:11  pwagner
+! Changes to appease gfortran
+!
 ! Revision 2.90  2021/04/29 22:52:13  pwagner
 ! Added WriteIntsToList
 !
