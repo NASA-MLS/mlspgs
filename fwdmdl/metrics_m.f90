@@ -400,15 +400,23 @@ path: do i = i1, i2
           &                h_ref(k,j:j+1), a, b, c, &
           &                tan_ht, r_eq, my_h_tol, i /= i2 .or. j /= p_coeffs-1, &
           &                start, h_path(i), p_path(i), stat(i), outside )
-        if ( IEEE_Is_NaN(p_path(i)) ) stat(i) = NaN_sol
+        if ( IEEE_Is_NaN(p_path(i)) ) then
+          stat(i) = NaN_sol
+          ! print *, 'i ', i, '  stat(i) ', stat(i)
+        endif
         ! Test for phi out of order.
         if ( i > 1 .and. stat(i) >= good ) then
+          ! print *, '- ', p_path(i), p_path(i-1), stat(i-1)
           if ( p_path(i) < p_path(i-1) .and. stat(i-1) >= good ) then
             stat(i) = order ! Phi out of order, can't be right
           end if
         end if
         if ( i < n_path .and. stat(i) >= good ) then
-          if ( p_path(i) > p_path(i+1) .and. stat(i+1) >= good ) then
+          ! print *, '+ ', p_path(i), p_path(i+1), stat(i+1)
+          if ( any( stat(i+1) == (/ No_sol, NaN_sol /) ) )  then
+            ! NAG now crashes under Oracle Linux 8 when this is the case
+            stat(i+1) = NaN_sol
+          elseif ( p_path(i) > p_path(i+1) .and. stat(i+1) >= good ) then
             stat(i) = order ! Phi out of order, can't be right
           end if
         end if
@@ -1186,6 +1194,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.91  2018/08/28 22:15:35  vsnyder
+! Rearrange arguments because Eta_FZP is optional in Comp_Sps_Path_Sparse_No_Frq
+!
 ! Revision 2.90  2018/08/15 01:15:47  vsnyder
 ! Add calculation of T_Der_Path_Flags for temperature derivatives
 !
