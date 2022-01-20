@@ -36,8 +36,9 @@ MakeFName = Makefile
 
 # ------------------- Automatic internalcleanup
 # We use COPY_NUMBER to keep track of the number of times
-# the functional targets update or depends are "built", i.e. performed
-# every tenth time an internalcleanup is automatically performed
+# the functional targets update or depends are "built", i.e. performed.
+# E.g., every tenth time an internalcleanup is automatically performed.
+# .... Actually, we do that every time now.
 
 SCRIPTS = scripts
 # This is how big COPY_NUMBER may grow before being reset
@@ -273,6 +274,7 @@ SHELL = /bin/sh
 # MLS_h5ls       
 # remake_gh
 # resetl2gpstatus
+# resetl2gpvalues
 # Spartacus
 # UnwrapList
 # utctotai       
@@ -491,8 +493,8 @@ MLSTOOLS = chunktimes checkpvmup compare dateconverter extinctionmaker fixDOI\
   killmaster \
   l1bcat l1bdiff l1bdump l1h5subset \
   l2auxcat l2auxchi l2auxdump l2gp2nc4 l2gpcat l2gpdiff l2gpdump \
-  l2pcdiff l2pcdump l2q lr \
-  machineok misalignment resetl2gpstatus Spartacus tellMasterToQuit \
+  l2pcdiff l2pcdump l2q lr machineok misalignment \
+  resetl2gpstatus resetl2gpvalues Spartacus tellMasterToQuit \
   vansGoldFilter WordSplit wrapLines
 
 ifdef HDFINC
@@ -1177,6 +1179,11 @@ resetl2gpstatus: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/resetl2gpstatus.f90 l1--itm
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
+resetl2gpvalues: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/resetl2gpvalues.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
 Spartacus: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/Spartacus.f90 l2
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m l2 \
@@ -1510,6 +1517,9 @@ tools: $(MLSTOOLS)
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.29  2020/04/27 17:07:05  pwagner
+# Light housekeeping
+#
 # Revision 1.28  2020/04/08 21:55:48  pwagner
 # Can now build l2gp2nc4
 #
