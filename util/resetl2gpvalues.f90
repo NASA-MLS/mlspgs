@@ -22,7 +22,7 @@ program resetL2GPValues ! resets values of L2GPData files, e.g. nrt
      & ReadL2GPData
    use Machine, only: Hp, Getarg
    use MLSCommon, only: MLSFile_T
-   use MLSFiles, only: HDFVersion_5, MLS_Exists, &
+   use MLSFiles, only: HDFVersion_5, Dump, MLS_CloseFile, MLS_Exists, &
      & MLS_Inqswath, InitializeMLSFile
    use MLSFinds, only: FindFirst
    use MLSHDF5, only: GetAllHDF5DSNames, LoadFromHDF5DS, MLS_H5open, MLS_H5close
@@ -66,6 +66,7 @@ program resetL2GPValues ! resets values of L2GPData files, e.g. nrt
     logical               :: debug   = .false.
     logical               :: verbose = .false.
     logical               :: dryrun  = .false.
+    logical               :: interp  = .true.        ! interpolate onto pressure surfaces
     character(len=255)    :: swathNames = ' '        ! which swaths to reset
     character(len=255)    :: DSNames    = ' '        ! which new DS to use
     character(len=255)    :: newValues = &           ! where to read new values
@@ -278,7 +279,15 @@ contains
           & call dump( L2GP%L2GPValue(1,1,1:N), 'new values', width=5 )
         if ( options%debug ) call Dump( L2GP )
         call DestroyL2GPContents( L2GP )
+        if ( options%debug ) then
+          call ReadL2GPData( L2GPFile, swath, L2GP, numProfs )
+          call output ( 'Reset L2GP as reread', advance='yes' )
+          call Dump( L2GP )
+          call DestroyL2GPContents( L2GP )
+        endif
         numTotProfs = numTotProfs + N
+        call Dump( L2GPFile )
+        call MLS_CloseFile( L2GPFile )
       enddo
       deallocate(pressures)
       deallocate(values)
@@ -328,10 +337,16 @@ contains
     chunk = 1
     profile = 1
     do time = 1, ntimes
+      if ( options%interp ) then
       ! We must interpolate from the new values pressures onto
       ! the L2GP's own presure surfaces
-      call InterpolateValues ( pressures, values(time,:), &
-        & L2GP%pressures, L2GP%l2gpValue(1,:,profile), method='L' )
+        call InterpolateValues ( pressures, values(time,:), &
+          & L2GP%pressures, L2GP%l2gpValue(1,:,profile), method='L' )
+      elseif ( size(values(time,:)) == size(L2GP%pressures) ) then
+        L2GP%l2gpValue(1,:,profile) = values(time,:)
+      elseif ( time == 1 ) then ! print warning mesg just once
+        print *, 'Mismatched number of pressure surfaces'
+      endif
       if ( options%debug ) then
         call Dump ( values(time,:), 'values at this profile', width=5 )
         call Dump ( L2GP%l2gpValue(1,:,profile), 'l2gp at this profile', width=5 )
@@ -378,6 +393,9 @@ contains
       elseif ( filename(1:4) == '-dry' ) then
         options%dryrun = .true.
         exit
+      elseif ( filename(1:5) == '-noin' ) then
+        options%interp = .false. ! Don't interpolate onto pressure surfaces
+        exit
       elseif ( filename(1:3) == '-v ' ) then
         options%verbose = .true.
         exit
@@ -385,7 +403,7 @@ contains
         call getarg ( i+1+hp, filename )
         i = i + 1
         exit
-      else if ( filename(1:3) == '-vals ' ) then
+      else if ( filename(1:6) == '-vals ' ) then
         call getarg ( i+1+hp, options%newValues )
         i = i + 1
         exit
@@ -430,6 +448,8 @@ contains
       & 'Usage: resetL2GPValues [options] [filenames]'
       write (*,*) &
       & ' If no filenames supplied, you will be prompted to supply one'
+      write (*,*) &
+      & 'By default we will interpolate onto pressure surfaces'
       write (*,*) ' Options:'
       write (*,*) ' -dryrun       => dont execute, just describe'
       write (*,*) ' -f filename   => add filename to list of l2gp filenames'
@@ -439,6 +459,8 @@ contains
       write (*,*) '                   (default is SET_Profile...nc)'
       write (*,*) ' -debug        => switch on debug mode'
       write (*,*) ' -v            => switch on verbose mode'
+      write (*,*) ' -nointerp     => dont interpolate onto pressure surfaces'
+      write (*,*) '                   (we must then assume the surfaces match)'
       ! write (*,*) ' -spread n     => spread each value over n profiles'
       write (*,*) ' -nc n         => use only the first n cluster profiles'
       write (*,*) '                  (otherwise use all in the file)'
@@ -473,6 +495,9 @@ end program resetL2GPValues
 !==================
 
 ! $Log$
+! Revision 1.3  2021/09/30 21:54:42  pwagner
+! Fixed bug that always, and usually wongly, overwrites ChunkNumbers
+!
 ! Revision 1.2  2021/08/12 20:41:32  pwagner
 ! News -nc aloows use of only first n clusters
 !
