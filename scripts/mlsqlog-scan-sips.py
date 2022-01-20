@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import  sys, os, re
 
@@ -151,36 +151,36 @@ for file in os.popen(cmd).readlines():
                     PhaseDict[k] = (PhaseDict[k][0],PhaseDict[k][1]+1,PhaseDict[k][2])
                     
 print
-print  'Total'.rjust(10),    StatusDict['Total'].rjust(10)
-print 'Underway'.rjust(10),  StatusDict['Underway'].rjust(10)
-print 'Remaining'.rjust(10), StatusDict['Remaining'].rjust(10)
-print 'Abandoned'.rjust(10), StatusDict['Abandoned'].rjust(10)
-print 'Completed'.rjust(10), StatusDict['Completed'].rjust(10)
-print
+print( 'Total'.rjust(10),    StatusDict['Total'].rjust(10))
+print('Underway'.rjust(10),  StatusDict['Underway'].rjust(10))
+print('Remaining'.rjust(10), StatusDict['Remaining'].rjust(10))
+print('Abandoned'.rjust(10), StatusDict['Abandoned'].rjust(10))
+print('Completed'.rjust(10), StatusDict['Completed'].rjust(10))
+print(" ")
 
 n=-1
 PhaseStartLineNos=PhaseDict.keys()
 PhaseStartLineNos.sort()
 # print PhaseStartLineNos
-print 'LineNo'.rjust(10), 'Phase Name'.rjust(20), '#Chunks'.rjust(10)
+print('LineNo'.rjust(10), 'Phase Name'.rjust(20), '#Chunks'.rjust(10))
 for i in PhaseStartLineNos :
     n = n + 1
-    print '%s %s %10d %10d' % (i.rjust(10), PhaseDict[i][0].rjust(20), PhaseDict[i][1], PhaseDict[i][2]),
+    print('%s %s %10d %10d' % (i.rjust(10), PhaseDict[i][0].rjust(20), PhaseDict[i][1], PhaseDict[i][2]), end=" ")
     if n != len(PhaseStartLineNos)-1 :
-        print '%10d %10d' % (PhaseDict[PhaseStartLineNos[n]][1] - PhaseDict[PhaseStartLineNos[n+1]][1], PhaseDict[PhaseStartLineNos[n]][2] - PhaseDict[PhaseStartLineNos[n+1]][2])
+        print('%10d %10d' % (PhaseDict[PhaseStartLineNos[n]][1] - PhaseDict[PhaseStartLineNos[n+1]][1], PhaseDict[PhaseStartLineNos[n]][2] - PhaseDict[PhaseStartLineNos[n+1]][2]))
     else :
-        print
+        print(" ")
                                                           
 print
 
 PhaseStartLineNos=PhaseDict.keys()
 PhaseStartLineNos.sort()
-print 'LineNo'.rjust(10), 'Phase Name'.rjust(20), '#Chunks'.rjust(10)
+print('LineNo'.rjust(10), 'Phase Name'.rjust(20), '#Chunks'.rjust(10))
 for i in PhaseStartLineNos :
-    print '%s %s %10d %10d' % (i.rjust(10), PhaseDict[i][0].rjust(20), PhaseDict[i][1], PhaseDict[i][2])
+    print('%s %s %10d %10d' % (i.rjust(10), PhaseDict[i][0].rjust(20), PhaseDict[i][1], PhaseDict[i][2]))
 
     
-print "LineNumbers"
+print("LineNumbers")
 for file in os.popen(cmd).readlines():
     filein = file[:-1] 
     
@@ -213,9 +213,12 @@ for file in os.popen(cmd).readlines():
             if (line.lower()).find(src.lower()) !=-1 :
                 for i in PhaseStartLineNos[0:-1] :
                     if int(lno) >= int(i) : PhaseName = PhaseDict[i][0]
-                    print '>>>>>>>>>>>', PhaseName, chunkno, time, lno
-                    print line
+                    print('>>>>>>>>>>>', PhaseName, chunkno, time, lno)
+                    print(line)
     f.close()
     
 
 # $Log$
+# Revision 1.1  2006/10/19 18:29:10  pwagner
+# First commit
+#
