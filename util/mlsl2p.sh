@@ -388,7 +388,7 @@ echo "MLSL2PLOG " > "$MLSL2PLOG"
 logit "$MLSL2PLOG"
 env | sort >> "$MLSL2PLOG"
 
-SAVEJOBSTATS="yes"
+SAVEJOBSTATS="no"
 #             ^^^---- "yes" if recording progress of chunks through each phase
 
 # In addition to whatever options and switches may be set by the environment
@@ -826,6 +826,9 @@ else
 fi
 
 # $Log$
+# Revision 1.41  2020/04/22 16:45:40  pwagner
+# May use NETCDFCONVERT instead of augmenting hdfeos files
+#
 # Revision 1.40  2019/07/17 20:23:04  pwagner
 # Try to makee error mesgs more helpful and conspicuous
 #

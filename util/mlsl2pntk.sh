@@ -123,7 +123,7 @@ echo "$MLSL2PLOG"
 echo "$MLSL2PLOG" > "$MLSL2PLOG"
 env | sort >> "$MLSL2PLOG"
 
-SAVEJOBSTATS="yes"
+SAVEJOBSTATS="no"
 #             ^^^---- "yes" if progress of chunks thru phases recorded
 
 # In addition to whatever options and switches may be set by the environment
@@ -385,6 +385,9 @@ else
 fi
 
 # $Log$
+# Revision 1.13  2018/02/28 21:04:13  pwagner
+# Made more similar to toolkit-dependent mlsl2p.sh
+#
 # Revision 1.12  2016/01/05 00:45:08  pwagner
 # Correctly captures l2cf name to create job stats
 #
