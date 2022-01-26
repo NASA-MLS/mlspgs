@@ -36,10 +36,13 @@ srclib = ../../../srclib
 include $(srclib)/$(MLSF95).$(MLSPLAT)
 include $(srclib)/targets.h
 
+# Building an executable that links to netcdf, e.g., l2gp2nc4, requires
+# extraordinary measures
+# Should we have put all this in customblds?
 ifdef NETCDF
-   EXTRA_PATHS="-I /software/toolkit/netcdf-fortran-4.5.1/include"
+   EXTRA_PATHS="-I ${FNETCDF}/../include"
    LDOPTS := "$(LDOPTS) -Wl,--allow-multiple-definition"
-   NC4_Linker_Line="-L/software/toolkit/netcdf-fortran-4.5.1/lib -lnetcdff -L/software/toolkit/netcdf-c-4.7.1/lib -lnetcdf"
+   NC4_Linker_Line="-L${FNETCDF} -lnetcdff -L${CNETCDF} -lnetcdf"
 endif
 
 
@@ -197,6 +200,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.29  2020/04/08 21:49:52  pwagner
+# Added stuff relevant to netcdf
+#
 # Revision 1.28  2009/07/17 20:27:32  pwagner
 # Added COPTS as cc options
 #
