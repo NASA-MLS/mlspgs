@@ -51,17 +51,22 @@ program l2gp2nc4 ! Rewrite L2GPData files as NetCDF4
 !---------------------------------------------------------------------------
 
 ! Brief description of program
-! This program rewritess L2GPData files as netcdf4
+! This program rewrites L2GPData files as netcdf4
 !
 ! A test of the NCL2GPData module
 ! To build it, 
+
+! From the root, mlspgs, level, just type
+!   make l2gp2nc4
+
+! An older method requires you:
 ! cp it to tests/lib
 ! cd tests/lib
 ! cp ../../netcdf/NCL2GP.f90 ../../netcdf/MLSNetCDF4.f90 ./
 ! make update
 ! make NEEDS_ITM=yes NETCDF=yes
 !
-! An older and even kludgier metod required
+! An older and even kludgier method required
 !
 ! cp Makefile-IFC.Linux.ifc17 IFC.Linux.ifc17 
 ! cp ../../netcdf/NCL2GP.f90 ../../netcdf/MLSNetCDF4.f90 ./
@@ -495,6 +500,9 @@ end program l2gp2nc4
 !==================
 
 ! $Log$
+! Revision 1.2  2020/04/08 21:54:38  pwagner
+! Now copies metadata datasets, too
+!
 ! Revision 1.1  2020/03/19 22:36:09  pwagner
 ! First commit
 !
