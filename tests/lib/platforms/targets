@@ -39,10 +39,18 @@ include $(srclib)/targets.h
 # Building an executable that links to netcdf, e.g., l2gp2nc4, requires
 # extraordinary measures
 # Should we have put all this in customblds?
+# Tried that. Did not work. Did not work the first time, anyway.
 ifdef NETCDF
    EXTRA_PATHS="-I ${FNETCDF}/../include"
-   LDOPTS := "$(LDOPTS) -Wl,--allow-multiple-definition"
    NC4_Linker_Line="-L${FNETCDF} -lnetcdff -L${CNETCDF} -lnetcdf"
+# NAG has a peculiar way of treating -Wl,.. sending it
+# not to ld but to gcc
+# IFC (and the rest?) send it to ld
+ifeq ($(MLSF95),NAG)
+   LDOPTS := "$(LDOPTS) -Wl,-Wl,,--allow-multiple-definition"
+else
+   LDOPTS := "$(LDOPTS) -Wl,--allow-multiple-definition"
+endif
 endif
 
 
@@ -164,6 +172,7 @@ utctotai_message=Building mlsl2 with toolkitless utc to tai conversion
 
 # ========================================================================
 $(PROG_NAME): $(ALLOBJS) $(PVM_OBJS) $(libdir)/libmls.a $(CONFDIR)/$(MLSCFILE)
+		@echo "$(MLSF95)"
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
 		@echo "$(lapack_message)"
@@ -200,6 +209,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.30  2022/01/26 00:12:42  pwagner
+# Now uses .configure variables CNETCDF and FNETCDF
+#
 # Revision 1.29  2020/04/08 21:49:52  pwagner
 # Added stuff relevant to netcdf
 #
