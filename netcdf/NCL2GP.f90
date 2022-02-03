@@ -533,7 +533,7 @@ contains ! ======================= Public Procedures =========================
     integer :: y_dimId       ! NetCDF dimension identifier for nLevels
     integer :: z_dimId       ! NetCDF dimension identifier for nTimesTotal
     ! Executable
-    deebughere = DEEBUG  .or. .TRUE.
+    deebughere = DEEBUG !   .or. .TRUE.
     if (present(swathName)) then
        name=swathName
     else
@@ -1438,7 +1438,7 @@ contains ! ======================= Public Procedures =========================
     logical :: alreadyOpen
     integer :: Me = -1                  ! String index for trace cacheing
     integer :: status
-    logical, parameter :: DEEBUG = .true.
+    logical, parameter :: DEEBUG = .false.
     ! Executable code
 
     call trace_begin ( me, 'WriteNCL2GPData_MLSFile', cond=.false. )
@@ -1455,7 +1455,7 @@ contains ! ======================= Public Procedures =========================
     if ( L2GPFile%access == DFACC_RDONLY )  &
       & call MLSMessage(MLSMSG_Error, ModuleName, &
       & 'l2gp file is rdonly', MLSFile=L2GPFile)
-    print *, 'About to OutputNCL2GP_createFile_MF'
+    if ( DEEBUG ) print *, 'About to OutputNCL2GP_createFile_MF'
     call OutputNCL2GP_createFile_MF (l2gp, L2GPFile, &
       & swathName, notUnlimited=notUnlimited)
     call OutputNCL2GP_writeGeo_MF (l2gp, L2GPFile, &
@@ -1496,7 +1496,7 @@ contains ! ======================= Public Procedures =========================
       integer :: status
       logical :: myDOI
       logical :: myMiscNotes
-      logical, parameter :: DeeBug = .true.
+      logical, parameter :: DeeBug = .false.
       logical :: my_skip
 ! Executable
       myDOI = .false.
@@ -1935,7 +1935,7 @@ contains ! ======================= Public Procedures =========================
 !     integer :: chunk
     integer :: status, swid,myOffset
     integer :: start(2), stride(2), edge(2)
-    logical, parameter:: DEEBUG = .true.
+    logical, parameter:: DEEBUG = .false.
 
     ! Begin
     if (present(offset)) then
@@ -2166,6 +2166,9 @@ contains ! ======================= Public Procedures =========================
 end module NCL2GP
 
 ! $Log$
+! Revision 1.2  2020/03/19 22:35:23  pwagner
+! Repaired more bugs than you can shake a stick at.
+!
 ! Revision 1.1  2020/03/06 00:24:19  pwagner
 ! First commit
 !
