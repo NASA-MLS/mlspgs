@@ -234,6 +234,242 @@ set_if_not_def()
      fi
 }
 
+# ------------------ check for misalignment ----------------------
+# ----------------------------------------------------------------
+file=`extant_files *L2GP-DGG_*.he5`
+# Check products for misaligned geolocations
+# If they are found to be misaligned, set return_status to 99
+check_for_misalignment()
+{
+if [ -x "$MISALIGNMENT" -a "$file" != "" ]
+then
+  logit "Checking for misalignment"
+  a=`$MISALIGNMENT -silent $file`
+  if [ "$a" != "" ]
+  then
+    logit $a
+    logit "Misalignment detected"
+    logit hide_files *.he5 *.met *.xml *.h5
+    hide_files *.he5 *.met *.xml *.h5
+    return_status=99
+  fi
+fi
+
+}
+
+# ------------------ convert the product file format ----------------------
+# ----------------------------------------------------------------
+# Convert hdfeos product files to netcdf
+# A trick: the hdfeos file names already end in '.nc' so
+# we'll need to mv them so they end in .he5
+# When we're done we'll have 2 versions of each std. prod. file:
+#   product.he5      hdfeos
+#   product.nc       NetCDF4
+# 
+# Possible improvements:
+# Option to end file names with ".nc4" instead of ".nc"
+# Option to hide the hdfeos versions so they aren't copied
+# to the scf or ingested into the database
+convert_file_formats()
+{
+logit "NETCDFCONVERT: $NETCDFCONVERT"
+if [ -x "$NETCDFCONVERT" ]
+then
+  logit "Converting file format to NetCDF4"
+  files=`extant_files *L2GP-*.nc`
+  if [ "$files" = "" ]
+  then
+    if [ -d "outputs" ]
+    then
+      cd "outputs"
+      files=`extant_files *L2GP-*.nc`
+    fi
+  fi
+  for file in $files
+  do
+    hname=`echo $file | sed 's/\.nc$/\.he5/'`
+    logit "mving $file to $hname"
+    mv $file $hname
+    logit "Converting $hname to $file"
+    $NETCDFCONVERT $hname
+    # The tool insists on naming its output file "something.nc4"
+    # So we must rename it yet again to "something.nc"
+    # What a shameful mess we've made
+    nc4name=`echo $hname | sed 's/\.he5$/\.nc4/'`
+    logit "mving $nc4name to $file"
+    mv $nc4name $file
+  done
+fi
+}
+
+# ------------------ nccopy ----------------------
+# ----------------------------------------------------------------
+# h5repack doesn't work properly with NetCDF files
+# Instead we must use nccopy
+nccopy_files()
+{
+if [ -x "$NCCOPY" ]
+then
+  logit "Doing nccopy on files"
+  files=`extant_files *.nc`
+  if [ "$files" = "" ]
+  then
+    if [ -d "outputs" ]
+    then
+      cd "outputs"
+      files=`extant_files *.nc`
+    fi
+  fi
+  for file in $files
+  do
+    if [ -w "$file" ]
+    then
+      packed="$file".p
+      if [ "$GZIPLEVEL" != "" ] 
+      then
+        filter="-d $GZIPLEVEL"
+      else
+        filter=""
+      fi
+      logit "nccopying $file into $packed"
+      logit $NCCOPY  $filter "$file" "$packed"
+      $NCCOPY  $filter "$file" "$packed"
+      # Here we could insert some check involving h5diff if we were dubious
+      mv "$packed" "$file"
+    fi
+  done
+fi
+# ----------------------------------------------------------------
+}
+# ----------------------------------------------------------------
+
+# ------------------ repack ----------------------
+# ----------------------------------------------------------------
+# repack level 2 product files to speed things up
+# Last chance to find h5repack
+repack_files()
+{
+if [ ! -x "$H5REPACK" ]
+then
+  H5REPACK=$HDFTOOLS/h5repack
+fi
+
+if [ -x "$H5REPACK" ]
+then
+  logit "Doing h5repack on files"
+  files=`extant_files *L2FWM*.h5 *L2GP-[A-CE-Z]*.he5 *L2GP-DGG_*.he5 *L2AUX-[A-C]*.h5 *L2AUX-DGM_*.h5`
+  if [ "$files" = "" ]
+  then
+    if [ -d "outputs" ]
+    then
+      cd "outputs"
+      files=`extant_files *L2FWM*.h5 *L2GP-*.he5 *L2GP-*.nc *L2AUX-[A-C]*.h5 *L2AUX-DGM_*.h5`
+    fi
+  fi
+  for file in $files
+  do
+    if [ -w "$file" ]
+    then
+      packed="$file".p
+      if [ "$GZIPLEVEL" != "" ] 
+      then
+        filter="-f GZIP=$GZIPLEVEL"
+      else
+        filter=""
+      fi
+      logit "Packing $file into $packed"
+      logit $H5REPACK -i "$file" -o "$packed" $filter
+      $H5REPACK -i "$file" -o "$packed" $filter
+      # Here we could insert some check involving h5diff if we were dubious
+      mv "$packed" "$file"
+    fi
+  done
+fi
+# ----------------------------------------------------------------
+}
+
+# ------------------ augment ----------------------
+# ----------------------------------------------------------------
+# augment level 2 product files to make them netcdf-compatible
+# (must not reverse order of repack, augment)
+# After we become more comfortable with l2gp2nc4 actually
+# converting the hdfeos formats to NetCDF4 we may delete
+# this section.
+augment_files()
+{
+if [ -x "$NETCDFAUGMENT" ]
+then
+  logit "Doing augment on files"
+  files=`extant_files *L2GP-[A-CE-Z]*.he5 *L2GP-DGG_*.he5`
+  if [ "$files" = "" ]
+  then
+    if [ -d "outputs" ]
+    then
+      cd "outputs"
+      files=`extant_files *L2GP-[A-CE-Z]*.he5 *L2GP-DGG_*.he5`
+    fi
+  fi
+  logit "files: $files"
+  for file in $files
+  do
+    if [ -w "$file" ]
+    then
+      logit $NETCDFAUGMENT $file
+      $NETCDFAUGMENT $file
+    fi
+  done
+fi
+# ----------------------------------------------------------------
+}
+
+# ----------------------wait_for_slaves_to_finish-----------------
+# ----------------------------------------------------------------
+wait_for_slaves_to_finish()
+{
+logit SAVEJOBSTATS $SAVEJOBSTATS
+logit masterlog $masterlog
+logit PGE_SCRIPT_DIR/jobstat-sips.sh $PGE_SCRIPT_DIR/jobstat-sips.sh
+# Save record of progress thru phases
+if [ -f "$masterlog" ]
+then
+  l2cf=`grep -i 'Level 2 configuration file' $masterlog | head -1 | awk '{print $13}'`
+fi
+if [ "$SAVEJOBSTATS" = "yes" -a -x "$PGE_SCRIPT_DIR/jobstat-sips.sh" -a -f "$l2cf" ]
+then
+  # This sleep is to give slave tasks extra time to complete stdout
+  sleep 20
+  JOBSTATSFILE="$JOBDIR/phases.stats"
+  JOBSOPTS="-S $PGE_BINARY_DIR/mlsqlog-scan-sips.py -t $PGE_SCRIPT_DIR/split_path.sh ${JOBDIR}/pvmlog $l2cf $masterlog"
+  if [ "$verbose" != "" ]
+  then
+    JOBSOPTS="-v $JOBSOPTS"
+  fi
+  logit "$PGE_SCRIPT_DIR/jobstat-sips.sh $JOBSOPTS"
+  $PGE_SCRIPT_DIR/jobstat-sips.sh $JOBSOPTS > "$JOBSTATSFILE"
+else
+  JOBSTATSFILE="none"
+fi
+
+# catenate each slave's log to a log file
+LOGFILE="${JOBDIR}/pvmlog/mlsl2.log"
+if [ ! -w "$LOGFILE"  ]
+then
+  logit "catenating slave logs in $LOGFILE"
+  echo "catenating slave logs in $LOGFILE" > "$LOGFILE".1
+  # This sleep is to give slave tasks extra time to complete stdout
+  sleep 20
+  cat ${JOBDIR}/pvmlog/*.log >> "$LOGFILE".1
+  rm -f ${JOBDIR}/pvmlog/*.log
+  mv "$LOGFILE".1 "$LOGFILE"
+fi
+
+if [ -f "$LOGFILE" -a -f "$JOBSTATSFILE" ]
+then
+  cat "$LOGFILE" "$JOBSTATSFILE" > "$LOGFILE".1
+  mv "$LOGFILE".1 "$LOGFILE"
+fi
+}
+
 #------------------------------- run_mlsl2_ntk ------------
 #
 # Function to do one level 2 run after expanding an l2cf template
@@ -286,6 +522,7 @@ run_mlsl2_ntk()
     --idents "$IDENTFILE" --loc "$HOSTNAME" \
     $otheropts $l2cf 2> $JOBDIR/master.l2cfname
   return_status=`expr $?`
+  wait_for_slaves_to_finish
 }
 
 #------------------------------- run_mlsl2_tk ------------
@@ -354,6 +591,7 @@ run_mlsl2_tk()
   fi
   # Save return status
   return_status=`expr $?`
+  wait_for_slaves_to_finish
 }
 
 #------------------------------- Main Program ------------
@@ -569,6 +807,16 @@ then
 
   run_mlsl2_tk
   l2cf=$L2CF
+  check_for_misalignment
+
+  convert_file_formats
+
+  nccopy_files
+
+  repack_files
+
+  augment_files
+
 else
   # Use sed to convert slavetmplt.sh into an executable script
   # The resulting script sets some toolkitless environment variables
@@ -596,218 +844,8 @@ else
   chmod a+x $slave_script
 
   run_mlsl2_ntk
+  check_for_misalignment
 fi
-# ----------------------------------------------------------------
-
-logit SAVEJOBSTATS $SAVEJOBSTATS
-logit masterlog $masterlog
-logit PGE_SCRIPT_DIR/jobstat-sips.sh $PGE_SCRIPT_DIR/jobstat-sips.sh
-# Save record of progress thru phases
-if [ -f "$masterlog" ]
-then
-  l2cf=`grep -i 'Level 2 configuration file' $masterlog | head -1 | awk '{print $13}'`
-fi
-if [ "$SAVEJOBSTATS" = "yes" -a -x "$PGE_SCRIPT_DIR/jobstat-sips.sh" -a -f "$l2cf" ]
-then
-  # This sleep is to give slave tasks extra time to complete stdout
-  sleep 20
-  JOBSTATSFILE="$JOBDIR/phases.stats"
-  JOBSOPTS="-S $PGE_BINARY_DIR/mlsqlog-scan-sips.py -t $PGE_SCRIPT_DIR/split_path.sh ${JOBDIR}/pvmlog $l2cf $masterlog"
-  if [ "$verbose" != "" ]
-  then
-    JOBSOPTS="-v $JOBSOPTS"
-  fi
-  logit "$PGE_SCRIPT_DIR/jobstat-sips.sh $JOBSOPTS"
-  $PGE_SCRIPT_DIR/jobstat-sips.sh $JOBSOPTS > "$JOBSTATSFILE"
-else
-  JOBSTATSFILE="none"
-fi
-
-# catenate each slave's log to a log file
-LOGFILE="${JOBDIR}/pvmlog/mlsl2.log"
-if [ ! -w "$LOGFILE"  ]
-then
-  logit "catenating slave logs in $LOGFILE"
-  echo "catenating slave logs in $LOGFILE" > "$LOGFILE".1
-  # This sleep is to give slave tasks extra time to complete stdout
-  sleep 20
-  cat ${JOBDIR}/pvmlog/*.log >> "$LOGFILE".1
-  rm -f ${JOBDIR}/pvmlog/*.log
-  mv "$LOGFILE".1 "$LOGFILE"
-fi
-
-if [ -f "$LOGFILE" -a -f "$JOBSTATSFILE" ]
-then
-  cat "$LOGFILE" "$JOBSTATSFILE" > "$LOGFILE".1
-  mv "$LOGFILE".1 "$LOGFILE"
-fi
-
-# ------------------ check for misalignment ----------------------
-# ----------------------------------------------------------------
-file=`extant_files *L2GP-DGG_*.he5`
-# Check products for misaligned geolocations
-# If they are found to be misaligned, set return_status to 99
-if [ -x "$MISALIGNMENT" -a "$file" != "" ]
-then
-  a=`$MISALIGNMENT -silent $file`
-  if [ "$a" != "" ]
-  then
-    logit $a
-    logit "Misalignment detected"
-    logit hide_files *.he5 *.met *.xml *.h5
-    hide_files *.he5 *.met *.xml *.h5
-    return_status=99
-  fi
-fi
-
-# ------------------ convert the product file format ----------------------
-# ----------------------------------------------------------------
-# Convert hdfeos product files to netcdf
-# A trick: the hdfeos file names already end in '.nc' so
-# we'll need to mv them so they end in .he5
-# When we're done we'll have 2 versions of each std. prod. file:
-#   product.he5      hdfeos
-#   product.nc       NetCDF4
-# 
-# Possible improvements:
-# Option to end file names with ".nc4" instead of ".nc"
-# Option to hide the hdfeos versions so they aren't copied
-# to the scf or ingested into the database
-if [ -x "$NETCDFCONVERT" -a "$UsingPCF" != "" ]
-then
-  files=`extant_files *L2GP-*.nc`
-  if [ "$files" = "" ]
-  then
-    if [ -d "outputs" ]
-    then
-      cd "outputs"
-      files=`extant_files *L2GP-*.nc`
-    fi
-  fi
-  for file in $files
-  do
-    hname=`echo $file | sed 's/\.nc$/\.he5/'`
-    logit "mving $file to $hname"
-    mv $file $hname
-    logit "Converting $hname to $file"
-    $NETCDFCONVERT $hname
-    # The tool insists on naming its output file "something.nc4"
-    # So we must rename it yet again to "something.nc"
-    # What a shameful mess we've made
-    nc4name=`echo $hname | sed 's/\.he5$/\.nc4/'`
-    logit "mving $nc4name to $file"
-    mv $nc4name $file
-  done
-fi
-# ----------------------------------------------------------------
-
-
-# ------------------ nccopy ----------------------
-# ----------------------------------------------------------------
-# h5repack doesn't work properly with NetCDF files
-# Instead we must use nccopy
-if [ -x "$NCCOPY" ]
-then
-  files=`extant_files *.nc`
-  if [ "$files" = "" ]
-  then
-    if [ -d "outputs" ]
-    then
-      cd "outputs"
-      files=`extant_files *.nc`
-    fi
-  fi
-  for file in $files
-  do
-    if [ -w "$file" ]
-    then
-      packed="$file".p
-      if [ "$GZIPLEVEL" != "" ] 
-      then
-        filter="-d $GZIPLEVEL"
-      else
-        filter=""
-      fi
-      logit "nccopying $file into $packed"
-      logit $NCCOPY  $filter "$file" "$packed"
-      $NCCOPY  $filter "$file" "$packed"
-      # Here we could insert some check involving h5diff if we were dubious
-      mv "$packed" "$file"
-    fi
-  done
-fi
-# ----------------------------------------------------------------
-
-# ------------------ repack ----------------------
-# ----------------------------------------------------------------
-# repack level 2 product files to speed things up
-# Last chance to find h5repack
-if [ ! -x "$H5REPACK" ]
-then
-  H5REPACK=$HDFTOOLS/h5repack
-fi
-
-if [ -x "$H5REPACK" ]
-then
-  files=`extant_files *L2FWM*.h5 *L2GP-[A-CE-Z]*.he5 *L2GP-DGG_*.he5 *L2AUX-[A-C]*.h5 *L2AUX-DGM_*.h5`
-  if [ "$files" = "" ]
-  then
-    if [ -d "outputs" ]
-    then
-      cd "outputs"
-      files=`extant_files *L2FWM*.h5 *L2GP-*.he5 *L2GP-*.nc *L2AUX-[A-C]*.h5 *L2AUX-DGM_*.h5`
-    fi
-  fi
-  for file in $files
-  do
-    if [ -w "$file" ]
-    then
-      packed="$file".p
-      if [ "$GZIPLEVEL" != "" ] 
-      then
-        filter="-f GZIP=$GZIPLEVEL"
-      else
-        filter=""
-      fi
-      logit "Packing $file into $packed"
-      logit $H5REPACK -i "$file" -o "$packed" $filter
-      $H5REPACK -i "$file" -o "$packed" $filter
-      # Here we could insert some check involving h5diff if we were dubious
-      mv "$packed" "$file"
-    fi
-  done
-fi
-# ----------------------------------------------------------------
-
-
-# ------------------ augment ----------------------
-# ----------------------------------------------------------------
-# augment level 2 product files to make them netcdf-compatible
-# (must not reverse order of repack, augment)
-# After we become more comfortable with l2gp2nc4 actually
-# converting the hdfeos formats to NetCDF4 we may delete
-# the following part
-if [ -x "$NETCDFAUGMENT" -a "$UsingPCF" != "" ]
-then
-  files=`extant_files *L2GP-[A-CE-Z]*.he5 *L2GP-DGG_*.he5`
-  if [ "$files" = "" ]
-  then
-    if [ -d "outputs" ]
-    then
-      cd "outputs"
-      files=`extant_files *L2GP-[A-CE-Z]*.he5 *L2GP-DGG_*.he5`
-    fi
-  fi
-  for file in $files
-  do
-    if [ -w "$file" ]
-    then
-      logit $NETCDFAUGMENT $file
-      $NETCDFAUGMENT $file
-    fi
-  done
-fi
-# ----------------------------------------------------------------
 
 # ----------------------------------------------------------------
 
@@ -826,6 +864,9 @@ else
 fi
 
 # $Log$
+# Revision 1.42  2022/01/20 22:01:30  pwagner
+# Cant SAVEJOBSTATS until we debug mlsqlog-scan-sips.py
+#
 # Revision 1.41  2020/04/22 16:45:40  pwagner
 # May use NETCDFCONVERT instead of augmenting hdfeos files
 #
