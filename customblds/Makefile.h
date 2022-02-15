@@ -734,10 +734,10 @@ wvs-149.bbl: wvs-149.bib wvs-149.aux
 	$(BIBTEX) wvs-149
 
 wvs-149-1.600gf: wvs-149-1.txp
-	mf '\mode=localfont; ' input wvs-149-1
+	$(MF) '\mode=localfont; ' input wvs-149-1
 
 wvs-149-1.600pk: wvs-149-1.600gf
-	gftopk wvs-149-1.600gf
+	$(GFTOPK) wvs-149-1.600gf
 
 dnwt.ps: dnwt.dot
 	dot -Tps dnwt.dot > dnwt.ps
@@ -868,6 +868,9 @@ iy-006.bbl: yanovsky.bib iy-006.aux
 
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.53  2021/04/21 23:49:35  pwagner
+# Added some robustness
+#
 # Revision 1.52  2020/06/10 21:01:51  pwagner
 # Builds wvs-160 OK, now
 #

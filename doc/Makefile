@@ -111,11 +111,15 @@ ifdef LATEXPATH
    LATEX=$(LATEXPATH)/latex
    DVIPDF=$(LATEXPATH)/dvipdfm
    PDFLATEX=$(LATEXPATH)/pdflatex
+   MF=$(LATEXPATH)/mf
+   GFTOPK=$(LATEXPATH)/gftopk
 else
    BIBTEX=bibtex
    LATEX=latex
    DVIPDF=dvipdfm
    PDFLATEX=pdflatex
+   MF=mf
+   GFTOPK=gftopk
 endif
 
 TESTSDIR=$(CONFDIR)/tests
@@ -266,6 +270,9 @@ update:
 
 # ========================================================================
 # $Log$
+# Revision 1.13  2021/04/21 23:45:13  pwagner
+# Added some robustness
+#
 # Revision 1.12  2020/06/09 22:58:09  pwagner
 # Attempt to fix problems caused by upgrading LaTeX and .nav files
 #
