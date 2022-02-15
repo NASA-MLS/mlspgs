@@ -31,6 +31,18 @@ REECHO=$(UTILDIR)/reecho.sh
 l2cf_sources := $(shell ${REECHO} *.l2cf)
 tex_sources := $(shell ${REECHO} *.tex)
 
+ifdef LATEXPATH
+   BIBTEX=$(LATEXPATH)/bibtex
+   LATEX=$(LATEXPATH)/latex
+   DVIPDF=$(LATEXPATH)/dvipdfm
+   PDFLATEX=$(LATEXPATH)/pdflatex
+else
+   BIBTEX=bibtex
+   LATEX=latex
+   DVIPDF=dvipdfm
+   PDFLATEX=pdflatex
+endif
+
 # Set paths for finding source files
 
 DVIDIR = ./dvi/
@@ -52,13 +64,13 @@ vpath %.pdf $(PDFDIR)
 .SUFFIXES:
 .SUFFIXES: .tex .dvi .pdf
 .tex.dvi:
-	latex $<
-	latex $<
+	$(LATEX) $<
+	$(LATEX) $<
 	mv $@ $(DVIDIR)
 	mv $*.log $(LOGDIR)
 
 .dvi.pdf:
-	dvipdf $(DVIDIR)/$<
+	$(DVIPDF) $(DVIDIR)/$<
 	mv $@ $(PDFDIR)
 
 # Bugs and limitations:
@@ -84,10 +96,10 @@ l2cf: ${NEAROBJS} ${OBJS} ${BBL} $(tex_sources) $(l2cf_sources)
    touch ${BBL}; touch $(DVIDIR)/*; touch $(PDFDIR)/*
 
 ${AUX}: l2cf.tex
-	latex l2cf
+	$(LATEX) l2cf
 
 ${BBL}: ${BIB} ${AUX}
-	bibtex l2cf
+	$(BIBTEX) l2cf
 
 ${NEAROBJS}: ${BBL} ${l2cf_sources}
 # ========================================================================
@@ -124,6 +136,9 @@ update:
 
 # ========================================================================
 # $Log$
+# Revision 1.2  2018/06/22 23:26:01  pwagner
+# Corrected small errors
+#
 # Revision 1.1  2018/06/15 23:09:24  pwagner
 # First commit
 #

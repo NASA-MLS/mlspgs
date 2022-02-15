@@ -97,10 +97,10 @@ icfm: ${NEAROBJS} ${OBJS} ${BBL}
    touch ${BBL}; touch $(DVIDIR)/*; touch $(PDFDIR)/*
 
 ${AUX}: icfm.tex
-	latex icfm
+	$(LATEX) icfm
 
 ${BBL}: ${BIB} ${AUX}
-	bibtex icfm
+	$(BIBTEX) icfm
 
 ${NEAROBJS}: ${BBL} ${pro_sources}
 # ========================================================================
@@ -137,6 +137,9 @@ update:
 
 # ========================================================================
 # $Log$
+# Revision 1.4  2021/04/21 23:44:13  pwagner
+# Added some robustness
+#
 # Revision 1.3  2019/06/27 21:09:08  pwagner
 # make clean more thorough
 #

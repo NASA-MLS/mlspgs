@@ -109,10 +109,10 @@ cfm: ${NEAROBJS} ${OBJS} ${BBL}
    touch ${BBL}; touch $(DVIDIR)/*; touch $(PDFDIR)/*
 
 ${AUX}: cfm.tex
-	latex cfm
+	$(LATEX) cfm
 
 ${BBL}: ${BIB} ${AUX}
-	bibtex cfm
+	$(BIBTEX) cfm
 
 ${NEAROBJS}: ${BBL} ${f9h_sources} ${tex_sources}
 # ========================================================================
@@ -149,6 +149,9 @@ update:
 
 # ========================================================================
 # $Log$
+# Revision 1.6  2021/04/21 23:43:38  pwagner
+# Added some robustness
+#
 # Revision 1.5  2020/04/08 21:48:17  pwagner
 # Gets settings from .configure; corrected dependencies
 #
