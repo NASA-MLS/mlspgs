@@ -86,7 +86,12 @@ module NeuralNet_m              ! Use Neural Net Model to Retrieve State
   ! The following must someday also be read from the file of weight coefficients
   integer, parameter              :: NumHiddenLayers  = 2
   ! The type of activation function is now read from the weights file
+  ! (and anyway, it could be and in fact ultimately is 'relu'
   ! character(len=*), parameter     :: switchOver       = 'tanh' ! or 'sigmoid'
+  ! Instead of plopping these constants into parameter declarations
+  ! we'll either
+  ! (1) Read them from the coefficients file; or
+  ! (2) Make them fields of the l2cf's NeuralNet specification
   integer, parameter              :: NumChnnelsBand1  = 25
   integer, parameter              :: NumChnnelsBand8  = 25
   integer, parameter              :: NumChnnelsBand22 = 51
@@ -174,17 +179,8 @@ contains ! =====     Public Procedures     =============================
       & '/users/fwerner/Documents/database/trained_neural_nets/temperature/v1.14/1/' &
       & // &
       & 'Temperature_trained_neural_net.h5' ! For coefficients
-    ! These next two are for debugging the date 2019d001
-!     character (len=*), parameter    :: DefaultRadiances = &
-!       & '/users/pwagner/' &
-!       & // &
-!       & 'Radiances_used_in_nn.h5' ! For radiances
     character (len=*), parameter    :: DefaultRadiances = &
       & 'Radiances_used_in_nn.h5' ! For radiances
-!     character (len=*), parameter    :: DefaultTemperatures = &
-!       & '/users/fwerner/Documents/database/trained_neural_nets/test_data/temperature/v1.13/' &
-!       & // &
-!       & 'Temperature_20190101.h5' ! For results to compare with
     character (len=*), parameter    :: DefaultTemperatures = &
       & 'Temperature_20190101.h5' ! For results to compare with
     ! Beware if the following ever change
@@ -245,8 +241,6 @@ contains ! =====     Public Procedures     =============================
     endif
     do i = 1, state%template%noQuantities
       if ( state%quantities(i)%template%quantityType /= l_temperature ) then
-        ! call announce_error ( key, &
-        !   & "state vector must contain only Temperature" )
         if ( verbose ) print *, 'Skipping non-Temperature state quantity'
         cycle
       end if
@@ -325,41 +319,25 @@ contains ! =====     Public Procedures     =============================
         & shortName='Temperature', &
         & type=l_hdf, content='NNCoeffs', HDFVersion=HDFVersion_5 )
     endif
-    if ( DeeBug .and. .false. ) call Dump ( FileDatabase )
     call MLS_OpenFile( CoeffsFile, Status )
-    ! call Dump( RadiancesFile )
-!     call MLS_OpenFile( RadiancesFile, Status )
-!     if ( Status /= 0 ) then
-!       call announce_error ( key, &
-!         & 'Failed to Open/Create Radiances File' )
-!     endif
     ! These are absolute profile numbers, i.e. they start at '1' only
     ! for the first chunk
     call Dump ( Chunk )
-    if ( .false. ) then
-      firstProfile = L1MAFToL2Profile ( &
-        & Chunk%firstMAFIndex, FileDatabase, MIF=36, Debugging=.true. &
-        & )
-      lastProfile  = L1MAFToL2Profile ( &
-        & Chunk%lastMAFIndex , FileDatabase, MIF=36, Debugging=.false. &
-        & )
-    else
-      call L1BGeoLocation ( filedatabase, 'GHz/GeodAngle    ', &
-        & 'GHz', values2d=GeodAngle )
-      call L1BGeoLocation ( filedatabase, 'GHz/GeodLat    ', &
-        & 'GHz', values2d=GeodLat )
-      ! We'll use the Geod angles directly
-      call Hunt ( temperature%template%phi(1,:),  &
-        & GeodAngle(36,Chunk%firstMAFIndex+1), firstProfile, &
-        & allowTopValue=.true. )
-      call Hunt ( temperature%template%phi(1,:),  &
-        & GeodAngle(36,Chunk%lastMAFIndex+1), lastProfile, &
-        & allowTopValue=.true. )
-      ! Now we actually want the profile numbers in the entire
-      ! precessing range, not just this chunk
-      firstProfile = firstprofile + chunk%hGridOffsets(1)
-      lastProfile  = lastprofile  + chunk%hGridOffsets(1)
-    endif
+    call L1BGeoLocation ( filedatabase, 'GHz/GeodAngle    ', &
+      & 'GHz', values2d=GeodAngle )
+    call L1BGeoLocation ( filedatabase, 'GHz/GeodLat    ', &
+      & 'GHz', values2d=GeodLat )
+    ! We'll use the Geod angles directly
+    call Hunt ( temperature%template%phi(1,:),  &
+      & GeodAngle(36,Chunk%firstMAFIndex+1), firstProfile, &
+      & allowTopValue=.true. )
+    call Hunt ( temperature%template%phi(1,:),  &
+      & GeodAngle(36,Chunk%lastMAFIndex+1), lastProfile, &
+      & allowTopValue=.true. )
+    ! Now we actually want the profile numbers in the entire
+    ! precessing range, not just this chunk
+    firstProfile = firstprofile + chunk%hGridOffsets(1)
+    lastProfile  = lastprofile  + chunk%hGridOffsets(1)
     if ( verbose ) print *, 'chunkNumber  ', chunk%ChunkNumber
     if ( verbose ) print *, 'HGrid offset  ', chunk%hGridOffsets(1)
     if ( verbose ) print *, 'firstProfile ', firstProfile
@@ -396,7 +374,6 @@ contains ! =====     Public Procedures     =============================
       ! call OutputNamedValue ( 'Num profiles', temperature%template%NoInstances )
       do profile = 1, temperature%template%NoInstances ! firstProfile, lastProfile
         if ( verbose ) call outputNamedValue ( 'instance number in chunk ', profile )
-!         call InitializeNNMeasurements ( NNMeasurements )
         ! Does this profile fall within this bin num?
         if ( &
           & temperature%template%geodLat(1,profile) < BinArray(BinNum) &
@@ -408,39 +385,28 @@ contains ! =====     Public Procedures     =============================
         if ( verbose ) print *, 'bin range ', BinArray(BinNum), BinArray(BinNum)+BinSz
         thisProfile = profile + firstProfile - 1
         ! Find thisMAF matching profile
-        if ( .false. ) then
-          thisMAF = L2ProfileToL1MAF ( thisProfile, fileDatabase, MIF=36 )
-        elseif ( .false. ) then
-          ! We'll use the Geod angles directly
-          ! Alas, sometimes this Hunt returns the wrong answer
-          call Hunt ( GeodAngle(36,:), &
-            & temperature%template%phi(1,profile), thisMaf, &
-            & allowTopValue=.true. )
-          call OutputNamedValue ( 'Hunt returned MAF', thisMAF )
-        else
-          ! Choose which method by which to match MAF to profile
-          call Hunt ( GeodAngle(36,:), &
-            & temperature%template%phi(1,profile), thisMaf, &
-            & allowTopValue=.true. )
-          if ( verbose ) call OutputNamedValue ( 'Hunt returned MAF', thisMAF )
-          theseMAFs(2) = thisMAF
-          ! Do we need to scale?
-          theseMAFs(1:1) = minloc( &
-            & abs(GeodAngle(36,:)-temperature%template%phi(1,profile)) &
-            & + &
-            & abs(GeodLat(36,:)-temperature%template%GeodLat(1,profile)) &
-            & ) - 1
-          thisMAF = theseMAFs(1) ! minloc insists on returning an array 
-          if ( verbose ) call OutputNamedValue ( 'minloc returned MAF', thisMAF )
-          thisMAF = FindFirst( &
-            & (abs(GeodAngle(36,:)-temperature%template%phi(1,profile)) < 2.) &
-            & .and. &
-            & (abs(GeodLat(36,:)-temperature%template%GeodLat(1,profile)) < 1.) &
-            & )
-          if ( verbose ) call OutputNamedValue ( 'FindFirst returned MAF', thisMAF )
-          theseMAFs(3) = thisMAF
-          thisMAF = theseMAFs(howMatched)
-        endif
+        ! Choose which method by which to match MAF to profile
+        call Hunt ( GeodAngle(36,:), &
+          & temperature%template%phi(1,profile), thisMaf, &
+          & allowTopValue=.true. )
+        if ( verbose ) call OutputNamedValue ( 'Hunt returned MAF', thisMAF )
+        theseMAFs(2) = thisMAF
+        ! Do we need to scale?
+        theseMAFs(1:1) = minloc( &
+          & abs(GeodAngle(36,:)-temperature%template%phi(1,profile)) &
+          & + &
+          & abs(GeodLat(36,:)-temperature%template%GeodLat(1,profile)) &
+          & ) - 1
+        thisMAF = theseMAFs(1) ! minloc insists on returning an array 
+        if ( verbose ) call OutputNamedValue ( 'minloc returned MAF', thisMAF )
+        thisMAF = FindFirst( &
+          & (abs(GeodAngle(36,:)-temperature%template%phi(1,profile)) < 2.) &
+          & .and. &
+          & (abs(GeodLat(36,:)-temperature%template%GeodLat(1,profile)) < 1.) &
+          & )
+        if ( verbose ) call OutputNamedValue ( 'FindFirst returned MAF', thisMAF )
+        theseMAFs(3) = thisMAF
+        thisMAF = theseMAFs(howMatched)
         MAF = thisMAF - Chunk%firstMAFIndex ! + 1
         ! Must constrain MAF to be within range
         !   [0, NumMAFs-1]
@@ -460,14 +426,6 @@ contains ! =====     Public Procedures     =============================
           ! call Dump ( measurements%quantities(j)%template )
           if ( measurements%quantities(j)%template%quantityType /= l_radiance ) cycle
           !
-          if ( .false. ) then
-          call outputNamedValue ( 'j ', j )
-          call outputNamedValue ( 'Qty radiometer ', measurements%quantities(j)%template%radiometer )
-          call outputNamedValue ( 'Phi', measurements%quantities(j)%template%Phi(1,MAF+1) )
-          call outputNamedValue ( 'longitude', measurements%quantities(j)%template%lon(1,MAF+1) )
-          call outputNamedValue ( 'latitude', measurements%quantities(j)%template%GeodLat(1,MAF+1) )
-          call outputNamedValue ( 'bin latitude', BinArray(BinNum) )
-          endif
           ! Because there is no radiometer defined for Temperature,
           ! we can hardly compare it to whatever radiometer the measurement
           ! quantity uses
@@ -1031,6 +989,9 @@ end module NeuralNet_m
 
 !
 ! $Log$
+! Revision 2.16  2022/04/13 21:33:03  pwagner
+! Removed a lot of unneeded debugging stuff
+!
 ! Revision 2.15  2021/10/14 22:25:25  pwagner
 ! Changes to acommodate setting precisions
 !
