@@ -1345,7 +1345,8 @@ contains ! =====     Public Procedures     =============================
       call Get_String ( hgrid%name, name )
       profiled = profiled .and. index(lowercase(name), 'standard') > 0
     else
-      call output('(unknown)' )
+      ! call output('(unknown)' )
+      name = '(unknown)'
     end if
     L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
     if ( .not. associated(L1BFile) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -2241,10 +2242,12 @@ contains ! =====     Public Procedures     =============================
                 call outputNamedValue( 'Before making dummyHGrid', chunk )
                 call CheckForCorruptFileDatabase( filedatabase )
               endif
+              ! print *, 'About to  call CreateHGridFromMLSCFInfo'
               dummyHGrid = CreateHGridFromMLSCFInfo ( 0, key, filedatabase, l2gpDatabase, &
                 & processingRange, chunks(chunk), onlyComputingOffsets=.true., &
                 & check=.false. )
                 ! & check=(chunk == 1) )
+              ! print *, 'Done with CreateHGridFromMLSCFInfo'
               if ( chunk == 1 .and. deebug.and. .false.  ) then
                 call outputNamedValue( 'During chunk#', chunk )
                 call CheckForCorruptFileDatabase( filedatabase )
@@ -2809,6 +2812,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.159  2022/04/13 21:31:28  pwagner
+! Skipped some unneeded output
+!
 ! Revision 2.158  2021/11/18 18:11:28  pwagner
 ! Re-Trim regular HGrid to remove unwanted stubby overlap
 !
