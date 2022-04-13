@@ -54,7 +54,14 @@ MODULE NeuralNetUtils_M
   end type Radiance_T
 
   type NeuralNetCoeffs_T
+     ! One of 'relu,sigmoid,tanh'
      character(len=32)                             :: Activation_Function
+     ! Sizes of allocatable arrays
+     integer                                       :: NumberOfBands
+     integer                                       :: MaxNumberOfChannels
+     integer                                       :: NumberOfPressLevels
+     integer                                       :: NumberOfNeurons
+     integer                                       :: NumberOfVars
      ! Will be allocated in the caller. 
      ! [3]  Number of Bands
      character(len=32),  dimension(:), allocatable :: Bands
@@ -66,7 +73,7 @@ MODULE NeuralNetUtils_M
      ! (and someday may even skip some in the non-DACS)
      ! So (M,3)
      integer,   dimension(:,:), allocatable :: Channels_In_Each_Band
-     ! Variabls of this type will be allocated in the caller. 
+     ! Variables of this type will be allocated in the caller. 
 
      ! these are the dimensions for each part (assuming that we keep
      ! with Frank set up for Temperature retrieval)
@@ -108,6 +115,9 @@ MODULE NeuralNetUtils_M
   end type NeuralNetCoeffs_T
 
 
+  ! The following should be replaced by
+  ! type (Radiance_T), dimension(:), pointer :: InputRadiances
+
   type NeuralNetInputData_T
      ! I'm assuming that will have been corrected for the baseline and
      ! reduced to the appropriate MIFs, 22-96 for all bands, all 25
@@ -124,7 +134,7 @@ MODULE NeuralNetUtils_M
   end type NeuralNetInputData_T
 
   ! Paul; I used this type to pass info out of the routine. In the
-  ! final configutation, all you'll need is `prediction', so you could
+  ! final configuration, all you'll need is `prediction', so you could
   ! modify the type to use  just that variable, or comment it out
   ! entirely and just put `prediction' directly into the interface for
   ! NeuralNetFit. 
@@ -490,13 +500,13 @@ contains
     
     call outputNamedValue ( 'Number of pressure levels', &
          & SIZE(Coeffs%Intercepts_Hidden_Labels_Layer) )
-    IF ( myDetails > 0 ) THEN
+    if ( myDetails > 0 ) THEN
       !call dump ( Coeffs%Output_Pressure_Levels, 'Output_Pressure_Levels' )
       !call dump ( Coeffs%Output_Pressure_Levels_Indices, 'Output_Pressure_Indices' )
       call dump ( Coeffs%Intercepts_Hidden_Labels_Layer, 'Intercepts layer' )
       call dump ( Coeffs%Normalization_Labels_Max, 'Normalization Labels Max' )
       call dump ( Coeffs%Normalization_Labels_Min, 'Normalization Labels Max' )
-    ENDIF
+    endif
 
     call outputNamedValue ( 'Number of neurons', size(Coeffs%Intercepts_Hidden_Layer_1) )
     if ( myDetails < 0 ) return    
@@ -567,31 +577,31 @@ contains
      type = nnCoeffs%Activation_Function
      status = 0
      debug = .false.
-     IF (PRESENT(debugging)) debug=debugging
-     IF (debug) THEN 
+     if (PRESENT(debugging)) debug=debugging
+     if (debug) THEN 
        ! open an output file (for debugging purposes)
        OPEN(unit=7,file='intermediate_results.dat',status='replace',&
             & form='unformatted', iostat=istat, &
             & access='stream')
-       IF (istat /= 0) THEN 
+       if (istat /= 0) THEN 
          print *,'bad open! istat = ',istat
          return
-       ENDIF
-     ENDIF
+       endif
+     endif
 
     ! make sure type is correct.
-    IF ( index( 'relu,sigmoid,tanh', trim(type) ) < 1 ) then 
+    if ( index( 'relu,sigmoid,tanh', trim(type) ) < 1 ) then 
       print *,"input var type must be one of 'relu', 'tanh' or 'sigmoid'"
       call MLSMessage ( MLSMSG_Error, moduleName, &
         & 'Illegal activation type ' // trim(type) )
-    ENDIF
-    IF (NHL /=  1 .AND. NHL /= 2) THEN 
+    endif
+    if (NHL /=  1 .AND. NHL /= 2) THEN 
       print *,"NHL must equal either 1 or 2"
-     ENDIF
+     endif
 
 
     ! These are fixed for the run
-    IF (FIRST) THEN 
+    if (FIRST) THEN 
       nMIFs = nnInputData%Band_1_Radiances%numMIFs
       nChans(1)=nnInputData%Band_1_Radiances%numChannels
       nChans(2)=nnInputData%Band_22_Radiances%numChannels
@@ -601,16 +611,16 @@ contains
       dims2=SIZE( nnCoeffs%Standardization_Brightness_Temperature_Mean ) 
       nVars = dims2(1)
       first=.FALSE.
-    ENDIF
+    endif
 
 
-    IF (debug) THEN 
+    if (debug) THEN 
       print *,'nMIFs=',nMIFs
       print *,'nChans=',nChans
       print *,'nSurfs=',nSurfs
       print *,'nNeurons=',nNeurons
       print *,'nVars=',nVars
-    ENDIF
+    endif
 
     ! allocate space                        
     ! nVars = 2*Chanels(bands 1&8) *  nMIFs + nChans(22)*nMIFs
@@ -620,8 +630,6 @@ contains
     allocate( working_space(nVars )) 
     allocate(neuronValues(nNeurons))
     ! These will have already have been allocated in the caller
-!     allocate(prediction(nSurfs))
-!     allocate(precision(nSurfs))
 
     allocate(neuronValues2(nNeurons))
 
@@ -642,30 +650,30 @@ contains
     ! load the data into the working_space
     jj = 1
     ! Load band1
-    DO m=1,nMIFs
-      DO c=1,nChans(1)
+    do m=1,nMIFs
+      do c=1,nChans(1)
         working_space( jj ) = nnInputData%Band_1_Radiances%Values(c,m)
         jj = jj + 1
-      end DO
-    end DO
+      enddo
+    enddo
 
     ! Load band8
-    DO m=1,nMIFs
-      DO c=1,nChans(1)
+    do m=1,nMIFs
+      do c=1,nChans(1)
         working_space( jj ) = nnInputData%Band_8_Radiances%Values(c,m)
         jj = jj + 1
-      end DO
-    end DO
+      enddo
+    enddo
 
     ! load band 22
-    DO m=1,nMIFs
-      DO c=1,nChans(2)
+    do m=1,nMIFs
+      do c=1,nChans(2)
         working_space( jj ) = nnInputData%Band_22_Radiances%Values(c,m)
         jj = jj + 1
-      end DO
-    end DO
+      enddo
+    enddo
 
-    IF (debug) THEN 
+    if (debug) THEN 
       print *,'before normalization: size(working_space) = ',SIZE(working_space)
       WRITE (7,iostat=istat) working_space
 
@@ -692,7 +700,7 @@ contains
       print *,'size(Weights_Hidden_Layer_2) = ',SIZE(nnCoeffs%Weights_Hidden_Layer_2)
       write (7,iostat=istat) nnCoeffs%Weights_Hidden_Layer_1, & 
            & nnCoeffs%Weights_Hidden_Layer_2
-    ENDIF
+    endif
 
     neuronValues=0.0
     ! working_space is [nVars]
@@ -701,20 +709,19 @@ contains
     ! neuronValues is [nNeurons]
     ! Weights_Hidden_layer_1 is [numNeurons, numVars]
     ! Weights_Hidden_layer_2 is [numNeurons,numNeurons ]
-    DO v=1,nVars
+    do v=1,nVars
       neuronValues = neuronValues + &
            & working_space(v) * nnCoeffs%Weights_Hidden_Layer_1(v,:) 
-!           & working_space(v) * nnCoeffs%Weights_Hidden_Layer_1(:,v) 
-    end DO
-    IF (debug) THEN 
+    enddo
+    if (debug) THEN 
       print *,'after calculation with whl1: size(neuronValues) = ',SIZE(neuronValues)
       WRITE(7,iostat=istat) neuronValues
-    ENDIF
+    endif
     !print *,'k = ',k ! 8
     ! k=k+1
     neuronValues = Activation ( type, neuronValues + & 
            & nnCoeffs%Intercepts_Hidden_Layer_1 )
-    IF (debug) THEN 
+    if (debug) THEN 
       print *,'After ihl1'
       print*,'intercepts_hidden_layer_[12]',size(nnCoeffs%Intercepts_Hidden_Layer_1)
       WRITE (7) nnCoeffs%Intercepts_Hidden_Layer_1, nnCoeffs%Intercepts_Hidden_Layer_2
@@ -724,37 +731,31 @@ contains
       WRITE (7) nnCoeffs%Weights_Hidden_Labels_Layer
       print *,'after ihl1: size(neuronValues) = ',SIZE(neuronValues)
       WRITE(7,iostat=istat) neuronValues
-    ENDIF
+    endif
     if ( debug ) then
       call OutputNamedValue ( 'num neurons', nNeurons )
       call OutputNamedValue ( 'shape(WHLL)', shape(nnCoeffs%Weights_Hidden_Labels_Layer) )
     endif
 
 
-    !print *,'k = ',k ! 9
-    ! k=k+1
-
-
-    !print *,'nHL = ',nHL
-    IF (nHL .EQ. 1) THEN 
+    if (nHL .EQ. 1) THEN 
       ! 1 hidden layer
       ! Loop over surfaces
       
-      DO s=1,nSurfs 
+      do s=1,nSurfs 
 
-!        y_pred2 = DOT( neuronValues, &
         y_pred2 = dot_product( neuronValues, &
              & nnCoeffs%Weights_Hidden_Labels_Layer(:,s)  ) + &
              &   nnCoeffs%Intercepts_Hidden_Labels_Layer(s)
 
         if ( present(nnOutputData) ) then
-        nnOutputData%y_pred(s)=y_pred2
+          nnOutputData%y_pred(s)=y_pred2
 
-        ! Denormalize the 'labels'
-        nnOutputData%prediction(s) = y_pred2 * &
-             & ( nnCoeffs%Normalization_Labels_Max(s) - &
-             &   nnCoeffs%Normalization_Labels_Min(s)) + &
-             &   nnCoeffs%Normalization_Labels_Min(s)
+          ! Denormalize the 'labels'
+          nnOutputData%prediction(s) = y_pred2 * &
+               & ( nnCoeffs%Normalization_Labels_Max(s) - &
+               &   nnCoeffs%Normalization_Labels_Min(s)) + &
+               &   nnCoeffs%Normalization_Labels_Min(s)
         endif
         prediction(s) = y_pred2 * &
              & ( nnCoeffs%Normalization_Labels_Max(s) - &
@@ -763,33 +764,32 @@ contains
 
         !print '(a14,",",i2,",",f0.2,",",f0.2)','s, yp2,pred = ',&
         !     &              s,y_pred2,nnOutputData%prediction(s)
-      ENDDO ! loop over pressure surfaces
+      enddo ! loop over pressure surfaces
 
-    ELSEIF (nHL .EQ. 2) THEN 
+    ELSEif (nHL .EQ. 2) THEN 
 
 
       ! 2 hidden layers
       neuronValues2=0.0
-      DO n=1,nNeurons
+      do n=1,nNeurons
         neuronValues2 = neuronValues2 + &
              & neuronValues(n) * nnCoeffs%Weights_Hidden_Layer_2(n,:)
-      end DO
+      enddo
 
-      IF (debug) THEN 
+      if (debug) THEN 
         print *,'Writing size(neuronValues2) = ',SIZE(neuronValues2)
         WRITE(7,iostat=istat) neuronValues2
-      ENDIF
+      endif
       neuronValues2 = Activation ( type, neuronValues2 + & 
            & nnCoeffs%Intercepts_Hidden_Layer_1 )
-      IF (debug) THEN 
+      if (debug) THEN 
         print *,'after applying ihl2: Writing size(neuronValues2) = ',SIZE(neuronValues2)
         WRITE(7,iostat=istat) neuronValues2
-      ENDIF
+      endif
 
       ! Calculate the final product
-      DO s=1,nSurfs 
+      do s=1,nSurfs 
 
-!        y_pred2 = DOT( neuronValues2, &
         y_pred2 = dot_product( neuronValues2, &
              & nnCoeffs%Weights_Hidden_Labels_Layer(:,s)  ) + &
              &   nnCoeffs%Intercepts_Hidden_Labels_Layer(s)
@@ -810,8 +810,8 @@ contains
 
         !print '(a14,",",i2,",",f0.2,",",f0.2)','s, yp2,pred = ',&
         !     &              s,y_pred2,nnOutputData%prediction(s)
-      ENDDO ! loop over pressure surfaces
-      IF (debug) THEN 
+      enddo ! loop over pressure surfaces
+      if (debug) THEN 
         print *,'Normalization labels min/max'
         write (7,iostat=istat) nnCoeffs%Normalization_Labels_Min, &
              & nnCoeffs%Normalization_Labels_Max
@@ -852,9 +852,6 @@ contains
     endif
 
     status=1
-
-    !print *,'k = ',k ! 10
-    ! k=k+1
 
     if (debug) CLOSE(7)
     contains
@@ -950,12 +947,6 @@ contains
     do j=1, n
       ratio(j) = ( values(j) - mean(j) ) / stddev(j)
     enddo
-    if ( .false. ) then
-      call Dump( values, 'values' )
-      call Dump( mean ,  'mean  ' )
-      call Dump( stddev, 'stddev' )
-      call Dump( ratio , 'ratio ' )
-    endif
     if ( DeeBug ) then
       call OutputNamedValue ( '1st(values)', values(1) )
       call OutputNamedValue ( 'max(values)', maxval(values) )
@@ -983,8 +974,6 @@ contains
         nnInputData%Band_1_Radiances%values(channel, MIF) = ratio(j)
       enddo
     enddo
-!     print *, 'j: ', j
-!     print *, ratio(j)
     ! Band _8_
     do MIF=1, nnInputData%Band_8_Radiances%NumMIFs
       do channel=1, nnInputData%Band_8_Radiances%NumChannels
@@ -992,8 +981,6 @@ contains
         nnInputData%Band_8_Radiances%values(channel, MIF) = ratio(j)
       enddo
     enddo
-!     print *, 'j: ', j
-!     print *, ratio(j)
     ! Band _22_
     do MIF=1, nnInputData%Band_22_Radiances%NumMIFs
       do channel=1, nnInputData%Band_22_Radiances%NumChannels
@@ -1001,8 +988,6 @@ contains
         nnInputData%Band_22_Radiances%values(channel, MIF) = ratio(j)
       enddo
     enddo
-!     print *, 'j: ', j
-!     print *, ratio(j)
     !
     if ( .not. present(TempFileID) ) return
     call CompareStandardizedRads ( TempFileID, &
@@ -1022,14 +1007,14 @@ contains
     integer :: i,nn
     dot=0
     nn=size(x)
-    IF (nn .NE. SIZE(y)) THEN 
+    if (nn .NE. SIZE(y)) THEN 
       CALL MLSMessage(MLSMSG_error, ModuleName, &
            & 'The two vectors are not the same size!')
-    ENDIF
+    endif
 
-    DO i=1,SIZE(x)
+    do i=1,SIZE(x)
       dot = dot + x(i)*y(i)
-    end DO
+    enddo
   end function dot
 
   ! Sigmoid subroutine
@@ -1051,6 +1036,9 @@ contains
 
 end module NeuralNetUtils_M
 ! $Log$
+! Revision 2.11  2021/10/14 22:22:51  pwagner
+! NeuralNetFit now a subroutine; takes precision as an extra arg
+!
 ! Revision 2.10  2021/07/28 23:41:37  pwagner
 ! Fix bug preventing full use of relu activation function
 !
