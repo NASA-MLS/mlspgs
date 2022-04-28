@@ -15,7 +15,6 @@ module NeuralNet_m              ! Use Neural Net Model to Retrieve State
 
   use Chunks_m, only: Dump
   use Global_Settings, only: L1MAFToL2Profile, L2ProfileToL1MAF
-  use HDF, only: DFAcc_Create, DFAcc_RDOnly
   use HGridsDatabase, only: L1BGeolocation
   use HighOutput, only: BeVerbose, Dump, LetsDebug, OutputNamedValue
   use Hunt_M, only: Hunt
@@ -29,7 +28,8 @@ module NeuralNet_m              ! Use Neural Net Model to Retrieve State
   use MLSStats1, only: MLSMax, MLSMin
   use MLSStrings, only: Capitalize, ReplaceNonAscii
   use MoreTree, only: Get_Field_Id
-  use NeuralNetUtils_m, only: NeuralNetCoeffs_T, NeuralNetInputData_T, &
+  use NeuralNetUtils_m, only: NeuralNetCoeffs_T, &
+    & NeuralNetInputData_T, NeuralNetInputData_2_T, &
     & MatchedBinNum, MatchedMAF, MatchedStdRadiances, &
     & CheckMAFs, CheckTemperatures, Dump, NeuralNetFit, StandardizeRadiances
   use Output_M, only: Output
@@ -84,7 +84,7 @@ module NeuralNet_m              ! Use Neural Net Model to Retrieve State
 !---------------------------------------------------------------------------
 
   ! The following must someday also be read from the file of weight coefficients
-  integer, parameter              :: NumHiddenLayers  = 2
+  !  integer, parameter              :: NumHiddenLayers  = 2
   ! The type of activation function is now read from the weights file
   ! (and anyway, it could be and in fact ultimately is 'relu'
   ! character(len=*), parameter     :: switchOver       = 'tanh' ! or 'sigmoid'
@@ -109,7 +109,7 @@ contains ! =====     Public Procedures     =============================
 
 
   subroutine NeuralNet ( Key, VectorsDatabase, Chunk, FileDatabase )
-    use Init_Tables_Module, only: L_HDF, L_Temperature, L_Radiance
+    use Init_Tables_Module, only: L_H2O, L_HDF, L_Temperature, L_Radiance
     use Init_Tables_Module, only: F_State, F_Measurements, F_File, F_OutputSD
     integer, intent(in)                        :: Key
     type(vector_T), dimension(:), target       :: VectorsDatabase
@@ -118,7 +118,7 @@ contains ! =====     Public Procedures     =============================
     integer                   :: Me = -1 ! String index for trace
 
     ! Local variables
-    logical, dimension(3) :: NeededBands
+    logical, dimension(23) :: NeededBands
     integer :: BinNum                 ! Loop counter
     logical :: DeeBug
     integer :: FIELD                  ! Entry in tree
@@ -141,6 +141,7 @@ contains ! =====     Public Procedures     =============================
     real(r4):: MaxLat
     real(r4):: MinLat
     integer :: MyFile                 ! FileDatabase index
+    integer :: NumHiddenLayers        ! = 2
     integer :: NumMAFs                ! In this chunk
     real(r4):: Phi
     integer :: Profile
@@ -151,7 +152,7 @@ contains ! =====     Public Procedures     =============================
     integer :: Status
     real(Rv), allocatable, dimension(:) :: FranksValues
     real(Rv), allocatable, dimension(:) :: PrecisionValues
-    real(Rv), allocatable, dimension(:) :: TemperatureValues
+    real(Rv), allocatable, dimension(:) :: Values
     integer :: TempfileID
     integer, dimension(3) :: theseMAFs
     integer :: thisMAF
@@ -165,11 +166,17 @@ contains ! =====     Public Procedures     =============================
     type (MLSFile_T), pointer       :: CoeffsFile
     type (MLSFile_T), pointer       :: RadiancesFile
     type (VectorValue_T), pointer   :: Radiances ! The radiances for this band
+    character(len=16)               :: RetrievedQty ! 'Temperature' or 'H2O'
+    type (VectorValue_T), pointer   :: H2O ! The quantity to fill
+    type (VectorValue_T), pointer   :: H2OPrecision ! Another quantity to fill
     type (VectorValue_T), pointer   :: Temperature ! The quantity to fill
     type (VectorValue_T), pointer   :: TemperaturePrecision ! Another quantity to fill
+    type (VectorValue_T), pointer   :: Qty ! The quantity to fill
+    type (VectorValue_T), pointer   :: Precision ! Another quantity to fill
     
     type(NeuralNetCoeffs_T)         :: Coeffs
     type(NeuralNetInputData_T)      :: NNMeasurements
+    type(NeuralNetInputData_2_T)    :: NNMeasurements_2
     character (len=1024)            :: FileName
     real(rk), dimension(:,:), pointer :: GeodAngle
     real(rk), dimension(:,:), pointer :: GeodLat
@@ -240,20 +247,38 @@ contains ! =====     Public Procedures     =============================
       call outputNamedValue ( 'num quantities in state', state%template%noQuantities )
     endif
     do i = 1, state%template%noQuantities
-      if ( state%quantities(i)%template%quantityType /= l_temperature ) then
-        if ( verbose ) print *, 'Skipping non-Temperature state quantity'
+      if ( state%quantities(i)%template%quantityType == l_temperature ) then
+        TemperaturePrecision => OutputSD%quantities(i)
+        Temperature => state%quantities(i)
+        Temperature%values = 0.0_rv
+        RetrievedQty = 'Temperature'
+        NumHiddenLayers = 2
+        if ( .not. associated(Temperature%BinNumber) ) &
+          & allocate(Temperature%BinNumber(Temperature%template%NoInstances) )
+        if ( .not. associated(Temperature%MAF) ) &
+          & allocate(Temperature%MAF(Temperature%template%NoInstances) )
+        Qty => Temperature
+        Precision => TemperaturePrecision
+      elseif ( state%quantities(i)%template%quantityType == l_h2o ) then
+        H2OPrecision => OutputSD%quantities(i)
+        H2O => state%quantities(i)
+        H2O%values = 0.0_rv
+        RetrievedQty = 'H2O'
+        NumHiddenLayers = 4
+        if ( .not. associated(H2O%BinNumber) ) &
+          & allocate(H2O%BinNumber(H2O%template%NoInstances) )
+        if ( .not. associated(H2O%MAF) ) &
+          & allocate(H2O%MAF(H2O%template%NoInstances) )
+        Qty => H2O
+        Precision => H2OPrecision
+      else
+        if ( verbose ) &
+          & print *, 'Skipping non-Temperature, non-H2O state quantity'
         cycle
       end if
-      TemperaturePrecision => OutputSD%quantities(i)
-      Temperature => state%quantities(i)
-      Temperature%values = 0.0_rv
-      ! Now go through all the bands in the measurement vector that are in this radiometer
     end do                          ! End loop over state quantities
-    if ( .not. associated(Temperature%BinNumber) ) &
-      & allocate(Temperature%BinNumber(Temperature%template%NoInstances) )
-    if ( .not. associated(Temperature%MAF) ) &
-      & allocate(Temperature%MAF(Temperature%template%NoInstances) )
 
+      ! Now go through all the bands in the measurement vector that are in this radiometer
     do j = 1, measurements%template%noQuantities
       if ( measurements%quantities(j)%template%quantityType /= l_radiance ) then
         if ( verbose ) print *, 'measurement quantity type is not a radiance'
@@ -277,14 +302,39 @@ contains ! =====     Public Procedures     =============================
       case ('R1A:118.B1F:PT.S0.FB25-1')
         if ( verbose ) print *, 'Got Band 1'
         NeededBands(1) = .true.
-        NNMeasurements%Band_1_Radiances%NumChannels = NumChnnelsBand1
-        NNMeasurements%Band_1_Radiances%NumMIFs     = NumMIFs
+        ! Band 1 radiances are used in retrieving both T and H2O
+        if ( RetrievedQty == 'Temperature' ) then
+          NNMeasurements%Band_1_Radiances%NumChannels = NumChnnelsBand1
+          NNMeasurements%Band_1_Radiances%NumMIFs     = NumMIFs
+          allocate( &
+            & NNMeasurements%Band_1_Radiances%&
+            &   values(NumChnnelsBand1, NumMIFs) )
+        else
+          NNMeasurements_2%Band_1_Radiances%NumChannels = NumChnnelsBand1
+          NNMeasurements_2%Band_1_Radiances%NumMIFs     = NumMIFs
+          allocate( &
+            & NNMeasurements_2%Band_1_Radiances%&
+            &   values(NumChnnelsBand1, NumMIFs) )
+        endif
+      case ('R2:190.B2F:H2O.S0.FB25-1')
+        if ( verbose ) print *, 'Got Band 2'
+        NeededBands(2) = .true.
+        NNMeasurements_2%Band_2_Radiances%NumChannels = NumChnnelsBand1
+        NNMeasurements_2%Band_2_Radiances%NumMIFs     = NumMIFs
         allocate( &
-          & NNMeasurements%Band_1_Radiances%&
+          & NNMeasurements_2%Band_2_Radiances%&
+          &   values(NumChnnelsBand1, NumMIFs) )
+      case ('R2:190.B3F:N2O.S0.FB25-1')
+        if ( verbose ) print *, 'Got Band 3'
+        NeededBands(3) = .true.
+        NNMeasurements_2%Band_3_Radiances%NumChannels = NumChnnelsBand1
+        NNMeasurements_2%Band_3_Radiances%NumMIFs     = NumMIFs
+        allocate( &
+          & NNMeasurements_2%Band_3_Radiances%&
           &   values(NumChnnelsBand1, NumMIFs) )
       case ('R3:240.B8F:PT.S3.FB25-8')
         if ( verbose ) print *, 'Got Band 8'
-        NeededBands(2) = .true.
+        NeededBands(8) = .true.
         NNMeasurements%Band_8_Radiances%NumChannels = NumChnnelsBand8
         NNMeasurements%Band_8_Radiances%NumMIFs     = NumMIFs
         allocate( &
@@ -292,11 +342,19 @@ contains ! =====     Public Procedures     =============================
           &   values(NumChnnelsBand8, NumMIFs) )
       case ('R1A:118.B22D:PT.S0.DACS-4')
         if ( verbose ) print *, 'Got Band 22'
-        NeededBands(3) = .true.
+        NeededBands(22) = .true.
         NNMeasurements%Band_22_Radiances%NumChannels = NumChnnelsBand22
         NNMeasurements%Band_22_Radiances%NumMIFs     = NumMIFs
         allocate( &
           & NNMeasurements%Band_22_Radiances%&
+          &   values(NumChnnelsBand22, NumMIFs) )
+      case ('R2:190.B23D:H2O.S0.DACS-4')
+        if ( verbose ) print *, 'Got Band 23'
+        NeededBands(23) = .true.
+        NNMeasurements_2%Band_23_Radiances%NumChannels = NumChnnelsBand22
+        NNMeasurements_2%Band_23_Radiances%NumMIFs     = NumMIFs
+        allocate( &
+          & NNMeasurements_2%Band_23_Radiances%&
           &   values(NumChnnelsBand22, NumMIFs) )
       case default
         call output ( 'Unrecognized or unwanted signal string:', advance='no' )
@@ -308,15 +366,27 @@ contains ! =====     Public Procedures     =============================
 
     ! Sanity checks
     ! Must have all needed Bands
-    if ( .not. any(NeededBands) ) then
-      call announce_error ( key, &
-        & 'Must have all 3 needed bands; check your l2cf' )
+    if ( RetrievedQty == 'Temperature') then
+      if ( .not. &
+        & (NeededBands(1) .and. NeededBands(8) .and. NeededBands(22) ) &
+        &  ) then
+        call announce_error ( key, &
+        & 'Must have all 3 needed bands to retrieve T; check your l2cf' )
+      endif
+    else ! H2O
+      if ( .not. &
+        & (NeededBands(1) .and. NeededBands(2) .and. &
+        &  NeededBands(3) .and. NeededBands(23) ) &
+        &  ) then
+        call announce_error ( key, &
+        & 'Must have all 4 needed bands to retrieve H2O; check your l2cf' )
+      endif
     endif
     if ( myFile > 0 ) then
       CoeffsFile => FileDatabase(myFile)
     else
       CoeffsFile => AddInitializeMLSFile ( FileDatabase, name=fileName, &
-        & shortName='Temperature', &
+        & shortName=RetrievedQty, &
         & type=l_hdf, content='NNCoeffs', HDFVersion=HDFVersion_5 )
     endif
     call MLS_OpenFile( CoeffsFile, Status )
@@ -328,10 +398,10 @@ contains ! =====     Public Procedures     =============================
     call L1BGeoLocation ( filedatabase, 'GHz/GeodLat    ', &
       & 'GHz', values2d=GeodLat )
     ! We'll use the Geod angles directly
-    call Hunt ( temperature%template%phi(1,:),  &
+    call Hunt ( Qty%template%phi(1,:),  &
       & GeodAngle(36,Chunk%firstMAFIndex+1), firstProfile, &
       & allowTopValue=.true. )
-    call Hunt ( temperature%template%phi(1,:),  &
+    call Hunt ( Qty%template%phi(1,:),  &
       & GeodAngle(36,Chunk%lastMAFIndex+1), lastProfile, &
       & allowTopValue=.true. )
     ! Now we actually want the profile numbers in the entire
@@ -342,13 +412,13 @@ contains ! =====     Public Procedures     =============================
     if ( verbose ) print *, 'HGrid offset  ', chunk%hGridOffsets(1)
     if ( verbose ) print *, 'firstProfile ', firstProfile
     if ( verbose ) print *, 'lastProfile  ',  lastProfile
-    allocate(TemperatureValues(NumLevels))
+    allocate(Values(NumLevels))
     allocate(PrecisionValues(NumLevels))
-    allocate(FranksValues(Temperature%template%NoSurfs))
+    allocate(FranksValues(Qty%template%NoSurfs))
     
     ! Here's something new: must find first and last latitude bins
-    minLat = mlsmin( temperature%template%geodLat(1,:) )
-    maxLat = mlsmax( temperature%template%geodLat(1,:) )
+    minLat = mlsmin( Qty%template%geodLat(1,:) )
+    maxLat = mlsmax( Qty%template%geodLat(1,:) )
     firstBin = FindLast ( BinArray - minLat < 0._r4 )
     lastBin  = FindFirst ( BinArray - maxLat > 0._r4 )
     ! if ( lastBin < firstBin ) lastBin = firstBin ! In case firstBin == NumBins
@@ -371,38 +441,38 @@ contains ! =====     Public Procedures     =============================
         & Coeffs, &
         & BinNum==firstBin ) ! MustAllocate Coeffs arrays on the 1st time through
       if ( verbose ) print *, 'Done reading Coeffs file'
-      ! call OutputNamedValue ( 'Num profiles', temperature%template%NoInstances )
-      do profile = 1, temperature%template%NoInstances ! firstProfile, lastProfile
+      ! call OutputNamedValue ( 'Num profiles', Qty%template%NoInstances )
+      do profile = 1, Qty%template%NoInstances ! firstProfile, lastProfile
         if ( verbose ) call outputNamedValue ( 'instance number in chunk ', profile )
         ! Does this profile fall within this bin num?
         if ( &
-          & temperature%template%geodLat(1,profile) < BinArray(BinNum) &
+          & Qty%template%geodLat(1,profile) < BinArray(BinNum) &
           & .or. &
-          & temperature%template%geodLat(1,profile) > BinArray(BinNum) + BinSz &
+          & Qty%template%geodLat(1,profile) > BinArray(BinNum) + BinSz &
           & ) &
           & cycle
-        if ( verbose ) print *, 'lat of profile ', profile, ' ', temperature%template%geodLat(1,profile)
+        if ( verbose ) print *, 'lat of profile ', profile, ' ', Qty%template%geodLat(1,profile)
         if ( verbose ) print *, 'bin range ', BinArray(BinNum), BinArray(BinNum)+BinSz
         thisProfile = profile + firstProfile - 1
         ! Find thisMAF matching profile
         ! Choose which method by which to match MAF to profile
         call Hunt ( GeodAngle(36,:), &
-          & temperature%template%phi(1,profile), thisMaf, &
+          & Qty%template%phi(1,profile), thisMaf, &
           & allowTopValue=.true. )
         if ( verbose ) call OutputNamedValue ( 'Hunt returned MAF', thisMAF )
         theseMAFs(2) = thisMAF
         ! Do we need to scale?
         theseMAFs(1:1) = minloc( &
-          & abs(GeodAngle(36,:)-temperature%template%phi(1,profile)) &
+          & abs(GeodAngle(36,:)-Qty%template%phi(1,profile)) &
           & + &
-          & abs(GeodLat(36,:)-temperature%template%GeodLat(1,profile)) &
+          & abs(GeodLat(36,:)-Qty%template%GeodLat(1,profile)) &
           & ) - 1
         thisMAF = theseMAFs(1) ! minloc insists on returning an array 
         if ( verbose ) call OutputNamedValue ( 'minloc returned MAF', thisMAF )
         thisMAF = FindFirst( &
-          & (abs(GeodAngle(36,:)-temperature%template%phi(1,profile)) < 2.) &
+          & (abs(GeodAngle(36,:)-Qty%template%phi(1,profile)) < 2.) &
           & .and. &
-          & (abs(GeodLat(36,:)-temperature%template%GeodLat(1,profile)) < 1.) &
+          & (abs(GeodLat(36,:)-Qty%template%GeodLat(1,profile)) < 1.) &
           & )
         if ( verbose ) call OutputNamedValue ( 'FindFirst returned MAF', thisMAF )
         theseMAFs(3) = thisMAF
@@ -418,9 +488,9 @@ contains ! =====     Public Procedures     =============================
         if ( verbose ) print *, 'binNum, profile, MAF, chunk ', binNum, profile, MAF, Chunk%ChunkNumber
         if ( verbose ) print *, 'binNum, thisprofile, thisMAF, chunk ', binNum, thisprofile, thisMAF, Chunk%ChunkNumber
         if ( verbose ) print *, 'Num measurement quantities ', measurements%template%noQuantities
-        if ( verbose ) print *, 'Temperature radiometer ', Temperature%template%radiometer
-        Temperature%BinNumber(profile) = binNum
-        Temperature%MAF(profile)       = thisMAF
+        if ( verbose ) print *, 'Qty radiometer ', Qty%template%radiometer
+        Qty%BinNumber(profile) = binNum
+        Qty%MAF(profile)       = thisMAF
         ! MAF and profile are indices inside the chunk, not absolute indices
         do j = 1, measurements%template%noQuantities
           ! call Dump ( measurements%quantities(j)%template )
@@ -434,36 +504,72 @@ contains ! =====     Public Procedures     =============================
           radiances => measurements%quantities(j)
           signal = measurements%quantities(j)%template%signal
           ! print *, 'Calling AssembleNNMeasurement for MAF ', thisMAF
-          call AssembleNNMeasurement ( NNMeasurements, &
-            & radiances, signal, &
-            & Coeffs%MIFs, Coeffs%Channels_In_Each_Band, MAF, DeeBug )
+          if ( RetrievedQty == 'Temperature' ) then
+            call AssembleNNMeasurement ( NNMeasurements, &
+              & radiances, signal, &
+              & Coeffs%MIFs, Coeffs%Channels_In_Each_Band, MAF, DeeBug )
+          else ! H2O
+            call AssembleNNMeasurement_2 ( NNMeasurements_2, &
+              & radiances, signal, &
+              & Coeffs%MIFs, Coeffs%Channels_In_Each_Band, MAF, DeeBug )
+          endif
         end do     
         ! End loop over bands
-        if ( all(NNMeasurements%Band_1_Radiances%values == 0._r8) ) &
-          print *, 'All band 1 radiances vanish'
-        if ( all(NNMeasurements%Band_8_Radiances%values == 0._r8) ) &
-          print *, 'All band 8 radiances vanish'
-        if ( all(NNMeasurements%Band_22_Radiances%values == 0._r8) ) &
-          print *, 'All band 22 radiances vanish'
-        if ( StandardizeRadiancesHere ) then
-          call StandardizeRadiances ( NNMeasurements, &
-            & Coeffs%Standardization_Brightness_Temperature_Mean, &
-            & Coeffs%Standardization_Brightness_Temperature_Std )
+        if ( RetrievedQty == 'Temperature' ) then
+          if ( all(NNMeasurements%Band_1_Radiances%values == 0._r8) ) &
+            print *, 'All band 1 radiances vanish'
+          if ( all(NNMeasurements%Band_8_Radiances%values == 0._r8) ) &
+            print *, 'All band 8 radiances vanish'
+          if ( all(NNMeasurements%Band_22_Radiances%values == 0._r8) ) &
+            print *, 'All band 22 radiances vanish'
+          if ( StandardizeRadiancesHere ) then
+            call StandardizeRadiances ( NNMeasurements, &
+              & Coeffs%Standardization_Brightness_Temperature_Mean, &
+              & Coeffs%Standardization_Brightness_Temperature_Std )
+          endif
+          ! stop
+          ! print *, 'Calling NeuralNetFit'
+          if ( verbose ) print *, 'Using NeuralNetFit with our own raw Radiances'
+          call NeuralNetFit ( NNMeasurements, &
+            & Coeffs, NumHiddenLayers, Values, PrecisionValues, &
+            & Debugging=.false. )
+          do j=1, NumLevels
+            Temperature%values(Coeffs%Output_Pressure_Levels_Indices(j), profile) = &
+              & Values(j)
+          enddo
+          if ( any(PrecisionValues == UndefinedValue) ) &
+            & TemperaturePrecision%values(:,profile) = UndefinedValue
+          ! if ( StandardizeRadiancesHere ) &
+          !  & call Dump ( FranksValues, 'Temps (Franks ANN)' )
+        else ! H2O
+          if ( all(NNMeasurements_2%Band_1_Radiances%values == 0._r8) ) &
+            print *, 'All band 1 radiances vanish'
+          if ( all(NNMeasurements_2%Band_2_Radiances%values == 0._r8) ) &
+            print *, 'All band 2 radiances vanish'
+          if ( all(NNMeasurements_2%Band_3_Radiances%values == 0._r8) ) &
+            print *, 'All band 3 radiances vanish'
+          if ( all(NNMeasurements_2%Band_23_Radiances%values == 0._r8) ) &
+            print *, 'All band 23 radiances vanish'
+          if ( StandardizeRadiancesHere ) then
+            call StandardizeRadiances ( NNMeasurements_2, &
+              & Coeffs%Standardization_Brightness_Temperature_Mean, &
+              & Coeffs%Standardization_Brightness_Temperature_Std )
+          endif
+          ! stop
+          ! print *, 'Calling NeuralNetFit'
+          if ( verbose ) print *, 'Using NeuralNetFit with our own raw Radiances'
+          call NeuralNetFit ( NNMeasurements_2, &
+            & Coeffs, NumHiddenLayers, Values, PrecisionValues, &
+            & Debugging=.false. )
+          do j=1, NumLevels
+            Qty%values(Coeffs%Output_Pressure_Levels_Indices(j), profile) = &
+              & Values(j)
+          enddo
+          if ( any(PrecisionValues == UndefinedValue) ) &
+            & Precision%values(:,profile) = UndefinedValue
+          ! if ( StandardizeRadiancesHere ) &
+          !  & call Dump ( FranksValues, 'Temps (Franks ANN)' )
         endif
-        ! stop
-        ! print *, 'Calling NeuralNetFit'
-        if ( verbose ) print *, 'Using NeuralNetFit with our own raw Radiances'
-        call NeuralNetFit ( NNMeasurements, &
-          & Coeffs, NumHiddenLayers, TemperatureValues, PrecisionValues, &
-          & Debugging=.false. )
-        do j=1, NumLevels
-          Temperature%values(Coeffs%Output_Pressure_Levels_Indices(j), profile) = &
-            & TemperatureValues(j)
-        enddo
-        if ( any(PrecisionValues == UndefinedValue) ) &
-          & TemperaturePrecision%values(:,profile) = UndefinedValue
-        ! if ( StandardizeRadiancesHere ) &
-        !  & call Dump ( FranksValues, 'Temps (Franks ANN)' )
       enddo ! Loop of profiles
     enddo ! Loop of BinNums
     call MLS_CloseFile( CoeffsFile, Status )
@@ -514,10 +620,9 @@ contains ! =====     Public Procedures     =============================
     end subroutine announce_error
   
   !------------------------------------------  AssembleNNMeasurements  -----
+    ! Assemble masurements array to be used by RunNeuralNet
     subroutine AssembleNNMeasurement ( NNMeasurements, &
              & radiances, signal, MIFs, ChannelNums, MAF, DeeBug )
-      ! Assemble masurements array to be used by RunNeuralNet
-      ! real(r4), allocatable, dimension(:,:) :: NNMeasurements
       type (VectorValue_T), pointer   :: Radiances ! The radiances for this band
       type(NeuralNetInputData_T)      :: NNMeasurements
       integer                         :: SIGNAL    ! the signal we're looking for
@@ -569,6 +674,71 @@ contains ! =====     Public Procedures     =============================
         print *, 'Failed to recognize: ', Capitalize(signalStr)
       end select
     end subroutine AssembleNNMeasurement
+
+    subroutine AssembleNNMeasurement_2 ( NNMeasurements, &
+             & radiances, signal, MIFs, ChannelNums, MAF, DeeBug )
+      ! real(r4), allocatable, dimension(:,:) :: NNMeasurements
+      type (VectorValue_T), pointer   :: Radiances ! The radiances for this band
+      type(NeuralNetInputData_2_T)    :: NNMeasurements
+      integer                         :: SIGNAL    ! the signal we're looking for
+      integer, dimension(:)           :: MIFs      ! MIF numbers in radiances
+      integer, dimension(:,:)         :: ChannelNums! channel numbers in radiances
+      integer                         :: MAF ! Remember--1st MAF is 0
+      logical, intent(in)             :: DeeBug
+      ! Local variables
+      integer                         :: channel
+      integer                         :: chanNum
+      integer                         :: MIF
+      character(len=32)               :: SignalStr  ! its string value
+      ! logical, parameter              :: DeeBug = .true.
+      ! Executable
+      call GetSignalName ( signal, signalStr )
+      signalStr = ReplaceNonAscii( signalStr, ' ' )
+      select case (Capitalize(signalStr) )
+      case ('R1A:118.B1F:PT.S0.FB25-1')
+        do MIF = 1, NumMIFs
+          do channel = 1, NumChnnelsBand1
+            chanNum = ChannelNums(channel, 1)
+            NNMeasurements%Band_1_Radiances%values(channel,MIF) = &
+              & radiances%value3(chanNum, MIFs(MIF), MAF+1)
+          enddo
+        enddo
+        if ( DeeBug ) call OutputNamedValue ( 'Band 1 rad', &
+          & NNMeasurements%Band_1_Radiances%values(1,1) )
+      case ('R2:190.B2F:H2O.S3.FB25-8')
+        do MIF = 1, NumMIFs
+          do channel = 1, NumChnnelsBand8
+            chanNum = ChannelNums(channel, 2)
+            NNMeasurements%Band_2_Radiances%values(channel,MIF) = &
+              & radiances%value3(chanNum, MIFs(MIF), MAF+1)
+          enddo
+        enddo
+        if ( DeeBug ) call OutputNamedValue ( 'Band 2 rad', &
+          & NNMeasurements%Band_2_Radiances%values(1,1) )
+      case ('R2:190.B3F:N2O.S3.FB25-8')
+        do MIF = 1, NumMIFs
+          do channel = 1, NumChnnelsBand8
+            chanNum = ChannelNums(channel, 2)
+            NNMeasurements%Band_3_Radiances%values(channel,MIF) = &
+              & radiances%value3(chanNum, MIFs(MIF), MAF+1)
+          enddo
+        enddo
+        if ( DeeBug ) call OutputNamedValue ( 'Band 3 rad', &
+          & NNMeasurements%Band_3_Radiances%values(1,1) )
+      case ('R1A:118.B23D:H2O.S0.DACS-4')
+        do MIF = 1, NumMIFs
+          do channel = 1, NumChnnelsBand22
+            chanNum = ChannelNums(channel, 3)
+            NNMeasurements%Band_23_Radiances%values(channel,MIF) = &
+              & radiances%value3(chanNum, MIFs(MIF), MAF+1)
+          enddo
+        enddo
+        if ( DeeBug ) call OutputNamedValue ( 'Band 23 rad', &
+          & NNMeasurements%Band_23_Radiances%values(1,1) )
+      case  default
+        print *, 'Failed to recognize: ', Capitalize(signalStr)
+      end select
+    end subroutine AssembleNNMeasurement_2
 
   !------------------------------------------  InitializeNNMeasurements  -----
     subroutine InitializeNNMeasurements ! ( NNMeasurements )
@@ -905,12 +1075,14 @@ contains ! =====     Public Procedures     =============================
         & "Activation_Function", &
         & charvalues, start(1:1), count(1:1), &
         & stride(1:1), block(1:1) )
-      print *, 'Activation_Function (read): ', &
-        & trim(charvalues(1))
-        Coeffs%Activation_Function = &
-          Asciify( charvalues(1), how='snip' )
-      if ( DeeBug ) print *, 'Activation_Function (asciified): ', &
-        & trim(Coeffs%Activation_Function)
+      if ( DeeBug ) then
+        print *, 'Activation_Function (read): ', &
+          & trim(charvalues(1))
+          Coeffs%Activation_Function = &
+            Asciify( charvalues(1), how='snip' )
+        print *, 'Activation_Function (asciified): ', &
+          & trim(Coeffs%Activation_Function)
+      endif
     end subroutine ReadCoeffsFile
 
   !------------------------------------------  FileNameToID  -----
@@ -989,6 +1161,9 @@ end module NeuralNet_m
 
 !
 ! $Log$
+! Revision 2.17  2022/04/28 20:46:32  pwagner
+! First steps toward a 2nd n-n retrieval
+!
 ! Revision 2.16  2022/04/13 21:33:03  pwagner
 ! Removed a lot of unneeded debugging stuff
 !
