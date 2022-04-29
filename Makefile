@@ -251,6 +251,7 @@ SHELL = /bin/sh
 # heconvert      
 # hl             
 # init_gen       
+# insertl2gpvalues
 # killmaster     
 # l1bcat     
 # l1bdiff        
@@ -489,8 +490,8 @@ MIESOURCESWITHHDF = $(shell ${REECHO} -excl $(MIE)/WriteNoHDF_m.f90 $(MIE)/*.f90
 MIESOURCESWOHDF = $(shell ${REECHO} -excl $(MIE)/WriteHDF_m.f90 $(MIE)/*.f90 $(MIE)/math77/*.f)
 
 MLSTOOLS = chunktimes checkpvmup compare dateconverter extinctionmaker fixDOI\
-  heconvert h5subset h5cat hl Goldbrick_More \
-  killmaster \
+  Goldbrick_More heconvert h5subset h5cat hl \
+  insertl2gpvalues killmaster \
   l1bcat l1bdiff l1bdump l1h5subset \
   l2auxcat l2auxchi l2auxdump l2gp2nc4 l2gpcat l2gpdiff l2gpdump \
   l2pcdiff l2pcdump l2q lr machineok misalignment \
@@ -991,6 +992,11 @@ heconvert: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/convert.c \
 init_gen: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/init_gen.f90
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+insertl2gpvalues: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/insertl2gpvalues.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
 h5subset: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/h5subset.c
@@ -1517,6 +1523,9 @@ tools: $(MLSTOOLS)
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.30  2022/01/20 22:11:51  pwagner
+# Can now make resetl2gpvalues
+#
 # Revision 1.29  2020/04/27 17:07:05  pwagner
 # Light housekeeping
 #
