@@ -48,6 +48,37 @@ executable_or_exit()
   fi
 }
 
+#------------------------------- h2o_nn_retrieval ------------
+#
+# Perform a separate retrieval for H2O
+# using a trained n-n algorithm
+# Then overwrite the swaths in the std. prod. "file" and in the "DGG"
+# Args
+# L1BRADG L1BRADD L1BOA Weights_File Prediction_File 
+#
+# In effect we are running
+#   python3 $H2ONNSCRIPT $L1BRADG $L1BRADD $L1BOA $Weights_File $Prediction_File
+# Afterwards we 
+# * use insertl2gpvalues to overwrite the reelevant levels in the DGG swath
+# * use l2gpcat to copy the changed swath to the DGG from the std. prod. file
+
+h2o_nn_retrieval()
+{
+  pwd
+  ls
+  swath="H2O"
+  echo $PYTHON3 $H2ONNSCRIPT $@
+  $PYTHON3 $H2ONNSCRIPT $@
+  file=`echo *L2GP-$swath*.he5`
+  DGG=`echo *L2GP-DGG_*.he5`
+  echo $insertl2gpvalues $file
+  $insertl2gpvalues -s $swath-StdProd -d ANN_Prediction -p ANN_Precision \
+    -Lf $3 \
+    -Vf $5 \
+    $file
+  $l2gpcat -s $swath -r $swath-StdProd -o $DGG $file 
+}
+
 #------------------------------- Main Program ------------
 
 #****************************************************************
@@ -67,7 +98,7 @@ then
  . ./"$ENVFILE"
 fi
 
-# Now check on possible candidates for l2gpcat and l2auxcat
+# Now check on possible candidates for l2gpcat, l2auxcat, etc.
 l2gpcat=`which l2gpcat 2>/dev/null`
 if [ ! -x "$l2gpcat" ]
 then
@@ -85,6 +116,16 @@ fi
 if [ "$L2AUXCAT" != "" ]
 then
   l2auxcat=$L2AUXCAT
+fi
+
+insertl2gpvalues=`which insertl2gpvalues 2>/dev/null`
+if [ ! -x "$insertl2gpvalues" ]
+then
+  insertl2gpvalues=$MLSTOOLS/insertl2gpvalues
+fi
+if [ "$INSERTL2GPVALUES" != "" ]
+then
+  insertl2gpvalues=$INSERTL2GPVALUES
 fi
 
 executable_or_exit l2gpcat "$l2gpcat"
@@ -155,7 +196,46 @@ a_file=$a_dir/$name1
 echo $l2auxcat -nodup -v -o $c_file -g $b_file $b_file $a_file
 $l2auxcat -nodup -v -o $c_file -g $b_file $b_file $a_file
 cp $b_file.xml $c_dir
+
+if [ "$H2ONNSCRIPT" = '' ]
+then
+  H2ONNSCRIPT=$MLSTOOLS/h2o_prediction.py
+fi
+
+if [ ! -f "$H2ONNSCRIPT" ]
+then
+  echo "Will not retrieve H2O with n-n algorithm"
+  exit 0
+fi
+
+echo "PYTHON3 $PYTHON3"
+echo "H2ONNSCRIPT $H2ONNSCRIPT"
+
+# -------------------------- Uncomment the following ------------
+if [ ! -f "$PYTHON3" ]
+then
+  echo "PYTHON3 not defined so skipping H2O n-n retrieval"
+elif [ ! -f "$H2ONNSCRIPT" ]
+then
+  echo "H2ONNSCRIPT not defined so skipping H2O n-n retrieval"
+elif [ ! -f "$insertl2gpvalues" ]
+then
+  echo "insertl2gpvalues not defined so skipping H2O n-n retrieval"
+else
+  cd $c_dir
+  radg=*RADG*.h5
+  radd=*RADD*.h5
+  boa=*L1BOA*.h5
+  pred=h2o_prediction.h5
+  echo h2o_nn_retrieval $radg $radd $boa $H2OANNWEIGHTS $pred
+  h2o_nn_retrieval $radg $radd $boa $H2OANNWEIGHTS $pred
+  cd $cwd
+fi
+# -------------------------- -------------------------- ------------
 # $Log$
+# Revision 1.3  2017/10/12 00:00:49  pwagner
+# Source job.env if it exists
+#
 # Revision 1.2  2017/07/13 17:42:31  pwagner
 # Fixed error when species in b but not in a
 #
