@@ -72,7 +72,7 @@ h2o_nn_retrieval()
   file=`echo *L2GP-$swath*.he5`
   DGG=`echo *L2GP-DGG_*.he5`
   echo $insertl2gpvalues $file
-  $insertl2gpvalues -s $swath-StdProd -d ANN_Prediction -p ANN_Precision \
+  $insertl2gpvalues -s $swath -d ANN_Prediction -p ANN_Precision \
     -Lf $3 \
     -Vf $5 \
     $file
@@ -233,6 +233,9 @@ else
 fi
 # -------------------------- -------------------------- ------------
 # $Log$
+# Revision 1.4  2022/05/05 21:48:58  pwagner
+# Added internal function h2o_nn_retrieval
+#
 # Revision 1.3  2017/10/12 00:00:49  pwagner
 # Source job.env if it exists
 #
