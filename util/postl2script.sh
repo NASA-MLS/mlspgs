@@ -59,8 +59,12 @@ executable_or_exit()
 # In effect we are running
 #   python3 $H2ONNSCRIPT $L1BRADG $L1BRADD $L1BOA $Weights_File $Prediction_File
 # Afterwards we 
-# * use insertl2gpvalues to overwrite the reelevant levels in the DGG swath
+# * use insertl2gpvalues to overwrite the relevant levels in the h2o swath
 # * use l2gpcat to copy the changed swath to the DGG from the std. prod. file
+# *** Scratch that last point ***
+# We could have used a tool like l2gpcp instead of l2gpcat. But, since we
+# have insertl2gpvalues handy, why not use insertl2gpvalues on the DGG file, too?
+# ***                         ***
 
 h2o_nn_retrieval()
 {
@@ -76,7 +80,13 @@ h2o_nn_retrieval()
     -Lf $3 \
     -Vf $5 \
     $file
-  $l2gpcat -s $swath -r $swath-StdProd -o $DGG $file 
+  # $l2gpcat -nodup -s $swath -r $swath-StdProd -o $DGG $file 
+  # l2gpcat doesn't act like we thought it did, so we'll just 
+  # reuse insertl2gpvalues to handle the DGG file
+  $insertl2gpvalues -s $swath-StdProd -d ANN_Prediction -p ANN_Precision \
+    -Lf $3 \
+    -Vf $5 \
+    $DGG
 }
 
 #------------------------------- Main Program ------------
@@ -233,6 +243,9 @@ else
 fi
 # -------------------------- -------------------------- ------------
 # $Log$
+# Revision 1.5  2022/05/11 23:41:44  pwagner
+# Fixed bug in args to insertl2gpvalues
+#
 # Revision 1.4  2022/05/05 21:48:58  pwagner
 # Added internal function h2o_nn_retrieval
 #
