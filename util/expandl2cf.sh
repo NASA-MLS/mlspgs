@@ -74,6 +74,8 @@
 # Other settings in the .macros or .env file and their effect:
 #   WIDTH          maximum line length if wrapping lines
 #   IDENTMAKER     use this instead of $HOME/mlspgs/util/identl2cf.sh
+#   SETREAD        use this instead of `which set_read_env.sh`
+#   WRAPLINES      use this instead of `which wrapLines`
 # Other uses:
 # (PCF)
 #     expandl2cf.sh can also be used to expand a PCF template
@@ -83,6 +85,7 @@
 #
 # Bugs and limitations:
 # (1) set_read_env.sh must be both executable and in your path
+#     (unless you set SETREAD in your .env file)
 # (2) The -w option assumes that wrapLines exists, is executable,
 #     and is in your PATH
 # (3) Nobody uses the "dotfile"--should we remove it as an option?
@@ -438,8 +441,6 @@ then
   . "$dotfile"
 fi
 
-SETREAD=`which set_read_env.sh`
-
 # Did we use a single file combining env and macros?
 # If so, disgorge the separate env and macros files
 if [ -f "$combfile" ]
@@ -448,6 +449,26 @@ then
   macrofile="$combfile".macros
   sed -n '/- e n v/,/- m 4   m/ p' $combfile | sed '$ d' > $envfile
   sed -n '/- m 4   m/,$ p' $combfile | sed '1 d' > $macrofile
+fi
+
+# Are there any special settings we should be aware of in the env file?
+# Namely, do we set alternatives for SETREAD, etc.?
+# If so, we may need to set them now, expecially SETREAD
+# because it's used to set the others.
+if [ -f "$envfile" ]
+then
+  SETREAD=`grep SETREAD $envfile | sed 's/.*=//'`
+  WRAPLINES=`grep WRAPLINES $envfile | sed 's/.*=//'`
+fi
+
+if [ "$SETREAD" = "" ]
+then
+  SETREAD=`which set_read_env.sh`
+fi
+
+if [ "$WRAPLINES" = "" ]
+then
+  WRAPLINES=`which wrapLines`
 fi
 
 if [ -f "$envfile" ]
@@ -580,9 +601,9 @@ then
     echo " ; mypath: $mypath"                    >> $templ2cf
     echo " ; M4: $M4"                            >> $templ2cf
     echo " ; --- End expandl2cf.sh settings ---" >> $templ2cf
-    wrapLines $WRAPOPTS -i $stempl2cf            >> $templ2cf
+    $WRAPLINES $WRAPOPTS -i $stempl2cf            >> $templ2cf
   else
-    wrapLines $WRAPOPTS -i $stempl2cf            > $templ2cf
+    $WRAPLINES $WRAPOPTS -i $stempl2cf            > $templ2cf
   fi
   rm $stempl2cf
 fi
@@ -642,6 +663,9 @@ fi
 
 exit 0
 # $Log$
+# Revision 1.14  2017/12/07 00:36:24  pwagner
+# Add a new comdline option -Cf combining -Df and -Ef in a single file
+#
 # Revision 1.13  2017/03/28 20:34:50  pwagner
 # Handle case where . is not in PATH
 #
