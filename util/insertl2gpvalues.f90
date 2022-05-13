@@ -55,7 +55,6 @@ program insertL2GPValues ! inserts values of L2GPData files, e.g. nrt
 ! Then run it something like this
 !    /users/pwagner/mlspgs/tests/lib/NAG.Linux-CemtOS7/test \ 
 !       -s H2O-StdProd -d ANN_Prediction -p ANN_Precision \
-!       -DGM MLS-Aura_L2GP-DGM_*.h5 \
 !       -Vf h2o_prediction.h5 \
 !       -Wf /users/fwerner/Documents/database/neural_network_weights/weights/v05-0x/MLS-Aura_ANN-H2O_v05-0x-01_20220415.h5 \
 !       MLS-Aura_L2GP-DGG_*.he5 
@@ -71,14 +70,14 @@ program insertL2GPValues ! inserts values of L2GPData files, e.g. nrt
 
   type options_T
     logical               :: debug   = .false.
-    logical               :: verbose = .true.
+    logical               :: verbose = .false.
     logical               :: dryrun  = .false.
     character(len=255)    :: swathNames = ' '        ! which swath to modify
     character(len=255)    :: DSNames    = ' '        ! which new DS holds values
     character(len=255)    :: PrecNames  = ' '        ! which new DS holds precs
     character(len=255)    :: newValues  = ' '        ! file with new values
     character(len=255)    :: L1BOAFile  = ' '        ! L1BOA file
-    character(len=255)    :: DGMFile    = ' '        ! DGM file
+    ! character(len=255)    :: DGMFile    = ' '        ! DGM file
     character(len=255)    :: Weights    = ' '        ! Weights file
   end type options_T
   
@@ -143,7 +142,7 @@ contains
     integer :: jj
     type(L2GPData_T) :: L2GP
     type( MLSFile_T ) :: L2GPFile
-    type( MLSFile_T ) :: DGMFile
+    ! type( MLSFile_T ) :: DGMFile
     type( MLSFile_T ) :: L1BOAFile
     type( MLSFile_T ) :: valuesFile
     type( MLSFile_T ) :: WeightsFile
@@ -196,46 +195,16 @@ contains
     ! 1st data set to read:          nearest profile
     ! read from                        DGM File
     ! Alas, this array fails to do what it promised
-    if ( .false. ) then
-      status = InitializeMLSFile( DGMFile, type=l_hdf, access=DFACC_RDOnly, &
-        & content='hdf', name=trim(options%DGMFile), hdfVersion=HDFVERSION_5 )
-      call GetAllHDF5DSNames ( DGMFile, DSList )
-      if ( options%verbose ) then
-        print *, 'DS names in hdf file ' // trim(DSList)
-      endif
-      DSName = 'nearest profile'
-      call GetHDF5DSDims ( DGMFile, DSName, DIMS )
-      NvTimes = DIMS(3)
-      if ( options%verbose ) print *, 'DIMS: ', DIMS
-      allocate(neartemp(1,1,nvTimes))
-      allocate(nearestProfiles(nvTimes))
-      call LoadFromHDF5DS ( DGMFile, DSName, neartemp )
-      nearestProfiles = neartemp(1,1,:)
-      if ( options%verbose ) call dump( nearestProfiles, 'nearestProfiles' )
-      deallocate(neartemp)
-    endif
-    
+    ! What we'll do instead is match MAFs and profiles using a method
+    ! similar to what we did in mlsl2
+
     ! ------------------------------------------------------------------------
     ! 2nd data set to read:          Output_Pressure_Levels_Indices
     ! read from                        Weights File
     
     ! We don't need these if the prediction and precision arrays
     ! already fill in the vertical levels missing from the Weights file.
-    if ( .false. ) then
-      status = InitializeMLSFile( WeightsFile, type=l_hdf, access=DFACC_RDOnly, &
-        & content='hdf', name=trim(options%Weights), hdfVersion=HDFVERSION_5 )
-      call GetAllHDF5DSNames ( WeightsFile, DSList )
-      if ( options%verbose ) then
-        print *, 'DS names in hdf file ' // trim(DSList)
-      endif
-      DSName = 'Output_Pressure_Levels_Indices'
-      call GetHDF5DSDims ( WeightsFile, DSName, DIMS )
-      NPr = DIMS(1)
-      if ( options%verbose ) print *, 'DIMS: ', DIMS
-      allocate(Output_Pressure_Levels_Indices(Npr))
-      call LoadFromHDF5DS ( WeightsFile, DSName, Output_Pressure_Levels_Indices )
-    endif
-    
+
     ! ------------------------------------------------------------------------
     ! 3rd and 4th data sets to read:    values and precisions
     ! read from                                Values File
@@ -343,7 +312,7 @@ contains
     ! enddo
     call MLS_CloseFile( ValuesFile )
     call MLS_CloseFile( WeightsFile )
-    call MLS_CloseFile( DGMFile )
+    ! call MLS_CloseFile( DGMFile )
     call sayTime('insertting all swaths')
   end subroutine insert_swaths
 
@@ -395,6 +364,7 @@ contains
     enddo
   end subroutine insertL2GPDataByOverwrite
   
+  ! This function attempts to replicate how we matched MAFs to profiles in mlsl2
   function matchingMAF ( profile, GeodLat, GeodAngle, L2GP ) result ( MAF )
     ! Return the nearest MAF to the input profile number
     ! Do we care that the MAF index numbers conventionally start at 0?
@@ -427,6 +397,7 @@ contains
      MAF = intarray(1) + 1 ! Because we'll use this MAF as an index, start at 1
   end function matchingMAF
   
+  ! This function has been outmoded, deprecated, and slated for deletion
   function nearestMAF ( profile, nearestProfiles ) result ( MAF )
     ! Return the nearest MAF to the input profile number
     ! Do we care that the MAF index numbers conventionally start at 0?
@@ -479,10 +450,10 @@ contains
         call getarg ( i+1+hp, filename )
         i = i + 1
         exit
-      else if ( filename(1:4) == '-DGM' ) then
-        call getarg ( i+1+hp, options%DGMFile )
-        i = i + 1
-        exit
+!       else if ( filename(1:4) == '-DGM' ) then
+!         call getarg ( i+1+hp, options%DGMFile )
+!         i = i + 1
+!         exit
       else if ( filename(1:4) == '-Lf' ) then
         call getarg ( i+1+hp, options%L1BOAFile )
         i = i + 1
@@ -585,3 +556,6 @@ end program insertL2GPValues
 !==================
 
 ! $Log$
+! Revision 1.1  2022/05/13 17:59:20  pwagner
+! First commit
+!
