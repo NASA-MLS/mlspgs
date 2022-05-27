@@ -827,6 +827,8 @@ else
   then
     logit "************************************************************************"
     logit 'Usage (w/o toolkit): mlsl2p.sh l2cf_file'
+    logit 'Check that you really intended to run w/o toolkit'
+    logit 'To run with a PCF you must set the environment variable UsingPCF=yes'
     logit "************************************************************************"
     exit 1
   fi
@@ -864,6 +866,9 @@ else
 fi
 
 # $Log$
+# Revision 1.43  2022/02/03 18:45:10  pwagner
+# Move augment, convert, etc. into internal functions
+#
 # Revision 1.42  2022/01/20 22:01:30  pwagner
 # Cant SAVEJOBSTATS until we debug mlsqlog-scan-sips.py
 #
