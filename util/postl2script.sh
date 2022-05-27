@@ -33,6 +33,28 @@
 # (2) Define env variables L2GPCAT and l2AUXCAT with their locations
 # directory as this script
 # 
+
+#---------------------------- commando
+# May
+# * echo a command with all its args;
+# * execute a command with all its args, or 
+# * merely echo the command that would be executed
+# Which to do depends on $dryrun and $verbose
+
+commando()
+{
+   if [ "$dryrun" = "yes" ]
+   then
+     echo $@
+   elif [ "$verbose" = "yes" ]
+   then
+     echo $@
+     $@
+   else
+     $@
+   fi
+}
+      
 #------------------------------- executable_or_exit ------------
 #
 # Check that a named file is executable;
@@ -89,65 +111,50 @@ h2o_nn_retrieval()
     $DGG
 }
 
-#------------------------------- Main Program ------------
-
-#****************************************************************
-#                                                               *
-#                  * * * Main Program  * * *                    *
-#                                                               *
-#                                                               *
-#	The entry point where control is given to the script         *
-#****************************************************************
+#------------------------------- swath_nn_retrieval ------------
 #
+# Perform a separate retrieval for a general swath named "$swath"
+# using a trained n-n algorithm
+# Then overwrite the swaths in the std. prod. "file" and in the "DGG"
+# Args
+# swath SWATHNNSCRIPT L1BRADG L1BRADD L1BOA Weights_File Prediction_File 
+#
+# In effect we are running
+#   python3 $SWATHNNSCRIPT $L1BRADG $L1BRADD $L1BOA $Weights_File $Prediction_File
+# Afterwards we 
+# * use insertl2gpvalues to overwrite the relevant levels in the swath
+# ***                         ***
 
-I=postl2script
-# Is there an env file we are supposed to source?
-ENVFILE=job.env
-if [ -f "$ENVFILE" ]
-then
- . ./"$ENVFILE"
-fi
+swath_nn_retrieval()
+{
+  pwd
+  ls
+  swath="$1"
+  SWATHNNSCRIPT="$2"
+  shift
+  shift
+  echo $PYTHON3 $SWATHNNSCRIPT $@
+  $PYTHON3 $SWATHNNSCRIPT $@
+  file=`echo *L2GP-$swath*.he5`
+  DGG=`echo *L2GP-DGG_*.he5`
+  echo $insertl2gpvalues $file
+  $insertl2gpvalues -s $swath -d ANN_Prediction -p ANN_Precision \
+    -Lf $3 \
+    -Vf $5 \
+    $file
+  $insertl2gpvalues -s $swath-StdProd -d ANN_Prediction -p ANN_Precision \
+    -Lf $3 \
+    -Vf $5 \
+    $DGG
+}
 
-# Now check on possible candidates for l2gpcat, l2auxcat, etc.
-l2gpcat=`which l2gpcat 2>/dev/null`
-if [ ! -x "$l2gpcat" ]
-then
-  l2gpcat=$MLSTOOLS/l2gpcat
-fi
-l2auxcat=`which l2auxcat 2>/dev/null`
-if [ ! -x "$l2auxcat" ]
-then
-  l2auxcat=$MLSTOOLS/l2auxcat
-fi
-if [ "$L2GPCAT" != "" ]
-then
-  l2gpcat=$L2GPCAT
-fi
-if [ "$L2AUXCAT" != "" ]
-then
-  l2auxcat=$L2AUXCAT
-fi
+#------------------------------- merge_files ----------------------------
+# Mrge the DGG and DGM files produced in the a and b subdirectories
+# by the two independent nrt mlsl2 runs
+# ***                         ***
 
-insertl2gpvalues=`which insertl2gpvalues 2>/dev/null`
-if [ ! -x "$insertl2gpvalues" ]
-then
-  insertl2gpvalues=$MLSTOOLS/insertl2gpvalues
-fi
-if [ "$INSERTL2GPVALUES" != "" ]
-then
-  insertl2gpvalues=$INSERTL2GPVALUES
-fi
-
-executable_or_exit l2gpcat "$l2gpcat"
-executable_or_exit l2auxcat "$l2auxcat"
-
-list='CO H2O HNO3 N2O O3 SO2 Temperature DGG'
-echo "Launching postl2script with args $@"
-c_dir=$1
-a_dir=$2
-b_dir=$3
-pwd
-cwd=`pwd`
+merge_files()
+{
 for i in $list
 do
   echo "cwd/a_dir $cwd/$a_dir"
@@ -206,16 +213,92 @@ a_file=$a_dir/$name1
 echo $l2auxcat -nodup -v -o $c_file -g $b_file $b_file $a_file
 $l2auxcat -nodup -v -o $c_file -g $b_file $b_file $a_file
 cp $b_file.xml $c_dir
+}
+#------------------------------- Main Program ------------
+
+#****************************************************************
+#                                                               *
+#                  * * * Main Program  * * *                    *
+#                                                               *
+#                                                               *
+#	The entry point where control is given to the script         *
+#****************************************************************
+#
+verbose="yes"
+I=postl2script
+# Is there an env file we are supposed to source?
+ENVFILE=job.env
+if [ -f "$ENVFILE" ]
+then
+ . ./"$ENVFILE"
+fi
+
+# Now check on possible candidates for l2gpcat, l2auxcat, etc.
+l2gpcat=`which l2gpcat 2>/dev/null`
+if [ ! -x "$l2gpcat" ]
+then
+  l2gpcat=$MLSTOOLS/l2gpcat
+fi
+l2auxcat=`which l2auxcat 2>/dev/null`
+if [ ! -x "$l2auxcat" ]
+then
+  l2auxcat=$MLSTOOLS/l2auxcat
+fi
+if [ "$L2GPCAT" != "" ]
+then
+  l2gpcat=$L2GPCAT
+fi
+if [ "$L2AUXCAT" != "" ]
+then
+  l2auxcat=$L2AUXCAT
+fi
+
+insertl2gpvalues=`which insertl2gpvalues 2>/dev/null`
+if [ ! -x "$insertl2gpvalues" ]
+then
+  insertl2gpvalues=$MLSTOOLS/insertl2gpvalues
+fi
+if [ "$INSERTL2GPVALUES" != "" ]
+then
+  insertl2gpvalues=$INSERTL2GPVALUES
+fi
+
+executable_or_exit l2gpcat "$l2gpcat"
+executable_or_exit l2auxcat "$l2auxcat"
+
+list='CO H2O HNO3 N2O O3 SO2 Temperature DGG'
+echo "Launching postl2script with args $@"
+c_dir=$1
+a_dir=$2
+b_dir=$3
+pwd
+cwd=`pwd`
+
+# Merge the product files from a_dir and b_dir
+# but only if they exist
+if [ -d "$a_dir" -a -d "$b_dir" ]
+then
+  merge_files $@
+fi
 
 if [ "$H2ONNSCRIPT" = '' ]
 then
   H2ONNSCRIPT=$MLSTOOLS/h2o_prediction.py
 fi
 
-if [ ! -f "$H2ONNSCRIPT" ]
+if [ "$O3NNSCRIPT" = '' ]
 then
-  echo "Will not retrieve H2O with n-n algorithm"
-  exit 0
+  O3NNSCRIPT=$MLSTOOLS/o3_prediction.py
+fi
+
+if [ "$CONNSCRIPT" = '' ]
+then
+  CONNSCRIPT=$MLSTOOLS/co_prediction.py
+fi
+
+if [ "$TEMPNNSCRIPT" = '' ]
+then
+  TEMPNNSCRIPT=$MLSTOOLS/temp_prediction.py
 fi
 
 echo "PYTHON3 $PYTHON3"
@@ -224,25 +307,42 @@ echo "H2ONNSCRIPT $H2ONNSCRIPT"
 # -------------------------- Uncomment the following ------------
 if [ ! -f "$PYTHON3" ]
 then
-  echo "PYTHON3 not defined so skipping H2O n-n retrieval"
-elif [ ! -f "$H2ONNSCRIPT" ]
-then
-  echo "H2ONNSCRIPT not defined so skipping H2O n-n retrieval"
+  echo "PYTHON3 not defined so skipping n-n retrievals"
 elif [ ! -f "$insertl2gpvalues" ]
 then
-  echo "insertl2gpvalues not defined so skipping H2O n-n retrieval"
+  echo "insertl2gpvalues not found so skipping n-n retrievals"
 else
   cd $c_dir
   radg=*RADG*.h5
   radd=*RADD*.h5
   boa=*L1BOA*.h5
-  pred=h2o_prediction.h5
-  echo h2o_nn_retrieval $radg $radd $boa $H2OANNWEIGHTS $pred
-  h2o_nn_retrieval $radg $radd $boa $H2OANNWEIGHTS $pred
+  if [ -f "$H2ONNSCRIPT" ]
+  then
+    pred=h2o_prediction.h5
+    commando swath_nn_retrieval H2O $H2ONNSCRIPT $radg $radd $boa $H2OANNWEIGHTS $pred
+  fi
+  if [ -f "$O3NNSCRIPT" ]
+  then
+    pred=o3_prediction.h5
+    commando swath_nn_retrieval O3 $O3NNSCRIPT $radg $radd $boa $O3ANNWEIGHTS $pred
+  fi
+  if [ -f "$CONNSCRIPT" ]
+  then
+    pred=co_prediction.h5
+    commando swath_nn_retrieval CO $CONNSCRIPT $radg $radd $boa $COANNWEIGHTS $pred
+  fi
+  if [ -f "$TEMPNNSCRIPT" ]
+  then
+    pred=temp_prediction.h5
+    commando swath_nn_retrieval Temperature $TEMPNNSCRIPT $radg $radd $boa $TEMPANNWEIGHTS $pred
+  fi
   cd $cwd
 fi
 # -------------------------- -------------------------- ------------
 # $Log$
+# Revision 1.6  2022/05/12 22:36:46  pwagner
+# Corrected buggy use of l2gpcat
+#
 # Revision 1.5  2022/05/11 23:41:44  pwagner
 # Fixed bug in args to insertl2gpvalues
 #
