@@ -421,6 +421,10 @@ def _h2o_prediction(l1bradg_file=None, \
                     weights.labels_mean[:,i_lat]
             pred[ind_lat,weights.surfs[0]-1:weights.surfs[-1]] = dummy
 
+    # Precision
+    prec = _define_precision(surfs=weights.surfs)
+    prec = np.tile(prec,(len(features),1))
+
     # Check for unrealistic predictions outside the expected range
     for i_lat in range ( 0, len(weights.lats) ):
         lat_bin = weights.lats[i_lat]
@@ -439,11 +443,7 @@ def _h2o_prediction(l1bradg_file=None, \
                 ind_thresh = np.where( (pred[ind_lat,i_surfs]<thresh_min) | \
                                        (pred[ind_lat,i_surfs]>thresh_max) )[0]
                 if len(ind_thresh)>0:
-                    pred[ind_lat[ind_thresh],:] = -999.99
-
-    # Precision
-    prec = _define_precision(surfs=weights.surfs)
-    prec = np.tile(prec,(len(features),1))
+                    prec[ind_lat[ind_thresh],:] = -999.99
 
     # Output file
     file = h5py.File(out_file, 'w')
@@ -471,7 +471,7 @@ out_file = args['out_file']
 
 ## =========================================================================
 ## Run main
-# Call: python h2o_prediction.py '/data/emls/nrt/v05.01.NRT.15/2022/102/MLS-Aura_L1BRADG_v05-01-NRT-15-c01_2022d102t1410.h5' '/data/emls/nrt/v05.01.NRT.15/2022/102/MLS-Aura_L1BRADD_v05-01-NRT-15-c01_2022d102t1410.h5' '/data/emls/nrt/v05.01.NRT.15/2022/102/MLS-Aura_L1BOA_v05-01-NRT-15-c01_2022d102t1410.h5' '/users/fwerner/Documents/database/neural_network_weights/weights/v05-0x/MLS-Aura_ANN-H2O_v05-0x-01_20220415.h5' '/users/fwerner/Documents/software/python/ann/test_data/MLS-Aura_H2O_v05-01-NRT-15-c01_2022d102t1410.h5'
+# Call: python h2o_prediction.py '/data/emls/nrt/v05.01.NRT.15/2022/142/MLS-Aura_L1BRADG_v05-01-NRT-15-c01_2022d142t1410.h5' '/data/emls/nrt/v05.01.NRT.15/2022/142/MLS-Aura_L1BRADD_v05-01-NRT-15-c01_2022d142t1410.h5' '/data/emls/nrt/v05.01.NRT.15/2022/142/MLS-Aura_L1BOA_v05-01-NRT-15-c01_2022d142t1410.h5' '/users/fwerner/Documents/database/neural_network_weights/weights/v05-0x/MLS-Aura_ANN-H2O_v05-0x-01_20220415.h5' '/users/fwerner/Documents/software/python/ann/test_data/MLS-Aura_H2O_v05-01-NRT-15-c01_2022d142t1410.h5'
 ## =========================================================================
 result = _h2o_prediction(l1bradg_file=l1bradg_file, \
                          l1bradd_file=l1bradd_file, \
