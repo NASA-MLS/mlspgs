@@ -150,9 +150,6 @@ class _Weights_object():
                    Bands, \
                    MIFs, \
                    Channels_Band_1, \
-                   Channels_Band_2, \
-                   Channels_Band_3, \
-                   Channels_Band_4, \
                    Latitude_Bins, \
                    Output_Pressure_Levels_Indices, \
                    Activation_Function ):
@@ -175,9 +172,6 @@ class _Weights_object():
         self.bands = np.array(band_dummy)
         self.mifs = MIFs
         self.ch_b1 = Channels_Band_1
-        self.ch_b2 = Channels_Band_2
-        self.ch_b3 = Channels_Band_3
-        self.ch_b4 = Channels_Band_4
         self.lats = Latitude_Bins
         self.surfs = Output_Pressure_Levels_Indices
         self.actf = Activation_Function[0].decode('utf-8')
@@ -211,9 +205,6 @@ def _read_weights(weights_file=None):
     Bands = file['Bands'][:]
     MIFs = file['MIFs'][:]
     Channels_Band_1 = file['Channels_Band_#1'][:]
-    Channels_Band_2 = file['Channels_Band_#2'][:]
-    Channels_Band_3 = file['Channels_Band_#3'][:]
-    Channels_Band_4 = file['Channels_Band_#4'][:]
 
     # Other information
     Latitude_Bins = file['Latitude_Bins'][:]
@@ -237,9 +228,6 @@ def _read_weights(weights_file=None):
                                Bands, \
                                MIFs, \
                                Channels_Band_1, \
-                               Channels_Band_2, \
-                               Channels_Band_3, \
-                               Channels_Band_4, \
                                Latitude_Bins, \
                                Output_Pressure_Levels_Indices, \
                                Activation_Function)
@@ -286,41 +274,31 @@ def _define_precision(surfs=None):
 
     # The ANN precision is based on the RMSD between ANN and L2
     # from the test data set (averaged over all latitude bins).
-    rmsd_ann = np.array([-9.99990000e+08, -9.99990000e+08, -9.99990000e+08, -9.99990000e+08,
-                         -9.99990000e+08, -9.99990000e+08, -9.99990000e+08,  2.92201910e-02,
-                          2.82322505e-02,  2.99169313e-02,  3.07538027e-02,  4.13389150e-02,
-                          4.86140760e-02,  5.98551235e-02,  6.89169350e-02,  7.65637222e-02,
-                          8.42942241e-02,  9.23077103e-02,  1.02346102e-01,  1.11384161e-01,
-                          1.24430195e-01,  1.37504418e-01,  1.48185314e-01,  1.52174074e-01,
-                          1.52253732e-01,  1.49458180e-01,  1.44112287e-01,  1.37538870e-01,
-                          1.33090343e-01,  1.30095299e-01,  1.29060689e-01,  1.25206672e-01,
-                          1.22233774e-01,  1.16656211e-01,  1.15582205e-01,  1.23030248e-01,
-                          1.28668305e-01,  1.64011951e-01,  1.53004965e-01,  1.51560229e-01,
-                          1.73361153e-01,  2.13937285e-01,  2.22216709e-01,  2.64945373e-01,
-                          4.52517247e-01, -9.99990000e+08, -9.99990000e+08, -9.99990000e+08,
-                         -9.99990000e+08, -9.99990000e+08, -9.99990000e+08, -9.99990000e+08,
-                         -9.99990000e+08, -9.99990000e+08, -9.99990000e+08])
+    rmsd_ann = np.array([-9.99990000e+11, -9.99990000e+11, -9.99990000e+11, -9.99990000e+11, 8.56216098,
+                          6.92221789, 5.76268736, 5.25208157, 4.87335382, 4.61660929,
+                          4.57897211, 4.28569904, 4.17745534, -9.99990000e+11, -9.99990000e+11,
+                         -9.99990000e+11, -9.99990000e+11, -9.99990000e+11, -9.99990000e+11, -9.99990000e+11,
+                         -9.99990000e+11, -9.99990000e+11, -9.99990000e+11, -9.99990000e+11, -9.99990000e+11,
+                         -9.99990000e+11, -9.99990000e+11, -9.99990000e+11, -9.99990000e+11, -9.99990000e+11,
+                         -9.99990000e+11, -9.99990000e+11, -9.99990000e+11, -9.99990000e+11, -9.99990000e+11,
+                         -9.99990000e+11, -9.99990000e+11])
 
     # Here we use the annual median of precision per level, 
     # averaged over all years.
-    rmsd_l2 = np.array([-9.99000000e+08, -9.99000000e+08, -9.99000000e+08, -9.99000000e+08,
-                        -9.99000000e+08, -9.99000000e+08, -9.99000000e+08, 1.94482222e-02,
-                         1.80147222e-02, 1.84860000e-02, 2.06353333e-02, 2.55423889e-02,
-                         2.96750556e-02, 3.62118889e-02, 4.41700000e-02, 5.17160556e-02,
-                         5.99513889e-02, 6.90437222e-02, 7.85441111e-02, 8.89020556e-02,
-                         9.99719444e-02, 1.12152833e-01, 1.20670833e-01, 1.25289000e-01,
-                         1.26568667e-01, 1.30566167e-01, 1.33442111e-01, 1.34904389e-01,
-                         1.35162278e-01, 1.34299389e-01, 1.32754500e-01, 1.30413000e-01,
-                         1.28015556e-01, 1.27423778e-01, 1.35219778e-01, 1.61885000e-01,
-                         1.75352611e-01, 2.79385000e-01, 3.13986556e-01, 3.51962167e-01,
-                         3.99151444e-01, 4.45810333e-01, 4.07989833e-01, 4.54852722e-01,
-                         7.56327611e-01, -9.99000000e+08, -9.99000000e+08, -9.99000000e+08,
-                        -9.99000000e+08, -9.99000000e+08, -9.99000000e+08, -9.99000000e+08,
-                        -9.99000000e+08, -9.99000000e+08, -9.99000000e+08])
+    rmsd_l2 = np.array([-9.99990000e+11, -9.99990000e+11, -9.99990000e+11, -9.99990000e+11,
+                         4.32648022e+00, 3.74325072e+00, 3.46083172e+00, 3.48007256e+00,
+                         3.61452322e+00, 3.85696367e+00, 4.40285739e+00, 4.95606539e+00,
+                         4.38501183e+00, -9.99990000e+11, -9.99990000e+11, -9.99990000e+11,
+                        -9.99990000e+11, -9.99990000e+11, -9.99990000e+11, -9.99990000e+11,
+                        -9.99990000e+11, -9.99990000e+11, -9.99990000e+11, -9.99990000e+11,
+                        -9.99990000e+11, -9.99990000e+11, -9.99990000e+11, -9.99990000e+11,
+                        -9.99990000e+11, -9.99990000e+11, -9.99990000e+11, -9.99990000e+11,
+                        -9.99990000e+11, -9.99990000e+11, -9.99990000e+11, -9.99990000e+11,
+                        -9.99990000e+11])
 
     # Total precision via RSS
-    nn_prec = np.zeros ( (55) )
-    nn_prec[:] = np.sqrt ( rmsd_l2**2 + rmsd_ann**2 )/1e6
+    nn_prec = np.zeros ( (37) )
+    nn_prec[:] = np.sqrt ( rmsd_l2**2 + rmsd_ann**2 )/1e9
 
     # Set other values to -999.99
     ind = np.where(rmsd_ann<-999)[0]
@@ -329,9 +307,9 @@ def _define_precision(surfs=None):
     return(nn_prec)
 
 ## =========================================================================
-## Prediction wrapper for O3
+## Prediction wrapper for SO2
 ## =========================================================================
-def _o3_prediction(l1bradg_file=None, \
+def _so2_prediction(l1bradg_file=None, \
                    l1bradd_file=None, \
                    l1boa_file=None, \
                    weights_file=None, \
@@ -342,11 +320,7 @@ def _o3_prediction(l1bradg_file=None, \
 
     # Read L1b GHz data
     ghz_rad = _read_l1brad(l1brad_file=l1bradg_file, \
-                           l1b_bands=weights.bands[0:3])
-
-    # Read L1b DACS data
-    dacs_rad = _read_l1brad(l1brad_file=l1bradd_file, \
-                            l1b_bands=[weights.bands[3]])
+                           l1b_bands=weights.bands[0:1])
     # Read L1b GHz data
     l1boa_lat = _read_l1boa(l1boa_file=l1boa_file)
     
@@ -354,15 +328,6 @@ def _o3_prediction(l1bradg_file=None, \
     # For some reason I have to do dimensions individually
     b1 = ghz_rad[0][:,weights.mifs-1,:]
     b1 = b1[:,:,weights.ch_b1-1]
-
-    b2 = ghz_rad[1][:,weights.mifs-1,:]
-    b2 = b2[:,:,weights.ch_b2-1]
-
-    b3 = ghz_rad[2][:,weights.mifs-1,:]
-    b3 = b3[:,:,weights.ch_b3-1]
-
-    b4 = dacs_rad[0][:,weights.mifs-1,:]
-    b4 = b4[:,:,weights.ch_b4-1]
     
     # We average l1boa_lat over all valid MIFs
     lat = np.mean(l1boa_lat[0:len(b1),weights.mifs-1],axis=1)
@@ -371,17 +336,11 @@ def _o3_prediction(l1bradg_file=None, \
     n_obs = len(b1)
     n_mifs = len(weights.mifs)
     n_ch1 = len(weights.ch_b1)
-    n_ch2 = len(weights.ch_b2)
-    n_ch3 = len(weights.ch_b3)
-    n_ch4 = len(weights.ch_b4)
 
     features = np.reshape(b1,(n_obs,n_mifs*n_ch1))
-    features = np.append(features,np.reshape(b2,(n_obs,n_mifs*n_ch2)),axis=1)
-    features = np.append(features,np.reshape(b3,(n_obs,n_mifs*n_ch3)),axis=1)
-    features = np.append(features,np.reshape(b4,(n_obs,n_mifs*n_ch4)),axis=1)
 
     # Predict
-    pred = np.zeros ( (len(features),55) )
+    pred = np.zeros ( (len(features),37) )
     pred[:,:] = -999
     for i_lat in range ( 0, len(weights.lats) ):
         lat_bin = weights.lats[i_lat]
@@ -431,8 +390,8 @@ def _o3_prediction(l1bradg_file=None, \
 
     # Output file
     file = h5py.File(out_file, 'w')
-    dset = file.create_dataset('ANN_Prediction', data=pred, shape=[len(features),55], dtype=float)
-    dset = file.create_dataset('ANN_Precision', data=prec, shape=[len(features),55], dtype=float)
+    dset = file.create_dataset('ANN_Prediction', data=pred, shape=[len(features),37], dtype=float)
+    dset = file.create_dataset('ANN_Precision', data=prec, shape=[len(features),37], dtype=float)
     file.close()
 
     return ( None )
@@ -455,9 +414,9 @@ out_file = args['out_file']
 
 ## =========================================================================
 ## Run main
-# Call: python o3_prediction.py '/data/emls/nrt/v05.01.NRT.15/2022/135/MLS-Aura_L1BRADG_v05-01-NRT-15-c01_2022d135t1410.h5' '/data/emls/nrt/v05.01.NRT.15/2022/135/MLS-Aura_L1BRADD_v05-01-NRT-15-c01_2022d135t1410.h5' '/data/emls/nrt/v05.01.NRT.15/2022/135/MLS-Aura_L1BOA_v05-01-NRT-15-c01_2022d135t1410.h5' '/users/fwerner/Documents/database/neural_network_weights/weights/v05-0x/MLS-Aura_ANN-O3_v05-0x-01_20220523.h5' '/users/fwerner/Documents/software/python/ann/test_data/MLS-Aura_O3_v05-01-NRT-15-c01_2022d135t1410.h5'
+# Call: python so2_prediction.py '/data/emls/nrt/v05.01.NRT.15/2022/145/MLS-Aura_L1BRADG_v05-01-NRT-15-c01_2022d145t1410.h5' '/data/emls/nrt/v05.01.NRT.15/2022/145/MLS-Aura_L1BRADD_v05-01-NRT-15-c01_2022d145t1410.h5' '/data/emls/nrt/v05.01.NRT.15/2022/145/MLS-Aura_L1BOA_v05-01-NRT-15-c01_2022d145t1410.h5' '/users/fwerner/Documents/database/neural_network_weights/weights/v05-0x/MLS-Aura_ANN-SO2_v05-0x-01_20220601.h5' '/users/fwerner/Documents/software/python/ann/test_data/MLS-Aura_SO2_v05-01-NRT-15-c01_2022d145t1410.h5'
 ## =========================================================================
-result = _o3_prediction(l1bradg_file=l1bradg_file, \
+result = _so2_prediction(l1bradg_file=l1bradg_file, \
                          l1bradd_file=l1bradd_file, \
                          l1boa_file=l1boa_file, \
                          weights_file=weights_file, \
