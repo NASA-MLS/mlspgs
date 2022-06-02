@@ -296,6 +296,11 @@ then
   CONNSCRIPT=$MLSTOOLS/co_prediction.py
 fi
 
+if [ "$SO2NNSCRIPT" = '' ]
+then
+  SO2NNSCRIPT=$MLSTOOLS/so2_prediction.py
+fi
+
 if [ "$TEMPNNSCRIPT" = '' ]
 then
   TEMPNNSCRIPT=$MLSTOOLS/temp_prediction.py
@@ -316,6 +321,13 @@ else
   radg=*RADG*.h5
   radd=*RADD*.h5
   boa=*L1BOA*.h5
+  # The following set of consecutive if blocks should be
+  # replaced by a single
+  # for mol in $mols
+  # do
+  # done
+  # block
+  # where mols="h2o o3 co so2 temperature"
   if [ -f "$H2ONNSCRIPT" ]
   then
     pred=h2o_prediction.h5
@@ -331,6 +343,11 @@ else
     pred=co_prediction.h5
     commando swath_nn_retrieval CO $CONNSCRIPT $radg $radd $boa $COANNWEIGHTS $pred
   fi
+  if [ -f "$SO2NNSCRIPT" ]
+  then
+    pred=so2_prediction.h5
+    commando swath_nn_retrieval SO2 $SO2NNSCRIPT $radg $radd $boa $SO2ANNWEIGHTS $pred
+  fi
   if [ -f "$TEMPNNSCRIPT" ]
   then
     pred=temp_prediction.h5
@@ -340,6 +357,9 @@ else
 fi
 # -------------------------- -------------------------- ------------
 # $Log$
+# Revision 1.7  2022/05/27 20:59:32  pwagner
+# Can now use python scripts to predict CO, O3, and Temperature; can skip merger of a, b
+#
 # Revision 1.6  2022/05/12 22:36:46  pwagner
 # Corrected buggy use of l2gpcat
 #
