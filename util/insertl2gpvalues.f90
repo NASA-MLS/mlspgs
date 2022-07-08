@@ -77,8 +77,10 @@ program insertL2GPValues ! inserts values of L2GPData files, e.g. nrt
     character(len=255)    :: PrecNames  = ' '        ! which new DS holds precs
     character(len=255)    :: newValues  = ' '        ! file with new values
     character(len=255)    :: L1BOAFile  = ' '        ! L1BOA file
-    ! character(len=255)    :: DGMFile    = ' '        ! DGM file
     character(len=255)    :: Weights    = ' '        ! Weights file
+    integer               :: NewStatus  = -999       ! Replace value for status
+    double precision      :: NewConverg = -999.99d0  ! for convergence
+    double precision      :: NewQuality = -999.99d0  ! for Quality
   end type options_T
   
   type ( options_T ) :: options
@@ -142,11 +144,9 @@ contains
     integer :: jj
     type(L2GPData_T) :: L2GP
     type( MLSFile_T ) :: L2GPFile
-    ! type( MLSFile_T ) :: DGMFile
     type( MLSFile_T ) :: L1BOAFile
     type( MLSFile_T ) :: valuesFile
     type( MLSFile_T ) :: WeightsFile
-    ! type (L1BData_T)  :: l1bField ! L1B data
     integer :: nPr
     integer :: numProfs
     integer :: numTotProfs
@@ -221,99 +221,90 @@ contains
     if ( options%verbose ) print *, 'DIMS: ', DIMS
     if ( options%verbose ) print *, 'Num swaths: ', NumStringElements( DSList, countEmpty )
     numTotProfs = 0
-    ! do jj=1, NumStringElements( DSList, countEmpty )
     jj = 1
-      call GetStringElement( DSList, DSName, jj, countEmpty )
-      call time_now ( tFile )
-      swath = options%swathNames
-      if ( options%verbose ) print *, 'inserting values into swath: ', trim(swath)
-      if ( options%verbose ) print *, 'using values from DS: ', trim(swath)
-      call Blanks( 72, fillChar='-', advance='yes' )
-      if ( options%verbose ) then
-        call OutputNamedValue ( 'DSName', swath )
-      else
-        call OutputNamedValue ( 'Looking to write DSName', swath )
+    call GetStringElement( DSList, DSName, jj, countEmpty )
+    call time_now ( tFile )
+    swath = options%swathNames
+    if ( options%verbose ) print *, 'inserting values into swath: ', trim(swath)
+    if ( options%verbose ) print *, 'using values from DS: ', trim(swath)
+    call Blanks( 72, fillChar='-', advance='yes' )
+    if ( options%verbose ) then
+      call OutputNamedValue ( 'DSName', swath )
+    else
+      call OutputNamedValue ( 'Looking to write DSName', swath )
+    endif
+    DSName = swath
+    allocate(values(nPr, nvTimes))
+    allocate(precisions(nPr, nvTimes))
+    if ( options%verbose ) &
+      & call OutputNamedValue ( 'shp(values)', (/ shape(values) /) )
+    call LoadFromHDF5DS ( valuesFile, options%DSNames, values )
+    if ( options%verbose ) &
+      & call Dump( Values(:,1), 'values used in overwriting', width=5 )
+    call LoadFromHDF5DS ( valuesFile, options%PrecNames, precisions )
+    if ( options%verbose ) &
+      & call Dump( precisions(:,1), 'precisions used in overwriting', width=5 )
+    N = 0
+    i = 1
+    if ( options%verbose ) &
+      & print *, 'Beginning with L2GP file ' // trim(filenames(i))
+    numswathssofar = mls_InqSwath ( filenames(i), SwathList, listSize, &
+         & hdfVersion=HDFVERSION_5)
+    swathList = options%swathNames
+    !
+    iSwathNum = StringElementNum( swathList, trim(swath), countEmpty )
+    call dump ( swathList, 'List of swaths' )
+    print *, 'swath to read: ', trim(swath)
+    if ( iSwathNum < 1 ) then
+      if ( options%debug ) then
+        call OutputNamedValue ( 'swathName', swath )
+        call OutputNamedValue ( 'swathList', swathList )
+        call MLSMessage( MLSMSG_Warning, ModuleName, &
+          & "swathName not found in list; so not replaced" )
       endif
-      DSName = swath
-      allocate(values(nPr, nvTimes))
-      allocate(precisions(nPr, nvTimes))
-      if ( options%verbose ) &
-        & call OutputNamedValue ( 'shp(values)', (/ shape(values) /) )
-      call LoadFromHDF5DS ( valuesFile, options%DSNames, values )
-      if ( options%verbose ) &
-        & call Dump( Values(:,1), 'values used in overwriting', width=5 )
-      call LoadFromHDF5DS ( valuesFile, options%PrecNames, precisions )
-      if ( options%verbose ) &
-        & call Dump( precisions(:,1), 'precisions used in overwriting', width=5 )
-      N = 0
-!       do i=1, n_filenames
-      i = 1
-        if ( options%verbose ) &
-          & print *, 'Beginning with L2GP file ' // trim(filenames(i))
-        numswathssofar = mls_InqSwath ( filenames(i), SwathList, listSize, &
-             & hdfVersion=HDFVERSION_5)
-!         if ( options%swathNames /= ' ' ) then
-!           swathList1 = swathList
-!           swathList = Intersection( options%swathNames, swathList1 )
-!         endif
-        swathList = options%swathNames
-        !
-        iSwathNum = StringElementNum( swathList, trim(swath), countEmpty )
-        call dump ( swathList, 'List of swaths' )
-        print *, 'swath to read: ', trim(swath)
-        if ( iSwathNum < 1 ) then
-          if ( options%debug ) then
-            call OutputNamedValue ( 'swathName', swath )
-            call OutputNamedValue ( 'swathList', swathList )
-            call MLSMessage( MLSMSG_Warning, ModuleName, &
-              & "swathName not found in list; so not replaced" )
-          endif
-          return ! was cycle
-        else
-          call OutputNamedValue ( 'L2GP File', trim(filenames(i)) )
-          call Output( 'Replacing ' // trim(swath) // ' with ' // &
-            & trim(DSName) // ' values', advance='yes' )
-        endif
-        status = InitializeMLSFile( L2GPFile, type=l_swath, access=DFACC_RDWR, &
-            & content='L2GP', name=trim(filenames(i)), hdfVersion=HDFVERSION_5 )
-        if ( options%verbose ) print *, 'Reading from: ', trim(filenames(i))
-        call ReadL2GPData( L2GPFile, swath, L2GP, numProfs )
-        print *, 'Num profiles: ', numProfs
-        if ( options%debug ) call Dump( L2GP )
-        if ( options%verbose ) &
-          & call Dump( L2GP%L2GPValue(1,1,:), 'L2gp before overwriting', width=5 )
-        call insertL2GPDataByOverwrite ( L2GP, values, precisions )
-        if ( options%verbose ) &
-          & call Dump( L2GP%L2GPValue(1,1,:), 'L2gp after overwriting', width=5 )
+      return ! was cycle
+    else
+      call OutputNamedValue ( 'L2GP File', trim(filenames(i)) )
+      call Output( 'Replacing ' // trim(swath) // ' with ' // &
+        & trim(DSName) // ' values', advance='yes' )
+    endif
+    status = InitializeMLSFile( L2GPFile, type=l_swath, access=DFACC_RDWR, &
+        & content='L2GP', name=trim(filenames(i)), hdfVersion=HDFVERSION_5 )
+    if ( options%verbose ) print *, 'Reading from: ', trim(filenames(i))
+    call ReadL2GPData( L2GPFile, swath, L2GP, numProfs )
+    print *, 'Num profiles: ', numProfs
+    if ( options%debug ) call Dump( L2GP )
+    if ( options%verbose ) &
+      & call Dump( L2GP%L2GPValue(1,1,:), 'L2gp before overwriting', width=5 )
+    call insertL2GPDataByOverwrite ( L2GP, values, precisions )
+    if ( options%verbose ) &
+      & call Dump( L2GP%L2GPValue(1,1,:), 'L2gp after overwriting', width=5 )
 
 !    stop
-        if ( .not. options%dryrun ) &
-          & call AppendL2GPData ( L2GP, L2GPFile, swath )
-        N = L2GP%nTimes
-        ! a(1:N) = L2GP%L2GPValue(1,1,1:N)
-        if ( options%verbose ) &
-          & call dump( L2GP%L2GPValue(1,1,1:N), 'new values', width=5 )
-        if ( options%debug ) call Dump( L2GP )
-        call DestroyL2GPContents( L2GP )
-        if ( options%debug ) then
-          call ReadL2GPData( L2GPFile, swath, L2GP, numProfs )
-          call output ( 'insert L2GP as reread', advance='yes' )
-          call Dump( L2GP )
-          call DestroyL2GPContents( L2GP )
-        endif
-        numTotProfs = numTotProfs + N
-        call Dump( L2GPFile )
-        call MLS_CloseFile( L2GPFile )
-!       enddo
-      deallocate(precisions)
-      deallocate(values)
-      call sayTime('insertting this swath', tFile)
-      call Blanks( 72, advance='yes' )
-    ! enddo
+    if ( .not. options%dryrun ) &
+      & call AppendL2GPData ( L2GP, L2GPFile, swath )
+    N = L2GP%nTimes
+    ! a(1:N) = L2GP%L2GPValue(1,1,1:N)
+    if ( options%verbose ) &
+      & call dump( L2GP%L2GPValue(1,1,1:N), 'new values', width=5 )
+    if ( options%debug ) call Dump( L2GP )
+    call DestroyL2GPContents( L2GP )
+    if ( options%debug ) then
+      call ReadL2GPData( L2GPFile, swath, L2GP, numProfs )
+      call output ( 'insert L2GP as reread', advance='yes' )
+      call Dump( L2GP )
+      call DestroyL2GPContents( L2GP )
+    endif
+    numTotProfs = numTotProfs + N
+    call Dump( L2GPFile )
+    if ( L2GPFile%StillOpen ) call MLS_CloseFile( L2GPFile )
+    deallocate(precisions)
+    deallocate(values)
+    call sayTime('inserting this swath', tFile)
+    call Blanks( 72, advance='yes' )
     call MLS_CloseFile( ValuesFile )
     call MLS_CloseFile( WeightsFile )
-    ! call MLS_CloseFile( DGMFile )
-    call sayTime('insertting all swaths')
+    call sayTime('inserting all swaths')
   end subroutine insert_swaths
 
   ! (1) overwriting the current l2gpvalue using values
@@ -362,6 +353,16 @@ contains
         print *, 'No MAF close to profile ', time
       endif
     enddo
+    ! Have we been asked to overwrite Convergence, Quality, Status fields?
+    if ( options%NewConverg > 0. ) then
+      L2GP%Convergence = options%NewConverg
+    endif
+    if ( options%NewStatus > 0. ) then
+      L2GP%Status = options%NewStatus
+    endif
+    if ( options%NewQuality > 0. ) then
+      L2GP%Quality = options%NewQuality
+    endif
   end subroutine insertL2GPDataByOverwrite
   
   ! This function attempts to replicate how we matched MAFs to profiles in mlsl2
@@ -397,28 +398,6 @@ contains
      MAF = intarray(1) + 1 ! Because we'll use this MAF as an index, start at 1
   end function matchingMAF
   
-  ! This function has been outmoded, deprecated, and slated for deletion
-  function nearestMAF ( profile, nearestProfiles ) result ( MAF )
-    ! Return the nearest MAF to the input profile number
-    ! Do we care that the MAF index numbers conventionally start at 0?
-    ! Well .. since we'll use the returned integer value as an index in an array
-    ! whose lower bound is 1 instead of 0,  then "No".
-    
-    ! However, once again we see how ill-advised we were when we ever
-    ! sought to make MAFs a 0-based array. From that point on, every use
-    ! of MAF causes us to question whether we're making an off-by-one
-    ! error. 
-    
-    ! Moreover, if we ever find we've made an off-by-one error, we won't
-    ! know whether it's due to the MAFs being 0-based or due to some other
-    ! indexing error.
-     integer, intent(in)                 :: profile
-     integer, dimension(:), intent(in)   :: nearestProfiles
-     integer                             :: MAF
-     ! Executable
-     MAF = FindFirst ( nearestProfiles, profile )
-  end function nearestMAF
-
 !------------------------- get_filename ---------------------
     subroutine get_filename(filename, n_filenames, options)
     ! Added for command-line processing
@@ -450,10 +429,6 @@ contains
         call getarg ( i+1+hp, filename )
         i = i + 1
         exit
-!       else if ( filename(1:4) == '-DGM' ) then
-!         call getarg ( i+1+hp, options%DGMFile )
-!         i = i + 1
-!         exit
       else if ( filename(1:4) == '-Lf' ) then
         call getarg ( i+1+hp, options%L1BOAFile )
         i = i + 1
@@ -478,10 +453,18 @@ contains
         call getarg ( i+1+hp, options%PrecNames )
         i = i + 1
         exit
-!       elseif ( filename(1:3) == '-sp' ) then
-!         call igetarg ( i+1+hp, options%spread )
-!         i = i + 1
-!         exit
+      elseif ( filename(1:5) == '-conv' ) then
+        call dgetarg ( i+1+hp, options%NewConverg )
+        i = i + 1
+        exit
+      elseif ( filename(1:5) == '-qual' ) then
+        call dgetarg ( i+1+hp, options%NewQuality )
+        i = i + 1
+        exit
+      elseif ( filename(1:5) == '-stat' ) then
+        call igetarg ( i+1+hp, options%NewStatus )
+        i = i + 1
+        exit
       else
         call print_help
       end if
@@ -525,6 +508,9 @@ contains
       write (*,*) ' -debug        => switch on debug mode'
       write (*,*) ' -v            => switch on verbose mode'
       write (*,*) '                   (we must then assume the surfaces match)'
+      write (*,*) ' -conv val     => set values of Convergence field to val'
+      write (*,*) ' -qual val     => set values of Quality field to val'
+      write (*,*) ' -stat val     => set values of Status field to val'
       write (*,*) ' -h            => print brief help'
       stop
   end subroutine print_help
@@ -542,6 +528,14 @@ contains
     call output ( "Timing for " // what // " = " )
     call output ( dble(t2 - myt1), advance = 'yes' )
   end subroutine SayTime
+!------------------------- dgetarg ---------------------
+  subroutine dgetarg ( pos, darg )
+   integer, intent(in) :: pos
+   double precision, intent(out) :: darg
+   character(len=16) :: arg
+   call getarg ( pos, arg )
+   read(arg, *) darg
+  end subroutine dgetarg
 !------------------------- igetarg ---------------------
   subroutine igetarg ( pos, iarg )
    integer, intent(in) :: pos
@@ -556,6 +550,9 @@ end program insertL2GPValues
 !==================
 
 ! $Log$
+! Revision 1.2  2022/05/13 18:02:27  pwagner
+! Numerous bugfixes; removed DGM file
+!
 ! Revision 1.1  2022/05/13 17:59:20  pwagner
 ! First commit
 !
