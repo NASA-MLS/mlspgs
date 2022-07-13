@@ -101,6 +101,9 @@ h2o_nn_retrieval()
   $insertl2gpvalues -s $swath -d ANN_Prediction -p ANN_Precision \
     -Lf $3 \
     -Vf $5 \
+    -conv 1 \
+    -qual 0 \
+    -stat 68 \
     $file
   # $l2gpcat -nodup -s $swath -r $swath-StdProd -o $DGG $file 
   # l2gpcat doesn't act like we thought it did, so we'll just 
@@ -108,6 +111,9 @@ h2o_nn_retrieval()
   $insertl2gpvalues -s $swath-StdProd -d ANN_Prediction -p ANN_Precision \
     -Lf $3 \
     -Vf $5 \
+    -conv 1 \
+    -qual 0 \
+    -stat 68 \
     $DGG
 }
 
@@ -141,10 +147,16 @@ swath_nn_retrieval()
   $insertl2gpvalues -s $swath -d ANN_Prediction -p ANN_Precision \
     -Lf $3 \
     -Vf $5 \
+    -conv 1 \
+    -qual 0 \
+    -stat 68 \
     $file
   $insertl2gpvalues -s $swath-StdProd -d ANN_Prediction -p ANN_Precision \
     -Lf $3 \
     -Vf $5 \
+    -conv 1 \
+    -qual 0 \
+    -stat 68 \
     $DGG
 }
 
@@ -357,6 +369,9 @@ else
 fi
 # -------------------------- -------------------------- ------------
 # $Log$
+# Revision 1.8  2022/06/02 21:39:35  pwagner
+# Added SO2 to mols predicted by python script
+#
 # Revision 1.7  2022/05/27 20:59:32  pwagner
 # Can now use python scripts to predict CO, O3, and Temperature; can skip merger of a, b
 #
