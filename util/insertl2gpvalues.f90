@@ -25,7 +25,7 @@ program insertL2GPValues ! inserts values of L2GPData files, e.g. nrt
    use MLSCommon, only: MLSFile_T
    use MLSFiles, only: HDFVersion_5, Dump, MLS_CloseFile, MLS_Exists, &
      & MLS_Inqswath, InitializeMLSFile
-   use MLSFinds, only: FindFirst
+   use MLSFinds, only: FindFirst, FindLast
    use MLSHDF5, only: GetAllHDF5DSNames, GetHDF5DSDims, LoadFromHDF5DS, &
      & MLS_H5open, MLS_H5close
    use MLSMessageModule, only: MLSMessageConfig, MLSMessage, MLSMSG_Warning
@@ -81,6 +81,8 @@ program insertL2GPValues ! inserts values of L2GPData files, e.g. nrt
     integer               :: NewStatus  = -999       ! Replace value for status
     double precision      :: NewConverg = -999.99d0  ! for convergence
     double precision      :: NewQuality = -999.99d0  ! for Quality
+    double precision      :: PressBottom= -999.99d0  ! Bottommost Pr overwritten
+    double precision      :: PressTop   = -999.99d0  ! Topmost Pr overwritten
   end type options_T
   
   type ( options_T ) :: options
@@ -320,6 +322,8 @@ contains
     real(rgp), dimension(:,:), intent(in)       :: values  
     ! internal variables
     integer                                     :: k
+    integer                                     :: k1 ! PressBottom level
+    integer                                     :: k2 ! PressTop level
     integer                                     :: MAF
     integer                                     :: time ! Like chunk number
     integer                                     :: ntimes ! num of values
@@ -329,6 +333,19 @@ contains
     print *, 'Shape (values): ', shape(values)
     print *, 'Shape (l2gpvalues): ', shape(L2GP%l2gpValue)
     print *, 'ntimes: ', ntimes
+    k1 = 1
+    k2 = size(values, 1)
+    if ( options%PressBottom > -999.99d0 ) &
+      & k1 = FindFirst( (options%PressBottom - L2GP%Pressures) >= 0.d0 )
+    if ( options%PressTop > -999.99d0 ) &
+      & k2 = FindLast( (options%PressTop - L2GP%Pressures) <= 0.d0 )
+    ! FindFirst and FindLast may return 0
+    if ( k1 < 1 ) k1 = 1
+    if ( k2 < 1 ) k2 = size(values, 1)
+    if ( options%verbose ) then
+      if ( k1 > 1 .or. k2 < size(values, 1) ) &
+        call outputNamedValue ( 'k1, k2', (/ k1, k2 /) )
+    endif
     do time = 1, ntimes
       ! MAF = nearestMAF ( time, nearestProfiles )
       MAF = matchingMAF ( time, GeodLat, GeodAngle, L2GP )
@@ -339,7 +356,8 @@ contains
 !           L2GP%l2gpPrecision(1, Output_Pressure_Levels_Indices(k), time) = &
 !             & precisions(k, MAF)
 !         enddo
-        do k = 1, size(values, 1)
+!        do k = 1, size(values, 1)
+        do k = k1, k2
           if ( values(k, MAF) > -999.00_rgp ) then
             L2GP%l2gpValue(1, k, time) = &
               & values(k, MAF)
@@ -465,6 +483,14 @@ contains
         call igetarg ( i+1+hp, options%NewStatus )
         i = i + 1
         exit
+      elseif ( filename(1:6) == '-prbot' ) then
+        call dgetarg ( i+1+hp, options%PressBottom )
+        i = i + 1
+        exit
+      elseif ( filename(1:6) == '-prtop' ) then
+        call dgetarg ( i+1+hp, options%PressTop )
+        i = i + 1
+        exit
       else
         call print_help
       end if
@@ -490,6 +516,7 @@ contains
       & 'Overwrite the swath values in l2gp files, e.g. nrt dgg files,'
       write (*,*) &
       & 'using values stored in a different file (made by a n-n script)'
+      write (*,*) '                   (we must then assume the surfaces match)'
       write (*,*) &
       & 'Usage: insertl2gpvalues [options] [filenames]'
       write (*,*) &
@@ -501,16 +528,15 @@ contains
       write (*,*) ' -d ds_name    => get values to insert from ds_name'
       write (*,*) ' -p ds_name    => get precisions to insert from ds_name'
       write (*,*) ' -s swaths     => insert new values into swaths'
-!      write (*,*) ' -DGM dgmname  => read nearest profile dgmname'
       write (*,*) ' -Lf name      => name of L1BOA file'
-      write (*,*) ' -Vf vname     => read new values from vname'
-!      write (*,*) ' -Wf wname     => read Output_Pressure_Levels_Indices from wname'
+      write (*,*) ' -Vf vname     => read new values from file vname'
       write (*,*) ' -debug        => switch on debug mode'
       write (*,*) ' -v            => switch on verbose mode'
-      write (*,*) '                   (we must then assume the surfaces match)'
       write (*,*) ' -conv val     => set values of Convergence field to val'
       write (*,*) ' -qual val     => set values of Quality field to val'
       write (*,*) ' -stat val     => set values of Status field to val'
+      write (*,*) ' -prbot val    => overwrite only heights at val and above'
+      write (*,*) ' -prtop val    => overwrite only heights at val and below'
       write (*,*) ' -h            => print brief help'
       stop
   end subroutine print_help
@@ -550,6 +576,9 @@ end program insertL2GPValues
 !==================
 
 ! $Log$
+! Revision 1.3  2022/07/08 20:34:10  pwagner
+! 3 new cmdline args to set conv, qual, status
+!
 ! Revision 1.2  2022/05/13 18:02:27  pwagner
 ! Numerous bugfixes; removed DGM file
 !
