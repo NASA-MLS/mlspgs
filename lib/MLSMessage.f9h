@@ -1094,7 +1094,8 @@ contains
     if ( myDetails > -1 ) then
       if ( UseSDPToolkit .and. MLSFile%shortName /= ' ' ) &
         & call addRow ( 'short name', trim(MLSFile%shortName) )
-      call addRow ( 'Type', MLSFile%TypeStr )
+      if ( len_trim(MLSFile%TypeStr) > 0 ) &
+        & call addRow ( 'Type', MLSFile%TypeStr )
       if ( FILESTRINGTABLE ) then
         call get_string ( lit_indices(MLSFile%Type), str, strip=.true. )
         call addRow ( 'Type(int)', trim(str) )
@@ -1233,6 +1234,9 @@ contains
 
 !
 ! $Log$
+! Revision 2.61  2022/07/13 20:45:16  pwagner
+! Suppress dumping MLSFile%TypeStr if its not set
+!
 ! Revision 2.60  2020/04/30 23:13:21  pwagner
 ! If we are to quit, may  as well PrintFinalReport
 !
