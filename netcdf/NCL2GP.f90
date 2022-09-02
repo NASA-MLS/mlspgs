@@ -798,7 +798,8 @@ contains ! ======================= Public Procedures =========================
     ! returning a filled data structure and the !
     ! number of profiles read.
     ! hdfVersion may be WILDCARDHDFVERSION
-
+    use Intrinsic, only: L_HDFeos, L_HDF, L_Swath
+    use MLSFiles, only: HDFVersion_5
     ! Arguments
 
     character (len=*), intent(in) :: swathname ! Name of swath
@@ -814,8 +815,9 @@ contains ! ======================= Public Procedures =========================
     integer :: status
     
     ! Executable code
+!     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_READ, &
     status = InitializeMLSFile ( MLSFile, type=l_NetCDF4, access=DFACC_READ, &
-     & name=trim(fileName) )
+     & hdfVersion=HDFVERSION_5, name=trim(fileName) )
     call MLS_OpenFile( MLSFile )
     L2FileHandle = MLSFile%FileID%f_id
     call ReadNCL2GPData_fileID ( L2FileHandle, swathname, l2gp, numProfs=numProfs, &
@@ -860,7 +862,7 @@ contains ! ======================= Public Procedures =========================
     endif
     call ReadNCL2GPData_MF_NC4 ( L2GPFile, swathname, l2gp,&
       & numProfs, firstProf, lastProf, ReadData )
-    if ( .not. alreadyOpen )  call mls_closeFile ( L2GPFile, Status )
+    ! if ( .not. alreadyOpen )  call mls_closeFile ( L2GPFile, Status )
     L2GPFile%errorCode = status
     L2GPFile%lastOperation = 'read'
   end subroutine ReadNCL2GPData_MLSFile
@@ -869,6 +871,7 @@ contains ! ======================= Public Procedures =========================
 
   subroutine ReadNCL2GPData_MF_NC4( L2GPFile, swathname, l2gp, &
     & numProfs, firstProf, lastProf, ReadData )
+  use HDF5, only: H5FClose_F
   use MLSNetCDF4, only: MLS_SWAttach, MLS_SWDetach, MLS_SWDiminfo, &
     & MLS_SwrdAttr, MLS_SWRdLAttr, MLS_SWRdfld
   use MLSStringLists, only: IsInList
@@ -910,6 +913,7 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(MAXDIMSIZE) :: dims
     integer :: first
     integer :: freq
+    integer :: grpId
     integer :: i
     integer :: lev
     integer :: nDims
@@ -946,7 +950,7 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(MaxFlds) :: varIDs
     ! Executable code
     call trace_begin ( me,  'ReadNCL2GPData_MF_NC4', cond=.false. )
-    deeBugHere = DEEBUG ! .or. .true.
+    deeBugHere = DEEBUG .or. .true.
     nullify ( realFreq, realSurf, realProf, real3 )
     hdfVersion = L2GPFile%hdfVersion
     ! Don't fail when trying to read an mls-specific field 
@@ -956,6 +960,7 @@ contains ! ======================= Public Procedures =========================
     if ( present(ReadData) ) ReadingData = ReadData
     ReadingConvergence = .false.
     ReadingAscDescMode = .false.
+    call Dump ( L2GPFile, Details=2 )
     ! Attach to the swath for reading
     l2gp%Name = swathname
     ! We have suffered surprises when hefeos character fields 
@@ -964,12 +969,14 @@ contains ! ======================= Public Procedures =========================
     fieldlist = ' '
     list = ' '
     
+    print *, 'Trying to attach ', trim(l2gp%Name)
     swid = mls_SWattach( L2GPFile, l2gp%Name )
     DF_Name = DATA_FIELD1
     DF_Precision = DATA_FIELD2
     if ( deeBugHere ) print *, 'DF_NAME: ',DF_NAME
     if ( deeBugHere ) print *, 'DF_Precision: ',DF_Precision
     ! Here we read the Missing Value attribute
+    print *, 'Trying to read missing data'
     status = MLS_SWRdLAttr( swid, 'L2gpValue', 'MissingValue', &
       & nf90_real, RealBuffer=MissingValue )
     if ( status /= 0 ) then
@@ -980,20 +987,27 @@ contains ! ======================= Public Procedures =========================
       l2gp%MissingL2GP = MissingValue(1)
     endif
     if (swid == -1) call MLSMessage(MLSMSG_Error, ModuleName, &
-         &'Failed to attach to hdfeos2/5 swath interface for reading' &
+         &'Failed to attach to NetCDF4 swath interface for reading' &
          & // trim(swathname), MLSFile=L2GPFile)
 
     ! Get dimension information
-
+    ! Look inside Data Fields
+!     print *, 'seek group name and id'
+    call check( &
+      & nf90_inq_ncid( swId, 'Data Fields', grpId ), &
+      & 'ReadNCL2GPData_MF_NC4 (varId):' // trim(l2gp%name) )
     lev = 0
     freq = 0
-    call check( nf90_inq_varid(swid, 'L2gpvalue', varid), &
+    nTimesTotal = 0
+    nFreqs = 0
+!     print *, 'Trying to read L2gpValue'
+    call check( nf90_inq_varid(grpId, 'L2gpValue', varid), &
       & 'ReadNCL2GPData_MF_NC4 (varId):' // trim(l2gp%name) )
-    call check( nf90_inquire_variable(swid, varid, dimids=dimids, nDims=nDims), &
+    call check( nf90_inquire_variable(grpId, varid, dimids=dimids, nDims=nDims), &
       & 'ReadNCL2GPData_MF_NC4 (dimIds):' // trim(l2gp%name) )
     do i=1, NDims
       call check( nf90_inquire_dimension ( &
-        & swid, dimids(i), name=dimname, len=edge(i) &
+        & grpId, dimids(i), name=dimname, len=edge(i) &
         & ), &
         & 'ReadNCL2GPData_MF_NC4 (dim(i)):' // trim(l2gp%name) )
       select case (trim(dimname))
@@ -1007,6 +1021,8 @@ contains ! ======================= Public Procedures =========================
         nTimesTotal = edge(i)
       end select
     enddo
+    ! print *, 'nDims as read from NetCDF ', nDims
+    ! print *, 'edge as read from NetCDF ', edge
     nDims = min( nDims, MAXDIMSIZE )
 
     dims(1:nDims) = edge(1:nDims)                                  
@@ -1020,10 +1036,11 @@ contains ! ======================= Public Procedures =========================
     if ( deeBugHere ) print *, 'ndims: ', ndims
     if ( deeBugHere ) print *, 'dims: ', dims
     if (nDims == -1) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed to get dimension information on hdfeos5 swath ' // &
+      & 'Failed to get dimension information on NetCDF4 swath ' // &
       & trim(swathname), MLSFile=L2GPFile)
     if ( index(list,'nLevels') /= 0 ) lev = 1
     if ( index(list,'Freq') /= 0 ) freq = 1
+    if ( nTimesTotal == 0 ) nTimesTotal = nTimes
 
     l2gp%nTimes      = nTimes     
     l2gp%nTimesTotal = nTimesTotal
@@ -1111,18 +1128,23 @@ contains ! ======================= Public Procedures =========================
 
     ! Read the horizontal geolocation fields
 
-    start(1) = 0
-    start(2) = 0
-    start(3) = first
+    start(1) = 1 ! 0
+    start(2) = 1 ! 0
+    start(3) = 1 ! first
     stride = 1
     edge(1) = nFreqsOr1
     edge(2) = nLevelsOr1
     edge(3) = myNumProfs
     status=0
 
+    print *, 'start ', start
+    print *, 'stride ', stride
+    print *, 'edge ', edge
+    print *, 'shape(realProf) ', shape(realProf)
     status = mls_SWrdfld(swid, 'Latitude', start(3:3), stride(3:3), &
       edge(3:3), realProf)
     l2gp%latitude = realProf
+    print *, 'min  max (latitude) ', minval(realProf), maxval(realProf)
 
     status = mls_SWrdfld(swid, 'Longitude', start(3:3), stride(3:3), edge(3:3),&
       &    realProf)
@@ -1172,14 +1194,23 @@ contains ! ======================= Public Procedures =========================
     endif
 
     ! Read the data fields that may have 1-3 dimensions
+    ! Why would start now be set back to 0 instead of 1?
+    ! start = 0
 
-    if ( freq == 1) then
+    if ( freq == 1 .or. .true. ) then
 
-       status = mls_SWrdfld(swid, trim(DF_Name), start, stride, edge, real3)
+!       status = mls_SWrdfld(swid, trim(DF_Name), start, stride, edge, real3)
+       status = mls_SWrdfld(swid, 'L2gpValue', start, stride, edge, real3)
        l2gp%l2gpValue = real3
+       print *, 'Min, max (real3) ', minval(real3), maxval(real3)
+       print *, 'Min, max (l2gpval) ', minval(l2gp%l2gpValue), maxval(l2gp%l2gpValue)
+       print *, 'shape (l2gpval) ', shape(l2gp%l2gpValue)
+       print *, 'status ', status       
 
        status = mls_SWrdfld(swid, trim(DF_Precision), start, stride, edge, real3)
        l2gp%l2gpPrecision = real3
+       print *, 'Min, max (precision) ', minval(l2gp%l2gpPrecision), maxval(l2gp%l2gpPrecision)
+       print *, 'shape (precision) ', shape(l2gp%l2gpPrecision)
 
     else if ( lev == 1) then
 
@@ -1193,6 +1224,8 @@ contains ! ======================= Public Procedures =========================
 
     else
 
+       print *, start(3:3),stride(3:3),edge(3:3)
+       print *, shape(real3(1,1,:))
        status = mls_SWrdfld(swid,trim(DF_Name),start(3:3),stride(3:3),edge(3:3),&
          &   real3(1,1,:) )
        l2gp%l2gpValue = real3
@@ -1208,6 +1241,7 @@ contains ! ======================= Public Procedures =========================
     l2gp%status = l2gp%MissingStatus ! l2gp%MissingValue ! So it has a value.
     status = mls_swrdfld( swid, 'Status',start(3:3),stride(3:3),edge(3:3),&
       & l2gp%status )
+     print *, 'Min, max (status) ', minval(l2gp%status), maxval(l2gp%status)
 
     status = mls_SWrdfld(swid, 'Quality', start(3:3), stride(3:3),&
       edge(3:3),realProf)
@@ -1232,6 +1266,11 @@ contains ! ======================= Public Procedures =========================
     !  firstprof,lastprof,myNumProfs
     ! Set numProfs if wanted
     if (present(numProfs)) numProfs=myNumProfs
+    ! Must we close the MLS file somehow?
+    call Dump ( L2GPFile, Details=2 )
+!    call h5fclose_f ( L2GPFile%fileID%f_id, status )
+!     if (status == -1) call MLSMessage( MLSMSG_Error, ModuleName, 'Failed to &
+!          & close NC4 file after reading.', MLSFile=L2GPFile )
     call trace_end (  'ReadNCL2GPData_MF_NC4', cond=.false. )
 
   end subroutine ReadNCL2GPData_MF_NC4
@@ -1621,10 +1660,13 @@ contains ! ======================= Public Procedures =========================
     if ( present(FailureOK) ) MyFailOK = FailureOK
     MySilent = .false.
     if ( present(Silent) ) MySilent = Silent
+!     print *, 'status   ', status
+!     print *, 'MySilent ', MySilent
     if( status /= nf90_noerr ) then 
       if ( .not. MySilent ) &
         & call output( trim(nf90_strerror(status)), advance='yes' )
       if ( MyFailOK ) return
+      print *, trim(nf90_strerror(status))
       call MLSMessage ( MLSMSG_Error, moduleName,  &
           & trim(mesg) )
     end if
@@ -2120,6 +2162,10 @@ contains ! ======================= Public Procedures =========================
          tFile = t2
        endif
     end if
+    if ( status /= 0 ) then
+       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Failed to write l2gp values/precicions NC4 swath interface', MLSFile=L2GPFile )
+    end if
 
     ! 1-D status & quality fields
 
@@ -2166,6 +2212,9 @@ contains ! ======================= Public Procedures =========================
 end module NCL2GP
 
 ! $Log$
+! Revision 1.3  2022/02/03 18:43:15  pwagner
+! Reduce the amount debug printing
+!
 ! Revision 1.2  2020/03/19 22:35:23  pwagner
 ! Repaired more bugs than you can shake a stick at.
 !
