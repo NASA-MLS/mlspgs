@@ -205,7 +205,7 @@ contains ! =========== Public procedures ===================================
   end subroutine CreateEmptyHGrid
 
   ! ---------------------------------------------  L1BGeoLocation  -----
-  ! Read the approprriate geolocations from the l1boa file.
+  ! Read the appropriate geolocations from the l1boa file.
   ! The first time through, read from the l1boa, and store in the
   ! appropriate component of HGridGeolocations.
   ! In all subsequent times, simply copy the stored values.
@@ -239,6 +239,7 @@ contains ! =========== Public procedures ===================================
     ! Local variables
     type (L1BData_T) :: l1bField ! L1B data
     logical, parameter                    :: DeeBug = .false.
+    logical, parameter                    :: Monotonic = .false. ! Must l1b be?
     integer                               :: HdfVersion
     type (MLSFile_T), pointer             :: L1BFile
     character(len=64)                     :: L1bItemName
@@ -347,21 +348,29 @@ contains ! =========== Public procedures ===================================
     ! into the l1b data fields!
     ! Before we began using L1BGeoLocation, we used to read each
     ! chunk's worth of l1b data by setting FirstMAF and lastMAF
-    ! which auttomatically set dontPad=.true.
+    ! which automatically set dontPad=.true.
     call ReadL1BData ( L1BFile, readItemName, l1bField, noMAFs, status, &
       & dontpad=.true., neverFail=neverFail )
     if ( myNeverFail .and. status /= 0 ) go to 9
     if ( .not. associated(l1bField%dpField) ) call ConvertL1BData( l1bField )
-    if ( any(isFillValue(l1bField%dpField) ) .and. .not. & 
-      & any(StrEq( (/ '/GHz/Lon ', 'scOrbIncl' /), trim(readItemname) ) ) ) then 
+
+    ! Do we insist that the l1b data values be monotonic?
+    if ( &
+      & Monotonic &
+      & .and. &
+      & any(isFillValue(l1bField%dpField) ) &
+      & .and. &
+      & .not. & 
+      & any(StrEq( (/ 'GHz/Lon ', 'scOrbIncl' /), trim(readItemname) ) ) &
+      & ) then 
       call output( 'Fill values among ' // trim(readItemName), advance='yes' ) 
       call MLSMessage ( MLSMSG_Warning, trim(ModuleName) // '%L1BGeoLocation', & 
         & 'Required monotonization' ) 
-      verbose = ( trim(readItemname) == '/GHz/Lon' ) & 
-        & .or. ( trim(readItemname) == '/GHz/GeodAngle' ) 
-      if ( verbose ) call dump( l1bField%dpField, 'lons before monotony' ) 
+      verbose = &
+        & ( any(StrEq( (/ 'GHz/Lon', 'GHz/GeodAngle' /) , trim(readItemname) ) ) )
+      if ( verbose ) call dump( l1bField%dpField, 'vals before monotony' ) 
       call Monotonize( l1bField%dpField ) 
-      if ( verbose ) call dump( l1bField%dpField, 'lons after monotony' ) 
+      if ( verbose ) call dump( l1bField%dpField, 'vals after monotony' ) 
     endif 
 
     noFreqs = size(l1bField%dpField,2)
@@ -809,6 +818,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.47  2022/09/15 16:33:58  pwagner
+! Fixed erroneous code monotonizing l1b data in L1BGeoLocation
+!
 ! Revision 2.46  2021/07/08 23:30:38  pwagner
 ! Require -SGrid2 for verbose
 !
