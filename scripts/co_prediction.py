@@ -382,7 +382,7 @@ def _co_prediction(l1bradg_file=None, \
 
     # Predict
     pred = np.zeros ( (len(features),37) )
-    pred[:,:] = -999
+    pred[:,:] = -999.99
     for i_lat in range ( 0, len(weights.lats) ):
         lat_bin = weights.lats[i_lat]
         ind_lat = np.where((np.min(features,axis=1)>-100) & (lat>=lat_bin[0]) & (lat<lat_bin[1]))[0]
@@ -409,18 +409,23 @@ def _co_prediction(l1bradg_file=None, \
     prec = _define_precision(surfs=weights.surfs)
     prec = np.tile(prec,(len(features),1))
 
+    # Check for faulty latitudes and set precision to -999.99.
+    # Predictions are already -999.99.
+    ind_lat = np.where((lat<-90))[0]
+    if len(ind_lat)>0:
+        prec[ind_lat,:] = -999.99
+
     # Check for unrealistic predictions outside the expected range
     for i_lat in range ( 0, len(weights.lats) ):
         lat_bin = weights.lats[i_lat]
         ind_lat = np.where((lat>=lat_bin[0]) & (lat<lat_bin[1]))[0]
         if len(ind_lat)>0:
-            # I start this search at level 10, which is less noisy)
-            for i_surfs in range(4, weights.surfs[-1]):
+            for i_surfs in range(weights.surfs[0]-1, weights.surfs[-1]):
                 # We need to be careful: weights.labels_min and weights.labels_max
                 # are only provided for valid surfs (6:48)
-                min_clim = weights.labels_min[i_surfs-weights.surfs[0]-1,i_lat]
-                max_clim = weights.labels_max[i_surfs-weights.surfs[0]-1,i_lat]
-                delta = max_clim - min_clim
+                min_clim = weights.labels_min[i_surfs-weights.surfs[0]+1,i_lat]
+                max_clim = weights.labels_max[i_surfs-weights.surfs[0]+1,i_lat]
+                delta = np.zeros_like(max_clim) #max_clim - min_clim
                 thresh_min = min_clim - delta
                 thresh_max = max_clim + delta
 
@@ -465,7 +470,7 @@ def _co_prediction(l1bradg_file=None, \
 
     # Predict
     pred2 = np.zeros ( (len(features),37) )
-    pred2[:,:] = -999
+    pred2[:,:] = -999.99
     for i_lat in range ( 0, len(weights.lats) ):
         lat_bin = weights.lats[i_lat]
         ind_lat = np.where((np.min(features,axis=1)>-100) & (lat>=lat_bin[0]) & (lat<lat_bin[1]))[0]
@@ -493,13 +498,12 @@ def _co_prediction(l1bradg_file=None, \
         lat_bin = weights.lats[i_lat]
         ind_lat = np.where((lat>=lat_bin[0]) & (lat<lat_bin[1]))[0]
         if len(ind_lat)>0:
-            # I start this search at level 10, which is less noisy)
-            for i_surfs in range(4, weights.surfs[-1]):
+            for i_surfs in range(weights.surfs[0]-1, weights.surfs[-1]):
                 # We need to be careful: weights.labels_min and weights.labels_max
                 # are only provided for valid surfs (6:48)
-                min_clim = weights.labels_min[i_surfs-weights.surfs[0]-1,i_lat]
-                max_clim = weights.labels_max[i_surfs-weights.surfs[0]-1,i_lat]
-                delta = max_clim - min_clim
+                min_clim = weights.labels_min[i_surfs-weights.surfs[0]+1,i_lat]
+                max_clim = weights.labels_max[i_surfs-weights.surfs[0]+1,i_lat]
+                delta = np.zeros_like(max_clim) #max_clim - min_clim
                 thresh_min = min_clim - delta
                 thresh_max = max_clim + delta
 
@@ -544,3 +548,17 @@ result = _co_prediction(l1bradg_file=l1bradg_file, \
                          l1boa_file=l1boa_file, \
                          weights_file=weights_file, \
                          out_file=out_file)
+
+## =========================================================================
+## Revisions
+## =========================================================================
+## Revision 1.1  2022/07/14 fwerner
+## Set precisions to -999.99 for all profiles if latitude <-90 (can happen in NRT)
+##
+## Revision 1.2  2022/09/02 fwerner
+## Adjust envelope to identify unrealistic predictions outside the expected range.
+## Instead of delta = max_clim - min_clim we now do delta = 0 (i.e., no extrapolation).
+##
+## Revision 1.2.1  2022/09/02 fwerner
+## Fixed a bug in the part that identifies unrealistic predictions outside the expected range.
+## i_surfs-weights.surfs[0]-1 -> i_surfs-(weights.surfs[0]-1) = i_surfs-weights.surfs[0]+1
