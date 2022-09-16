@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from __future__ import print_function
 import os, sys, re
 import optparse as op
@@ -65,6 +65,7 @@ status of 0 and if the file has 1 or more breaks, the status is 1
                default=False)
 
 
+  print(f"python version: {sys.version}")
   opts,args=p.parse_args()
   nocatch=opts.nocatch
   verbose=opts.verbose
@@ -96,27 +97,24 @@ status of 0 and if the file has 1 or more breaks, the status is 1
   pp=sp.Popen(spargs,stdout=sp.PIPE,stderr=sp.PIPE)
   (out,err)=pp.communicate()
   retcode=pp.returncode
+  print("=================== STDOUT =============== ")
+  print(str(out,'utf-8'))
+  print( "================== STDERR =============== ")
+  print( str(err,'utf-8'))
+  print( "================== Done =============== ")
+
   if retcode == -1:
     print("Error in the IDL runtime!")
-    print("=================== STDOUT =============== ")
-    print( out)
-    print( "=================== STDERR =============== ")
-    print( err)
     sys.exit(1)
   elif retcode == 1:
     if verbose: print( "File has break!")
   elif retcode == 0:
     if verbose: 
       print( "File is okay!")
-      print("retcode = %d" % retcode)
+      print("retcode = {retcode:d}")
   else:
     print( "Some other error occurred")
-    print("Error code = %d" % retcode)
-    print( "STDOUT/STDERR = ")
-    print( "=================== STDOUT =============== ")
-    print( out)
-    print( "=================== STDERR =============== ")
-    print( err)
+    print(f"Error code = {retcode}")
     
   sys.exit(retcode)
 
@@ -130,6 +128,10 @@ status of 0 and if the file has 1 or more breaks, the status is 1
 #
 # Modifications:
 # $Log$
+# Revision 1.8  2022/09/15 00:11:17  whdaffer
+# Print STDOUT/STDERR regardless of return status from process running
+# the IDL runtime. Need more info, not less. Deal with bytecode variables.
+#
 # Revision 1.7  2021/05/17 18:08:37  whdaffer
 # Added from __future__ import print_function
 #
