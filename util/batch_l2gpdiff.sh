@@ -142,7 +142,7 @@ extant_files()
 #	The entry point where control is given to the script         *
 #****************************************************************
 #
-stdprods='BrO CH3Cl CH3CN ClO CO GPH H2O HCl HCN HNO3 HO2 HOCl IWC N2O O3 OH RHI Temperature'
+stdprods='BrO CH3Cl CH3CN ClO CO GPH H2O HCl HCN HNO3 HO2 HOCl IWC N2O O3 OH RHI SO2 Temperature'
 debug=0
 #     ^  -- set this to 1 if worried
 keep=0
@@ -308,6 +308,7 @@ then
   echo "frstdir $frstdir"
   echo "scnddir $scnddir"
 fi
+
 if [ "$dir1" = "$dir2" ]
 then
   echo "Sorry--dir1 and dir2 must be different"
@@ -323,11 +324,20 @@ then
 fi
 for i in $list
 do
+  # We'll use this bit of trickery to skip any products that weren't created
+  # e.g., "OH" on dates when the THz radiometer is off
+  # of products not created by the nrt process
+  file1="skip"
+  file2="skip"
   extant_files $dir1/MLS-Aura_L2GP-${i}_*c${cycle1}*.he5
   if [ "$cycle1" = "none" ]
   then
     extant_files $dir1/MLS-Aura_L2GP-${i}_*.he5
   fi
+  
+  echo dir1/MLS-Aura_L2GP-{i}_ $dir1/MLS-Aura_L2GP-${i}_*.he5
+  echo extant_files_result $extant_files_result
+
   nfiles=`echo "$extant_files_result" | wc | awk '{print $2}'`
   if [ "$nfiles" -gt 1 ]
   then
@@ -344,6 +354,10 @@ do
   then
     extant_files $dir2/MLS-Aura_L2GP-${i}_*.he5
   fi
+  
+  echo dir2/MLS-Aura_L2GP-{i}_ $dir2/MLS-Aura_L2GP-${i}_*.he5
+  echo extant_files_result $extant_files_result
+
   nfiles=`echo "$extant_files_result" | wc | awk '{print $2}'`
   if [ "$nfiles" -gt 1 ]
   then
@@ -361,56 +375,62 @@ do
     echo "file1 $file1"
     echo "file2 $file2"
   fi
-  if [ "$profile1" != "" -a "$profile2" != "" ]
+  a=`echo "$file1 $file2" | grep skip`
+  # Run the diffs tool only if both files are present
+  # i.e., neither is named "skip"
+  if [ "$a" = "" ]
   then
-    fname1=`perl -e '$reverse=reverse("$ARGV[0]"); @parts=split("/",$reverse); $reverse=$parts[0]; $reverse=reverse($reverse); print $reverse' $file1`
-    fname2=`perl -e '$reverse=reverse("$ARGV[0]"); @parts=split("/",$reverse); $reverse=$parts[0]; $reverse=reverse($reverse); print $reverse' $file2`
-    newfile1=$frstdir/$fname1
-    newfile2=$scnddir/$fname2
+    if [ "$profile1" != "" -a "$profile2" != "" ]
+    then
+      fname1=`perl -e '$reverse=reverse("$ARGV[0]"); @parts=split("/",$reverse); $reverse=$parts[0]; $reverse=reverse($reverse); print $reverse' $file1`
+      fname2=`perl -e '$reverse=reverse("$ARGV[0]"); @parts=split("/",$reverse); $reverse=$parts[0]; $reverse=reverse($reverse); print $reverse' $file2`
+      newfile1=$frstdir/$fname1
+      newfile2=$scnddir/$fname2
+      if [ "$dryrun" = "yes" ]
+      then
+        echo "l2gpcat -v -o $newfile1 -profiles $profile1 $profile2 $file1"
+        echo "l2gpcat -v -o $newfile2 -profiles $profile1 $profile2 $file2"
+      else
+        l2gpcat -v -o $newfile1 -profiles $profile1 $profile2 $file1
+        l2gpcat -v -o $newfile2 -profiles $profile1 $profile2 $file2
+      fi
+      file1=$newfile1
+      file2=$newfile2
+    fi
+    if [ "$unique" = "yes" ]
+    then
+       outfile=`get_unique_name $i`
+    else
+      outfile="$i.diff"
+    fi
     if [ "$dryrun" = "yes" ]
     then
-      echo "l2gpcat -v -o $newfile1 -profiles $profile1 $profile2 $file1"
-      echo "l2gpcat -v -o $newfile2 -profiles $profile1 $profile2 $file2"
+      echo "l2gpdiff $file1 $file2 to $outfile"
+    elif [ ! -f "$outfile" ]
+    then
+      echo "$file1 $file2 $outfile" > "$outfile"
+    elif [ "$append" = "yes" ]
+    then
+       echo "$file1 $file2 $outfile" >> "$outfile"
     else
-      l2gpcat -v -o $newfile1 -profiles $profile1 $profile2 $file1
-      l2gpcat -v -o $newfile2 -profiles $profile1 $profile2 $file2
+      rm -f "$outfile"
+      echo "$file1 $file2 $outfile" > "$outfile"
     fi
-    file1=$newfile1
-    file2=$newfile2
-  fi
-  if [ "$unique" = "yes" ]
-  then
-     outfile=`get_unique_name $i`
-  else
-    outfile="$i.diff"
-  fi
-  if [ "$dryrun" = "yes" ]
-  then
-    echo "l2gpdiff $file1 $file2 to $outfile"
-  elif [ ! -f "$outfile" ]
-  then
-    echo "$file1 $file2 $outfile" > "$outfile"
-  elif [ "$append" = "yes" ]
-  then
-     echo "$file1 $file2 $outfile" >> "$outfile"
-  else
-    rm -f "$outfile"
-    echo "$file1 $file2 $outfile" > "$outfile"
-  fi
-  if [ "$file1" = "" ]
-  then
-    echo "No $i file found in $dir1"
-  elif [ "$file2" = "" ]
-  then
-    echo "No $i file found in $dir2"
-  elif [ "$dryrun" = "yes" ]
-  then
-    echo "$L2GPDIFF $l2gpdiff_opts $file1 $file2"
-  elif [ "$l2gpdiff_opts" = "" ]
-  then
-    $L2GPDIFF $file1 $file2 >> "$outfile"
-  else
-    $L2GPDIFF $l2gpdiff_opts $file1 $file2 >> "$outfile"
+    if [ "$file1" = "" ]
+    then
+      echo "No $i file found in $dir1"
+    elif [ "$file2" = "" ]
+    then
+      echo "No $i file found in $dir2"
+    elif [ "$dryrun" = "yes" ]
+    then
+      echo "$L2GPDIFF $l2gpdiff_opts $file1 $file2"
+    elif [ "$l2gpdiff_opts" = "" ]
+    then
+      $L2GPDIFF $file1 $file2 >> "$outfile"
+    else
+      $L2GPDIFF $l2gpdiff_opts $file1 $file2 >> "$outfile"
+    fi
   fi
 done
 if [ "$profile1" != "" -a "$profile2" != "" -a "$keep" != 1 ]
@@ -420,6 +440,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.19  2018/03/12 21:45:25  pwagner
+# Respect the env variable L2GPDIFF as the preferred l2gpdiff
+#
 # Revision 1.18  2012/07/02 23:06:34  pwagner
 # The environment variable PRODUCTS now determines what is diffed
 #
