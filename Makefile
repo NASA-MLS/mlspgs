@@ -261,6 +261,7 @@ SHELL = /bin/sh
 # l2auxchi       
 # l2auxdump      
 # l2gp2nc4     
+# l2gpdiffnc4     
 # l2gpcat        
 # l2gpdiff       
 # l2gpdump       
@@ -493,7 +494,7 @@ MLSTOOLS = chunktimes checkpvmup compare dateconverter extinctionmaker fixDOI\
   Goldbrick_More heconvert h5subset h5cat hl \
   insertl2gpvalues killmaster \
   l1bcat l1bdiff l1bdump l1h5subset \
-  l2auxcat l2auxchi l2auxdump l2gp2nc4 l2gpcat l2gpdiff l2gpdump \
+  l2auxcat l2auxchi l2auxdump l2gp2nc4 l2gpdiffnc4 l2gpcat l2gpdiff l2gpdump \
   l2pcdiff l2pcdump l2q lr machineok misalignment \
   resetl2gpstatus resetl2gpvalues Spartacus tellMasterToQuit \
   vansGoldFilter WordSplit wrapLines
@@ -1078,6 +1079,18 @@ l2gp2nc4: $(CONFDIR)/$(MLSCFILE) $(CONFDIR)/netcdf/l2gp2nc4.f90 l1--itm
 	make NEEDS_ITM=yes NETCDF=yes
 	cp $(CONFDIR)/tests/lib/$(MLSCONFG)/test $(INSTALLDIR)/l2gp2nc4
 
+l2gpdiffnc4: $(CONFDIR)/$(MLSCFILE) $(CONFDIR)/netcdf/l2gpdiffnc4.f90 l1--itm
+# Needs further refinement
+	cd $(CONFDIR)/tests/lib; \
+	mv *.f9[0h] hideme; \
+	cd ../../netcdf; \
+	cp l2gpdiffnc4.f90 MLSFiles.f90 MLSNetCDF4.f90 MLS_Swrdfld.f9h \
+	MLS_Swwrfld.f9h NCL2GP.f90 ../tests/lib; \
+	cd ../tests/lib; \
+	make update; \
+	make NEEDS_ITM=yes NETCDF=yes
+	cp $(CONFDIR)/tests/lib/$(MLSCONFG)/test $(INSTALLDIR)/l2gpdiffnc4
+
 l2gpcat: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2gpcat.f90 l1--itm
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
@@ -1523,6 +1536,9 @@ tools: $(MLSTOOLS)
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.31  2022/04/29 15:58:48  pwagner
+# Now able to build insertl2gpvalues
+#
 # Revision 1.30  2022/01/20 22:11:51  pwagner
 # Can now make resetl2gpvalues
 #
