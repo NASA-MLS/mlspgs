@@ -51,7 +51,9 @@
 # then as a final step repack and augment them with netCDF attributes.
 
 # As an alternative, if NETCDFCONVERT is defined and executable,
-# use that instead.
+# use that instead to create an explicitly NetCDF-formatted file.
+# Additionally, if NCCOPY is defined and executable,
+# use that tool to compress the NetCDF file.
 
 # usage: see (1) above
 
@@ -273,6 +275,7 @@ fi
 convert_file_formats()
 {
 logit "NETCDFCONVERT: $NETCDFCONVERT"
+logit "NCCOPY: $NCCOPY"
 if [ -x "$NETCDFCONVERT" ]
 then
   logit "Converting file format to NetCDF4"
@@ -302,7 +305,7 @@ then
 fi
 }
 
-# ------------------ nccopy ----------------------
+# ------------------ nccopy_files ----------------------
 # ----------------------------------------------------------------
 # h5repack doesn't work properly with NetCDF files
 # Instead we must use nccopy
@@ -866,6 +869,9 @@ else
 fi
 
 # $Log$
+# Revision 1.44  2022/05/27 21:00:41  pwagner
+# Printed a more helpful error message when run w/o toolkit
+#
 # Revision 1.43  2022/02/03 18:45:10  pwagner
 # Move augment, convert, etc. into internal functions
 #
