@@ -55,6 +55,148 @@ commando()
    fi
 }
       
+#---------------------------- print_nth_array_element
+#
+# Function to print the nth element in a space-delimited list
+# where n is the first arg, the list is the second arg, 
+# print_nth_list_element 3 'a b c d'
+# writes 'c' to standard output
+
+print_nth_array_element()
+{
+
+   # Do we have enough args?
+      if [ $# -lt 2 ]
+      then
+         echo "Usage: print_nth_array_element n 'a b c ..'"
+         exit 1
+      fi
+      
+      perl -e '@parts=split(" ","$ARGV[0]"); print $parts[$ARGV[1]-1]' "$2" "$1"
+}
+
+#---------------------------- what_array_element
+#
+# Function to show what element in a space-delimited list has been supplied
+# in the first arg, the list is the second arg, 
+# what_array_element c 'a b c d'
+# writes '3' to standard output
+what_array_element()
+{
+
+   # Do we have enough args?
+      if [ $# -lt 2 ]
+      then
+         echo "Usage: what_array_element c 'a b c ..'"
+         exit 1
+      fi
+      n=0
+      count_up=1
+      for i in $2
+      do
+        # echo $i $1
+        if [ "$i" = "$1" ]
+        then
+          # echo "really, $i $1"
+          n=$count_up
+        fi
+        count_up=`expr $count_up + 1`
+      done
+      echo $n
+}
+
+#---------------------------- print_hash_element
+#
+# Function to print value corresponding to key given two space-delimited arrays
+# where the first array are the keys and the second the values
+# print_hash_element c 'a b c d' '1 2 3 4'
+# writes '3' to standard output
+print_hash_element()
+{
+   # Do we have enough args?
+      if [ $# -lt 3 ]
+      then
+         echo "Usage: print_hash_element c 'a b c ..' '1 2 3 4 ..'"
+         exit 1
+      fi
+      arg_num=`what_array_element $1 "$2"`
+      print_nth_array_element $arg_num "$3"
+}
+
+#------------------------------- mega_buck ------------
+#
+# Function to force multiple-evaluation of its second arg
+# i.e., $$..$color (where the number of $ signs is n)
+# usage: mega_buck n color
+
+mega_buck()
+{
+   # Trivial case (n is 0)
+   if [ "$1" -lt 1 ]
+   then
+     mega_buck_result="$2"
+   elif [ "$2" = "" ]
+   then
+     mega_buck_result="$2"
+   else
+     mega_buck_result=`pr_mega_buck $1 $2`
+   fi
+}
+      
+pr_double_buck()
+{
+      eval echo $`echo $1`
+}
+      
+pr_mega_buck()
+{
+      number=0
+      mega_buck_temp=$2
+      while [ "$number" -lt "$1" ]
+      do
+        mega_buck_temp=`pr_double_buck $mega_buck_temp`
+        number=`expr $number + 1`
+      done
+      echo $mega_buck_temp
+}
+
+      
+#---------------------------- lhs_eq_rhs
+#
+# Function to assign second arg to first: lhs=rhs
+# where (lhs rhs) = ($1 $2)
+# if given optional third arg "n"
+# assigns $$..$lhs = $$..$rhs
+
+lhs_eq_rhs()
+{
+
+      if [ $# -lt 3 ]
+      then
+         eval "$1"="'"$2"'"
+      else
+         mega_buck $3 $1
+         lhs=$mega_buck_result
+         mega_buck $3 $2
+         rhs=$mega_buck_result
+         eval "$lhs"="'"$rhs"'"
+      fi
+}
+
+#---------------------------- set_if_not_def
+#
+# Function to assign second arg to first only if first not already defined
+set_if_not_def()
+{
+     # echo $@
+     mega_buck 1 $1
+     # echo $mega_buck_result
+     if [ "$mega_buck_result" = "" -o "$mega_buck_result" = '$' ]
+     then
+       lhs_eq_rhs $@
+     fi
+}
+
 #------------------------------- executable_or_exit ------------
 #
 # Check that a named file is executable;
@@ -68,53 +210,6 @@ executable_or_exit()
     echo "Sorry, $1 not executable or not in your PATH"
     exit 1
   fi
-}
-
-#------------------------------- h2o_nn_retrieval ------------
-#
-# Perform a separate retrieval for H2O
-# using a trained n-n algorithm
-# Then overwrite the swaths in the std. prod. "file" and in the "DGG"
-# Args
-# L1BRADG L1BRADD L1BOA Weights_File Prediction_File 
-#
-# In effect we are running
-#   python3 $H2ONNSCRIPT $L1BRADG $L1BRADD $L1BOA $Weights_File $Prediction_File
-# Afterwards we 
-# * use insertl2gpvalues to overwrite the relevant levels in the h2o swath
-# * use l2gpcat to copy the changed swath to the DGG from the std. prod. file
-# *** Scratch that last point ***
-# We could have used a tool like l2gpcp instead of l2gpcat. But, since we
-# have insertl2gpvalues handy, why not use insertl2gpvalues on the DGG file, too?
-# ***                         ***
-
-h2o_nn_retrieval()
-{
-  pwd
-  ls
-  swath="H2O"
-  echo $PYTHON3 $H2ONNSCRIPT $@
-  $PYTHON3 $H2ONNSCRIPT $@
-  file=`echo *L2GP-$swath*.he5`
-  DGG=`echo *L2GP-DGG_*.he5`
-  echo $insertl2gpvalues $file
-  $insertl2gpvalues -s $swath -d ANN_Prediction -p ANN_Precision \
-    -Lf $3 \
-    -Vf $5 \
-    -conv 1 \
-    -qual 0 \
-    -stat 68 \
-    $file
-  # $l2gpcat -nodup -s $swath -r $swath-StdProd -o $DGG $file 
-  # l2gpcat doesn't act like we thought it did, so we'll just 
-  # reuse insertl2gpvalues to handle the DGG file
-  $insertl2gpvalues -s $swath-StdProd -d ANN_Prediction -p ANN_Precision \
-    -Lf $3 \
-    -Vf $5 \
-    -conv 1 \
-    -qual 0 \
-    -stat 68 \
-    $DGG
 }
 
 #------------------------------- swath_nn_retrieval ------------
@@ -133,8 +228,8 @@ h2o_nn_retrieval()
 
 swath_nn_retrieval()
 {
-  pwd
-  ls
+  # pwd
+  # ls
   swath="$1"
   SWATHNNSCRIPT="$2"
   shift
@@ -143,15 +238,15 @@ swath_nn_retrieval()
   $PYTHON3 $SWATHNNSCRIPT $@
   file=`echo *L2GP-$swath*.he5`
   DGG=`echo *L2GP-DGG_*.he5`
-  echo $insertl2gpvalues $file
-  $insertl2gpvalues -s $swath -d ANN_Prediction -p ANN_Precision \
+  # echo $insertl2gpvalues $file
+  commando $insertl2gpvalues -s $swath -d ANN_Prediction -p ANN_Precision \
     -Lf $3 \
     -Vf $5 \
     -conv 1 \
     -qual 0 \
     -stat 68 \
     $file
-  $insertl2gpvalues -s $swath-StdProd -d ANN_Prediction -p ANN_Precision \
+  commando $insertl2gpvalues -s $swath-StdProd -d ANN_Prediction -p ANN_Precision \
     -Lf $3 \
     -Vf $5 \
     -conv 1 \
@@ -293,30 +388,13 @@ then
   merge_files $@
 fi
 
-if [ "$H2ONNSCRIPT" = '' ]
-then
-  H2ONNSCRIPT=$MLSTOOLS/h2o_prediction.py
-fi
-
-if [ "$O3NNSCRIPT" = '' ]
-then
-  O3NNSCRIPT=$MLSTOOLS/o3_prediction.py
-fi
-
-if [ "$CONNSCRIPT" = '' ]
-then
-  CONNSCRIPT=$MLSTOOLS/co_prediction.py
-fi
-
-if [ "$SO2NNSCRIPT" = '' ]
-then
-  SO2NNSCRIPT=$MLSTOOLS/so2_prediction.py
-fi
-
-if [ "$TEMPNNSCRIPT" = '' ]
-then
-  TEMPNNSCRIPT=$MLSTOOLS/temp_prediction.py
-fi
+set_if_not_def H2ONNSCRIPT $MLSTOOLS/h2o_prediction.py
+set_if_not_def O3NNSCRIPT $MLSTOOLS/o3_prediction.py
+set_if_not_def CONNSCRIPT $MLSTOOLS/co_prediction.py
+set_if_not_def SO2NNSCRIPT $MLSTOOLS/so2_prediction.py
+set_if_not_def TEMPNNSCRIPT $MLSTOOLS/temp_prediction.py
+set_if_not_def N2ONNSCRIPT $MLSTOOLS/n2o_prediction.py
+set_if_not_def HNO3NNSCRIPT $MLSTOOLS/hno3_prediction.py
 
 echo "PYTHON3 $PYTHON3"
 echo "H2ONNSCRIPT $H2ONNSCRIPT"
@@ -333,42 +411,31 @@ else
   radg=*RADG*.h5
   radd=*RADD*.h5
   boa=*L1BOA*.h5
-  # The following set of consecutive if blocks should be
-  # replaced by a single
-  # for mol in $mols
-  # do
-  # done
-  # block
-  # where mols="h2o o3 co so2 temperature"
-  if [ -f "$H2ONNSCRIPT" ]
-  then
-    pred=h2o_prediction.h5
-    commando swath_nn_retrieval H2O $H2ONNSCRIPT $radg $radd $boa $H2OANNWEIGHTS $pred
-  fi
-  if [ -f "$O3NNSCRIPT" ]
-  then
-    pred=o3_prediction.h5
-    commando swath_nn_retrieval O3 $O3NNSCRIPT $radg $radd $boa $O3ANNWEIGHTS $pred
-  fi
-  if [ -f "$CONNSCRIPT" ]
-  then
-    pred=co_prediction.h5
-    commando swath_nn_retrieval CO $CONNSCRIPT $radg $radd $boa $COANNWEIGHTS $pred
-  fi
-  if [ -f "$SO2NNSCRIPT" ]
-  then
-    pred=so2_prediction.h5
-    commando swath_nn_retrieval SO2 $SO2NNSCRIPT $radg $radd $boa $SO2ANNWEIGHTS $pred
-  fi
-  if [ -f "$TEMPNNSCRIPT" ]
-  then
-    pred=temp_prediction.h5
-    commando swath_nn_retrieval Temperature $TEMPNNSCRIPT $radg $radd $boa $TEMPANNWEIGHTS $pred
-  fi
+  # The following arrays hold corresponding names for
+  # molecules  swaths  pythonscripts  weightsfiles
+  mols="h2o o3 co so2 temp n2o hno3"
+  swaths="H2O O3 CO SO2 Temperature N2O HNO3"
+  scripts="$H2ONNSCRIPT $O3NNSCRIPT $CONNSCRIPT $SO2NNSCRIPT $TEMPNNSCRIPT $N2ONNSCRIPT $HNO3NNSCRIPT"
+  weights="$H2OANNWEIGHTS $O3ANNWEIGHTS $COANNWEIGHTS $SO2ANNWEIGHTS $TEMPANNWEIGHTS $N2OANNWEIGHTS $HNO3ANNWEIGHTS"
+  echo "weights: $weights"
+  for mol in $mols
+  do
+    # mol_num is the index number in mols corresponding to mol
+    # i.e., 1 2 .. n
+    mol_num=`what_array_element $mol "$mols"`
+    swath=`print_nth_array_element $mol_num "$swaths"`
+    script=`print_nth_array_element $mol_num "$scripts"`
+    weight=`print_nth_array_element $mol_num "$weights"`
+    pred=${mol}_prediction.h5
+    commando swath_nn_retrieval $swath $script $radg $radd $boa $weight $pred
+  done
   cd $cwd
 fi
 # -------------------------- -------------------------- ------------
 # $Log$
+# Revision 1.9  2022/07/13 22:53:49  pwagner
+# Use new insertl2gpvalues cmdline opts
+#
 # Revision 1.8  2022/06/02 21:39:35  pwagner
 # Added SO2 to mols predicted by python script
 #
