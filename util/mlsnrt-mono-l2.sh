@@ -168,7 +168,7 @@ mv pvmlog job1logs
 #------------------------------- create_and_run_Level_2 ------------
 #
 # Create and launch a level 2 master task
-# usage: create_and_run_Level_2 new_JOBDIR PCF_Template l2cf temp_file
+# usage: create_and_run_Level_2 new_JOBDIR PCF_Template
 
 create_and_run_Level_2()
 {
@@ -423,7 +423,7 @@ L1JOBENV=$JOBENV
 export OTHEROPTS="$otheropts"
 /bin/rm -f $L1JOBDIR/temp_a $L1JOBDIR/temp_b
 
-create_and_run_Level_2 $JOBDIR $L1PCF $L2CF_A $L1JOBDIR/temp_a
+create_and_run_Level_2 $JOBDIR $L1PCF
 
 # Did we define a script to run after (a) and (b)?
 # Perhaps to combine their std prods?
@@ -509,3 +509,6 @@ then
 fi
 
 # $Log$
+# Revision 1.1  2022/06/02 21:40:59  pwagner
+# First commit
+#
