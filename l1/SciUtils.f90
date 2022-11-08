@@ -646,6 +646,7 @@ MODULE SciUtils ! L0 science utilities
     USE L0_sci_tbls, ONLY: APE_theta_dflt, TSSM_theta_dflt
     USE MLSL1Config, ONLY: L1Config
     USE EngTbls, ONLY: EngMAF
+    use MLSFillValues, only: Isnan
 
     INTEGER :: i
     REAL :: APE, TSSM
@@ -653,15 +654,36 @@ MODULE SciUtils ! L0 science utilities
     REAL, PARAMETER :: APE_B_A = 0.734
     REAL, PARAMETER :: TSSM_eps = 26.232   !26.301 before 9/20/04
 
+!     print *, 'In GetScAngles'
+!     print *, 'shape(APE_theta_dflt) ', shape(APE_theta_dflt)
+!     print *, 'shape(TSSM_theta_dflt) ', shape(TSSM_theta_dflt)
+!     print *, 'shape(SciMAF) ', shape(SciMAF)
+!     print *, 'lbound,ubound(APE_theta_dflt) ', lbound(APE_theta_dflt), ubound(APE_theta_dflt)
+!     print *, 'lbound,ubound(SciMAF) ', lbound(SciMAF), ubound(SciMAF)
+!     do i = 0, (MaxMIFs - 1)
+!           print *, 'i, SciMAF(i)%APE_theta ', i, SciMAF(i)%APE_theta
+!           print *, 'i, SciMAF(i)%TSSM_theta ', i, SciMAF(i)%TSSM_theta
+!     enddo
+!     stop
     DO i = 0, (MaxMIFs - 1)
        IF (L1Config%Globals%SimOA) THEN
           APE = APE_theta_dflt(i)
           TSSM = TSSM_theta_dflt(i)
+!           print *, 'SimOA ', i, APE
        ELSE
           APE = SciMAF(i)%APE_theta
           IF (EngMAF%ASE_Side == "B") APE = APE - APE_B_A  ! Adjust for "B" side
           TSSM = SciMAF(i)%TSSM_theta
+!           print *, 'not SimOA ', i, APE
        ENDIF
+       if ( isNaN(APE) ) then
+         APE = -999.9
+         SciMAF(i)%scAngleG = -999.9
+       endif
+       if ( isNaN(TSSM) ) then
+         TSSM = -999.9
+         SciMAF(i)%scAngleT = -999.9
+       endif
        IF (APE >= 0.0) THEN
           SciMAF(i)%scAngleG = MOD ((APE + APE_eps), 360.0)
        ELSE
@@ -1010,6 +1032,9 @@ MODULE SciUtils ! L0 science utilities
 END MODULE SciUtils
 
 ! $Log$
+! Revision 2.22  2022/11/08 23:47:59  pwagner
+! Workaround for NAG signaling NaN in scAngleG and T
+!
 ! Revision 2.21  2016/03/15 22:17:59  whdaffer
 ! Merged whd-rel-1-0 back onto main branch. Most changes
 ! are to comments, but there's some modification to Calibration.f90
@@ -1073,6 +1098,9 @@ END MODULE SciUtils
 ! moved parameter statement to data statement for LF/NAG compatitibility
 !
 ! $Log$
+! Revision 2.22  2022/11/08 23:47:59  pwagner
+! Workaround for NAG signaling NaN in scAngleG and T
+!
 ! Revision 2.21  2016/03/15 22:17:59  whdaffer
 ! Merged whd-rel-1-0 back onto main branch. Most changes
 ! are to comments, but there's some modification to Calibration.f90
