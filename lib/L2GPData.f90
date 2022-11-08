@@ -2695,9 +2695,9 @@ contains ! =====     Public Procedures     =============================
     integer :: nUnique
     logical :: skipGeos
     real(rgp), dimension(:), pointer :: spacing
-    integer, dimension(1000) :: FirstProfInChunk
-    integer, dimension(1000) :: FirstProfInUnique
-    integer, dimension(1000) :: uniqueVals
+    integer, dimension(MAXNUMTIMES) :: FirstProfInChunk
+    integer, dimension(MAXNUMTIMES) :: FirstProfInUnique
+    integer, dimension(MAXNUMTIMES) :: uniqueVals
 
     ! Executable code
     myDetails = 1
@@ -5830,6 +5830,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.253  2021/09/30 21:51:21  pwagner
+! Add check for agreement to DumpL2GPData%1st pprofiles
+!
 ! Revision 2.252  2021/09/23 23:02:56  pwagner
 ! Added FirstProfileNumber to fields that can be Dumped
 !
