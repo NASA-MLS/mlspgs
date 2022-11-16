@@ -950,7 +950,7 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(MaxFlds) :: varIDs
     ! Executable code
     call trace_begin ( me,  'ReadNCL2GPData_MF_NC4', cond=.false. )
-    deeBugHere = DEEBUG .or. .true.
+    deeBugHere = DEEBUG ! .or. .true.
     nullify ( realFreq, realSurf, realProf, real3 )
     hdfVersion = L2GPFile%hdfVersion
     ! Don't fail when trying to read an mls-specific field 
@@ -971,12 +971,13 @@ contains ! ======================= Public Procedures =========================
     
     print *, 'Trying to attach ', trim(l2gp%Name)
     swid = mls_SWattach( L2GPFile, l2gp%Name )
+    if ( deeBugHere ) print *, 'swid: ',swid
     DF_Name = DATA_FIELD1
     DF_Precision = DATA_FIELD2
     if ( deeBugHere ) print *, 'DF_NAME: ',DF_NAME
     if ( deeBugHere ) print *, 'DF_Precision: ',DF_Precision
     ! Here we read the Missing Value attribute
-    print *, 'Trying to read missing data'
+    ! print *, 'Trying to read missing data'
     status = MLS_SWRdLAttr( swid, 'L2gpValue', 'MissingValue', &
       & nf90_real, RealBuffer=MissingValue )
     if ( status /= 0 ) then
@@ -1137,10 +1138,12 @@ contains ! ======================= Public Procedures =========================
     edge(3) = myNumProfs
     status=0
 
+    if ( DeeBugHere ) then
     print *, 'start ', start
     print *, 'stride ', stride
     print *, 'edge ', edge
     print *, 'shape(realProf) ', shape(realProf)
+    endif
     status = mls_SWrdfld(swid, 'Latitude', start(3:3), stride(3:3), &
       edge(3:3), realProf)
     l2gp%latitude = realProf
@@ -1175,7 +1178,7 @@ contains ! ======================= Public Procedures =========================
 
     ! Read the pressures vertical geolocation field, if it exists
 
-    if (lev /= 0) then
+    if (NLevels /= 0) then
        status = mls_SWrdfld(swid,'Pressure',start(2:2),stride(2:2), edge(2:2),&
          & realSurf)
        l2gp%pressures = realSurf
@@ -1197,20 +1200,29 @@ contains ! ======================= Public Procedures =========================
     ! Why would start now be set back to 0 instead of 1?
     ! start = 0
 
-    if ( freq == 1 .or. .true. ) then
+    if ( any(freq == (/0,1/)) ) then
 
 !       status = mls_SWrdfld(swid, trim(DF_Name), start, stride, edge, real3)
-       status = mls_SWrdfld(swid, 'L2gpValue', start, stride, edge, real3)
+!       status = mls_SWrdfld(swid, 'L2gpValue', start, stride, edge, real3)
+       status = mls_SWrdfld(swid, 'L2gpValue', start(2:3), stride(2:3), edge(2:3), real3(1,:,:))
        l2gp%l2gpValue = real3
+       if ( DeeBugHere ) then
        print *, 'Min, max (real3) ', minval(real3), maxval(real3)
        print *, 'Min, max (l2gpval) ', minval(l2gp%l2gpValue), maxval(l2gp%l2gpValue)
        print *, 'shape (l2gpval) ', shape(l2gp%l2gpValue)
        print *, 'status ', status       
+!        print *, '3rd index'    
+!        call Dump( l2gp%l2gpValue(1,1,:), trim(swathname) )
+       print *, '2nd index'    
+       call Dump( l2gp%l2gpValue(1,:,1), trim(swathname) )
+       endif
 
-       status = mls_SWrdfld(swid, trim(DF_Precision), start, stride, edge, real3)
+       status = mls_SWrdfld(swid, trim(DF_Precision), start(2:3), stride(2:3), edge(2:3), real3(1,:,:))
        l2gp%l2gpPrecision = real3
+       if ( DeeBugHere ) then
        print *, 'Min, max (precision) ', minval(l2gp%l2gpPrecision), maxval(l2gp%l2gpPrecision)
        print *, 'shape (precision) ', shape(l2gp%l2gpPrecision)
+       endif
 
     else if ( lev == 1) then
 
@@ -2212,6 +2224,9 @@ contains ! ======================= Public Procedures =========================
 end module NCL2GP
 
 ! $Log$
+! Revision 1.4  2022/09/02 21:25:20  pwagner
+! Fixed some but not all bugs in reading
+!
 ! Revision 1.3  2022/02/03 18:43:15  pwagner
 ! Reduce the amount debug printing
 !
