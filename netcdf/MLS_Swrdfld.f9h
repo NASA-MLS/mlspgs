@@ -28,21 +28,38 @@
     integer :: grpid
     integer :: varid
     integer :: which_group
+    logical :: logtemp
     ! Executable code
+!     print *, 'In MLS_Swrdfld.f9h'
     call trace_begin ( me, ProcName , cond=.false. )
     returnStatus = -1
+    logtemp = Is_datafield_in_swath(swathId, fieldname, which_group)
+!     print *, 'logtemp ', logtemp
     if ( Is_datafield_in_swath(swathId, fieldname, which_group) ) then
       ! Must get grpid for Groupname
+!       print *, 'seek group name and id'
       call check( &
         & nf90_inq_ncid( swathId, trim(SWGroupNames(which_group)), grpId ), &
         & ProcName )
+!       print *, 'seek field name and varid ' // trim(Fieldname)
       call check( nf90_inq_varid(grpid, Fieldname, varid), &
         & ProcName // trim(Fieldname) )
+!       print *, 'try to read varid'
+!       print *, 'start ', start
+!       print *, 'count ', count
+!       print *, 'stride ', stride
+!       print *, 'shape(values) ', shape(values)
       call check( nf90_get_var(grpid, varid, values, start, count, stride), &
         & ProcName // trim(Fieldname) )
       returnStatus = nf90_NoErr
+!       print *, 'group name ', trim(SWGroupNames(which_group))
+    else
+      print *, trim(fieldname) // ' not found in either group'
     endif
     call trace_end ( cond=.false. )
 
 !   end subroutine MLS_Swrdfld_1D_DOUBLE
 ! $Log$
+! Revision 1.1  2020/03/06 00:24:19  pwagner
+! First commit
+!
