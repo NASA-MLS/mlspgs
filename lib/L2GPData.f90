@@ -1745,8 +1745,8 @@ contains ! =====     Public Procedures     =============================
     logical :: badChunksDifferent     ! Are any chunks bad in one l2gp not bad in the other?
     integer :: badInstances
     character(len=*), parameter :: DEFAULTFIELDS = &
-      & 'pressures, latitude, longitude, solarTime, solarZenith,' // &
-      & 'losAngle, geodAngle, time, chunkNumber, frequency,'  // &
+      & 'pressure, lat, lon, solarTime, solarZenith,' // &
+      & 'losAngle, geodAngle, time, chunkNumber, freq,'  // &
       & 'l2gpvalue, l2gpPrecision, status, quality, convergence, AscDescMode '
     ! logical, parameter :: DEEBUG = .true.
     logical :: diffGeosMeanBadChunks
@@ -1814,6 +1814,8 @@ contains ! =====     Public Procedures     =============================
       call output( myFields, advance='yes' )   
       call output( 'skipGeos: ', advance='no' )
       call output( skipGeos, advance='yes' )   
+      call output( 'myVerbose: ', advance='no' )
+      call output( myVerbose, advance='yes' )   
     endif
     if ( myFields == '*' .or. lowercase(myFields) == 'all' ) &
       & myFields = DEFAULTFIELDS
@@ -1961,6 +1963,8 @@ contains ! =====     Public Procedures     =============================
       ! call output( 'calling diffGeoLocations', advance='yes' )
       ! call outputNamedValue( 'nameOnEachLine', trim(nameOnEachLine) )
       call diffGeoLocations( l2gp1, l2gp2Temp )
+      ! call Dump ( l2gp1%pressures, 'l2gp1 pressures' )
+      ! call Dump ( l2gp2Temp%pressures, 'l2gp2 pressures' )
     endif
     if ( myDetails < 1 .or. ShapesDontMatch )  then
       call doneHere
@@ -1978,7 +1982,11 @@ contains ! =====     Public Procedures     =============================
       & SwitchDetail(lowercase(myFields), 'l2gpvalue', '-fc') > -1 .and. myVerbose ) then
       call output('(values fields equal)', advance='yes')
     endif
-
+!     print *, '(lowercase(myFields): ', trim(lowercase(myFields))
+!     print *, SwitchDetail(lowercase(myFields), 'l2gpprecision', '-fc')
+!     print *, SwitchDetail(lowercase(myFields), 'status', '-fc')
+!     print *, SwitchDetail(lowercase(myFields), 'quality', '-fc')
+!     print *, SwitchDetail(lowercase(myFields), 'convergence', '-fc')
     NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%Precisions', ' ', statsOnOneLine )
     if ( any(l2gp1%l2gpPrecision /= l2gp2Temp%l2gpPrecision) .and. &
       & SwitchDetail(lowercase(myFields), 'l2gpprecision', '-fc') > -1 ) then
@@ -2032,133 +2040,170 @@ contains ! =====     Public Procedures     =============================
   contains
     subroutine diffGeoLocations( l2gp1, l2gp2 )
       ! Args
-      type(L2GPData_T) :: l2gp1
-      type(L2GPData_T) :: l2gp2
+      type(L2GPData_T)            :: l2gp1
+      type(L2GPData_T)            :: l2gp2
+      logical                     :: AnyDiffs
+      logical                     :: DiffUs
+      logical, parameter          :: NoteWhenEqual = .true.
       ! Executable
+!       print *, 'In diffGeoLocations'
+!       print *, SwitchDetail(lowercase(myFields), 'pressure', '-fc') > -1
+!       print *, SwitchDetail(lowercase(myFields), 'lat', '-fc') > -1
+!       print *, SwitchDetail(lowercase(myFields), 'lon', '-fc') > -1
+!       print *, SwitchDetail(lowercase(myFields), 'solarTime', '-fc') > -1
+!       print *, SwitchDetail(lowercase(myFields), 'solarZenith', '-fc') > -1
+!       print *, SwitchDetail(lowercase(myFields), 'losAngle', '-fc') > -1
+!       print *, SwitchDetail(lowercase(myFields), 'geodAngle', '-fc') > -1
+!       print *, SwitchDetail(lowercase(myFields), 'time', '-fc') > -1
+      AnyDiffs = .false.
       if ( all(shape(l2gp1%pressures) == shape(l2gp2%pressures)) ) then
         NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%pressure', ' ', statsOnOneLine )
-        if ( any(l2gp1%pressures /= l2gp2%pressures) .and. &
-          & SwitchDetail(lowercase(myFields), 'pressure', '-fc') > -1 ) then
-            call diff ( l2gp1%pressures, 'l2gp%pressures', &
+        DiffUs = SwitchDetail(lowercase(myFields), 'pressure', '-fc') > -1
+        if ( any(l2gp1%pressures /= l2gp2%pressures) ) &
+          & then
+            if ( DiffUs ) call diff ( l2gp1%pressures, 'l2gp%pressures', &
               &         l2gp2%pressures, ' ', &
               & options=options )
           myNumDiffs = myNumDiffs + count( l2gp1%pressures /= l2gp2%pressures )
+          AnyDiffs = .true.
+        elseif( NoteWhenEqual .and. DiffUs ) then
+          call output('(pressure fields equal)', advance='yes')
         endif
       endif
       if ( all(shape(l2gp1%latitude) == shape(l2gp2%latitude)) ) then
         NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%latitude', ' ', statsOnOneLine )
-        if ( any(l2gp1%latitude /= l2gp2%latitude) .and. &
-          & SwitchDetail(lowercase(myFields), 'lat', '-fc') > -1 ) then
-            call diff ( l2gp1%latitude, 'latitude', &
+        DiffUs = SwitchDetail(lowercase(myFields), 'lat', '-fc') > -1
+        if ( any(l2gp1%latitude /= l2gp2%latitude) ) &
+          & then
+            if ( DiffUs ) call diff ( l2gp1%latitude, 'l2gp%latitude', &
               &         l2gp2%latitude, ' ', &
               & options=options )
           myNumDiffs = myNumDiffs + count( l2gp1%latitude /= l2gp2%latitude )
+          AnyDiffs = .true.
+        elseif( NoteWhenEqual .and. DiffUs ) then
+          call output('(latitude fields equal)', advance='yes')
         endif
       endif
       if ( all(shape(l2gp1%longitude) == shape(l2gp2%longitude)) ) then
         NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%longitude', ' ', statsOnOneLine )
-        if ( any(l2gp1%longitude /= l2gp2%longitude) .and. &
-          & SwitchDetail(lowercase(myFields), 'lon', '-fc') > -1 ) then
-          if ( goldbrick ) then
-            call diff ( l2gp1%longitude, 'longitude', &
+        DiffUs = SwitchDetail(lowercase(myFields), 'lon', '-fc') > -1
+        if ( any(l2gp1%longitude /= l2gp2%longitude) ) &
+          & then
+            if ( DiffUs ) call diff ( l2gp1%longitude, 'l2gp%longitude', &
               &         l2gp2%longitude, ' ', &
               & options=options )
-          else
-            call dump ( &
-              & diff_fun( l2gp1%longitude, l2gp2%longitude, &
-              &         auxvalue=360._rgp, &
-              &         options=AddOntoOptions('p',options) ), &
-              & 'longitude', &
-              & options=options )
-          endif
           myNumDiffs = myNumDiffs + count( l2gp1%longitude /= l2gp2%longitude )
+          AnyDiffs = .true.
+        elseif( NoteWhenEqual .and. DiffUs ) then
+          call output('(longitude fields equal)', advance='yes')
         endif
       endif
       if ( all(shape(l2gp1%solarTime) == shape(l2gp2%solarTime)) ) then
-        NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%solartime', ' ', statsOnOneLine )
-        if ( any(l2gp1%solarTime /= l2gp2%solarTime) .and. &
-          & SwitchDetail(lowercase(myFields), 'solartime', '-fc') > -1 ) then
-          if ( goldbrick ) then
-            call diff ( l2gp1%solarTime, 'solarTime', &
+        NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%solarTime', ' ', statsOnOneLine )
+        DiffUs = SwitchDetail(lowercase(myFields), 'solartime', '-fc') > -1
+        if ( any(l2gp1%solarTime /= l2gp2%solarTime) ) &
+          & then
+            if ( DiffUs ) call diff ( l2gp1%solarTime, 'l2gp%solarTime', &
               &         l2gp2%solarTime, ' ', &
               & options=options )
-          else
-            call dump ( &
-              & diff_fun( l2gp1%solarTime, l2gp2%solarTime, &
-              &         auxvalue=24._rgp, &
-              &         options=AddOntoOptions('p',options) ), &
-              & 'solarTime', &
-              & options=options )
-          endif
           myNumDiffs = myNumDiffs + count( l2gp1%solarTime /= l2gp2%solarTime )
+          AnyDiffs = .true.
+        elseif( NoteWhenEqual .and. DiffUs ) then
+          call output('(solarTime fields equal)', advance='yes')
         endif
       endif
       if ( all(shape(l2gp1%solarZenith) == shape(l2gp2%solarZenith)) ) then
-        NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%solarzenith', ' ', statsOnOneLine )
-        CrashAtBeginning = .true.
-        if ( any(l2gp1%solarZenith /= l2gp2%solarZenith) .and. &
-          & SwitchDetail(lowercase(myFields), 'solarzenith', '-fc') > -1 ) then
-            call diff ( l2gp1%solarZenith, 'solarZenith', &
+        NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%solarZenith', ' ', statsOnOneLine )
+        DiffUs = SwitchDetail(lowercase(myFields), 'solarzenith', '-fc') > -1
+        if ( any(l2gp1%solarZenith /= l2gp2%solarZenith) ) &
+          & then
+            if ( DiffUs ) call diff ( l2gp1%solarZenith, 'l2gp%solarZenith', &
               &         l2gp2%solarZenith, ' ', &
-              & options=trim(options) )
-          badChunks = .true.
+              & options=options )
           myNumDiffs = myNumDiffs + count( l2gp1%solarZenith /= l2gp2%solarZenith )
+          AnyDiffs = .true.
+        elseif( NoteWhenEqual .and. DiffUs ) then
+          call output('(solarZenith fields equal)', advance='yes')
         endif
       endif
       if ( all(shape(l2gp1%losAngle) == shape(l2gp2%losAngle)) ) then
-        NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%losangle', ' ', statsOnOneLine )
-        if ( any(l2gp1%losAngle /= l2gp2%losAngle) .and. &
-          & SwitchDetail(lowercase(myFields), 'losangle', '-fc') > -1 ) then
-            call diff ( l2gp1%losAngle, 'losAngle', &
+        NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%losAngle', ' ', statsOnOneLine )
+        DiffUs = SwitchDetail(lowercase(myFields), 'losangle', '-fc') > -1
+        if ( any(l2gp1%losAngle /= l2gp2%losAngle) ) &
+          & then
+            if ( DiffUs ) call diff ( l2gp1%losAngle, 'l2gp%losAngle', &
               &         l2gp2%losAngle, ' ', &
               & options=options )
           myNumDiffs = myNumDiffs + count( l2gp1%losAngle /= l2gp2%losAngle )
+          AnyDiffs = .true.
+        elseif( NoteWhenEqual .and. DiffUs ) then
+          call output('(losAngle fields equal)', advance='yes')
         endif
       endif
       if ( all(shape(l2gp1%geodAngle) == shape(l2gp2%geodAngle)) ) then
-        NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%geodangle', ' ', statsOnOneLine )
-        if ( any(l2gp1%geodAngle /= l2gp2%geodAngle) .and. &
-          & SwitchDetail(lowercase(myFields), 'geodangle', '-fc') > -1 ) then
-            call diff ( l2gp1%geodAngle, 'geodAngle', &
+        NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%geodAngle', ' ', statsOnOneLine )
+        DiffUs = SwitchDetail(lowercase(myFields), 'geodangle', '-fc') > -1
+        if ( any(l2gp1%geodAngle /= l2gp2%geodAngle) ) &
+          & then
+            if ( DiffUs ) call diff ( l2gp1%geodAngle, 'l2gp%geodAngle', &
               &         l2gp2%geodAngle, ' ', &
               & options=options )
-          ! badChunks = .true.
           myNumDiffs = myNumDiffs + count( l2gp1%geodAngle /= l2gp2%geodAngle )
+          AnyDiffs = .true.
+        elseif( NoteWhenEqual .and. DiffUs ) then
+          call output('(geodAngle fields equal)', advance='yes')
         endif
       endif
       if ( all(shape(l2gp1%time) == shape(l2gp2%time)) ) then
         NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%time', ' ', statsOnOneLine )
-        if ( any(l2gp1%time /= l2gp2%time) .and. &
-          & SwitchDetail(lowercase(myFields), 'time', '-fc') > -1 ) then
-            call diff ( l2gp1%time, ' time', &
+        DiffUs = SwitchDetail(lowercase(myFields), 'time', '-fc') > -1
+        if ( any(l2gp1%time /= l2gp2%time) ) &
+          & then
+            if ( DiffUs ) call diff ( l2gp1%time, 'l2gp%time', &
               &         l2gp2%time, ' ', &
               & options=options )
-          ! badChunks = .true.
           myNumDiffs = myNumDiffs + count( l2gp1%time /= l2gp2%time )
+          AnyDiffs = .true.
+        elseif( NoteWhenEqual .and. DiffUs ) then
+          call output('(time fields equal)', advance='yes')
         endif
       endif
       if ( all(shape(l2gp1%chunkNumber) == shape(l2gp2%chunkNumber)) ) then
-        NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%chunknumber', ' ', statsOnOneLine )
-        if ( any(l2gp1%chunkNumber /= l2gp2%chunkNumber) .and. &
-          & SwitchDetail(lowercase(myFields), 'chunknumber', '-fc') > -1 ) then
-          call diff ( l2gp1%chunkNumber, 'chunkNumber', &
-            &         l2gp2%chunkNumber, ' ', &
+        NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%chunkNumber', ' ', statsOnOneLine )
+        DiffUs = SwitchDetail(lowercase(myFields), 'chunkNumber', '-fc') > -1
+        if ( any(l2gp1%chunkNumber /= l2gp2%chunkNumber) ) &
+          & then
+            if ( DiffUs ) call diff ( l2gp1%chunkNumber, 'l2gp%chunkNumber', &
+              &         l2gp2%chunkNumber, ' ', &
               & options=options )
           myNumDiffs = myNumDiffs + count( l2gp1%chunkNumber /= l2gp2%chunkNumber )
+          AnyDiffs = .true.
+        elseif( NoteWhenEqual .and. DiffUs ) then
+          call output('(chunkNumber fields equal)', advance='yes')
         endif
       endif
       
       if ( associated(l2gp1%frequency) .and.  associated(l2gp2%frequency)) then
-        if ( all(shape(l2gp1%frequency) == shape(l2gp2%frequency)) ) then
-          if ( any(l2gp1%frequency /= l2gp2%frequency) .and. &
-            & SwitchDetail(lowercase(myFields), 'freq', '-fc') > -1 ) then
-            call diff ( l2gp1%frequency, 'frequency', &
+      if ( all(shape(l2gp1%frequency) == shape(l2gp2%frequency)) ) then
+        NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%frequency', ' ', statsOnOneLine )
+        DiffUs = SwitchDetail(lowercase(myFields), 'freq', '-fc') > -1
+        if ( any(l2gp1%frequency /= l2gp2%frequency) ) &
+          & then
+            if ( DiffUs ) call diff ( l2gp1%frequency, 'l2gp%frequency', &
               &         l2gp2%frequency, ' ', &
               & options=options )
           myNumDiffs = myNumDiffs + count( l2gp1%frequency /= l2gp2%frequency )
-          endif
+          AnyDiffs = .true.
+        elseif( NoteWhenEqual .and. DiffUs ) then
+          call output('(frequency fields equal)', advance='yes')
         endif
       endif
+      endif
+
+      DiffUs = SwitchDetail(lowercase(myFields), 'geoloc', '-fc') > -1
+      if ( NoteWhenEqual .and. DiffUs .and. .not. AnyDiffs ) &
+        & call output('(all geolocation fields equal)', advance='yes')
+
     end subroutine diffGeoLocations
 
     subroutine doneHere
@@ -5830,6 +5875,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.254  2022/11/08 23:50:42  pwagner
+! Array bounds were too small in Dump_L2GP; fixed
+!
 ! Revision 2.253  2021/09/30 21:51:21  pwagner
 ! Add check for agreement to DumpL2GPData%1st pprofiles
 !
