@@ -1,4 +1,4 @@
-! Copyright 2020, by the California Institute of Technology. ALL
+! Copyright 2022, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -10,12 +10,12 @@
 ! foreign countries or providing access to foreign persons.
 
 !=================================
-program l2gpdiffnc4 ! Diff L2GPData file from NetCDF4
+program l2gpdiffnc4 ! Diff an HDFEOS L2GPData file from a NetCDF4 one
 !=================================
 
    use Dump_1, only: Dump
    use Dump_Options, only: SDFormatDefault, DumpDumpOptions
-   use HDF, only: Dfacc_Read, Dfacc_Create    
+   use HDF, only: Dfacc_Read    
    use HDF5, only: H5F_ACC_RDONLY_F, &
      & H5fclose_F, H5fopen_F, H5gopen_F, H5gclose_F, H5fis_HDF5_F
    use HighOutput, only: OutputNamedValue
@@ -57,22 +57,17 @@ program l2gpdiffnc4 ! Diff L2GPData file from NetCDF4
 ! To build it, 
 
 ! From the root, mlspgs, level, just type
-!   make l2gpdoffnc4
+!   make l2gpdiffnc4
 
 ! To run the resulting executable
 ! IFC.Linux.ifc17/test -v -a -m nctest/*.he5 nctest/*.nc4
 ! 
 
-  ! This is just the maximum num of chunks you wish
-  ! to dump individually in case you don't want to dump them all
-  ! It's not the actual maximum number of chunks.
-  integer, parameter :: MetaDataSize = 65535 
-
   type Options_T
-    character(len=80) ::   dumpOptions     = 's'
+    character(len=80) ::   dumpOptions     = 'v,s'
     integer     ::         Details         = 2
     logical     ::         force           = .false.
-    logical     ::         AuBrick         = .true.
+    logical     ::         AuBrick         = .false.
     logical     ::         rms             = .false.
     logical     ::         stats           = .false.
     logical     ::         table           = .false.
@@ -227,7 +222,7 @@ contains
   subroutine print_help
   ! Print brief but helpful message
       write (*,*) &
-      & 'Usage: l2gpdiffnc4 [options] [filenames]'
+      & 'Usage: l2gpdiffnc4 [options] hdfeos_file netcdf_file'
       write (*,*) &
       & ' If no filenames supplied, you will be prompted to supply one'
       write (*,*) ' Options:'
@@ -245,60 +240,6 @@ contains
 
       stop
   end subroutine print_help
-  
-  function IsAttributeInFile( file, attribute ) result(sooDesu)
-    use MLSHDF5, only: IsHDF5itempresent
-    use HDF5, only: H5fopen_F, H5f_Acc_Rdonly_F
-    ! Dummy args
-    character(len=*), intent(in) :: file
-    character(len=*), intent(in) :: attribute
-    logical :: sooDesu
-    ! Local variables
-    integer :: fileID
-    integer :: grpID
-    integer :: status
-    character(len=len(attribute)) :: path, name
-    ! TRUE if attribute in file
-    call h5fopen_f ( trim(file), H5F_ACC_RDONLY_F, fileID, status )
-    if ( status /= 0 ) call defeat('Opening file')
-    call split_path_name ( attribute, path, name )
-    call h5gopen_f( fileID, trim(path), grpID, status )
-    if ( status /= 0 ) call defeat('Opening group')
-    sooDesu = IsHDF5ItemPresent ( grpID, name, '-a' )
-    call h5gclose_f(grpID, status)
-    if ( status /= 0 ) call defeat('Closing group')
-    call h5fclose_f(fileID, status)
-    if ( status /= 0 ) call defeat('Closing file')
-  end function IsAttributeInFile
-
-  function IsDSInFile( file, DS ) result(sooDesu)
-    use MLSHDF5, only: IsHDF5itempresent
-    use HDF5, only: H5fopen_F, H5f_Acc_Rdonly_F
-    ! Dummy args
-    character(len=*), intent(in) :: file
-    character(len=*), intent(in) :: DS
-    logical :: sooDesu
-    ! Local variables
-    integer :: fileID
-    integer :: status
-    integer :: grpID
-    character(len=len(DS)) :: path, name
-    ! TRUE if DS in file
-    call h5fopen_f ( trim(file), H5F_ACC_RDONLY_F, fileID, status )
-    call split_path_name ( DS, path, name )
-    call h5gopen_f( fileID, trim(path), grpID, status )
-    sooDesu = IsHDF5ItemPresent ( grpID, name, '-d' )
-    call h5gclose_f(grpID, status)
-    call h5fclose_f(fileID, status)
-  end function IsDSInFile
-  
-  subroutine Defeat(msg)
-    character(len=*), intent(in) :: msg
-    call resumeOutput
-    call output('Serious error: ' // msg, advance='yes')
-    call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'stopping' )
-  end subroutine Defeat
   
    subroutine readHe5Swath ( filename, swath, l2gp )
    use L2GPData, only: L2GPData_T, L2GPnamelen, Maxswathnamesbufsize, Rgp, &
@@ -350,11 +291,6 @@ contains
     character (len=L2GPNameLen)          :: swath
     character (len=MAXSWATHNAMESBUFSIZE) :: SwathList
     character(len=40)                    :: ProcessLevel       
-    double precision                     :: TAI93At0zOfGranule 
-    integer                              :: DayofYear          
-    character (len=L2GPNameLen)          :: HostName
-    character (len=MAXSWATHNAMESBUFSIZE) :: MiscNotes
-    character (len=L2GPNameLen)          :: DOI
     ! Get swath list
     noSwaths = mls_InqSwath ( HEFFileName, SwathList, listSize, &
            & hdfVersion=HDFVERSION_5 )
@@ -402,3 +338,6 @@ end program l2gpdiffnc4
 !==================
 
 ! $Log$
+! Revision 1.1  2022/09/02 21:14:01  pwagner
+! First commit
+!
