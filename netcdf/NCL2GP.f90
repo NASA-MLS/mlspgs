@@ -56,7 +56,7 @@ module NCL2GP
 !---------------------------------------------------------------------------
 
   interface cpNCL2GPData
-    module procedure EpNCL2GPData_fileID
+    module procedure CpNCL2GPData_fileID
     ! module procedure CpL2GPData_fileName
     ! module procedure CpL2GPData_MLSFile
   end interface
@@ -276,8 +276,8 @@ contains ! ======================= Public Procedures =========================
     call trace_end ( 'AppendNCL2GPData', cond=.false. )
   end subroutine AppendNCL2GPData
 
-  ! ---------------------- EpNCL2GPData_fileID  ---------------------------
-  subroutine EpNCL2GPData_fileID( l2metaData, file1, file2, swathList, &
+  ! ---------------------- CpNCL2GPData_fileID  ---------------------------
+  subroutine CpNCL2GPData_fileID( l2metaData, file1, file2, swathList, &
     & notUnlimited, rename, ReadData, &
     & HGrid, rFreqs, rLevels, rTimes, options )
     !------------------------------------------------------------------------
@@ -425,7 +425,7 @@ contains ! ======================= Public Procedures =========================
       call DestroyL2GPContents ( l2gp )
     enddo
        
-  end subroutine EpNCL2GPData_fileID
+  end subroutine CpNCL2GPData_fileID
   
   ! ---------------------- CpNCGlobalAttr  ---------------------------
   subroutine CpNCGlobalAttr( File1Handle, File2Handle, status )
@@ -819,8 +819,11 @@ contains ! ======================= Public Procedures =========================
     status = InitializeMLSFile ( MLSFile, type=l_NetCDF4, access=DFACC_READ, &
      & hdfVersion=HDFVERSION_5, name=trim(fileName) )
     call MLS_OpenFile( MLSFile )
-    L2FileHandle = MLSFile%FileID%f_id
-    call ReadNCL2GPData_fileID ( L2FileHandle, swathname, l2gp, numProfs=numProfs, &
+!     L2FileHandle = MLSFile%FileID%f_id
+!     call ReadNCL2GPData_fileID ( L2FileHandle, swathname, l2gp, numProfs=numProfs, &
+!        & firstProf=firstProf, lastProf=lastProf, &
+!        & ReadData=ReadData )
+    call ReadNCL2GPData_MLSFile ( MLSFile, swathname, l2gp, numProfs=numProfs, &
        & firstProf=firstProf, lastProf=lastProf, &
        & ReadData=ReadData )
     call MLS_CloseFile( MLSFile )
@@ -960,7 +963,7 @@ contains ! ======================= Public Procedures =========================
     if ( present(ReadData) ) ReadingData = ReadData
     ReadingConvergence = .false.
     ReadingAscDescMode = .false.
-    call Dump ( L2GPFile, Details=2 )
+    if ( deeBugHere ) call Dump ( L2GPFile, Details=2 )
     ! Attach to the swath for reading
     l2gp%Name = swathname
     ! We have suffered surprises when hefeos character fields 
@@ -969,7 +972,7 @@ contains ! ======================= Public Procedures =========================
     fieldlist = ' '
     list = ' '
     
-    print *, 'Trying to attach ', trim(l2gp%Name)
+    if ( deeBugHere ) print *, 'Trying to attach ', trim(l2gp%Name)
     swid = mls_SWattach( L2GPFile, l2gp%Name )
     if ( deeBugHere ) print *, 'swid: ',swid
     DF_Name = DATA_FIELD1
@@ -1279,7 +1282,7 @@ contains ! ======================= Public Procedures =========================
     ! Set numProfs if wanted
     if (present(numProfs)) numProfs=myNumProfs
     ! Must we close the MLS file somehow?
-    call Dump ( L2GPFile, Details=2 )
+    if ( deeBugHere ) call Dump ( L2GPFile, Details=2 )
 !    call h5fclose_f ( L2GPFile%fileID%f_id, status )
 !     if (status == -1) call MLSMessage( MLSMSG_Error, ModuleName, 'Failed to &
 !          & close NC4 file after reading.', MLSFile=L2GPFile )
@@ -2224,6 +2227,9 @@ contains ! ======================= Public Procedures =========================
 end module NCL2GP
 
 ! $Log$
+! Revision 1.5  2022/11/16 23:26:37  pwagner
+! Fixed bugs in ReadNCL2GPData_MF_NC4
+!
 ! Revision 1.4  2022/09/02 21:25:20  pwagner
 ! Fixed some but not all bugs in reading
 !
