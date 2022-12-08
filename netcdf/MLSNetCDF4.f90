@@ -54,6 +54,7 @@ module MLSNetCDF4
     & MLS_Swattach, MLS_Swcreate, MLS_Swdetach, &
     & MLS_Swrdattr, MLS_Swwrattr, MLS_Swrdlattr, MLS_Swwrlattr, &
     & MLS_Swath_In_File
+  public :: mls_InqSwath
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -67,6 +68,7 @@ module MLSNetCDF4
 
 ! MLS_DfldSetup     Sets up a data field in a swath
 ! MLS_GfldSetup     Sets up a geolocation field in a swath
+! MLS_InqSwath      Return the list of swaths present in the file
 ! MLS_IsglAtt       Is the named global attribute present in the file?
 ! MLS_Swath_In_File Is named swath in file?
 ! MLS_SwAttach      Attaches a swath (perhaps prior to reading)
@@ -94,6 +96,8 @@ module MLSNetCDF4
 !     [int iFill], [r4 rFill], [r8 dFill]) 
 ! log MLS_ISGLATT (file, char* attrname)
 !     file can be one of: int fileID, or char* filename
+! log MLS_InqSwath (char* filename, char* swathlist, int listSize)
+!     swathlist is a comma-separated strlist, listsize is its number of strings
 ! log MLS_Swath_In_File (file, char* attrname)
 ! int MLS_SwATTACH (file, char* swathname, [char* filename], [int hdfVersion], 
 !     [log dontFail]) 
@@ -164,8 +168,9 @@ module MLSNetCDF4
     & 'Geolocation Fields   ' &
     & /)
   ! Print debugging stuff?
-  logical, parameter :: DEEBUG = .false.  
+  logical, parameter          :: DEEBUG = .false.  
   character(len=1), parameter :: BLANK = ' '
+  integer, public, parameter  :: MAXNUMSWATHS = 300
 
 contains ! ======================= Public Procedures =========================
 
@@ -187,6 +192,59 @@ contains ! ======================= Public Procedures =========================
       & 'MLS_EHwrglAtt' // trim(Attrname), FailureOK=.true. )
      returnStatus = NCError
   end function MLS_EHwrglAtt
+
+  ! --------------------------------------------  MLS_EHwrglAtt  -----
+  function mls_InqSwath ( FileName, SwathList, listSize ) result( returnStatus )
+    character(len=*), intent(in)     :: FileName     ! File name
+    character(len=*), intent(out)    :: SwathList    ! swath names
+    integer, intent(out)             :: listSize
+    integer                          :: returnStatus
+    integer                          :: FileID
+    integer                          :: grpID
+    integer                          :: i
+    integer, dimension(MAXNUMSWATHS) :: ncids
+    character(len=256)               :: grpName
+    integer                          :: Me = -1 !String index for trace cacheing
+    character, parameter             :: NULL = achar(0)
+    !
+    call trace_begin ( me, 'mls_InqSwath' , cond=.false. )
+    SwathList = ""
+    call check( nf90_open(Filename, NF90_NoWrite, FileId) , &
+      & 'mls_InqSwath ' // trim(FileName) )
+!     print *, 'FileID:   ', FileID
+    !
+    ! Despite the netcdf docs implying that we must open the "/" root group
+    ! the following command returns an error message complaining about an
+    ! illegal character. The character is "illegal" even if it's a
+    ! BLANK instead of a NULL.
+    ! Directly counting the datasets under FileID seems to work
+    ! properly so that's how we're implementing it instead.
+!     call check( nf90_inq_ncid( FileId, NULL, grpId) , &
+!       & 'mls_InqSwath ' // "/", &
+!       & FailureOK=.false., silent=.false. )
+!     print *, 'grpID:    ', grpID
+!     call check ( nf90_inq_grps( grpId, listSize, ncids ), &
+!       & 'mls_InqSwath' // '/inq grps', FailureOK=.true. )
+    call check ( nf90_inq_grps( FileId, listSize, ncids ), &
+      & 'mls_InqSwath' // '/inq grps', FailureOK=.true. )
+!     print *, 'listSize: ', listSize
+    do i=1, listSize
+      call check( nf90_inq_grpname( ncids(i), grpName) , &
+        & 'mls_InqSwath ' // "/grpName", &
+        & FailureOK=.true., silent=.true. )
+      if ( len_trim(SwathList) < 1 ) then
+        SwathList = grpName
+      else
+        SwathList = trim(Swathlist) // "," // grpName
+      endif
+!       print *, 'grpName: ', trim(grpName)
+    enddo
+    
+    call check( nf90_close(FileId), &
+      & 'mls_InqSwath close ', FailureOK=.true. )
+    returnStatus = (NCError == nf90_noerr)
+    call trace_end ( cond=.false. )
+  end function mls_InqSwath
 
   ! ---------------------------------------------  MLS_IsGlatt_Fn  -----
   function MLS_IsGlatt_Fn ( Filename, Attrname ) result(isThere)
@@ -1038,6 +1096,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSNetCDF4
 
 ! $Log$
+! Revision 1.2  2020/03/19 22:33:29  pwagner
+! Repaired many bugs in writing global attrs
+!
 ! Revision 1.1  2020/03/06 00:24:19  pwagner
 ! First commit
 !
