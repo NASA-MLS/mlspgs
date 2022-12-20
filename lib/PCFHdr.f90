@@ -169,9 +169,9 @@ module PCFHdr
   ! global attributes from a text file
   ! yet Fortran in its mighty wisdom forbids io if  any list item is a pointer
   type GlobalAttributes_T
-    character(len=FileNameLen) :: FileAttributesCopiedFrom = ' '
-    integer :: OrbNum(max_orbits)
-    real(r8) :: OrbPeriod(max_orbits)
+    character(len=FileNameLen)     :: FileAttributesCopiedFrom = ' '  
+    integer                        :: OrbNum(max_orbits)              
+    real(r8)                       :: OrbPeriod(max_orbits)           
     integer, pointer, dimension(:,:) :: OrbNumDays => Null()
     real(r8), pointer, dimension(:,:) :: OrbPeriodDays => Null()
     character(len=GA_VALUE_LENGTH) :: InstrumentName = 'MLS Aura'
@@ -183,12 +183,14 @@ module PCFHdr
     character(len=GA_VALUE_LENGTH) :: EndUTC = ''
     character(len=GA_VALUE_LENGTH) :: DOI = '' ! E.g., '10.5083/AURA/MLS/DATA201'
     character(len=GA_VALUE_LENGTH) :: productionLoc = ' '
+    character(len=GA_VALUE_LENGTH) :: geos5_type = ' '
     ! Note that the next 3 may refer to either of 2 formats
     ! (a) yyyy-mm-dd if GranuleMonth > 0
     ! (b) yyyy-Doy if GranuleMonth < 0
     integer                        :: GranuleMonth                  = 0 ! < 0 if day is Doy
     integer                        :: GranuleDay                    = 0 ! 0 < Day < 32 of month > 0
     integer                        :: GranuleYear                   = 0
+    integer                        :: DayOfYear                     = 0
 
     real(r8)                       :: TAI93At0zOfGranule            = 0.d0
     integer                        :: FirstMAFCtr                   = BIGGESTMAFCTR
@@ -1924,6 +1926,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.79  2022/12/20 23:32:07  pwagner
+!# Added two more file attributes
+!#
 !# Revision 2.78  2020/03/20 23:02:10  pwagner
 !# Attempt to relieve confusion between ProductionLocation and ProductionLoc; may optionally read DOI, etc.
 !#
