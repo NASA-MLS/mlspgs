@@ -275,6 +275,7 @@ SHELL = /bin/sh
 # Mie_Tables_nohdf
 # MLS_h5ls       
 # ncl2gpdiff
+# ncl2gpdump
 # remake_gh
 # resetl2gpstatus
 # resetl2gpvalues
@@ -497,8 +498,8 @@ MLSTOOLS = chunktimes checkpvmup compare dateconverter extinctionmaker fixDOI\
   l1bcat l1bdiff l1bdump l1h5subset \
   l2auxcat l2auxchi l2auxdump l2gp2nc4 l2gpdiffnc4 l2gpcat l2gpdiff l2gpdump \
   l2pcdiff l2pcdump l2q lr machineok misalignment \
-  ncl2gpdiff resetl2gpstatus resetl2gpvalues Spartacus tellMasterToQuit \
-  vansGoldFilter WordSplit wrapLines
+  ncl2gpdiff ncl2gpdump resetl2gpstatus resetl2gpvalues Spartacus \
+  tellMasterToQuit vansGoldFilter WordSplit wrapLines
 
 ifdef HDFINC
    IHDFINC := -I $(HDFINC)
@@ -1201,6 +1202,18 @@ ncl2gpdiff: $(CONFDIR)/$(MLSCFILE) $(CONFDIR)/netcdf/ncl2gpdiff.f90 l1--itm
 	make NEEDS_ITM=yes NETCDF=yes
 	cp $(CONFDIR)/tests/lib/$(MLSCONFG)/test $(INSTALLDIR)/ncl2gpdiff
 
+ncl2gpdump: $(CONFDIR)/$(MLSCFILE) $(CONFDIR)/netcdf/ncl2gpdump.f90 l1--itm
+# Needs further refinement
+	cd $(CONFDIR)/tests/lib; \
+	mv *.f9[0h] hideme; \
+	cd ../../netcdf; \
+	cp ncl2gpdump.f90 MLSFiles.f90 MLSNetCDF4.f90 MLS_Swrdfld.f9h \
+	MLS_Swwrfld.f9h NCL2GP.f90 ../tests/lib; \
+	cd ../tests/lib; \
+	make update; \
+	make NEEDS_ITM=yes NETCDF=yes
+	cp $(CONFDIR)/tests/lib/$(MLSCONFG)/test $(INSTALLDIR)/ncl2gpdump
+
 remake_gh: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/remake_gh.f90
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) -O LDOPTS=-static \
@@ -1549,6 +1562,9 @@ tools: $(MLSTOOLS)
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.33  2022/12/08 19:00:23  pwagner
+# Can now build the ncl2gpdiff tool
+#
 # Revision 1.32  2022/09/16 21:15:59  pwagner
 # Added command to build l2gpdiffnc4
 #
