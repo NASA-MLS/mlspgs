@@ -2284,7 +2284,7 @@ contains
 
     ! case('netcdf4')
     case(l_netcdf4)
-      call output( 'NetCDF4 opening file ' // trim(myName), advance='yes')
+!       call output( 'NetCDF4 opening file ' // trim(myName), advance='yes')
       theFileHandle = -1   ! This is the error value expected by hdf4/5
       if ( any( FileAccessType == (/ DFACC_RDONLY, Dfacc_Read /) ) ) then
         ErrType = nf90_open( myName, NF90_NoWrite, theFileHandle )
@@ -2295,7 +2295,7 @@ contains
       else
         ErrType = UNKNOWNFILEACCESSTYPE
       endif
-      call output( (/ErrType, theFileHandle/), advance='yes')
+!       call output( (/ErrType, theFileHandle/), advance='yes')
 
     case default
       ErrType = UNKNOWNTOOLBOXMODE
@@ -2336,6 +2336,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 1.2  2020/03/19 22:31:05  pwagner
+! More changes needed by netcdf4 files
+!
 ! Revision 1.1  2020/03/06 00:24:19  pwagner
 ! First commit
 !
