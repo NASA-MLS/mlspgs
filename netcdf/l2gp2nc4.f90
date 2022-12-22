@@ -23,7 +23,7 @@ program l2gp2nc4 ! Rewrite L2GPData files as NetCDF4
    use L2GPData, only: L2GPData_T, L2GPnamelen, Maxswathnamesbufsize, Rgp, &
      & Dump, ReadL2GPData, DestroyL2GPcontents
    use Machine, only: Hp, Getarg
-   use MLSCommon, only: MLSFile_T
+   use MLSCommon, only: MLSFile_T, Split_path_name
    use MLSFiles, only: HDFversion_5, InitializeMLSFile, MLS_Inqswath, &
      & MLS_CloseFile, MLS_OpenFile, Split_Path_Name
    use MLSHDF5, only: IsHDF5DSPresent, LoadFromHDF5DS, MLS_H5open, MLS_H5close
@@ -31,7 +31,8 @@ program l2gp2nc4 ! Rewrite L2GPData files as NetCDF4
    use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
      & MLSMessage
    use MLSNetCDF4, only: MLS_SwWrattr
-   use MLSStringLists, only: GetStringElement, NumStringElements
+   use MLSStringLists, only: GetStringElement, NumStringElements, &
+     & ReplaceSubstring
    use MLSStrings, only: Lowercase, Reverse
    use NCL2GP, only: WriteNCGlobalAttr, WriteNCL2GPData
    use NetCDF, only: NF90_Char, NF90_Open, NF90_Def_Dim, NF90_Def_Grp, &
@@ -59,30 +60,14 @@ program l2gp2nc4 ! Rewrite L2GPData files as NetCDF4
 ! From the root, mlspgs, level, just type
 !   make l2gp2nc4
 
-! An older method requires you:
-! cp it to tests/lib
-! cd tests/lib
-! cp ../../netcdf/NCL2GP.f90 ../../netcdf/MLSNetCDF4.f90 ./
-! make update
-! make NEEDS_ITM=yes NETCDF=yes
-!
-! An older and even kludgier method required
-!
-! cp Makefile-IFC.Linux.ifc17 IFC.Linux.ifc17 
-! cp ../../netcdf/NCL2GP.f90 ../../netcdf/MLSNetCDF4.f90 ./
-! make NEEDS_ITM=yes
-!
-! To run the resulting executable
-! IFC.Linux.ifc17/test -v -a -m nctest/*.he5 
+! Testing has taken place in
+! /users/pwagner/mlspgs/tests/lib/nctest
 ! 
 
-  ! This is just the maximum num of chunks you wish
-  ! to dump individually in case you don't want to dump them all
-  ! It's not the actual maximum number of chunks.
   integer, parameter :: MetaDataSize = 65535 
 
   type Options_T
-     logical ::             debug         = .true.
+     logical ::             debug         = .false.
      logical ::             verbose       = .false.
      logical ::             attributesToo = .false.
      logical ::             metaDataToo   = .false.
@@ -190,19 +175,18 @@ contains
   subroutine print_help
   ! Print brief but helpful message
       write (*,*) &
-      & 'Usage: l2gp2nc4 [options] [filenames]'
+      & 'l2gpnc4: Converts each hdfeos file to NetCDF4 format' &
+      & // 'replacing the .he5 suffix with .nc4' &
+      & // 'Usage: l2gp2nc4 [options] [hdfeos_filenames]'
       write (*,*) &
       & ' If no filenames supplied, you will be prompted to supply one'
       write (*,*) ' Options:'
       write (*,*) ' -f filename => use filename'
       write (*,*) ' -h          => print brief help'
-      write (*,*) ' -ls         => dump only swath names'
       write (*,*) ' -a          => copy attributes, too'
+      write (*,*) ' -m          => copy metadata, too'
       write (*,*) ' -v          => verbose'
-      write (*,*) ' (details level)'
-      write (*,*) ' -0          => dump only scalars, 1-d array'
-      write (*,*) ' -1          => dump only scalars'
-      write (*,*) ' -2          => dump only swath names (same as -ls)'
+      write (*,*) ' -d          => debug'
 
       stop
   end subroutine print_help
@@ -314,10 +298,13 @@ contains
     call outputNamedValue( 'NetCDF4 file name', ncfilename )
     status = InitializeMLSFile ( NC4File, type=l_netcdf4, access=DFACC_CREATE, &
      & name=ncfilename )
-     call Dump ( NC4File )
+    if ( options%verbose ) call Dump ( NC4File )
     ! Loop over swaths in file 1
     do i = 1, noSwaths
       call GetStringElement (trim(swathList), swath, i, countEmpty )
+      ! HDFEOS INFORMATION isn't a swath
+      if ( trim(swath) == 'HDFEOS INFORMATION' ) cycle
+    
       ! Allocate and fill l2gp
       ! print *, 'Reading swath from file: ', trim(swath)
       call ReadL2GPData ( trim(filename), trim(swath), l2gp, &
@@ -326,6 +313,10 @@ contains
       call output ( 'About to write the l2gp ' // &
         & trim(swath) // '  to the NetCDF4 file', advance='yes' )
       call WriteNCL2GPData( l2gp, NC4File, trim(swath) )
+      ! Should we default to writing attributes and metadata?
+      ! Maybe not metadata unless we figure out how to change
+      ! the suffix ".he5" in LocalGranuleID to ".nc4"
+      ! We're trying. We'll see how successful we are.
       if ( options%attributesToo .and. i == 1 ) then
         call MLS_OpenFile( MLSFile )
         call MLS_OpenFile( NC4File )
@@ -335,6 +326,13 @@ contains
          &  ProcessLevel, DayofYear, TAI93At0zOfGranule, &
          & HostName, MiscNotes, DOI, returnStatus=status )
         GlobalAttributes = gAttributes
+        if ( options%verbose ) then
+          call DumpGlobalAttributes
+          call OutputNamedValue ( 'DOI', trim(asciify( DOI, 'snip' ) ) )
+          call OutputNamedValue ( 'HostName', trim(asciify( HostName, 'snip' ) ) )
+          call OutputNamedValue ( 'MiscNotes', trim(asciify( MiscNotes, 'snip' ) ) )
+          call OutputNamedValue ( 'TAI93', TAI93At0zOfGranule )
+        endif
         GlobalAttributes%HostName           = asciify( HostName, 'snip' )
         GlobalAttributes%ProductionLoc      = asciify( HostName, 'snip' )
         GlobalAttributes%MiscNotes          = asciify( MiscNotes, 'snip' )
@@ -343,9 +341,11 @@ contains
         if ( status /= 0 ) then
           call output ('No global attributes found in file', advance='yes')
         endif
-        call dump( file1, l2gp )
-        print *, 'Attempting to copy attributes, too'
-        print *, 'ProductionLocation: ', trim(GlobalAttributes%ProductionLoc)
+        if ( options%verbose ) then
+          call dump( file1, l2gp )
+          print *, 'Attempting to copy attributes, too'
+          print *, 'ProductionLocation: ', trim(GlobalAttributes%ProductionLoc)
+        endif
         call WriteNCGlobalAttr ( NC4File%FileID%f_id, &
           & DOI=.true., MiscNotes=.true. )
         call copyAprioriFileNamesAttr ( MLSFile%FileID%f_id, NC4File%FileID%f_id )
@@ -379,12 +379,16 @@ contains
      integer                              :: hdfgrpid
      integer                              :: ncgrpid
      integer                              :: status
+     character(len=1024)                  :: path
      character(len=MetaDataSize)          :: strvalue
+     character(len=MetaDataSize)          :: tmpstr
      integer, dimension(1)                :: dimids ! For scalar variables
      integer                              :: xmldimid
      integer                              :: xmlvarid
+     character(len=128)                   :: hdfname
+     character(len=128)                   :: nc4name
      ! Executable
-     print *, 'Attempting to copyMetaData'
+     if ( options%debug ) print *, 'Attempting to copyMetaData'
      call h5fopen_f ( trim(hdf%name), H5F_ACC_RDONLY_F, hdffID, status )
      if ( .not. &
        & IsHDF5DSPresent ( HDF, '/HDFEOS INFORMATION/coremetadata.0' ) &
@@ -393,7 +397,8 @@ contains
        print *, 'cormetadata.0 not found in ', trim(HDF%name)
        return 
      endif
-
+     call split_path_name( trim(hdf%name), path, name=hdfname)
+     call split_path_name( trim(nc4%name), path, name=nc4name)
      
      call h5gopen_f ( hdffID, '/HDFEOS INFORMATION', hdfgrpID, status )
      if ( status /= 0 ) call terror ( 'Opening hdf5 group', status )
@@ -406,7 +411,10 @@ contains
      
      ! Write the 1st metadata
      call LoadFromHDF5DS ( hdfgrpID, 'coremetadata.0', strvalue )
-     call output( strvalue(1:80), advance='yes' )
+     ! Can we replace hdfname with nc4name? Let's try.
+     tmpstr = strvalue
+     call ReplaceSubString ( tmpstr, strvalue, trim(hdfname), trim(nc4name) )
+     if ( options%debug ) call output( strvalue(1:80), advance='yes' )
      ! Why do we need dims? The metadata are scalars. Blame netcdf
      ! for using c?
      status = nf90_def_dim( ncgrpid, "coresize", len_trim(strvalue), coredimid )
@@ -419,7 +427,10 @@ contains
 
      ! Write the 2nd metadata
      call LoadFromHDF5DS ( hdfgrpID, 'xmlmetadata', strvalue )
-     call output( strvalue(1:80), advance='yes' )
+     ! Can we replace hdfname with nc4name? Let's try.
+     tmpstr = strvalue
+     call ReplaceSubString ( tmpstr, strvalue, trim(hdfname), trim(nc4name) )
+     if ( options%debug ) call output( strvalue(1:80), advance='yes' )
      status = nf90_def_dim( ncgrpid, "xmlsize", len_trim(strvalue), xmldimid )
      dimids = xmldimid
      status = nf90_def_var( ncgrpID, "xmlmetadata", nf90_char, dimids, xmlvarid )
@@ -448,7 +459,7 @@ contains
      integer                              :: status
      character(len=Maxswathnamesbufsize)  :: strvalue
      ! Executable
-     print *, 'Attempting to copyAprioriFileNamesAttr'
+     if ( options%debug ) print *, 'Attempting to copyAprioriNames'
      if ( .not. MLS_Isglatt ( hdfeosID, 'A Priori l2gp' ) ) then
        print *, 'A Priori l2gp attribute not found in ', hdfeosID
        return 
@@ -488,6 +499,8 @@ contains
      status = MLS_Swwrattr ( nc4id, &
       & 'PCF1', nf90_char, 1, strvalue )
 
+     ! Can it be that the hdfeos5 library treats strvalue as inout?
+     ! strvalue = ' '
      status = HE5_EHRDGLATT( hdfeosID, &
       & 'PCF2', strvalue )
      status = MLS_Swwrattr ( nc4id, &
@@ -500,6 +513,9 @@ end program l2gp2nc4
 !==================
 
 ! $Log$
+! Revision 1.3  2022/01/27 16:42:41  pwagner
+! Corrected build instructions
+!
 ! Revision 1.2  2020/04/08 21:54:38  pwagner
 ! Now copies metadata datasets, too
 !
