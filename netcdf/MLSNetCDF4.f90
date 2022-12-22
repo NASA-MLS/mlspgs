@@ -282,7 +282,7 @@ contains ! ======================= Public Procedures =========================
     integer                       :: Status
     logical, parameter            :: DEEBUG = .false.
     ! Executable code
-    print *, 'Checking for global attribute: ', trim(Attrname)
+!     print *, 'Checking for global attribute: ', trim(Attrname)
     call check ( nf90_inquire_attribute( FileID, nf90_global, AttrName), &
       & 'MLS_IsGlatt_fid' // trim(Attrname), FailureOK=.true., silent=.true. )
     isThere = (NCError == nf90_noerr)
@@ -600,6 +600,8 @@ contains ! ======================= Public Procedures =========================
     ! Executable code
     call trace_begin ( me, 'MLS_SwRdattr' , cond=.false. )
     MLS_SwRdLattr = -1
+!     print *, 'Trying to read a local attribute '
+!     print *, trim(fieldname) // '/' // trim(attrname)
     if ( Is_datafield_in_swath(swathId, fieldname, which_group) ) then
       ! Must get grpid for Groupname
       call check( &
@@ -1035,6 +1037,8 @@ contains ! ======================= Public Procedures =========================
     integer                      :: grpId
     integer                      :: varId
     ! Begin execution
+!     print *, 'swathID: ', swathID
+!     print *, 'GroupName: ', trim(GroupName)
     ! Must get grpid for Groupname
     call check( nf90_inq_ncid( swathId, trim(GroupName), grpId ), &
       & 'MLS_dfldsetup Data Fields group' )
@@ -1096,6 +1100,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSNetCDF4
 
 ! $Log$
+! Revision 1.3  2022/12/08 18:53:23  pwagner
+! Added mls_InqSwath
+!
 ! Revision 1.2  2020/03/19 22:33:29  pwagner
 ! Repaired many bugs in writing global attrs
 !
