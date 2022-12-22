@@ -22,10 +22,10 @@ module NCL2GP
   use Intrinsic ! "units" Type Literals, Beginning With L
   use L2GPData, only: CharAttrLen, Col_Species_Keys, Col_Species_Hash, &
     & Data_Field1, Data_Field2, Dim_Name1, Dim_Name12, Dim_Name123, &
-    & L2GPData_T, L2GPNameLen, MaxChunkTimes, &
+    & L2GPData_T, L2GPNameLen, MaxChunkTimes, MaxNLevels, &
     & Max_DimL, Max_DimL1, Max_DimL12, Max_DimL123, NumGeolocFields, &
     & RGP, UnLim, &
-    & DestroyL2GPContents, OutputL2GP_Attributes, SetupNewL2GPRecord, &
+    & DestroyL2GPContents, Dump, OutputL2GP_Attributes, SetupNewL2GPRecord, &
     & WriteMastersFileAttributes
   use MLSCommon, only: L2MetaData_T, &
     & R4, R8, MLSFile_T, UndefinedIntegerValue
@@ -45,7 +45,7 @@ module NCL2GP
   implicit none
   private
 
-  public :: AppendNCL2GPData, CpNCL2GPData, IsNCL2GPInFile, &
+  public :: AppendNCL2GPData, CpNCL2GPData, DumpNCL2GP, IsNCL2GPInFile, &
     & ReadNCL2GPData, &
     & WriteNCFileAttr, WriteNCGlobalAttr, WriteNCL2GPData
 
@@ -57,8 +57,14 @@ module NCL2GP
 
   interface cpNCL2GPData
     module procedure CpNCL2GPData_fileID
-    ! module procedure CpL2GPData_fileName
-    ! module procedure CpL2GPData_MLSFile
+    ! module procedure CpNCL2GPData_fileName
+    ! module procedure CpNCL2GPData_MLSFile
+  end interface
+  
+  interface DumpNCL2GP
+    ! module procedure DumpNCL2GPData_fileID
+    ! module procedure DumpNCL2GPData_fileName
+    module procedure DumpNCL2GPData_MLSFile
   end interface
   
   interface ReadNCGlobalAttr
@@ -432,49 +438,67 @@ contains ! ======================= Public Procedures =========================
   ! Copy global attributes from file 1 to file 2
     use MLSNetCDF4, only: MLS_SwRdattr, MLS_Swwrattr
     ! Args
-    integer, intent(in)                          :: File1Handle
-    integer, intent(in)                          :: File2Handle
-    integer, intent(out)                         :: status
+    integer, intent(in)            :: File1Handle                      
+    integer, intent(in)            :: File2Handle                      
+    integer, intent(out)           :: status                           
     ! Internal variables
-    type(GlobalAttributes_T)                     :: gAttributes        
-    type(GlobalAttributes_T)                     :: gAttributesOriginal
-    character(len=40)                            :: ProcessLevel       
-    double precision                             :: TAI93At0zOfGranule 
-    integer                                      :: DayofYear          
+    type(GlobalAttributes_T)       :: gAttributes                      
+    type(GlobalAttributes_T)       :: gAttributesOriginal              
     ! Executable
     if ( DEEBUG ) then
       call output( 'Before reading global attributes', advance='yes' )
       call outputNamedValue( 'StartUTC', trim(GlobalAttributes%StartUTC) )
     endif
-    call ReadNCGlobalAttr ( File1Handle, gAttributes, &
-      & ProcessLevel, DayofYear, TAI93At0zOfGranule, status )
+    call ReadNCGlobalAttr ( File1Handle, gAttributes, status )
     if ( status == 0 ) then
-      if ( DEEBUG ) then
-        call output ( '(Global Attributes read) ', advance='yes')
-        call dumpGlobalAttributes
-      endif
-      if ( DEEBUG ) then
-        call output( 'After reading global attributes', advance='yes' )
-        call outputNamedValue( 'StartUTC', trim(GlobalAttributes%StartUTC) )
-      endif
-      ! Unfortunately, WriteNCGlobalAttr writes GlobalAttributes, not 
-      ! what we just read
-      ! So we must save the original version before we copy new data into it 
-      gAttributes%HostName = GlobalAttributes%HostName
-      gAttributes%ProductionLoc = GlobalAttributes%ProductionLoc
-      gAttributesOriginal = GlobalAttributes
       GlobalAttributes = gAttributes
-      ! Why must we do this? Why do things not simply work out properly?
-      GlobalAttributes%TAI93At0zOfGranule = TAI93At0zOfGranule
-      if ( DEEBUG ) then
-        call outputNamedValue('Misc Notes (written) ', trim(GlobalAttributes%MiscNotes) )
-        call dumpGlobalAttributes
-      endif
       call WriteNCGlobalAttr( File2Handle )
-      ! Before leaving must restore original data back
-      GlobalAttributes = gAttributesOriginal
     endif
   end subroutine CpNCGlobalAttr
+
+  ! ---------------------- DumpNCL2GPData_MLSFile  -----------------------------
+
+  subroutine DumpNCL2GPData_MLSFile( L2GPFile, swathname, &
+       firstProf, lastProf, DumpData, DumpAttributes )
+    !------------------------------------------------------------------------
+
+    ! Given a NetCDF formatted file,
+    ! This routine Reads and then Dumps an L2GP structure
+    ! returning a filled data structure and the !
+    ! number of profiles Dump.
+
+    ! Arguments
+
+    character (len=*), intent(in) :: swathname ! Name of swath
+    type(MLSFile_T)               :: L2GPFile
+    integer, intent(in), optional :: firstProf, lastProf ! Defaults to first and last
+    logical, optional, intent(in) :: DumpAttributes
+    logical, optional, intent(in) :: DumpData
+
+    ! Local
+    logical                       :: alReadyOpen
+    logical                       :: myDumpData
+    logical                       :: myDumpAttributes
+    integer                       :: numProfs ! Number actually Dump
+    integer                       :: status
+    type( l2GPData_T )            :: l2gp ! Result
+    
+    ! Executable code
+    status = 0
+    myDumpData = .true.
+    if ( present(DumpData) ) myDumpData = DumpData
+    if ( present(DumpAttributes) ) myDumpAttributes = DumpAttributes
+    call ReadNCL2GPData_MLSFile( L2GPFile, swathname, l2gp, numProfs=numProfs, &
+       & firstProf=firstProf, lastProf=lastProf, &
+       & ReadData=.true. )
+    if ( myDumpData ) &
+      & call Dump ( l2gp )
+    if ( myDumpAttributes ) &
+      & call DumpL2GP_attributes_NC_MF( L2GPFile, l2gp, swathName )
+    L2GPFile%errorCode = status
+    L2GPFile%lastOperation = 'Dump'
+    call DestroyL2GPContents ( l2gp )
+  end subroutine DumpNCL2GPData_MLSFile
 
   !------------------------------------------  IsNCL2GPInFile  -----
   function IsNCL2GPInFile ( File, swath ) result( ItIs )
@@ -878,22 +902,21 @@ contains ! ======================= Public Procedures =========================
   use MLSNetCDF4, only: MLS_SWAttach, MLS_SWDetach, MLS_SWDiminfo, &
     & MLS_SwrdAttr, MLS_SWRdLAttr, MLS_SWRdfld
   use MLSStringLists, only: IsInList
-  ! use HDF5, only: Size_T
     !------------------------------------------------------------------------
 
-    ! This routine reads an L2GP file, returning a filled data structure and the !
+    ! This routine reads an L2GP file that has been written in NetCDF format.
+    ! Returns a filled data structure and the !
     ! number of profiles read.
 
     ! All the ReadConvergence harrumphing is because convergence is newly added
-    ! (Some older files won't have this field)
     ! Arguments
 
-    character (len=*), intent(in) :: swathname ! Name of swath
-    type(MLSFile_T)                :: L2GPFile
-    integer, intent(in), optional :: firstProf, lastProf ! Defaults to first and last
-    type( L2GPData_T ), intent(OUT) :: l2gp ! Result
-    integer, intent(OUT),optional :: numProfs ! Number actually read
-    logical, optional, intent(in) :: ReadData
+    character (len=*), intent(in)   :: swathname ! Name of swath
+    type(MLSFile_T)                 :: L2GPFile
+    integer, intent(in), optional   :: firstProf, lastProf ! Defaults to first and last
+    type( L2GPData_T ), intent(out) :: l2gp ! Result
+    integer, intent(out),optional   :: numProfs ! Number actually read
+    logical, optional, intent(in)   :: ReadData
 
     ! Local Parameters
     character (len=*), parameter :: MLSMSG_INPUT = 'Error in input argument '
@@ -1291,8 +1314,7 @@ contains ! ======================= Public Procedures =========================
   end subroutine ReadNCL2GPData_MF_NC4
 
 !------------------------------------------------------------
-   subroutine ReadNCGlobalAttr_FileID ( fileID, gAttributes, &
-      & ProcessLevel, DayOfYear, TAI93At0zOfGranule, status )
+   subroutine ReadNCGlobalAttr_FileID ( fileID, gAttributes, status )
 !------------------------------------------------------------
 ! Should eventually be moved to PCFHdr module
     use MLSNetCDF4, only: MLS_SwRdattr, MLS_IsGlAtt
@@ -1303,9 +1325,6 @@ contains ! ======================= Public Procedures =========================
 
       integer, intent(in)            :: fileID
       type(GlobalAttributes_T)       :: gAttributes        
-      character(len=GA_VALUE_LENGTH) :: ProcessLevel
-      integer, intent(out)           :: DayOfYear
-      double precision               :: TAI93At0zOfGranule
       integer                        :: status
 ! Internal variables
       logical :: myDOI
@@ -1314,6 +1333,7 @@ contains ! ======================= Public Procedures =========================
       real(r8), dimension(1) :: dbuf
       logical :: my_skip
 ! Executable
+      if ( DeeBug ) print *, 'Reading NetCDF4 Global attributes'
       status = MLS_SwRdattr(fileID, &
        & 'identifier_product_doi', nf90_char, 1, &
        &  gAttributes%DOI)
@@ -1334,7 +1354,7 @@ contains ! ======================= Public Procedures =========================
          &  gAttributes%HostName)
       status = MLS_SwRdattr(fileID, &
        & 'ProcessLevel', nf90_char, 1, &
-       &  ProcessLevel)
+       &  gAttributes%ProcessLevel)
       status = MLS_SwRdattr(fileID, &
        & 'PGEVersion', nf90_char, 1, &
        &  gAttributes%PGEVersion)
@@ -1348,7 +1368,7 @@ contains ! ======================= Public Procedures =========================
       status = MLS_SwRdattr(fileID, &
        & 'GranuleDayOfYear', nf90_int, 1, &
        &  intBuffer=ibuf )
-      DayOfYear=ibuf(1)
+      gAttributes%DayOfYear=ibuf(1)
       status = MLS_SwRdattr(fileID, &
        & 'GranuleDay', nf90_int, 1, &
        &  int=gAttributes%GranuleDay )
@@ -1362,7 +1382,7 @@ contains ! ======================= Public Procedures =========================
       status = MLS_SwRdattr(fileID, &
        & 'TAI93At0zOfGranule', nf90_double, 1, &
        &  Doublesca= gAttributes%TAI93At0zOfGranule )
-      if ( lowercase(ProcessLevel(1:2)) == 'l2' ) then
+      if ( lowercase(gAttributes%ProcessLevel(1:2)) == 'l2' ) then
         status = MLS_SwRdattr(fileID, &
          & 'FirstMAF', nf90_int, 1, &
          &  int=gAttributes%FirstMAFCtr )
@@ -1370,12 +1390,22 @@ contains ! ======================= Public Procedures =========================
          & 'LastMAF', nf90_int, 1, &
          &  int=gAttributes%LastMAFCtr )
       endif
-      ! if ( DEBUG ) call outputNamedValue( 'gAttributes%MiscNotes: ', gAttributes%MiscNotes )
-      ! We don't write these here (the master would insert an erroneous value)
-      ! Instead we write them during DirectWrite operations
-      ! status = MLS_SwRdattr(fileID, &
-      ! & 'MiscNotes', nf90_char, 1, &
-      !  &  gAttributes%MiscNotes)
+
+      status = MLS_SwRdattr(fileID, &
+       & 'geos5 type', nf90_char, 1, &
+       &  gAttributes%geos5_type)
+      status = MLS_SwRdattr(fileID, &
+       & 'identifier_product_doi', nf90_char, 1, &
+       &  gAttributes%doi)
+      status = MLS_SwRdattr(fileID, &
+        & 'MiscNotes', nf90_char, 1, &
+        &  gAttributes%MiscNotes)
+      status = MLS_SwRdattr(fileID, &
+        & 'HostName', nf90_char, 1, &
+        &  gAttributes%HostName)
+      status = MLS_SwRdattr(fileID, &
+        & 'ProductionLocation', nf90_char, 1, &
+        &  gAttributes%ProductionLoc)
       if ( deebug ) then
         call output( 'Reading global attributes', advance='yes' )
         call dumpGlobalAttributes ( gAttributes )
@@ -1505,7 +1535,7 @@ contains ! ======================= Public Procedures =========================
         call MLSMessage(MLSMSG_Error, ModuleName, &
         & 'Unable to open l2gp file', MLSFile=L2GPFile)
     endif
-    call Dump ( L2GPFile )
+!     call Dump ( L2GPFile )
     if ( L2GPFile%access == DFACC_RDONLY )  &
       & call MLSMessage(MLSMSG_Error, ModuleName, &
       & 'l2gp file is rdonly', MLSFile=L2GPFile)
@@ -1553,6 +1583,7 @@ contains ! ======================= Public Procedures =========================
       logical, parameter :: DeeBug = .false.
       logical :: my_skip
 ! Executable
+      if ( deebug ) print *, 'Writing NetCDF4 Global attributes'
       myDOI = .false.
       if ( present(DOI) ) myDOI=DOI
       myMiscNotes = .false.
@@ -1567,11 +1598,11 @@ contains ! ======================= Public Procedures =========================
           & GlobalAttributes%productionLoc )
         call dumpGlobalAttributes
       endif
-      if ( len_trim(GlobalAttributes%DOI) > 0 .and. myDOI ) &
+      if ( len_trim(GlobalAttributes%DOI) > 0 ) &
        & status = MLS_Swwrattr(fileID, &
        & 'identifier_product_doi', nf90_char, 1, &
        &  charBuffer=GlobalAttributes%DOI)
-      if ( len_trim(GlobalAttributes%productionLoc) > 0 .and. myDOI ) &
+      if ( len_trim(GlobalAttributes%productionLoc) ) &
        & status = MLS_Swwrattr(fileID, &
        & 'ProductionLocation', nf90_char, 1, &
        &  charBuffer=GlobalAttributes%productionLoc)
@@ -1618,8 +1649,6 @@ contains ! ======================= Public Procedures =========================
       status = MLS_Swwrattr(fileID, &
        & 'EndUTC', nf90_char, 1, &
        &  charBuffer=GlobalAttributes%EndUTC)
-      ! if ( GlobalAttributes%GranuleDay == ' ') return
-      ! if ( GlobalAttributes%GranuleMonth == ' ') &
       if ( GlobalAttributes%GranuleDay < 1 ) return
       status = MLS_Swwrattr(fileID, &
        & 'GranuleMonth', nf90_int, 1, &
@@ -1644,13 +1673,12 @@ contains ! ======================= Public Procedures =========================
          & 'LastMAF', nf90_int, 1, &
          &  int= GlobalAttributes%LastMAFCtr )
       endif
-      ! if ( DEBUG ) call outputNamedValue( 'GlobalAttributes%MiscNotes: ', GlobalAttributes%MiscNotes )
-      ! We don't write these here (the master would insert an erroneous value)
-      ! Instead we write them during DirectWrite operations
-      if ( .not. myMiscNotes ) return
       status = MLS_Swwrattr(fileID, &
       & 'MiscNotes', nf90_char, 1, &
       &  GlobalAttributes%MiscNotes)
+      status = MLS_Swwrattr(fileID, &
+      & 'eos5 type', nf90_char, 1, &
+      &  GlobalAttributes%geos5_type)
 !------------------------------------------------------------
    end subroutine WriteNCGlobalAttr_FileID
 !------------------------------------------------------------
@@ -1772,7 +1800,7 @@ contains ! ======================= Public Procedures =========================
     ! - -   G l o b a l   A t t r i b u t e s   - -
     if ( WRITEMASTERSFILEATTRIBUTES .and. &
       & .not. MLS_ISGLATT(L2GPFile%fileID%f_id, 'StartUTC') ) then
-      print *, 'Writing Global attributes; e.g., StartUTC'
+      if ( DEEBUG ) print *, 'Writing Global attributes; e.g., StartUTC'
       call WriteNCGlobalAttr( L2GPFile%fileID%f_id )
     endif
 
@@ -2213,6 +2241,588 @@ contains ! ======================= Public Procedures =========================
   end subroutine OutputNCL2GP_writeData_MF
   !-------------------------------------
 
+  !----------------------------------------  DumpL2GP_attributes_NC_MF  -----
+  subroutine DumpL2GP_attributes_NC_MF( L2GPFile, l2gp, swathName )
+  use HDFEOS5, only: MLS_Chartype
+  use MLSHDFEOS, only: MLS_SWAttach, MLS_SWDetach, HE5_EHRdglatt
+  use MLSNetCDF4, only: MLS_SwRdattr, MLS_SWRdLAttr
+  use PCFHdr, only:  GlobalAttributes_T, HE5_ReadGlobalAttr, &
+    & DumpGlobalAttributes
+    ! Brief description of subroutine
+    ! This subroutine reads and then dumps the attributes for an l2gp
+    ! that has been written to a NetCDF-formatted file.
+    ! These include
+    ! Global attributes which are file level
+    ! Swath level
+    ! Geolocation field attributes
+    ! Data field attributes
+    
+    ! Arguments
+
+    type(MLSFile_T)                         :: L2GPFile
+    type( L2GPData_T ), intent(inout)       :: l2gp
+    character (len=*), optional, intent(in) :: swathName ! Defaults->l2gp%name
+
+    ! Variables
+    logical                           :: alreadyOpen
+    type (GlobalAttributes_T)         :: gAttributes
+    character(len=255)                :: ProcessLevel
+    integer                           :: DayofYear
+    double precision                  :: TAI93At0zOfGranule
+    real(rgp), dimension(MAXNLEVELS)  :: pressures
+
+    character (len=132) :: name     ! Either swathName or l2gp%name
+    ! The following pair of string list encode the Units attribute
+    ! corresponding to each Title attribute; e.g., the Units for Latitude is deg
+    character (len=*), parameter :: GeolocationTitles = &
+      & 'Latitude,Longitude,Time,LocalSolarTime,SolarZenithAngle,' // &
+      & 'LineOfSightAngle,OrbitGeodeticAngle,ChunkNumber,Pressure,Frequency'
+    character (len=*), parameter :: GeolocationUnits = &
+      & 'deg,deg,s,h,deg,' // &
+      & 'deg,deg,NoUnits,hPa,GHz'
+    character (len=*), parameter :: GeoUniqueFieldDefinition = &
+      & 'HMT,HMT,AS,HMT,HMT,' // &
+      & 'M,M,M,AS,M'   ! These are abbreviated values
+    character (len=*), parameter :: UniqueFieldDefKeys = &
+      & 'HM,HMT,MT,AS,M'
+    character (len=*), parameter :: UniqueFieldDefValues = &
+      & 'HIRDLS-MLS-Shared,HIRDLS-MLS-TES-Shared,MLS-TES-Shared,' // &
+      & 'Aura-Shared,MLS-Specific'  ! Expanded values
+    ! The following associate UniqueFieldDefs with species names
+    character (len=*), parameter :: Species = &
+      & 'Temperature,BrO,CH3CN,CO,ClO,GPH,HCl,HCN,H2O,H2O2,' // &
+      & 'HNO3,HOCl,HO2,N2,N2O,OH,O2,O3,RHI,SO2'
+    character (len=*), parameter :: SpUniqueFieldDefinition = &
+      & 'HMT,M,M,MT,M,M,M,M,HMT,M,' // &
+      & 'HMT,M,M,M,HM,M,M,HMT,M,M'   ! These are abbreviated values
+
+    integer                    :: field
+    logical                    :: isColumnAmt
+    integer                    :: status
+    integer                    :: swid
+    character(len=CHARATTRLEN), dimension(NumGeolocFields) :: theTitles
+    character(len=CHARATTRLEN), dimension(NumGeolocFields) :: theUnits
+    character(len=CHARATTRLEN) :: field_name
+    character(len=CHARATTRLEN) :: units_name
+    character(len=CHARATTRLEN) :: uniqueness
+    character(len=CHARATTRLEN) :: species_name
+    character(len=CHARATTRLEN) :: abbr_uniq_fdef
+    character(len=CHARATTRLEN) :: expnd_uniq_fdef
+    real(rgp), dimension(1)    :: MissingValue
+    ! Begin
+    if (present(swathName)) then
+       name=swathName
+    else
+       name=l2gp%name
+    endif
+    call outputNamedValue ( 'L2GP Attributes: (swath name) ', trim(name), &
+      & options = '-H' )
+    if ( .not. any( rgp /= (/ r4, r8 /) ) ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, & 
+        & 'Attributes have unrecognized numeric data type; should be r4 or r8' )
+    endif
+    call List2Array(GeolocationTitles, theTitles, .true.)
+    call List2Array(GeolocationUnits, theUnits, .true.)
+
+    ! - -   G l o b a l   A t t r i b u t e s   - -
+    alreadyOpen = L2GPFile%stillOpen
+    if ( .not. alreadyOpen ) then
+      if ( DEEBUG ) print *, 'Needed to open file ', trim(L2GPFile%name)
+      call mls_openFile(L2GPFile, Status)
+      if ( Status /= 0 ) &
+        call MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Unable to open l2gp file', MLSFile=L2GPFile)
+    endif
+    call output ( '(Global Attributes) ', advance='yes' )
+    call ReadNCGlobalAttr_FileID ( L2GPFile%fileID%f_id, gAttributes, status )
+    if ( status /= 0 ) then
+      call output ('No global attributes found in file', advance='yes')
+    else
+      ! We stopped reading MiscNotes in the PCFHdr module to avoid
+      ! letting the master task step on the value each slave had carefully
+      ! written there.
+      ! Therefore, we must read it here, now, along with other miscellania.
+      ! (Isn't Miscellania a state bordering Missouri and Pennsylvania?)
+!       status = MLS_SwRdattr( L2GPFile%fileID%f_id, &
+!       & 'MiscNotes', nf90_char, 1, &
+!       &  CharBuffer=gAttributes%MiscNotes )
+!       status = MLS_SwRdattr( L2GPFile%fileID%f_id, &
+!       & 'ProductionLocation', nf90_char, 1, &
+!       &  CharBuffer=gAttributes%ProductionLoc )
+!       status = MLS_SwRdattr( L2GPFile%fileID%f_id, &
+!       & 'HostName', nf90_char, 1, &
+!       &  CharBuffer=gAttributes%HostName )
+!       status = MLS_SwRdattr( L2GPFile%fileID%f_id, &
+!       & 'identifier_product_doi', nf90_char, 1, &
+!       &  CharBuffer=gAttributes%DOI )
+      call dumpGlobalAttributes ( gAttributes ) 
+      call dump_int ( DayOfYear, 'Granule day of year:' )
+      call dump_r8 ( TAI93At0zOfGranule, 'Equator crossing time (tai93):' )
+    endif
+    swid = mls_SWattach ( L2GPFile, name )
+    if ( swid == -1 ) then
+       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Failed to attach swath ' // trim(name))
+    end if
+    
+    !   - -   S w a t h   A t t r i b u t e s   - -
+    call output ( '(Swath Attributes) ', advance='yes')
+    status = MLS_SwRdLattr( swid, 'L2gpValue', 'Pressure', nf90_real, &
+      & RealBuffer=l2gp%pressures)
+    call dump ( pressures, 'Vertical coordinates:' )
+    status = MLS_SwRdLattr( swid, 'L2gpValue', 'VerticalCoordinate', MLS_CHARTYPE, &
+      & CharBuffer=field_name)
+    call dump_chars ( field_name, 'Vertical coordinates type:' )
+    status = MLS_SWRdLAttr( swid, 'L2gpValue', 'MissingValue', &
+      & nf90_real, RealBuffer=MissingValue )
+    call dump ( MissingValue, 'MissingValues (L2GPValues only):' )
+    status = MLS_SwRdLattr( swid, 'L2gpPrecision', 'MissingValue', &
+      & nf90_real, RealBuffer=MissingValue )
+    call dump ( MissingValue, 'MissingValues (other fields):' )
+    
+    !   - -   G e o l o c a t i o n   A t t r i b u t e s   - -
+    call output ( '(Geolocation Attributes) ', advance='yes')
+    do field=1, NumGeolocFields
+      ! Take care not to write attributes to "missing fields"
+      if ( trim(theTitles(field)) == 'Frequency' &
+        & .and. l2gp%nFreqs < 1 ) then
+        field_name = ''
+      elseif ( trim(theTitles(field)) == 'Pressure' &
+        & .and. l2gp%nLevels < 1 ) then
+        field_name = ''
+      else
+        call GetHashElement (GeolocationTitles, &
+          & GeoUniqueFieldDefinition, trim(theTitles(field)), &
+          & abbr_uniq_fdef, .false.)
+        call GetHashElement (UniqueFieldDefKeys, &
+          & UniqueFieldDefValues, trim(abbr_uniq_fdef), &
+          & expnd_uniq_fdef, .false.)
+        status = MLS_swrdlattr(swid, trim(theTitles(field)), 'Title', MLS_CHARTYPE, &
+      & CharBuffer=field_name)
+        status = MLS_swrdlattr(swid, trim(theTitles(field)), 'Units', MLS_CHARTYPE, &
+      & CharBuffer=units_name)
+        call dump_chars ( field_name, 'Field title:' )
+        call dump_chars ( units_name, 'Units:' )
+
+        status = MLS_swrdlattr(swid, trim(theTitles(field)), &
+          & 'UniqueFieldDefinition', MLS_CHARTYPE, &
+      & CharBuffer=uniqueness)
+        call dump_chars ( uniqueness, 'Unique field definition:' )
+      endif
+    enddo
+    !   - -   D a t a   A t t r i b u t e s   - -
+    call output ( '(Data Attributes) ', advance='yes')
+    field_name = Name
+    species_name = name
+    isColumnAmt = ( index(species_name, 'Column') > 0 )
+    if ( isColumnAmt ) then
+      call ExtractSubString(Name, species_name, 'Column', 'wmo')
+    endif
+    call GetHashElement (lowercase(Species), &
+      & SpUniqueFieldDefinition, trim(lowercase(species_name)), &
+      & abbr_uniq_fdef, .false.)
+    call GetHashElement (UniqueFieldDefKeys, &
+      & UniqueFieldDefValues, trim(abbr_uniq_fdef), &
+      & expnd_uniq_fdef, .false.)
+    select case (trim(lowercase(species_name)))
+    case ('temperature')
+      units_name = 'K'
+    case ('gph')
+      units_name = 'm'
+    case ('rhi')
+      units_name = '%rhi'
+    case default
+      units_name = 'vmr'
+    end select
+    if ( isColumnAmt ) units_name = 'DU'
+    status = MLS_swrdlattr(swid, 'L2gpValue', 'Title', MLS_CHARTYPE, &
+      & CharBuffer=field_name)
+    status = MLS_swrdlattr(swid, 'L2gpValue', 'Units', MLS_CHARTYPE, &
+      & CharBuffer=units_name)
+    status = MLS_swrdlattr(swid, 'L2gpValue', &
+      & 'UniqueFieldDefinition', MLS_CHARTYPE, &
+      & CharBuffer=uniqueness)
+    call dump_chars ( field_name, 'Field title:' )
+    call dump_chars ( units_name, 'Units:' )
+    call dump_chars ( uniqueness, 'Unique field definition:' )
+    status = MLS_swrdlattr(swid, 'L2gpPrecision', 'Title', MLS_CHARTYPE, &
+      & CharBuffer=field_name)
+    status = MLS_swrdlattr(swid, 'L2gpPrecision', 'Units', MLS_CHARTYPE, &
+      & CharBuffer=units_name)
+    status = MLS_swrdlattr(swid, 'L2gpPrecision', &
+      & 'UniqueFieldDefinition', MLS_CHARTYPE, &
+      & CharBuffer=uniqueness)
+    call dump_chars ( field_name, 'Field title:' )
+    call dump_chars ( units_name, 'Units:' )
+    call dump_chars ( uniqueness, 'Unique field definition:' )
+
+    ! ('Status' data field newly written)
+    status = MLS_swrdlattr(swid, 'Status', 'Title', MLS_CHARTYPE, &
+      & CharBuffer=field_name)
+    status = MLS_swrdlattr(swid, 'Status', 'Units', MLS_CHARTYPE, &
+      & CharBuffer=units_name)
+    status = MLS_swrdlattr(swid, 'Status', &
+      & 'UniqueFieldDefinition', MLS_CHARTYPE, &
+      & CharBuffer=uniqueness)
+    call dump_chars ( field_name, 'Field title:' )
+    call dump_chars ( units_name, 'Units:' )
+    call dump_chars ( uniqueness, 'Unique field definition:' )
+    
+    status = MLS_swrdlattr(swid, 'Quality', 'Title', MLS_CHARTYPE, &
+      & CharBuffer=field_name)
+    status = MLS_swrdlattr(swid, 'Quality', 'Units', MLS_CHARTYPE, &
+      & CharBuffer=units_name)
+    status = MLS_swrdlattr(swid, 'Quality', &
+      & 'UniqueFieldDefinition', MLS_CHARTYPE, &
+      & CharBuffer=uniqueness)
+    call dump_chars ( field_name, 'Field title:' )
+    call dump_chars ( units_name, 'Units:' )
+    call dump_chars ( uniqueness, 'Unique field definition:' )
+    
+    status = mls_SWdetach( swid )
+    if ( status == -1 ) then
+       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Failed to detach  from swath interface' )
+    end if
+    contains
+    subroutine dump_chars(value, name)
+      ! arguments
+      character(len=*), intent(in) :: value
+      character(len=*), intent(in) :: name
+      ! Executable
+      call output(trim(name) // ' ', advance='no')
+      call output(trim(value), advance='yes')
+    end subroutine dump_chars
+    subroutine dump_int(value, name)
+      ! arguments
+      integer, intent(in) :: value
+      character(len=*), intent(in) :: name
+      ! Executable
+      call output(trim(name) // ' ', advance='no')
+      call output(value, advance='yes')
+    end subroutine dump_int
+    subroutine dump_r8(value, name)
+      ! arguments
+      real(r8), intent(in) :: value
+      character(len=*), intent(in) :: name
+      ! Executable
+      call output(trim(name) // ' ', advance='no')
+      call output(value, advance='yes')
+    end subroutine dump_r8
+
+  !-------------------------------------
+  end subroutine DumpL2GP_attributes_NC_MF
+  !-------------------------------------
+
+  !----------------------------------------  OutputL2GP_attributes_MF  -----
+  ! Oops, we already coded a subroutine that does this.
+  ! What we really need is a subroutine to read l2gp attributes
+  subroutine OutputL2GP_attributes_MF(l2gp, L2GPFile, swathName)
+
+  use HDFEOS5, only: HE5T_Native_Int, HE5T_Native_Real, HE5T_Native_Double, &
+    & MLS_Chartype
+  use HE5_SWAPI, only: HE5_SWWrattr, HE5_SWWrlattr
+  use MLSNetCDF4, only: MLS_ISGlatt, &
+    & MLS_SWAttach, MLS_SWDetach, MLS_SWWrattr, MLS_SWWrlattr
+  use PCFHDR, only:  HE5_Writeglobalattr
+    ! Brief description of subroutine
+    ! This subroutine writes the attributes for an l2gp
+    ! These include
+    ! Global attributes which are file level
+    ! Swath level
+    ! Geolocation field attributes
+    ! Data field attributes
+    ! Arguments
+
+    type( L2GPData_T ), intent(inout) :: l2gp
+    type(MLSFile_T)                :: L2GPFile
+    character (len=*), intent(in), optional :: swathName ! Defaults->l2gp%name
+
+    ! Parameters
+    character (len=*), parameter :: NOUNITS = 'NoUnits'
+
+    ! The following pair of string list encode the Units attribute
+    ! corresponding to each Title attribute; e.g., the Units for Latitude is deg
+    character (len=*), parameter :: GeolocationTitles = &
+      & 'Latitude,Longitude,Time,LocalSolarTime,SolarZenithAngle,' // &
+      & 'LineOfSightAngle,OrbitGeodeticAngle,ChunkNumber,Pressure,Frequency'
+    character (len=*), parameter :: GeolocationUnits = &
+      & 'deg,deg,s,h,deg,' // &
+      & 'deg,deg,NoUnits,hPa,GHz'
+    character (len=*), parameter :: GeoUniqueFieldDefinition = &
+      & 'HMT,HMT,AS,HMT,HMT,' // &
+      & 'M,M,M,AS,M'   ! These are abbreviated values
+    character (len=*), parameter :: UniqueFieldDefKeys = &
+      & 'HM,HMT,MT,AS,M'
+    character (len=*), parameter :: UniqueFieldDefValues = &
+      & 'HIRDLS-MLS-Shared,HIRDLS-MLS-TES-Shared,MLS-TES-Shared,' // &
+      & 'Aura-Shared,MLS-Specific'  ! Expanded values
+    ! The following associate UniqueFieldDefs with species names
+    character (len=*), parameter :: Species = &
+      & 'Temperature,BrO,CH3CN,CO,ClO,GPH,HCl,HCN,H2O,H2O2,' // &
+      & 'HNO3,HOCl,HO2,N2,N2O,OH,O2,O3,RHI,SO2'
+    character (len=*), parameter :: SpUniqueFieldDefinition = &
+      & 'HMT,M,M,MT,M,M,M,M,HMT,M,' // &
+      & 'HMT,M,M,M,HM,M,M,HMT,M,M'   ! These are abbreviated values
+    ! logical, parameter :: DEEBUG = .true.
+
+    ! Variables
+    character (len=132) :: name     ! Either swathName or l2gp%name
+    character(len=CHARATTRLEN) :: abbr_uniq_fdef
+    character(len=CHARATTRLEN) :: expnd_uniq_fdef
+    integer :: field
+    character(len=CHARATTRLEN) :: field_name
+    logical :: isColumnAmt
+    logical :: isTPPressure
+    integer :: rgp_type
+    character(len=CHARATTRLEN) :: species_name ! Always lower case
+    integer :: status
+    integer :: swid
+    character(len=CHARATTRLEN) :: temp_name
+    character(len=CHARATTRLEN), dimension(NumGeolocFields) :: theTitles
+    character(len=CHARATTRLEN), dimension(NumGeolocFields) :: theUnits
+    character(len=CHARATTRLEN) :: units_name
+    ! Begin
+    if (present(swathName)) then
+       name=swathName
+    else
+       name=l2gp%name
+    endif
+    if ( DEEBUG ) print *, 'About to wr attrs to: ', trim(name)
+
+    if ( rgp == r4 ) then
+      rgp_type = HE5T_NATIVE_REAL
+    elseif ( rgp == r8 ) then
+      rgp_type = HE5T_NATIVE_DOUBLE
+    else
+      call MLSMessage ( MLSMSG_Error, ModuleName, & 
+        & 'Attributes have unrecognized numeric data type; should be r4 or r8', &
+        & MLSFile=L2GPFile)
+    endif
+    call List2Array(GeolocationTitles, theTitles, .true.)
+    call List2Array(GeolocationUnits, theUnits, .true.)
+
+    ! - -   G l o b a l   A t t r i b u t e s   - -
+    if ( WRITEMASTERSFILEATTRIBUTES .and. &
+      & .not. MLS_ISGLATT(L2GPFile%fileID%f_id, 'StartUTC') ) &
+      call WriteNCGlobalAttr_FileID ( L2GPFile%fileID%f_id )
+! 
+    swid = mls_SWattach (L2GPFile, name)
+!     
+    !   - -   S w a t h   A t t r i b u t e s   - -
+    ! Under NteCDF, every local attribute must be attached to a dataset
+    ! or what they call a 'variable'
+    ! So we'll attach swath-level attributes to the L2gpValue.
+    
+!     status = he5_swwrattr(swid, trim(l2gp%verticalCoordinate), &
+!       & rgp_type, hsize(size(l2gp%pressures)), &
+!       & l2gp%pressures)
+    status = MLS_Swwrlattr ( swid, &
+    & 'L2gpValue', trim(l2gp%verticalCoordinate), rgp_type, size(l2gp%pressures), &
+    & realbuffer=l2gp%pressures )
+!     field_name = l2gp%verticalCoordinate ! 'Pressure'
+!     status = mls_swwrattr(swid, 'VerticalCoordinate', MLS_CHARTYPE, 1, &
+!       & field_name)
+!     if ( DeeBug ) print *, 'Missing L2GP: ', real(l2gp%MissingL2GP)
+!     if ( DeeBug ) print *, 'Missing value: ', real(l2gp%MissingValue)
+!     if ( SWATHLEVELMISSINGVALUE ) &
+!       & status = he5_swwrattr(swid, 'MissingValue', rgp_type, hsize(1), &
+!       & (/ real(l2gp%MissingL2GP, rgp) /) )
+!     
+!     !   - -   G e o l o c a t i o n   A t t r i b u t e s   - -
+!     if ( DEEBUG ) print *, 'About to wr loc attrs to: ', trim(name)
+!     do field=1, NumGeolocFields
+!       ! Take care not to write attributes to "missing fields"
+!       if ( trim(theTitles(field)) == 'Frequency' &
+!         & .and. l2gp%nFreqs < 1 ) then
+!         field_name = ''
+!       elseif ( trim(theTitles(field)) == 'Pressure' &
+!         & .and. l2gp%nLevels < 1 ) then
+!         field_name = ''
+!       else
+!         field_name = theTitles(field)
+!         if ( trim(theTitles(field)) == 'Pressure' ) &
+!           & field_name = l2gp%verticalCoordinate
+!         call GetHashElement (GeolocationTitles, &
+!           & GeoUniqueFieldDefinition, trim(theTitles(field)), &
+!           & abbr_uniq_fdef, .false.)
+!         call GetHashElement (UniqueFieldDefKeys, &
+!           & UniqueFieldDefValues, trim(abbr_uniq_fdef), &
+!           & expnd_uniq_fdef, .false.)
+!         if ( DEEBUG ) print *, 'Field Title ', trim(theTitles(field))
+!         status = mls_swwrlattr(swid, trim(theTitles(field)), 'Title', &
+!           & MLS_CHARTYPE, 1, theTitles(field))
+!         if ( DEEBUG ) print *, 'Units ', trim(theUnits(field))
+!         status = mls_swwrlattr(swid, trim(theTitles(field)), 'Units', &
+!           & MLS_CHARTYPE, 1, theUnits(field))
+! 
+!         if ( trim(theTitles(field)) == 'Time' ) then
+!           status = he5_swwrlattr(swid, trim(theTitles(field)), &
+!             & 'MissingValue', &
+!             & HE5T_NATIVE_DOUBLE, hsize(1), (/ real(l2gp%MissingValue, r8) /) )
+!         elseif ( trim(theTitles(field)) == 'ChunkNumber' ) then
+!           status = he5_swwrlattr(swid, trim(theTitles(field)), &
+!             & 'MissingValue', &
+!             & HE5T_NATIVE_INT, hsize(1), (/ UndefinedIntegerValue /) )
+!         else
+!           status = he5_swwrlattr(swid, trim(theTitles(field)), &
+!             & 'MissingValue', &
+!             & rgp_type, hsize(1), (/ real(l2gp%MissingValue, rgp) /) )
+!         endif
+!         if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+!          & "Unable to write local attribute to " // trim(theTitles(field)) )
+!         if ( DEEBUG ) print *, 'Uniquefielddef ', trim(expnd_uniq_fdef)
+!         status = mls_swwrlattr(swid, trim(theTitles(field)), &
+!           & 'UniqueFieldDefinition', &
+!           & MLS_CHARTYPE, 1, expnd_uniq_fdef)
+!         ! print *, 'status : ', status
+!         if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+!          & "Unable to write local attribute to " // trim(theTitles(field)) )
+!       endif
+!     enddo
+!     if ( DEEBUG ) print *, 'Data'
+!     !   - -   D a t a   A t t r i b u t e s   - -
+!     ! call GetQuantityAttributes ( l2gp%quantityType, &
+!     !  & units_name, expnd_uniq_fdef)
+!     field_name = Name
+!     species_name = lowercase(name)
+!     ! The following special cases are handled by crude, despicable hacks
+!     ! It would be better to check on the quantity type, but paw hasn't
+!     ! succeeded in getting that to work properly and reliably
+!     isColumnAmt = ( index(species_name, 'column') > 0 )
+!     isTPPressure = ( index(species_name, 'tpp') > 0 )
+!     if ( isColumnAmt ) then
+!       ! This next failed sometimes
+!       temp_name = species_name
+!       call ExtractSubString(Name, species_name, 'column', 'wmo')
+!       if ( species_name == ' ' ) species_name=temp_name
+!       ! So we'll try another tack:
+!       temp_name = species_name
+!       call ReplaceSubString ( temp_name, species_name, 'column', '' )
+!       if ( species_name == ' ' ) species_name=temp_name
+!       temp_name = species_name
+!       call GetStringElement( temp_name, species_name, &
+!         & 1, countEmpty=.true., inseparator='-' )
+!       if ( species_name == ' ' ) species_name=temp_name
+!     else
+!       temp_name = species_name
+!       call GetStringElement( temp_name, species_name, &
+!         & 1, countEmpty=.true., inseparator='-' )
+!       if ( species_name == ' ' ) species_name=temp_name
+!     endif
+!     ! Hopefully by now we've turned species_name into one of the species
+!     if ( DEEBUG ) &
+!       & print *, 'full name: ', trim(name), ' Species: ', trim(species_name)
+!     call GetHashElement (lowercase(Species), &
+!       & SpUniqueFieldDefinition, trim(species_name), &
+!       & abbr_uniq_fdef, .false.)
+!     call GetHashElement (UniqueFieldDefKeys, &
+!       & UniqueFieldDefValues, trim(abbr_uniq_fdef), &
+!       & expnd_uniq_fdef, .false.)
+!     if ( expnd_uniq_fdef == '' .or. expnd_uniq_fdef == ',' ) &
+!       & expnd_uniq_fdef = 'MLS-Specific'
+!     select case (trim(lowercase(species_name)))
+!     case ('temperature')
+!       units_name = 'K'
+!     case ('gph')
+!       units_name = 'm'
+!     case ('geoheight')
+!       units_name = 'km'
+!     case ('rhi')
+!       units_name = '%rhi'
+!     case ('iwc', 'iwp')
+!       units_name = 'g/m^3'
+!     case default
+!       units_name = 'vmr'
+!     end select
+!     if ( isColumnAmt ) then
+!       ! units_name = 'DU'
+!       if ( DEEBUG ) &
+!         & call dump( .true., col_species_keys, col_species_hash, &
+!         & 'column species units' )
+!       call GetHashElement (col_species_keys, &
+!       & col_species_hash, trim(lowercase(species_name)), &
+!       & units_name, .true.)
+!       if ( DEEBUG ) &
+!       & print *, 'units_name: ', trim(units_name)
+!       if ( units_name == ',' ) units_name = 'molcm2'
+!     endif
+!     if ( isTPPressure ) units_name = 'hPa'
+!     if ( DEEBUG ) print *, 'Title ', trim(field_name)
+!     status = mls_swwrlattr(swid, 'L2gpValue', 'Title', &
+!       & MLS_CHARTYPE, 1, field_name)
+!     if ( DEEBUG ) print *, 'Units ', trim(units_name)
+!     status = mls_swwrlattr(swid, 'L2gpValue', 'Units', &
+!       & MLS_CHARTYPE, 1, units_name)
+!     status = he5_swwrlattr(swid, 'L2gpValue', 'MissingValue', &
+!       & rgp_type, hsize(1), (/ real(l2gp%MissingL2GP, rgp) /) )
+!     if ( DEEBUG ) print *, 'Title ', trim(expnd_uniq_fdef)
+!     status = mls_swwrlattr(swid, 'L2gpValue', &
+!       & 'UniqueFieldDefinition', &
+!       & MLS_CHARTYPE, 1, expnd_uniq_fdef)
+!     status = mls_swwrlattr(swid, 'L2gpPrecision', 'Title', &
+!       & MLS_CHARTYPE, 1, trim(field_name)//'Precision')
+!     status = mls_swwrlattr(swid, 'L2gpPrecision', 'Units', &
+!       & MLS_CHARTYPE, 1, units_name)
+!     status = he5_swwrlattr(swid, 'L2gpPrecision', 'MissingValue', &
+!       & rgp_type, hsize(1), (/ real(l2gp%MissingValue, rgp) /) )
+!     status = mls_swwrlattr(swid, 'L2gpPrecision', &
+!       & 'UniqueFieldDefinition', &
+!       & MLS_CHARTYPE, 1, expnd_uniq_fdef)
+! 
+!     ! ('Status' data field newly written)
+!     status = mls_swwrlattr(swid, 'Status', 'Title', &
+!       & MLS_CHARTYPE, 1, trim(field_name)//'Status')
+!     status = mls_swwrlattr(swid, 'Status', 'Units', &
+!       & MLS_CHARTYPE, 1, NOUNITS)
+!     status = he5_swwrlattr(swid, 'Status', 'MissingValue', &
+!       & HE5T_NATIVE_INT, hsize(1), (/ l2gp%MissingStatus /) )
+!     status = mls_swwrlattr(swid, 'Status', &
+!       & 'UniqueFieldDefinition', &
+!       & MLS_CHARTYPE, 1, 'MLS-Specific')
+!     
+!     status = mls_swwrlattr(swid, 'Quality', 'Title', &
+!       & MLS_CHARTYPE, 1, trim(field_name)//'Quality')
+!     status = mls_swwrlattr(swid, 'Quality', 'Units', &
+!       & MLS_CHARTYPE, 1, NOUNITS)
+!     status = he5_swwrlattr(swid, 'Quality', 'MissingValue', &
+!       & rgp_type, hsize(1), (/ real(l2gp%MissingValue, rgp) /) )
+!     status = mls_swwrlattr(swid, 'Quality', &
+!       & 'UniqueFieldDefinition', &
+!       & MLS_CHARTYPE, 1, 'MLS-Specific')
+!     
+!     status = mls_swwrlattr(swid, 'Convergence', 'Title', &
+!       & MLS_CHARTYPE, 1, trim(field_name)//'Convergence')
+!     status = mls_swwrlattr(swid, 'Convergence', 'Units', &
+!       & MLS_CHARTYPE, 1, NOUNITS)
+!     status = he5_swwrlattr(swid, 'Convergence', 'MissingValue', &
+!       & rgp_type, hsize(1), (/ real(l2gp%MissingValue, rgp) /) )
+!     status = mls_swwrlattr(swid, 'Convergence', &
+!       & 'UniqueFieldDefinition', &
+!       & MLS_CHARTYPE, 1, 'MLS-Specific')
+!     if ( AscDescModeIsField ) then
+!       status = mls_swwrlattr(swid, 'AscDescMode', 'Title', &
+!         & MLS_CHARTYPE, 1, trim(field_name)//'AscDescMode ')
+!       status = mls_swwrlattr(swid, 'AscDescMode', 'Units', &
+!         & MLS_CHARTYPE, 1, NOUNITS)
+!       status = he5_swwrlattr(swid, 'AscDescMode', 'MissingValue', &
+!         & HE5T_NATIVE_INT, hsize(1), (/ 0 /) )
+!       status = mls_swwrlattr(swid, 'AscDescMode', &
+!         & 'UniqueFieldDefinition', &
+!         & MLS_CHARTYPE, 1, 'MLS-Specific')
+!       endif
+!     
+    status = mls_SWdetach( swid )
+    if ( status == -1 ) then
+       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Failed to detach  from swath interface', MLSFile=L2GPFile )
+    end if
+
+
+  !-------------------------------------
+  end subroutine OutputL2GP_attributes_MF
+  !-------------------------------------
+
   ! ----------------------------------------------  not_used_here  -----
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -2227,6 +2837,9 @@ contains ! ======================= Public Procedures =========================
 end module NCL2GP
 
 ! $Log$
+! Revision 1.6  2022/12/08 18:56:25  pwagner
+! Fixed typo; bypass ReadNCL2GPData_fileID
+!
 ! Revision 1.5  2022/11/16 23:26:37  pwagner
 ! Fixed bugs in ReadNCL2GPData_MF_NC4
 !
