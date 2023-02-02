@@ -205,7 +205,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   logical, public            :: WRITEMASTERSFILEATTRIBUTES = .true.
 
   integer, parameter, public :: CHARATTRLEN = 255   ! was GA_VALUE_LENGTH
-  integer, parameter, public :: L2GPNameLen = 80
+  integer, parameter, public :: L2GPNameLen = 80    ! may need to be longer
   integer, parameter, public :: NumDataFields = 5
   integer, parameter, public :: NumGeolocFields = 10
   integer, parameter, public :: MAXFNFIELDS = NumGeolocFields + NumDataFields + 4
@@ -367,9 +367,6 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
      integer                           :: MissingStatus = DangerWillRobinson
     ! Vertical coordinate
     character(len=8) :: verticalCoordinate ! E.g. 'Pressure', or 'Theta'
-    ! integer :: verticalCoordinate ! The vertical coordinate used.  These
-                                  ! are l_lits of the type t_VGridCoord
-                                  ! defined in Init_Tables_Module.
   ! The following final method caused the sids tests
   ! in the nightly gold brick to bomb. A symptom of a deeper problem?
   ! contains
@@ -393,8 +390,9 @@ contains ! =====     Public Procedures     =============================
     !------------------------------------------------------------------------
 
     ! Given a file name,
-    ! This routine does an append operation (see AppendL2GPData_fileID)
-    ! If the file doesn't exist yet, hopefully, it'll create it
+    ! This routine does an append operation (see AppendL2GPData_fileID).
+    ! If the file doesn't exist yet, hopefully, it'll create it.
+    ! So, far, that hope as been realized.
 
     ! Arguments
 
@@ -2644,9 +2642,9 @@ contains ! =====     Public Procedures     =============================
       ! (Missing Value)
       ! call HuntRange( fullL2gp%chunkNumber, (/ chunk, chunk /), irange )
       if ( any( irange == 0 ) ) cycle
-      call output ( ' - - - Chunk number:', advance='no')
-      call output ( chunk, advance='no')
-      call output ( ' - - -', advance='yes')
+      call output ( ' - - - Chunk number:', advance='no' )
+      call output ( chunk, advance='no' )
+      call output ( ' - - -', advance='yes' )
       call ExtractL2GPRecord ( fullL2gp, l2gp, rTimes=irange )
       call Dump ( L2gp, ColumnsOnly, Details, Fields, width, options )
       call DestroyL2GPContents( l2gp )
@@ -2768,34 +2766,34 @@ contains ! =====     Public Procedures     =============================
       call StyledOutput ( 'L2GP Data: (swath name) ' // trim(l2gp%name), &
         & options='--Banner' )
       if ( NAMEINDEXEVERSET ) then
-        call output ( ', (parser name) ')
+        call output ( ', (parser name) ' )
         if(l2gp%nameIndex > 0) then
           call display_string ( l2gp%nameIndex, advance='yes', IERR=ierr)
           if ( ierr /= 0 ) call output ( '(not found in string table)', &
-           & advance='yes')
+           & advance='yes' )
         else
-          call output ( '(the nameIndex was 0) ', advance='yes')
+          call output ( '(the nameIndex was 0) ', advance='yes' )
         endif
       else
-        call output ( ' ', advance='yes')
+        call output ( ' ', advance='yes' )
       endif
     endif
 
     if ( showMe(myDetails > -2, myFields, 'ntimes') ) then
-      call output ( 'nTimes: ')
-      call output ( l2gp%nTimes, 5)
-      call output ( '  nTimesTotal: ')
-      call output ( l2gp%nTimesTotal, 5)
-      call output ( '  nLevels: ')
-      call output ( l2gp%nLevels, 3)
-      call output ( '  nFreqs: ')
-      call output ( l2gp%nFreqs, 3, advance='yes')
-      call output ( 'Fill/Missing L2GP Values: ')
-      call output ( l2gp%MissingL2GP, advance='yes')
+      call output ( 'nTimes: ' )
+      call output ( l2gp%nTimes, 5 )
+      call output ( '  nTimesTotal: ' )
+      call output ( l2gp%nTimesTotal, 5 )
+      call output ( '  nLevels: ' )
+      call output ( l2gp%nLevels, 3 )
+      call output ( '  nFreqs: ' )
+      call output ( l2gp%nFreqs, 3, advance='yes' )
+      call output ( 'Fill/Missing L2GP Values: ' )
+      call output ( l2gp%MissingL2GP, advance='yes' )
       call output ( 'Fill/Missing Values (Others): ')
-      call output ( l2gp%MissingValue, advance='yes')
-      call output ( 'Fill/Missing Status Field: ')
-      call output ( l2gp%MissingStatus, advance='yes')
+      call output ( l2gp%MissingValue, advance='yes' )
+      call output ( 'Fill/Missing Status Field: ' )
+      call output ( l2gp%MissingStatus, advance='yes' )
      endif
     
     if ( .not. skipGeos ) then
@@ -5875,6 +5873,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.255  2022/11/16 23:12:17  pwagner
+! Fixed various bugs in diffing geolocations
+!
 ! Revision 2.254  2022/11/08 23:50:42  pwagner
 ! Array bounds were too small in Dump_L2GP; fixed
 !
