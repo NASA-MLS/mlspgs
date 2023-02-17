@@ -51,8 +51,8 @@
 #    -m "whatever" Modify value of AddedNotes attribute to "whatever"
 #    -Ad Attr_dir  Root directory for legitimate L2GP files, e.g. L2GP-CO
 #    -Dd DMP_dir   Root directory for DMP files
-#    -Af Attr_dir  Legitimate L2GP file, e.g. L2GP-CO
-#    -Df DMP_dir   Existing DMP file
+#    -Af Attr_file Legitimate L2GP file, e.g. L2GP-CO
+#    -Df DMP_file  Existing DMP file
 #    -Ef env_file  Get options by sourcing env_file
 #    -undo         Undo effects of a previous repair, restoring the old files
 
@@ -257,6 +257,36 @@ then
 fi
 }
 
+# ------------------ one_day ----------------------
+# ----------------------------------------------------------------
+# Process each day in one day's worth of files.
+one_day()
+{
+  # Repairing an entire day of files
+  files=`/bin/ls $DMPDay`
+  for file in $files
+  do
+    echo $file
+    DMP=$DMPDay/$file
+    bogusDMP=`bogify $DMP`
+    # bogusDMP=$DMPDay/$bogusDMP
+    AttrFile=$AttrDay/$AttrFile
+    # Can't repair a non-existent DMP file
+    if [ ! -f "$DMP" ]
+    then
+      echo "No standard product DMP file in $DMPYear/$day"
+    # Have we been asked to undo an earlier repair?
+    elif [ "$undo" = "yes" ]
+    then
+      undoit
+    else
+      applyit
+      repack_files
+      augment_files
+    fi
+  done
+}
+
 # ------------------ one_year ----------------------
 # ----------------------------------------------------------------
 # Process each day in one year's worth of files.
@@ -270,33 +300,19 @@ one_year()
     then
       echo "Sorry--$DMPYear/$day is not a subdirectory containing DMP files"
     else
-      # Get files with highest cycle numbers
+      # Get files with highest cycle numbers (except for DMP)
       thisDir=`pwd`
       DMPDay=$DMPYear/$day
       AttrDay=$AttrYear/$day
       cd $AttrDay
       AttrFile=`magnify L2GP-CO`
-      cd $DMPDay
-      DMP=`magnify DMP`
+      # cd $DMPDay
+      # DMP=`magnify DMP`
       # Now prefix with appropriate paths
       cd $thisDir
-      DMP=$DMPDay/$DMP
-      bogusDMP=`bogify $DMP`
-      bogusDMP=$DMPDay/$bogusDMP
-      AttrFile=$AttrDay/$AttrFile
-      # Can't repair a non-existent DMP file
-      if [ ! -f "$DMP" ]
-      then
-        echo "No standard product DMP file in $DMPYear/$day"
-      # Have we been asked to undo an earlier repair?
-      elif [ "$undo" = "yes" ]
-      then
-        undoit
-      else
-        applyit
-        repack_files
-        augment_files
-      fi
+      # pwd
+      # echo "DMPDay $DMPDay"
+      one_day
     fi
   done
 }
@@ -508,3 +524,6 @@ else
   done
 fi
 # $Log$
+# Revision 1.1  2023/02/02 23:08:23  pwagner
+# First commit
+#
