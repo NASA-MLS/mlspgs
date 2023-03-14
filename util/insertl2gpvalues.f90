@@ -210,8 +210,11 @@ contains
     real (rgp), dimension(:,:), allocatable :: values
     integer(kind=hSize_t), dimension(3)     :: DIMS
     type (GlobalAttributes_T)               :: gAttributes
+    character(len=*), parameter             :: identifier_product_doi_merra = &
+      & "10.5067/AURA/MLS/DATA2524"
     character(len=*), parameter             :: identifier_product_doi = &
-      & "10.5067/AURA/MLS/DATA2521"
+      & "10.5067/AURA/MLS/DATA2523"
+!      & "10.5067/AURA/MLS/DATA2521"
     character(len=16)                       :: ProcessLevel
     integer                                 :: DayofYear
     double precision                        :: TAI93At0zOfGranule
@@ -433,6 +436,11 @@ contains
       gAttributes%HostName           = HostName
       gAttributes%MiscNotes          = '(Not relevant)'
       gAttributes%ProductionLoc      = 'SCF'
+      ! We now start to choose DOI depending on the file name
+      print *, 'values file: ', trim(options%newValues)
+      if ( index( trim(options%newValues), 'MERRA' ) > 0 ) &
+        & gAttributes%doi            = identifier_product_doi_merra
+
       GlobalAttributes               = gAttributes
       if ( .not. options%silent ) call DumpGlobalAttributes
       call he5_writeglobalattr ( L2GPFile, DOI=.true., &
@@ -925,6 +933,9 @@ end program insertL2GPValues
 !==================
 
 ! $Log$
+! Revision 1.5  2023/02/02 23:07:54  pwagner
+! Add subroutine DMP_swaths to cope with DMP files created by idl--they are not genuine hdfeos
+!
 ! Revision 1.4  2022/07/13 20:46:40  pwagner
 ! Added new cmdline options to restrict height range
 !
