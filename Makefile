@@ -278,6 +278,7 @@ SHELL = /bin/sh
 # ncl2gpdiff
 # ncl2gpdump
 # remake_gh
+# insertl2gpDOIs
 # resetl2gpstatus
 # resetl2gpvalues
 # Spartacus
@@ -499,7 +500,8 @@ MLSTOOLS = chunktimes checkpvmup compare dateconverter extinctionmaker fixDOI\
   l1bcat l1bdiff l1bdump l1h5subset \
   l2auxcat l2auxchi l2auxdump l2gp2nc4 l2gpdiffnc4 l2gpcat l2gpdiff l2gpdump \
   l2pcdiff l2pcdump l2q lr machineok misalignment \
-  ncl2gpcat ncl2gpdiff ncl2gpdump resetl2gpstatus resetl2gpvalues Spartacus \
+  ncl2gpcat ncl2gpdiff ncl2gpdump resetl2gpDOIs resetl2gpstatus resetl2gpvalues \
+  Spartacus \
   tellMasterToQuit vansGoldFilter WordSplit wrapLines
 
 ifdef HDFINC
@@ -1232,6 +1234,11 @@ remake_gh: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/remake_gh.f90
    -c $(MLSCONFG) -p $@ -M $(MAKE) -O LDOPTS=-static \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
+resetl2gpDOIs: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/resetl2gpDOIs.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
 resetl2gpstatus: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/resetl2gpstatus.f90 l1--itm
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
@@ -1575,6 +1582,9 @@ tools: $(MLSTOOLS)
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.35  2023/01/19 23:20:29  pwagner
+# Can now build ncl2gpcat
+#
 # Revision 1.34  2022/12/21 00:17:37  pwagner
 # Can now build ncl2gpdump
 #
