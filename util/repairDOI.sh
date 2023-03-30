@@ -16,7 +16,10 @@
 #    -Ef env_file  Get options by sourcing env_file
 
 # Effect:
-# The DMP file will be replaced with a genuine hdfeos formatted DMP file
+# The DMP file's DOI will be replaced with its correct value
+# i.e.,
+#    "10.5067/AURA/MLS/DATA2523" for non-MERRA
+#    "10.5067/AURA/MLS/DATA2524" for MERRA
 
 # Bugs and limitations
 # (1) resetl2gpDOIs is assumed to exist, to be an executable, and to be in
@@ -103,9 +106,9 @@ commando()
 
 applyit()
 {
-   if [ "$attrName" != "" -a "$attrvalue" != "" ]
+   if [ "$attrName" != "" -a "$attrValue" != "" ]
    then
-     $resetl2gpDOIs -v -a "$attrName" -V "$attrvalue" "$DMP"
+     commando $resetl2gpDOIs -v -a "$attrName" -V "$attrValue" "$DMP"
    else
      # Use the default DOIs which depend solely on the file name:
      # Does the file name contain the string MERRA?
@@ -113,11 +116,11 @@ applyit()
      if [ "$a" = "" ]
      then
        # non-MERRA
-       $resetl2gpDOIs -v -a identifier_product_doi \
+       commando $resetl2gpDOIs -v -a identifier_product_doi \
          -V "10.5067/AURA/MLS/DATA2523" "$DMP"
      else
        # MERRA
-       $resetl2gpDOIs -v -a identifier_product_doi \
+       commando $resetl2gpDOIs -v -a identifier_product_doi \
          -V "10.5067/AURA/MLS/DATA2524" "$DMP"
      fi
    fi
@@ -195,21 +198,25 @@ one_day()
   do
     echo $file
     DMP=$DMPDay/$file
-    bogusDMP=`bogify $DMP`
+    # bogusDMP=`bogify $DMP`
     # bogusDMP=$DMPDay/$bogusDMP
-    AttrFile=$AttrDay/$AttrFile
+    # Can't repair a bugus DMP file
+    a=`echo $file | grep '\.bogus'`
+    if [ "$a" != "" ]
+    then
+      echo "Skipping bogus file $file in $DMPYear/$day"
     # Can't repair a non-existent DMP file
-    if [ ! -f "$DMP" ]
+    elif [ ! -f "$DMP" ]
     then
       echo "No standard product DMP file in $DMPYear/$day"
     # Have we been asked to undo an earlier repair?
-    elif [ "$undo" = "yes" ]
-    then
-      undoit
+    # elif [ "$undo" = "yes" ]
+    # then
+    #  undoit
     else
       applyit
-      repack_files
-      augment_files
+      # repack_files
+      # augment_files
     fi
   done
 }
@@ -230,15 +237,6 @@ one_year()
       # Get files with highest cycle numbers (except for DMP)
       thisDir=`pwd`
       DMPDay=$DMPYear/$day
-      AttrDay=$AttrYear/$day
-      cd $AttrDay
-      AttrFile=`magnify L2GP-CO`
-      # cd $DMPDay
-      # DMP=`magnify DMP`
-      # Now prefix with appropriate paths
-      cd $thisDir
-      # pwd
-      # echo "DMPDay $DMPDay"
       one_day
     fi
   done
@@ -361,8 +359,8 @@ then
   echo "resetl2gpDOIs $resetl2gpDOIs"
   echo "DMPDir $DMPDir"
   echo "DMP file $DMP"
-  echo "H5REPACK $H5REPACK"
-  echo "NETCDFAUGMENT $NETCDFAUGMENT"
+#  echo "H5REPACK $H5REPACK"
+#  echo "NETCDFAUGMENT $NETCDFAUGMENT"
   echo "years $years"
 fi
 
@@ -378,11 +376,10 @@ then
 fi
 
 #echo "Past (2), anyway"
-if [ "$AttrDir" = "" -a "$DMPDir" = "" ]
+if [ "$DMPDir" = "" ]
 then
   # Repairing a single file
   echo "Repairing $DMP"
-  echo "AttrFile $AttrFile"
   # Can't repair a non-existent DMP file
   if [ ! -f "$DMP" ]
   then
@@ -390,25 +387,26 @@ then
     exit
   else
     applyit
-    repack_files
-    augment_files
+    # repack_files
+    # augment_files
   fi
 elif [ "$years" = "" ]
 then
-  # DMPDir and AttrDir contain the year datum;
+  # DMPDir contain the year datum;
   # you're doing just one year
   DMPYear=$DMPDir
-  AttrYear=$AttrDir
   one_year
 else
-  # DMPDir and AttrDir are jusst the version;
+  # DMPDir are just the version;
   # you're doing $years
   for year in $years
   do
     logit "year     $year"
     DMPYear=$DMPDir/$year
-    AttrYear=$AttrDir/$year
     one_year
   done
 fi
 # $Log$
+# Revision 1.1  2023/03/16 16:24:29  pwagner
+# First commit
+#
