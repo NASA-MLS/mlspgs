@@ -240,6 +240,7 @@ SHELL = /bin/sh
 # checkpvmup     
 # compare     
 # CondenseLeakLog
+# createattributes
 # dateconverter  
 # end_stmts      
 # extinctionmaker      
@@ -252,6 +253,7 @@ SHELL = /bin/sh
 # hl             
 # init_gen       
 # insertl2gpvalues
+# insertl2gpDOIs
 # killmaster     
 # l1bcat     
 # l1bdiff        
@@ -278,7 +280,6 @@ SHELL = /bin/sh
 # ncl2gpdiff
 # ncl2gpdump
 # remake_gh
-# insertl2gpDOIs
 # resetl2gpstatus
 # resetl2gpvalues
 # Spartacus
@@ -494,7 +495,8 @@ CUSTOM_PREFXD := $(shell ${REECHO} -dir srclib -prefix=-db $(CUSTOM_BUILDS))
 MIESOURCESWITHHDF = $(shell ${REECHO} -excl $(MIE)/WriteNoHDF_m.f90 $(MIE)/*.f90 $(MIE)/math77/*.f)
 MIESOURCESWOHDF = $(shell ${REECHO} -excl $(MIE)/WriteHDF_m.f90 $(MIE)/*.f90 $(MIE)/math77/*.f)
 
-MLSTOOLS = chunktimes checkpvmup compare dateconverter extinctionmaker fixDOI\
+MLSTOOLS = chunktimes checkpvmup compare createattributes \
+  dateconverter extinctionmaker fixDOI \
   Goldbrick_More heconvert h5subset h5cat hl \
   insertl2gpvalues killmaster \
   l1bcat l1bdiff l1bdump l1h5subset \
@@ -929,6 +931,11 @@ conv_uars: $(CONFDIR)/$(MLSCFILE) $(CONVSRCS) utctotai
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
           -c $(MLSCONFG) -p $@ -M $(MAKE) -O short_name=conv_uars_main -m lib \
           -C $(MLSCFILE) $(CONVSRCS)
+
+createattributes: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/createattributes.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
 UARSRECL_BARE =  $(shell ${REECHO} -dirn $(CONFDIR)/conv_uars/ -excl conv_uars.f90)
 UARSRECL = $(shell ${REECHO} -nf -prefixn=$(CONFDIR)/conv_uars/ ${UARSRECL_BARE})
@@ -1582,6 +1589,9 @@ tools: $(MLSTOOLS)
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.36  2023/03/16 16:22:37  pwagner
+# can now build the tool resetl2gpDOIs
+#
 # Revision 1.35  2023/01/19 23:20:29  pwagner
 # Can now build ncl2gpcat
 #
