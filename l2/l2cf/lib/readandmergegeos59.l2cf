@@ -19,7 +19,7 @@
    },{
     !define(geos5Day1,{!TrimLastChar(!esyscmd(dateconverter -o yyyymmdd "!day"))})
     !define(geos5Day2,{!TrimLastChar(!esyscmd(dateconverter +1 -o yyyymmdd "!day"))})
-    !ifdef(geos5Head,{},{!define(geos5Head,{DFPITI3NVASMMLS.rpit2.asm.inst3_3d_asm_Nv.GEOS591})})
+    !ifdef(geos5Head,{},{!define(geos5Head,{DFPITI3NVASMMLS.fpit.asm.inst3_3d_asm_Nv.GEOS5124})})
     !define(setgeos59dateStrings,{!dnl
     !ProcessParVal(g59dateString,$@)!dnl
     !define(getgeos59dateStrings,{, file=!g59dateString$1})
@@ -438,6 +438,9 @@ begin MergeGrids
 end MergeGrids
 
 ;$Log$
+;Revision 1.6  2018/03/13 23:22:31  pwagner
+;Silence hdf/hdfeos warnings when checking for meteorology file type
+;
 ;Revision 1.5  2016/10/06 20:27:23  pwagner
 ;May use flagSkipReading'Type' to shorten and simplify l2cf
 ;
