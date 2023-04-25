@@ -25,7 +25,7 @@
    },{
     !define(geos5Day1,{!TrimLastChar(!esyscmd(dateconverter -o yyyymmdd "!day"))})
     !define(geos5Day2,{!TrimLastChar(!esyscmd(dateconverter +1 -o yyyymmdd "!day"))})
-    !ifdef(geos5Head,{},{!define(geos5Head,{DFPITI3NVASMMLS.rpit2.asm.inst3_3d_asm_Nv.GEOS591})})
+    !ifdef(geos5Head,{},{!define(geos5Head,{DFPITI3NVASMMLS.fpit.asm.inst3_3d_asm_Nv.GEOS5124})})
     !define(setgeos59dateStrings,{!dnl
     !ProcessParVal(g59dateString,$@)!dnl
     !define(getgeos59dateStrings,{, file=!g59dateString$1})
@@ -161,7 +161,7 @@ end ReadApriori
 ; This will be used first for GPH
 begin ReadApriori
   gridEXTN: gridded,field='EXTN', origin=climatology, $
-       file='Climatologies'
+       file='!climatologyFile'
 end ReadApriori
 
 ; Initialize the run-time Booleans and flags
@@ -300,6 +300,9 @@ begin MergeGrids
 end MergeGrids
 
 ;$Log$
+;Revision 1.5  2019/10/03 17:28:29  pwagner
+;Revert to using Temperature grid when converting from eta levels; Concatenate unmerged GMAO to be saved later in its own swath
+;
 ;Revision 1.4  2019/10/01 17:28:41  pwagner
 ;Consistent with SA-01 090
 ;
