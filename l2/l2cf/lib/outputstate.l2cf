@@ -19,6 +19,7 @@
 })
 
 begin Output
+  Dump, text='In last section of outputstate.l2cf'
 ;; Now output the L2CF (but only if asked)
 !ifdef(flagWriteL2CFToDGM,{
 Output, type=l2cf, $
@@ -34,12 +35,16 @@ Copy, inputFile='l2cf.template', inputtype=ascii, type=l2aux, $
 Copy, inputFile='master.ident', inputtype=ascii, type=l2aux, $
   file='!DGMFileName'})
 
+end Output
 ;; These days pretty well everything is written with directWrite
 ;; statements, except maybe matrices
 
 ;; Now output any averaging kernel.
 !ifdef(matrixFilenameWord,{},{!define(matrixFilenameWord,{Full})})
 !ifdef(flagGotMatrices,{
+begin Output
+  Dump, text='In last section of outputstate.l2cf'
+Dump, text='Should see this statement in stdout'
 Output,  quantities=[ !undivert(!matrixDivert) ], type=l2pc, $
   file='!outpathl2mtx/MLS-Aura_L2MTX-!matrixFilenameWord_!l2version_!day.h5'
   })
@@ -47,6 +52,9 @@ Output,  quantities=[ !undivert(!matrixDivert) ], type=l2pc, $
 end Output
 !divert(-1)
 ; $Log$
+; Revision 1.52  2013/10/18 22:49:38  pwagner
+; Split outputstate.l2cf into 3 files
+;
 ; Revision 1.51  2013/10/17 22:33:03  pwagner
 ; Can write asc/desc mode to file attributes
 ;
