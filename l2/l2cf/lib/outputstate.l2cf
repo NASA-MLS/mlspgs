@@ -47,11 +47,14 @@ begin Output
 Dump, text='Should see this statement in stdout'
 Output,  quantities=[ !undivert(!matrixDivert) ], type=l2pc, $
   file='!outpathl2mtx/MLS-Aura_L2MTX-!matrixFilenameWord_!l2version_!day.h5'
+end Output
   })
 })
-end Output
 !divert(-1)
 ; $Log$
+; Revision 1.53  2023/04/25 17:09:34  pwagner
+; Work around bug in OutputAndClose module
+;
 ; Revision 1.52  2013/10/18 22:49:38  pwagner
 ; Split outputstate.l2cf into 3 files
 ;
