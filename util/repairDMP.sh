@@ -54,6 +54,8 @@
 #    -Af Attr_file Legitimate L2GP file, e.g. L2GP-CO
 #    -Df DMP_file  Existing DMP file
 #    -Ef env_file  Get options by sourcing env_file
+#    -redo         Redo effects of a previous, presumably faulty, repair,
+#                    assuming the .bogus files were left in place
 #    -undo         Undo effects of a previous repair, restoring the old files
 
 # Effect:
@@ -65,7 +67,7 @@
 # (2) the h5edit command is assumed to  be an executable if you use the -e option; 
 #     e.g., /software/toolkit/hdftools/h5edit
 # (3) the backup versions of the original files still exist and were
-#     not moved or renamed if you use the -undo option
+#     not moved or renamed if you use the -undo or -redo options
 # (4) If -Ad and -Dd are both left undefined, you must
 #     supply -Af and -Df instead. Perhaps most useful when testing.
 # (5) If the years args are supplied: 
@@ -181,6 +183,8 @@ applyit()
         # Now we do the overwriting: copy the DMP-190 swath values
         commando $insertl2gpvalues $insertoptions -Af $AttrFile -Vf $bogusDMP \
           -d $swath -dmp $DMP
+        echo $insertl2gpvalues $insertoptions -Af $AttrFile -Vf $bogusDMP \
+          -d $swath -dmp $DMP
       done
       # Have we been asked to add an extra Global Attribute
       # stating that we have monkeyed with the DMP file?
@@ -276,6 +280,18 @@ one_day()
     then
       echo "No standard product DMP file in $DMPYear/$day"
     # Have we been asked to undo an earlier repair?
+    elif [ "$redo" = "yes" ]
+    then
+      # redo means first undo, then do it over again
+      # with whatever corrected tools are needed
+      echo "First, undo the faulty conversion"
+      undoit
+      echo "Second, do the new conversion"
+      applyit
+      echo "Third, repack the files"
+      repack_files
+      echo "Fourth, augment the files"
+      augment_files
     elif [ "$undo" = "yes" ]
     then
       undoit
@@ -370,6 +386,8 @@ then
 fi
 
 swaths="Altitude DTDZ DynTropAltitude DynTropDTDZ DynTropFlag DynTropPressure DynTropStaticStability DynTropTemperature DynTropTheta GeopotentialHeight GlobalAverageOfPVGrad HorizontalPVGradient HorizontalTemperatureGradient MeridionalCompOfPVGrad MeridionalWind MontgomeryStreamFunction PVEquivalentLatitude PotentialVorticity RelativeVorticity ScaledPV StaticStability Temperature Theta VortexEdgeCenter VortexEdgeInner VortexEdgeOuter WMOTropAltitude WMOTropPV WMOTropPressure WMOTropStaticStability WMOTropTemperature WMOTropTheta ZonalWind"
+#swaths="Altitude DTDZ ZonalWind"
+#swaths="Altitude DynTropDTDZ"
 
 me="$0"
 my_name=repairDMP.sh
@@ -381,6 +399,7 @@ split_path="`echo $0 | sed 's/'$I'/split_path/'`"
 dryrun="no"
 miscnotes=""
 more_opts="yes"
+redo="no"
 undo="no"
 AttrDir=""
 DMPDir=""
@@ -396,6 +415,10 @@ while [ "$more_opts" = "yes" ] ; do
        ;;
     -silent )
 	    insertoptions="-silent"
+	    shift
+       ;;
+    -redo )
+	    redo="yes"
 	    shift
        ;;
     -undo )
@@ -457,6 +480,7 @@ years="$@"
 if [ "$debug" = 1 ]
 then
   echo "dryrun $dryrun"
+  echo "redo $redo"
   echo "undo $undo"
   echo "h5edit $h5edit"
   echo "insertl2gpvalues $insertl2gpvalues"
@@ -497,6 +521,18 @@ then
   then
     echo "No standard product DMP file defined; did you use -Df option?"
     exit
+  elif [ "$redo" = "yes" ]
+  then
+    # redo means first undo, then do it over again
+    # with whatever corrected tools are needed
+    echo "First, undo the faulty conversion"
+    undoit
+    echo "Second, do the new conversion"
+    applyit
+    echo "Third, repack the files"
+    repack_files
+    echo "Fourth, augment the files"
+    augment_files
   elif [ "$undo" = "yes" ]
   then
     undoit
@@ -524,6 +560,9 @@ else
   done
 fi
 # $Log$
+# Revision 1.2  2023/02/17 21:12:14  pwagner
+# Now can repair every file in a days directory
+#
 # Revision 1.1  2023/02/02 23:08:23  pwagner
 # First commit
 #
