@@ -122,7 +122,7 @@ program insertL2GPValues ! inserts values of L2GPData files, e.g. nrt
   real        :: tFile
   ! DSName and swath must be long enough to hold the full path
   ! set by everything beginning with "/HDFEOS/.."s
-  character(len=255)                  :: DSName
+  character(len=255)                  :: DSName, DYNTpName
   character(len=MAXSWATHNAMESBUFSIZE) :: DSList
   character(len=255)                  :: swath
   character(len=MAXSWATHNAMESBUFSIZE) :: swathList
@@ -205,6 +205,7 @@ contains
     integer :: numProfs
     integer :: numTotProfs
     integer :: NvTimes
+    real (rgp), dimension(:), allocatable   :: DYNTpVals
     real (rgp), dimension(:), allocatable   :: Pressure
     real (rgp), dimension(:,:), allocatable :: precisions
     real (rgp), dimension(:,:), allocatable :: values
@@ -334,11 +335,21 @@ contains
     swath = options%DSNames
     NPr     = DIMS(1)
     NvTimes = DIMS(2)
-    if ( options%verbose ) print *, 'NPr, NvTimes: ', DIMS
+    if ( options%verbose ) print *, 'NPr, NvTimes: ', DIMS!1:2)
     if ( options%verbose ) print *, 'Num swaths: ', NumStringElements( DSList, countEmpty )
     if ( NvTimes < 1 ) then
       NPr = 1
       NvTimes = Dims(1)
+    elseif ( NPr == 3 ) then
+      ! Some data fields have threshold values insstead of
+      ! pressures for their second, non-time component
+      DYNTpName = '/HDFEOS/GEOLOCATION/DYNTpVals'
+      call GetHDF5DSDims ( ValuesFile, DYNTpName, DIMS )
+      NPrs = DIMS(1)
+      if ( options%verbose ) print *, 'NPrs: ', NPrs
+      allocate(DYNTpVals(NPrs))
+      call LoadFromHDF5DS ( ValuesFile, DYNTpName, DYNTpVals )
+      if ( options%verbose ) call dump( DYNTpVals, 'DYNTpVals' )
     endif
     numTotProfs = 0
     ! jj = 1
@@ -384,8 +395,11 @@ contains
     call LoadFromHDF5DS ( ValuesFile, '/HDFEOS/GEOLOCATION/LocalSolarTime    ', L2GP%SolarTime    )
     call LoadFromHDF5DS ( ValuesFile, '/HDFEOS/GEOLOCATION/Longitude         ', L2GP%Longitude         )
     call LoadFromHDF5DS ( ValuesFile, '/HDFEOS/GEOLOCATION/OrbitGeodeticAngle', L2GP%geodAngle)
-    if ( NPr > 1 ) &
-  & call LoadFromHDF5DS ( ValuesFile, '/HDFEOS/GEOLOCATION/Pressure          ', L2GP%Pressures         )
+    if ( NPr > 3 ) then
+      call LoadFromHDF5DS ( ValuesFile, '/HDFEOS/GEOLOCATION/Pressure          ', L2GP%Pressures         )
+    elseif ( NPr > 1 ) then
+      call LoadFromHDF5DS ( ValuesFile, '/HDFEOS/GEOLOCATION/DYNTpVals         ', L2GP%Pressures         )
+    endif
     call LoadFromHDF5DS ( ValuesFile, '/HDFEOS/GEOLOCATION/SolarZenithAngle  ', L2GP%SolarZenith  )
     call LoadFromHDF5DS ( ValuesFile, '/HDFEOS/GEOLOCATION/Time              ', L2GP%Time              )
     ! call LoadFromHDF5DS ( ValuesFile, '/HDFEOS/GEOLOCATION/seconds_into_day  ', L2GP%seconds_into_day  )
@@ -415,7 +429,11 @@ contains
     L2GP%L2GPValue(1,:,:) = values
     if ( options%debug ) print *, 'shape of l2gp values: ', shape(L2GP%L2GPValue)
     L2GP%L2GPPrecision(1,:,:) = precisions
-    L2GP%Pressures = Pressure
+    if ( NPrs /= 3 ) then
+      L2GP%Pressures = Pressure
+    else
+      L2GP%Pressures = DYNTpVals
+    endif
     if ( options%verbose ) &
       & call Dump( L2GP%L2GPValue(1,1,:), 'L2gp after overwriting', width=5 )
 
@@ -933,6 +951,9 @@ end program insertL2GPValues
 !==================
 
 ! $Log$
+! Revision 1.6  2023/03/14 16:04:24  pwagner
+! New and corrected values for DOI
+!
 ! Revision 1.5  2023/02/02 23:07:54  pwagner
 ! Add subroutine DMP_swaths to cope with DMP files created by idl--they are not genuine hdfeos
 !
