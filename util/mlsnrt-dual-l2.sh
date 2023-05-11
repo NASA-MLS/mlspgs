@@ -305,6 +305,28 @@ if [ ! -x "$NETCDFAUGMENT" ]
 then
   NETCDFAUGMENT=$MLSTOOLS/aug_hdfeos5
 fi
+# Last chance to find h5repack
+if [ ! -x "$H5REPACK" ]
+then
+  H5REPACK=$HDFTOOLS/h5repack
+fi
+
+# We are going to insist that both H5REPACK and NETCDFAUGMENT
+# be defined before going any further. To override this, set
+# the environment variable OKTONOTAUGMENT to "yes"
+if [ "$OKTONOTAUGMENT" = "" ]
+then
+  if [ ! -x "$NETCDFAUGMENT" ]
+  then
+    echo "NETCDFAUGMENT not defined"
+    exit 1
+  elif [ ! -x "$H5REPACK" ]
+  then
+    echo "H5REPACK not defined"
+    exit 1
+  fi
+fi
+
 if [ ! -x "$L2GPDUMP" ]
 then
   L2GPDUMP=$MLSTOOLS/l2gpdump
@@ -314,11 +336,6 @@ then
   RESETSTATUS=$MLSTOOLS/resetstatus
 fi
 
-# Last chance to find h5repack
-if [ ! -x "$H5REPACK" ]
-then
-  H5REPACK=$HDFTOOLS/h5repack
-fi
 defined_or_exit JOBDIR "$JOBDIR"
 defined_or_exit PGE_ROOT "$PGE_ROOT"
 defined_or_exit MLSTOOLS "$MLSTOOLS"
@@ -525,7 +542,7 @@ then
     # the name as if it were a directory and gets sore when it
     # turns out not to be a directory.
     # So we'll check if the file name instead looks like _yyyydDoy.he5
-    # and if it does, we'll copy it a file with a more complaisant name
+    # and if it does, we'll copy it to a file with a more complaisant name
     file2=`echo $file | sed '/_20[0-9][0-9]d[0-9][0-9][0-9]\.he5/ s/\.he5/t0000.he5/'`
     if [ "$file2" != "$file" ]
     then
@@ -569,6 +586,9 @@ then
 fi
 
 # $Log$
+# Revision 1.10  2018/02/15 00:19:01  pwagner
+# Somehow munged name of resetting status bit tool; fixed
+#
 # Revision 1.9  2018/02/10 00:25:21  pwagner
 # Sense of test for executability of RESETSTATUSRESETSTATUS was reversed; fixed
 #

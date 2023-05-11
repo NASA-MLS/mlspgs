@@ -150,16 +150,33 @@ if [ ! -x "$NETCDFAUGMENT" ]
 then
   NETCDFAUGMENT=$MLSTOOLS/aug_hdfeos5
 fi
-if [ ! -x "$L2GPDUMP" ]
-then
-  L2GPDUMP=$MLSTOOLS/l2gpdump
-fi
-
 # Last chance to find h5repack
 if [ ! -x "$H5REPACK" ]
 then
   H5REPACK=$HDFTOOLS/h5repack
 fi
+
+# We are going to insist that both H5REPACK and NETCDFAUGMENT
+# be defined before going any further. To override this, set
+# the environment variable OKTONOTAUGMENT to "yes"
+if [ "$OKTONOTAUGMENT" = "" ]
+then
+  if [ ! -x "$NETCDFAUGMENT" ]
+  then
+    echo "NETCDFAUGMENT not defined"
+    exit 1
+  elif [ ! -x "$H5REPACK" ]
+  then
+    echo "H5REPACK not defined"
+    exit 1
+  fi
+fi
+
+if [ ! -x "$L2GPDUMP" ]
+then
+  L2GPDUMP=$MLSTOOLS/l2gpdump
+fi
+
 if [ "$JOBDIR" = "" ]
 then
   echo 'JOBDIR undefined'
@@ -419,6 +436,9 @@ then
 fi
 
 # $Log$
+# Revision 1.16  2018/03/01 00:22:38  pwagner
+# Now sets UsingPCF for use with new mlsl2p.sh
+#
 # Revision 1.15  2017/05/19 20:48:10  pwagner
 # repaired another error
 #

@@ -223,6 +223,28 @@ if [ ! -x "$NETCDFAUGMENT" ]
 then
   NETCDFAUGMENT=$MLSTOOLS/aug_hdfeos5
 fi
+# Last chance to find h5repack
+if [ ! -x "$H5REPACK" ]
+then
+  H5REPACK=$HDFTOOLS/h5repack
+fi
+
+# We are going to insist that both H5REPACK and NETCDFAUGMENT
+# be defined before going any further. To override this, set
+# the environment variable OKTONOTAUGMENT to "yes"
+if [ "$OKTONOTAUGMENT" = "" ]
+then
+  if [ ! -x "$NETCDFAUGMENT" ]
+  then
+    echo "NETCDFAUGMENT not defined"
+    exit 1
+  elif [ ! -x "$H5REPACK" ]
+  then
+    echo "H5REPACK not defined"
+    exit 1
+  fi
+fi
+
 if [ ! -x "$L2GPDUMP" ]
 then
   L2GPDUMP=$MLSTOOLS/l2gpdump
@@ -238,12 +260,6 @@ then
    exit 1
 else
    return_status_2=0
-fi
-
-# Last chance to find h5repack
-if [ ! -x "$H5REPACK" ]
-then
-  H5REPACK=$HDFTOOLS/h5repack
 fi
 
 # repack level 1 files to speed things up
@@ -369,6 +385,9 @@ else
 fi
 
 # $Log$
+# Revision 1.9  2016/04/06 21:10:24  pwagner
+# Check on return status immediately on return from mlsl1log
+#
 # Revision 1.8  2013/11/23 00:59:41  pwagner
 # Hide product files if number of profiles too many or too few
 #

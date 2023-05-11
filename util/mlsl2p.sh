@@ -717,6 +717,23 @@ if [ ! -x "$NETCDFAUGMENT" ]
 then
   NETCDFAUGMENT=$MLSTOOLS/aug_eos5
 fi
+
+# We are going to insist that both H5REPACK and NETCDFAUGMENT
+# be defined before going any further. To override this, set
+# the environment variable OKTONOTAUGMENT to "yes"
+if [ "$OKTONOTAUGMENT" = "" ]
+then
+  if [ ! -x "$NETCDFAUGMENT" ]
+  then
+    echo "NETCDFAUGMENT not defined"
+    exit 1
+  elif [ ! -x "$H5REPACK" ]
+  then
+    echo "H5REPACK not defined"
+    exit 1
+  fi
+fi
+
 if [ ! -x "$NETCDFCONVERT" ]
 then
   NETCDFCONVERT=$MLSTOOLS/l2gp2nc4
@@ -869,6 +886,9 @@ else
 fi
 
 # $Log$
+# Revision 1.45  2022/09/28 21:41:52  pwagner
+# Add comments regarding NCCOPY variable
+#
 # Revision 1.44  2022/05/27 21:00:41  pwagner
 # Printed a more helpful error message when run w/o toolkit
 #
