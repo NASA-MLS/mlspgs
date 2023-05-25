@@ -67,7 +67,7 @@ module FillUtils_1                     ! Procedures used by Fill
   ! Carefully Check Out The Code Around The Call To Snoop.
   use MLSCommon, only: MLSFile_T, DefaultUndefinedValue, MLS_HyperStart
   use MLSFiles, only: Hdfversion_5, Dump, GetMLSFileByType
-  use MLSFillValues, only: IsFillValue, IsFinite, &
+  use MLSFillValues, only: IsFillValue, IsFinite, IsInfinite, &
     & Monotonize, RemoveFillValues
   use MLSKinds, only: R4, R8, Rm, Rp, Rv
   use MLSL2options, only: Aura_L1bFiles, L2CFErrorNode, L2CFNode, Toolkit
@@ -120,7 +120,8 @@ module FillUtils_1                     ! Procedures used by Fill
   logical, parameter :: ADDSLASH = .false.
   logical, parameter :: DEEBUG = .FALSE.                 ! Usually FALSE
   logical, parameter :: UNIFORMCHISQRATIO = .FALSE.
-  integer, public :: FILLERROR
+  logical, parameter :: REPLACEINFS = .TRUE.
+  integer, public    :: FILLERROR
   integer, public, parameter            :: M_All = 127 ! 2**7 - 1
 
   ! -999.99 ! Same as %template%badvalue
@@ -1754,6 +1755,8 @@ contains ! =====     Public Procedures     =============================
         if ( qIndex > 0 ) &
           & quantity%values(1,:) = scale * sourceQuantity%values(qIndex,1)
       end if
+      if ( REPLACEINFS .and. any( IsInfinite(quantity%values(1,:))) ) &
+        & quantity%values(1,:) = UNDEFINED_VALUE
       call trace_end ( cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine ConvergenceFromChisq
 
@@ -8063,6 +8066,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.153  2023/05/25 22:27:35  pwagner
+! Try to avoid Filling convergence with ieee Infinity
+!
 ! Revision 2.152  2021/06/10 23:46:06  pwagner
 ! When copying vector qties, copy their BinNumber and MAF, too
 !
