@@ -469,7 +469,8 @@ CONTAINS
 !=============================================================================
 
     use Constants, ONLY: Rad2Deg, Deg2Rad
-    USE SDPToolkit, ONLY: spacecraftId, PGSd_SUN
+    USE MLSMessageModule, ONLY: MLSMESSAGE, MLSMSG_Error
+    USE SDPToolkit, ONLY: spacecraftId, PGSd_SUN, PGS_S_SUCCESS
 
     INTEGER, INTENT(IN) :: unit
     CHARACTER (LEN=27), INTENT(IN) :: asciiUTC
@@ -493,10 +494,22 @@ CONTAINS
 
     returnStatus = Pgs_cbp_sat_cb_vector (spacecraftId, 1, asciiUTC, &
          offset, PGSd_SUN, sc_frame_vector)
+    if ( returnStatus /= PGS_S_SUCCESS ) &
+      & CALL MLSMessage ( MLSMSG_Error, ModuleName, 'Pgs_cbp_sat_cb_vector' &
+      & //' at '//asciiUTC)
+
     returnStatus = Pgs_csc_scToORB (spacecraftId, 1, asciiUTC, &
          offset, sc_frame_vector, orb)
+    if ( returnStatus /= PGS_S_SUCCESS ) &
+      & CALL MLSMessage ( MLSMSG_Error, ModuleName, 'Pgs_csc_scToORB' &
+      & //' at '//asciiUTC)
+
     returnStatus = PGS_CBP_SolarTimeCoords (asciiUTC, 0.0d0, meanSolTimG, &
          meanSolTimL, apparSolTimL, solRA, solDec)
+    if ( returnStatus /= PGS_S_SUCCESS ) &
+      & CALL MLSMessage ( MLSMSG_Error, ModuleName, 'PGS_CBP_SolarTimeCoords' &
+      & //' at '//asciiUTC)
+
 
     sd1 = sin (solDec) / si
     cd1 = sqrt ((1.0 - sd1*sd1))
@@ -612,6 +625,9 @@ CONTAINS
 END MODULE BandTbls
 
 ! $Log$
+! Revision 2.13  2023/05/25 22:24:20  pwagner
+! Trying to make level 1 crash if de200.eos is out-of-date
+!
 ! Revision 2.12  2016/03/15 22:17:59  whdaffer
 ! Merged whd-rel-1-0 back onto main branch. Most changes
 ! are to comments, but there's some modification to Calibration.f90
