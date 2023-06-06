@@ -469,7 +469,7 @@ CONTAINS
 !=============================================================================
 
     use Constants, ONLY: Rad2Deg, Deg2Rad
-    USE MLSMessageModule, ONLY: MLSMESSAGE, MLSMSG_Error
+    USE MLSMessageModule, ONLY: MLSMESSAGE, MLSMSG_Info, MLSMSG_Error
     USE SDPToolkit, ONLY: spacecraftId, PGSd_SUN, PGS_S_SUCCESS
 
     INTEGER, INTENT(IN) :: unit
@@ -494,9 +494,16 @@ CONTAINS
 
     returnStatus = Pgs_cbp_sat_cb_vector (spacecraftId, 1, asciiUTC, &
          offset, PGSd_SUN, sc_frame_vector)
-    if ( returnStatus /= PGS_S_SUCCESS ) &
-      & CALL MLSMessage ( MLSMSG_Error, ModuleName, 'Pgs_cbp_sat_cb_vector' &
+    if ( returnStatus /= PGS_S_SUCCESS ) then
+      print *, 'Check that your toolkit/database/linux64/CBP/de200.eos' // &
+        &  ' is up-to-date'
+      CALL MLSMessage ( MLSMSG_Info, ModuleName, 'Check that your ' // &
+        &  'toolkit/database/linux64/CBP/de200.eos is up-to-date')
+      print *, 'Pgs_cbp_sat_cb_vector' &
+      & //' at '//asciiUTC
+      CALL MLSMessage ( MLSMSG_Error, ModuleName, 'Pgs_cbp_sat_cb_vector' &
       & //' at '//asciiUTC)
+    endif
 
     returnStatus = Pgs_csc_scToORB (spacecraftId, 1, asciiUTC, &
          offset, sc_frame_vector, orb)
@@ -506,9 +513,16 @@ CONTAINS
 
     returnStatus = PGS_CBP_SolarTimeCoords (asciiUTC, 0.0d0, meanSolTimG, &
          meanSolTimL, apparSolTimL, solRA, solDec)
-    if ( returnStatus /= PGS_S_SUCCESS ) &
-      & CALL MLSMessage ( MLSMSG_Error, ModuleName, 'PGS_CBP_SolarTimeCoords' &
+    if ( returnStatus /= PGS_S_SUCCESS ) then
+      print *, 'Check that your toolkit/database/linux64/CBP/de200.eos' // &
+        &  ' is up-to-date'
+      CALL MLSMessage ( MLSMSG_Info, ModuleName, 'Check that your ' // &
+        &  'toolkit/database/linux64/CBP/de200.eos is up-to-date')
+      print *, 'PGS_CBP_SolarTimeCoords' &
+      & //' at '//asciiUTC
+      CALL MLSMessage ( MLSMSG_Error, ModuleName, 'PGS_CBP_SolarTimeCoords' &
       & //' at '//asciiUTC)
+    endif
 
 
     sd1 = sin (solDec) / si
@@ -625,6 +639,9 @@ CONTAINS
 END MODULE BandTbls
 
 ! $Log$
+! Revision 2.14  2023/06/06 22:37:15  pwagner
+! Make helpful message refer to de200.eos specifically
+!
 ! Revision 2.13  2023/05/25 22:24:20  pwagner
 ! Trying to make level 1 crash if de200.eos is out-of-date
 !
