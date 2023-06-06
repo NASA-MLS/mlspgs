@@ -713,6 +713,13 @@ MODULE SciUtils ! L0 science utilities
 
     INTEGER :: iape, iasa
     REAL, PARAMETER :: aaa_frac = 3706880.0
+    integer, parameter :: NULLIS_ZERO = 0
+
+! Check if DN is all or partly NULLs
+    if ( ichar(DN(1:1)) == NULLIS_ZERO ) then
+      print *, 'Get_APE_ASA_pos failed 1st char in DN is NULL'
+      return
+    endif
 
 ! Check for leading commands:
 
@@ -1032,6 +1039,9 @@ MODULE SciUtils ! L0 science utilities
 END MODULE SciUtils
 
 ! $Log$
+! Revision 2.23  2023/06/06 22:40:55  pwagner
+! Try to avoid printing binary NULL chars to stdout
+!
 ! Revision 2.22  2022/11/08 23:47:59  pwagner
 ! Workaround for NAG signaling NaN in scAngleG and T
 !
@@ -1098,6 +1108,9 @@ END MODULE SciUtils
 ! moved parameter statement to data statement for LF/NAG compatitibility
 !
 ! $Log$
+! Revision 2.23  2023/06/06 22:40:55  pwagner
+! Try to avoid printing binary NULL chars to stdout
+!
 ! Revision 2.22  2022/11/08 23:47:59  pwagner
 ! Workaround for NAG signaling NaN in scAngleG and T
 !
