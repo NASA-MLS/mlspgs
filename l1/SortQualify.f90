@@ -70,6 +70,8 @@ CONTAINS
     INTEGER :: n
     CHARACTER(len=27) :: asciiUTC
     character(len=256) :: msg
+    logical :: Deebug
+    Deebug = L1Config%Output%DebugUpdateCalWindow
 
     nom_MIFs = L1Config%Calib%MIFsPerMAF
 
@@ -200,10 +202,12 @@ CONTAINS
     sci_MAFno = SciMAF(0)%MAFno
 
     n = PGS_TD_TAItoUTC (EngMAF%secTAI, asciiUTC)
-    WRITE(msg,'("Sci/Eng MAF: ",i4,"/",i4,", UTC: ",a27)') &
-         &      sci_MAFno, EngMAF%MAFno, asciiUTC
-    print *,TRIM(msg)
-    CALL MLSMessage(MLSMSG_Info,ModuleName,TRIM(msg))
+    if ( Deebug ) then
+      WRITE(msg,'("Sci/Eng MAF: ",i4,"/",i4,", UTC: ",a27)') &
+           &      sci_MAFno, EngMAF%MAFno, asciiUTC
+      print *,TRIM(msg)
+      CALL MLSMessage(MLSMSG_Info,ModuleName,TRIM(msg))
+    endif
 
 
     IF (CalWin%current > 0) THEN
@@ -303,13 +307,15 @@ CONTAINS
     IF (CalWin%current == CalWin%size .AND. &
          MAFinfo%startTAI >= L1Config%Input_TAI%startTime) THEN
       n = PGS_TD_TAItoUTC (MAFinfo%startTAI, asciiUTC)
-      write(msg,*) &
-           & 'Calibration window full: time of central MAF = '//asciiUTC
-      print *,trim(msg)
-      CALL MLSMessage(MLSMSG_Info,ModuleName,trim(msg))
-      write(msg,*) 'With integration time = ',MAFInfo%integTime
-      PRINT *,TRIM(msg)
-      CALL MLSMessage(MLSMSG_Info,ModuleName,TRIM(msg))
+      if ( DeeBug ) then
+        write(msg,*) &
+             & 'Calibration window full: time of central MAF = '//asciiUTC
+        print *,trim(msg)
+        CALL MLSMessage(MLSMSG_Info,ModuleName,trim(msg))
+        write(msg,*) 'With integration time = ',MAFInfo%integTime
+        PRINT *,TRIM(msg)
+        CALL MLSMessage(MLSMSG_Info,ModuleName,TRIM(msg))
+      endif
 
       CalWinFull = .TRUE.
     ELSE
@@ -453,9 +459,19 @@ CONTAINS
        ENDIF
 
        IF (foundWall) THEN
-          msg='Found Attenuation WALL at MAF time: ' // asciiUTC
-          PRINT *,TRIM(msg)
-          CALL MLSMessage(MLSMSG_Info,ModuleName,TRIM(msg))
+          L1Config%Output%NumAttenuationWalls = &
+            & L1Config%Output%NumAttenuationWalls + 1
+          if ( L1Config%Output%NumAttenuationWalls < &
+            & L1Config%Output%MaxAttenuationWalls ) then
+            msg='Found Attenuation WALL at MAF time: ' // asciiUTC
+            PRINT *,TRIM(msg)
+            CALL MLSMessage(MLSMSG_Info,ModuleName,TRIM(msg))
+          elseif ( L1Config%Output%NumAttenuationWalls == &
+            & L1Config%Output%MaxAttenuationWalls ) then
+            msg='Too many Attenuation WALLS to note all on this date'
+            PRINT *,TRIM(msg)
+            CALL MLSMessage(MLSMSG_Info,ModuleName,TRIM(msg))
+          endif
        ENDIF
 
        !! Rule #5: Set Switching Mirror position. 
@@ -1430,6 +1446,9 @@ END MODULE SortQualify
 !=============================================================================
 
 ! $Log$
+! Revision 2.34  2023/06/06 22:33:51  pwagner
+! Reduce routine printing
+!
 ! Revision 2.33  2016/03/15 22:17:59  whdaffer
 ! Merged whd-rel-1-0 back onto main branch. Most changes
 ! are to comments, but there's some modification to Calibration.f90
