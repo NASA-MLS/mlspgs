@@ -30,7 +30,7 @@ contains
 
   ! ---------------------------------  Get_Do_Calc_Indexed_Coarse  -----
   subroutine Get_Do_Calc_Indexed_Coarse  ( N, Tan_Pt_C, Do_Calc_All, &
-    & N_Inds, Inds )
+    & N_Inds, Inds, debug )
 
   ! Store L in Inds if Do_Calc_All is set for either boundary of layer L.
   ! Before the tangent, layer L is from boundary L-1 to L.
@@ -48,8 +48,12 @@ contains
                                           ! boundary nearest the tangent point;
                                           ! Inds(:,2) is the other boundary index.
 
+    logical, optional, intent(in) :: Debug
     integer :: M, P_I, P1, P2
+    logical :: DebugHere
 
+    DebugHere = .false.
+    if ( present(Debug) ) DebugHere = Debug
     n_inds = 0
     p1 = 2
     p2 = tan_pt_c
@@ -60,11 +64,36 @@ contains
              do_calc_all(ngp1*(p_i+m) - ng) ) then
           n_inds = n_inds + 1
           inds(n_inds,1:2) = [p_i,p_i+m*ngp1]
+!           if ( DebugHere ) then
+!             print *, 'ngp1*p_i-ng, ngp1*(p_i+m) - ng ', ngp1*p_i-ng, ngp1*(p_i+m) - ng
+!             print *, 'do_[1], do_[2] ', &
+!               & do_calc_all(ngp1*p_i-ng), &
+!               & do_calc_all(ngp1*(p_i+m) - ng)
+!             print *, 'm, p_i, p_i+m*ngp1, n_inds ', m, p_i, p_i+m*ngp1, n_inds
+!           endif
         end if
       end do ! p_i
       p1 = tan_pt_c + 1
       p2 = n - 1
     end do ! m
+    
+    
+    if ( DebugHere ) then
+      p1 = 2
+      p2 = tan_pt_c
+      do m = -1, 1, 2
+      if ( DebugHere ) print *, 'p1, p2 ', p1, p2
+        do p_i = p1, p2
+          print *, 'ngp1*p_i-ng, ngp1*(p_i+m) - ng ', ngp1*p_i-ng, ngp1*(p_i+m) - ng
+          print *, 'do_[1], do_[2] ', &
+            & do_calc_all(ngp1*p_i-ng), &
+            & do_calc_all(ngp1*(p_i+m) - ng)
+          print *, 'm, p_i, p_i+m*ngp1, n_inds ', m, p_i, p_i+m*ngp1, n_inds
+        enddo
+        p1 = tan_pt_c + 1
+        p2 = n - 1
+      enddo
+    endif
 
   end subroutine Get_Do_Calc_Indexed_Coarse
 
@@ -139,6 +168,9 @@ contains
 end module Get_Do_Calc_Indexed_m
 
 ! $Log$
+! Revision 2.5  2023/06/23 20:44:03  pwagner
+! In middle of debugging pol fwdmdl
+!
 ! Revision 2.4  2018/11/19 21:52:36  vsnyder
 ! Correct confusion between coarse and fine path indexing
 !
