@@ -28,6 +28,7 @@ contains
                &  IncOptDepth, Ref_Cor, d_Delta_df, d_Deltau_Pol_dF  )
 
     use DExdT_m, only: dExdT
+    use Dump_0, only: Dump
     use Get_do_Calc_Indexed_m, only: Get_do_Calc_Indexed_Coarse
     use GLNP, only: NG, NGP1
     use Load_Sps_Data_m, Only: Grids_t
@@ -121,11 +122,24 @@ contains
         if ( eta_zxp(sps_i)%cols(sparse_col) == 0 ) cycle ! Zero column
         call eta_zxp(sps_i)%get_col ( sparse_col, eta_zxp_col, do_calc_f )
 
+        ! This call is made only for polarized forward models that
+        ! do vmr derivatives
+        ! The indices it returns cause bounds errors.
+        ! Is it the fault of the input (e.g., do_calc_f)
+        ! or some coding error in the subroutine itself?
         ! Get indices for layers for which the interpolating coefficient
         ! is nonzero at either boundary.
         !????? Maybe could use Get_Do_Calc_Sparse, but it hasn't been tested
         call Get_do_calc_indexed_coarse ( i_stop, tan_pt_c, do_calc_f, &
           & n_inds, inds )
+        if ( any(inds(1:n_inds,:) < 1 ) ) then
+          print *, 'Warning--some of inds are < 1'
+          call Dump ( inds(1:n_inds,:), 'inds' )
+          print *, shape(do_calc_f)
+          call Dump ( do_calc_f, 'do_calc_f', options='.' )
+          call Get_do_calc_indexed_coarse ( i_stop, tan_pt_c, do_calc_f, &
+          & n_inds, inds, debug=.true. )
+        endif
 
         if ( n_inds == 0 ) cycle
 
@@ -139,6 +153,10 @@ contains
 
           do p_i = 1, n_inds
 
+            if ( any(inds(p_i,:) < 1 ) ) then
+              print *, 'p_i, inds(p_i,:) ', p_i, inds(p_i,:)
+              cycle
+            endif
             do b = 1, 2 ! b is boundary index
               ii = inds(p_i,b)
               ic = 1 + ( ii + ng ) / ngp1 ! On coarse path
@@ -151,8 +169,18 @@ contains
 
         else
 
-          beta(:,[1 + ( inds(:n_inds,1:2) + ng ) / ngp1]) = &
-            & beta_path_pol(:,[1 + ( inds(:n_inds,1:2) + ng ) / ngp1],sps_i)
+          do p_i = 1, n_inds
+            ! print *, 'inds(p_i,1:2) ', inds(p_i,1:2)
+            ! print *, '(inds(p_i,1:2) + ng)/ngp1 ', (inds(p_i,1:2) + ng)/ngp1
+            beta(:, 1 + ( inds(p_i,1:2) + ng ) / ngp1) = &
+              &  beta_path_pol(:, 1 + ( inds(p_i,1:2) + ng ) / ngp1, sps_i)
+          enddo
+! The NAG compiler complained that
+!     Left-hand side of assignment has vector subscript
+!     [1+(INDS(:N_INDS,1:2)+NG)/NGP1] with duplicate value 18
+! so we replaced the following vector assugnment with the above do loop
+!          beta(:,[1 + ( inds(:n_inds,1:2) + ng ) / ngp1]) = &
+!            & beta_path_pol(:,[1 + ( inds(:n_inds,1:2) + ng ) / ngp1],sps_i)
 
         end if
 
@@ -164,6 +192,10 @@ contains
           ic = 1 + ( ii + ng ) / ngp1 ! On coarse path
           b = inds(p_i,2)
           bc = 1 + ( b + ng ) / ngp1 ! On coarse path
+          if ( b < 1 ) then
+            print *, 'n_inds, p_i, ii, b ', n_inds, p_i, ii, b
+            cycle
+          endif
           d_delta_df_pol(:,ii) = &
             & ( beta(:,ic) * ( eta_zxp_col(ii) * tanh1_c(ic) ) + &
             &   beta(:,bc) * ( eta_zxp_col(b) * tanh1_c(bc) ) ) * &
@@ -594,6 +626,9 @@ contains
 end module Get_d_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.48  2023/06/23 20:44:34  pwagner
+! In middle of debugging pol fwdmdl
+!
 ! Revision 2.47  2018/11/19 21:53:33  vsnyder
 ! Correct confusion between coarse and fine path indexing in
 ! Get_d_Deltau_Pol_dF, which has apparently so far not been used.
