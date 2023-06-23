@@ -3075,6 +3075,7 @@ contains
 
         else if ( fwdModelConf%polarized .or. atmos_second_der ) then
           ! ( polarized or Hessians ) and not TScat
+          print *, 'Calling drad_tran_df polarized'
 
           call drad_tran_df ( gl_inds, del_zeta, Grids_f, eta_fzp, do_gl,   &
             &  del_s, ref_corr, dsdz_gw_path, inc_rad_path, dAlpha_df_path, &
@@ -3108,6 +3109,12 @@ contains
 
         if ( .not. pfa_or_not_pol ) then ! polarized and not PFA
 
+          ! This block of code is returning faulty results.
+          ! Unfortunately it was coded in a way that does not parallel
+          ! how vmr derivatives are coded for  non-polarized forward models
+          ! which makes debugging even harder.
+          print *, 'VMR derivatives for polarized radiance.'
+          print *, shape(de_df(:,:,1:p_stop,:))
           ! VMR derivatives for polarized radiance.
           ! Compute DE / Df from D Incoptdepth_pol / Df and put it
           ! into DE_DF.
@@ -3118,16 +3125,22 @@ contains
 
           ! Compute D radiance / Df from Tau, Prod, T_Script
           ! and DE / Df.
+          print *, 'Compute D radiance / Df.'
+          print *, shape(de_df(:,:,1:npc,:))
           call mcrt_der ( t_script, sqrt(e_rflty),             &
             & deltau_pol(:,:,1:npc), de_df(:,:,1:npc,:),       &
             & prod_pol(:,:,1:npc), tau_pol(:,:,1:npc), p_stop, &
             & tan_pt_c, d_rad_pol_df )
 
           if ( radiometers(firstSignal%radiometer)%polarization == l_a ) then
+            print *, 'l_a'
             k_atmos_frq(:) = real(d_rad_pol_df(1,1,:))
           else
+            print *, 'not l_a'
             k_atmos_frq(:) = real(d_rad_pol_df(2,2,:))
           end if
+          if ( any(abs(k_atmos_frq(:)) > 0.) ) &
+            & print *, 'non-zero'
 
         end if ! polarized and not PFA
 
@@ -4031,6 +4044,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.409  2020/08/28 21:41:58  vsnyder
+! Set up to calculate chi angles for QTM
+!
 ! Revision 2.408  2020/05/05 23:57:56  vsnyder
 ! Made F_and_V_MIF dummy argument of FullForwardModelAuto allocatable. Intel
 ! ifort 19 gets a seg fault at the call if the actual argument is not allocated,
