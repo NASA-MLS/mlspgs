@@ -3086,10 +3086,12 @@ contains ! =====     Public Procedures     =============================
     
     !   - -   S w a t h   A t t r i b u t e s   - -
     call output ( '(Swath Attributes) ', advance='yes')
-    status = he5_swrdattr(swid, 'Pressure', pressures)
-    call dump ( pressures, 'Vertical coordinates:' )
-    status = he5_swrdattr(swid, 'VerticalCoordinate', field_name)
-    call dump_chars ( field_name, 'Vertical coordinates type:' )
+    if ( l2gp%nLevels > 3 ) then
+      status = he5_swrdattr(swid, 'Pressure', pressures)
+      call dump ( pressures, 'Vertical coordinates:' )
+      status = he5_swrdattr(swid, 'VerticalCoordinate', field_name)
+      call dump_chars ( field_name, 'Vertical coordinates type:' )
+    endif
     status = he5_swrdlattr( swid, 'L2gpValue', 'MissingValue', MissingValue )
     call dump ( MissingValue, 'MissingValues (L2GPValues only):' )
     status = he5_swrdlattr( swid, 'L2gpPrecision', 'MissingValue', MissingValue )
@@ -3102,6 +3104,9 @@ contains ! =====     Public Procedures     =============================
       if ( trim(theTitles(field)) == 'Frequency' &
         & .and. l2gp%nFreqs < 1 ) then
         field_name = ''
+      elseif ( trim(theTitles(field)) == 'Pressure' &
+        & .and. l2gp%nLevels == 3 ) then
+        call dump_chars ( 'DYNTpVals', 'Field title:' )
       elseif ( trim(theTitles(field)) == 'Pressure' &
         & .and. l2gp%nLevels < 1 ) then
         field_name = ''
@@ -5212,6 +5217,11 @@ contains ! =====     Public Procedures     =============================
         & .and. l2gp%nFreqs < 1 ) then
         field_name = ''
       elseif ( trim(theTitles(field)) == 'Pressure' &
+        & .and. l2gp%nLevels == 3 ) then
+        field_name = 'DYNTpVals'
+        status = mls_swwrlattr(swid, trim(theTitles(field)), 'Title', &
+          & MLS_CHARTYPE, 1, field_name)
+      elseif ( trim(theTitles(field)) == 'Pressure' &
         & .and. l2gp%nLevels < 1 ) then
         field_name = ''
       else
@@ -5873,6 +5883,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.256  2023/02/02 22:25:11  pwagner
+! Light housekeeping
+!
 ! Revision 2.255  2022/11/16 23:12:17  pwagner
 ! Fixed various bugs in diffing geolocations
 !
