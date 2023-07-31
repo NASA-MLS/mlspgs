@@ -17,7 +17,8 @@ program createattributes ! creates file attributes
    use Dump_0, only: Dump
    use HDF, only: Dfacc_Rdwr
    use HDF5, only: H5DClose_f, H5DOpen_f, H5GClose_f, H5GOpen_f
-   use HDFEOS5, only: MLS_CharType
+   use HDFEOS5, only: HE5T_NATIVE_DOUBLE, HE5T_NATIVE_REAL, &
+     & HE5T_NATIVE_INT, MLS_CharType
    use Intrinsic, only: L_HDF, L_Swath
    use Io_Stuff, only: Get_NLines, Read_TextFile
    use Machine, only: Hp, Getarg
@@ -25,12 +26,13 @@ program createattributes ! creates file attributes
    use MLSFiles, only: HDFVersion_5, &
      & Dump, MLS_CloseFile, MLS_OpenFile, MLS_Exists, &
      & InitializeMLSFile
-   use MLSHDFEOS, only: MLS_EhwrGlAtt
+   use MLSHDFEOS, only: HE5_EHwrglatt, MLS_EhwrGlAtt, HSIZE
    use MLSHDF5, only: MLS_H5open, MLS_H5close
    use MLSHDF5, only: MakeHDF5Attribute
    use MLSMessageModule, only: MLSMessageConfig, &
      & MLSMessage, MLSMSG_Error, MLSMSG_Warning
    use MLSStringLists, only: GetStringElement
+   use MLSStrings, only: LowerCase, ReadNumsFromChars
    use Output_M, only: Output
    use Time_M, only: Time_Now, Time_Config
    
@@ -102,6 +104,17 @@ program createattributes ! creates file attributes
 ! (3) More ambitious plans would allow for numeric arrays using syntax like
 !      integer(:) OrbitNumber=97608, 97609, 97610, 97611, 97612, 97613, 97614, 97615, 97616, 97617, 97618, 97619, 97620, 97621, 97622, -1
 !      double(:) OrbitPeriod=5933.18, 5933.15, 5933.15, 5933.21, 5933.29, 5933.29, 5933.26, 5933.18, 5933.14, 5933.14, 5933.16, 5933.24, 5933.31, 5933.25, 5933.25, 0
+
+! Tests:
+! (Both in /users/pwagner/mlspgs/tests/lib/createattrstest)
+! l2gp
+! rm Altitude.he5 ; /users/pwagner/mlspgs/bin/IFC.Linux.ifc19-OL8/l2gpcat -s Altitude -o Altitude.he5 -g MLS-Aura_L2EDMP-GEOS5124-v201_v05-01-c01_2023d054.he5 MLS-Aura_L2EDMP-GEOS5124-v201_v05-01-c01_2023d054.he5
+! /users/pwagner/mlspgs/bin/IFC.Linux.ifc19-OL8/createattributes -debug -l2gp -Vf Altitude.env Altitude.he5
+!
+! l2aux:
+! rm chunknumber.h5 ; /software/toolkit/mlstools/l2auxcat -v -s "chunk number" -o chunknumber.h5 MLS-Aura_L2AUX-DGM_v05-01-c01_2023d026.h5
+! /users/pwagner/mlspgs/bin/IFC.Linux.ifc19-OL8/createattributes -debug -l2aux -Vf chunknumber.env chunknumber.h5
+
 
   type options_T
     logical               :: debug       = .false.
@@ -220,27 +233,100 @@ contains
     type( MLSFile_T ) :: L2GPFile
     character(len=FileNameLen) :: Line
     ! Internal variables
+    character(len=fileNameLen)      :: attrType
     character(len=fileNameLen)      :: name
     character(len=fileNameLen)      :: valu
     character(len=1), parameter     :: eqls = '='
     integer                         :: status
-    
+    character(len=*), parameter     :: attrTypes = &
+      & 'integer,single,double,character'
+    integer                         :: ivalu
+    real                            :: rvalu
+    double precision                :: dvalu
     ! --------------------------------------------------------------------
     ! --------------------------------------------------------------------
     ! Executable
     ! ------------------------------------------------------------------------
     call time_now ( tFile )
-    call getStringElement( line, name, 1, countEmpty, eqls )
-    call getStringElement( line, valu, 2, countEmpty, eqls )
-    if ( options%dryrun .or. options%debug ) then
-      print *, 'name: ', trim(name)
-      print *, 'value: ', trim(valu)
-    endif
-    if ( .not. options%dryrun ) then
-      status = mls_EHwrglatt( L2GPFile%fileID%f_id, &
-        & trim(name), MLS_CHARTYPE, 1, &
-        & trim(valu) )
-      call sayTime('Creating this attribute')
+    ! First, check if we are declaring the attribute type, like this
+    !   integer NOrbits=10
+    ! or using the old style character type
+    !   HostName=pigeon
+    call getStringElement( line, attrType, 1, countEmpty, ' ' )
+    if ( index(attrTypes, trim(lowercase(attrType))) < 1 ) then
+      ! old style
+      call getStringElement( line, name, 1, countEmpty, eqls )
+      call getStringElement( line, valu, 2, countEmpty, eqls )
+      if ( options%dryrun .or. options%debug ) then
+        print *, 'name: ', trim(name)
+        print *, 'value: ', trim(valu)
+      endif
+      if ( .not. options%dryrun ) then
+        status = mls_EHwrglatt( L2GPFile%fileID%f_id, &
+          & trim(name), MLS_CHARTYPE, 1, &
+          & trim(valu) )
+        call sayTime('Creating this attribute, ' // trim(name) )
+      endif
+    else
+      ! must have declared the attribute type
+      select case (lowercase(attrType(1:1)))
+      case ('i') ! 'integer '
+        call getStringElement( line(9:), name, 1, countEmpty, eqls )
+        call getStringElement( line(9:), valu, 2, countEmpty, eqls )
+        call ReadNumsFromChars ( valu, ivalu )
+        if ( options%dryrun .or. options%debug ) then
+          print *, 'name: ', trim(name)
+          print *, 'value: ', ivalu
+        endif
+        if ( .not. options%dryrun ) then
+          status = he5_EHwrglatt( L2GPFile%fileID%f_id, &
+            & trim(name), HE5T_NATIVE_INT, hsize(1), &
+            & (/ ivalu /) )
+          call sayTime('Creating this attribute, ' // trim(name) )
+        endif
+      case ('s') ! 'single '
+        call getStringElement( line(8:), name, 1, countEmpty, eqls )
+        call getStringElement( line(8:), valu, 2, countEmpty, eqls )
+        call ReadNumsFromChars ( valu, rvalu )
+        if ( options%dryrun .or. options%debug ) then
+          print *, 'name: ', trim(name)
+          print *, 'value: ', rvalu
+        endif
+        if ( .not. options%dryrun ) then
+          status = he5_EHwrglatt( L2GPFile%fileID%f_id, &
+            & trim(name), HE5T_NATIVE_REAL, hsize(1), &
+            & (/ rvalu /) )
+          call sayTime('Creating this attribute, ' // trim(name) )
+        endif
+      case ('d') ! 'double '
+        call getStringElement( line(8:), name, 1, countEmpty, eqls )
+        call getStringElement( line(8:), valu, 2, countEmpty, eqls )
+        call ReadNumsFromChars ( valu, dvalu )
+        if ( options%dryrun .or. options%debug ) then
+          print *, 'name: ', trim(name)
+          print *, 'value: ', dvalu
+        endif
+        if ( .not. options%dryrun ) then
+          status = he5_EHwrglatt( L2GPFile%fileID%f_id, &
+            & trim(name), HE5T_NATIVE_DOUBLE, hsize(1), &
+            & (/ dvalu /) )
+          call sayTime('Creating this attribute, ' // trim(name) )
+        endif
+      case ('c') ! 'character '
+        call getStringElement( line(10:), name, 1, countEmpty, eqls )
+        call getStringElement( line(10:), valu, 2, countEmpty, eqls )
+        name = adjustl(name)
+        if ( options%dryrun .or. options%debug ) then
+          print *, 'name: ', trim(name)
+          print *, 'value: ', trim(valu)
+        endif
+        if ( .not. options%dryrun ) then
+          status = mls_EHwrglatt( L2GPFile%fileID%f_id, &
+            & trim(name), MLS_CHARTYPE, 1, &
+            & valu )
+          call sayTime('Creating this attribute, ' // trim(name) )
+        endif
+      end select
     endif
   end subroutine create_l2gpattr
 
@@ -252,52 +338,176 @@ contains
     type( MLSFile_T ) :: L2GPFile
     character(len=FileNameLen)  :: Line
     ! Internal variables
+    character(len=fileNameLen)      :: attrType
     character(len=fileNameLen)      :: name
     character(len=fileNameLen)      :: valu
     character(len=1), parameter     :: eqls = '='
     integer                         :: grp_id
     integer                         :: setid
     integer                         :: status
+    character(len=*), parameter     :: attrTypes = &
+      & 'integer,single,double,character'
+    integer                         :: ivalu
+    real                            :: rvalu
+    double precision                :: dvalu
     
     ! --------------------------------------------------------------------
     ! --------------------------------------------------------------------
     ! Executable
     ! ------------------------------------------------------------------------
     call time_now ( tFile )
-    call getStringElement( line, name, 1, countEmpty, eqls )
-    call getStringElement( line, valu, 2, countEmpty, eqls )
-    if ( options%dryrun .or. options%debug ) then
-      print *, 'name: ', trim(name)
-      print *, 'value: ', trim(valu)
+    ! First, check if we are declaring the attribute type, like this
+    !   integer NOrbits=10
+    ! or using the old style character type
+    !   HostName=pigeon
+    call getStringElement( line, attrType, 1, countEmpty, ' ' )
+    if ( index(attrTypes, trim(lowercase(attrType))) < 1 ) then
+      ! old style
+      call getStringElement( line, name, 1, countEmpty, eqls )
+      call getStringElement( line, valu, 2, countEmpty, eqls )
+      if ( options%dryrun .or. options%debug ) then
+        print *, 'name: ', trim(name)
+        print *, 'value: ', trim(valu)
+      endif
+      ! Are we using this line to set the root or the DSName?
+      if ( trim(name) == 'root' ) then
+        options%root = valu
+        return
+      elseif ( trim(name) == 'DSName' ) then
+        options%DSName = valu
+        return
+      elseif ( .not. options%dryrun ) then
+        call h5gopen_f( L2GPFile%fileID%f_id, trim(options%root), grp_id, status )
+        if ( status /= 0 ) then
+          call MLSMessage( MLSMSG_Error, ModuleName, &
+            & 'Sorry, Cant open group: ' // trim(options%root) )
+        endif
+        ! Is our attribute a group-level attribute or specific to a dataset?
+        if ( len_trim(options%DSName) < 1 ) then
+
+          call MakeHDF5Attribute( grp_id, &
+            & trim(name), trim(valu), skip_if_already_there=.false. )
+        else
+          call h5dOpen_f ( grp_id, trim(options%DSName), setID, status )
+          call MakeHDF5Attribute( setid, &
+            & trim(name), trim(valu), skip_if_already_there=.false. )
+          call h5dclose_f ( setid, status )
+        endif
+        call h5gclose_f( grp_id, status )
+        call sayTime('Creating this attribute')
+      endif
+    else
+      ! must have declared the attribute type
+      select case (lowercase(attrType(1:1)))
+      case ('i') ! 'integer '
+        call getStringElement( line(9:), name, 1, countEmpty, eqls )
+        call getStringElement( line(9:), valu, 2, countEmpty, eqls )
+        call ReadNumsFromChars ( valu, ivalu )
+        if ( options%dryrun .or. options%debug ) then
+          print *, 'name: ', trim(name)
+          print *, 'value: ', ivalu
+        endif
+        if ( .not. options%dryrun ) then
+          call one_l2auxattr( L2GPFile, &
+            & trim(name), ivalu=ivalu )
+          call sayTime('Creating this attribute, ' // trim(name) )
+        endif
+      case ('s') ! 'single '
+        call getStringElement( line(8:), name, 1, countEmpty, eqls )
+        call getStringElement( line(8:), valu, 2, countEmpty, eqls )
+        call ReadNumsFromChars ( valu, rvalu )
+        if ( options%dryrun .or. options%debug ) then
+          print *, 'name: ', trim(name)
+          print *, 'value: ', rvalu
+        endif
+        if ( .not. options%dryrun ) then
+          call one_l2auxattr( L2GPFile, &
+            & trim(name), rvalu=rvalu )
+          call sayTime('Creating this attribute, ' // trim(name) )
+        endif
+      case ('d') ! 'double '
+        call getStringElement( line(8:), name, 1, countEmpty, eqls )
+        call getStringElement( line(8:), valu, 2, countEmpty, eqls )
+        call ReadNumsFromChars ( valu, dvalu )
+        if ( options%dryrun .or. options%debug ) then
+          print *, 'name: ', trim(name)
+          print *, 'value: ', dvalu
+        endif
+        if ( .not. options%dryrun ) then
+          call one_l2auxattr( L2GPFile, &
+            & trim(name), dvalu=dvalu )
+          call sayTime('Creating this attribute, ' // trim(name) )
+        endif
+      case ('c') ! 'character '
+        call getStringElement( line(10:), name, 1, countEmpty, eqls )
+        call getStringElement( line(10:), valu, 2, countEmpty, eqls )
+        name = adjustl(name)
+        if ( options%dryrun .or. options%debug ) then
+          print *, 'name: ', trim(name)
+          print *, 'value: ', trim(valu)
+        endif
+        if ( .not. options%dryrun ) then
+          call one_l2auxattr( L2GPFile, &
+            & trim(name), valu=valu )
+          call sayTime('Creating this attribute, ' // trim(name) )
+        endif
+      end select
     endif
-    ! Are we using this line to set the root or the DSName?
-    if ( trim(name) == 'root' ) then
-      options%root = valu
-      return
-    elseif ( trim(name) == 'DSName' ) then
-      options%DSName = valu
-      return
-    elseif ( .not. options%dryrun ) then
+  end subroutine create_l2auxattr
+  
+  subroutine one_l2auxattr ( L2GPFile, name, ivalu, rvalu, dvalu, valu )
+    ! We write an attribute's value, either to a data set or to a group
+    ! Dummy args
+    type( MLSFile_T )                      :: L2GPFile
+    character(len=*), intent(in)           :: name
+    character(len=*), intent(in), optional :: valu
+    integer, intent(in), optional          :: ivalu
+    real, intent(in), optional             :: rvalu
+    double precision, intent(in), optional :: dvalu
+    ! Internal variables
+    integer                                :: grp_id
+    integer                                :: setid
+    integer                                :: status
+    !
+    if ( .not. options%dryrun ) then
       call h5gopen_f( L2GPFile%fileID%f_id, trim(options%root), grp_id, status )
       if ( status /= 0 ) then
         call MLSMessage( MLSMSG_Error, ModuleName, &
           & 'Sorry, Cant open group: ' // trim(options%root) )
       endif
       ! Is our attribute a group-level attribute or specific to a dataset?
-      if ( len_trim(options%DSName) < 1 ) then
-
-        call MakeHDF5Attribute( grp_id, &
-          & trim(name), trim(valu), skip_if_already_there=.false. )
-      else
+      if ( len_trim(options%DSName) > 0 ) then
+        ! Specific to DSName
         call h5dOpen_f ( grp_id, trim(options%DSName), setID, status )
+      else
+        ! group-level
+        setID = grp_id
+      endif
+      if ( present(valu) ) then
+        ! character-valued
         call MakeHDF5Attribute( setid, &
           & trim(name), trim(valu), skip_if_already_there=.false. )
-        call h5dclose_f ( setid, status )
+      elseif ( present(ivalu) ) then
+        ! character-valued
+        call MakeHDF5Attribute( setid, &
+          & trim(name), ivalu, skip_if_already_there=.false. )
+      elseif ( present(rvalu) ) then
+        ! character-valued
+        call MakeHDF5Attribute( setid, &
+          & trim(name), rvalu, skip_if_already_there=.false. )
+      elseif ( present(dvalu) ) then
+        ! character-valued
+        call MakeHDF5Attribute( setid, &
+          & trim(name), dvalu, skip_if_already_there=.false. )
       endif
+      ! Don't forget to close dataset interface if specific to DSName
+      if ( len_trim(options%DSName) > 0 ) &
+        & call h5dclose_f ( setid, status )
       call h5gclose_f( grp_id, status )
-      call sayTime('Creating this attribute')
+      call sayTime('Creating this attribute: ' // trim(name) )
     endif
-  end subroutine create_l2auxattr
+    
+  end subroutine one_l2auxattr
 
 !------------------------- get_filename ---------------------
     subroutine get_filename(filename, n_filenames, options)
@@ -377,6 +587,8 @@ contains
       write (*,*) ' -f filename   => add filename to list of l2gp filenames'
       write (*,*) '                  (can do the same w/o the -f)'
       write (*,*) ' -Vf attr_file => settings file; one line per attribute'
+      write (*,*) ' -l2aux        => file type is l2aux'
+      write (*,*) ' -l2gp         => file type is l2gp'
       write (*,*) ' -debug        => switch on debug mode'
       write (*,*) ' -v            => switch on verbose mode'
       write (*,*) ' -silent       => switch on silent mode'
@@ -420,3 +632,6 @@ end program createattributes
 !==================
 
 ! $Log$
+! Revision 1.1  2023/04/14 15:48:54  pwagner
+! First commit
+!
