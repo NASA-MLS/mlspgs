@@ -31,7 +31,11 @@
 # Possible alternatives are
 # (1) Define MLSTOOLS and put them there
 # (2) Define env variables L2GPCAT and l2AUXCAT with their locations
-# directory as this script
+#     the same directory as this script
+# (3) The most recent nrt versions rely entirely on neural networks and
+#     don't require the simultaneous level 2 tasks runing in a_dir, b_dir;
+#     eventually we should strip out the now-obsolete option, leaving
+#     this script leaner and cleaner
 # 
 
 #---------------------------- commando
@@ -228,8 +232,8 @@ executable_or_exit()
 
 swath_nn_retrieval()
 {
-  # pwd
-  # ls
+#  pwd
+#  ls
   swath="$1"
   SWATHNNSCRIPT="$2"
   shift
@@ -253,10 +257,20 @@ swath_nn_retrieval()
     -qual 0 \
     -stat 68 \
     $DGG
+  # If createattributes is defined and is an executable, use it
+  # to add job.env as a file of attribute name=value pairs
+  echo "createattributes $createattributes"
+  echo "ATTRFILE $ATTRFILE"
+  if [ -x "$createattributes" -a -f "$ATTRFILE" ]
+  then
+    commando $createattributes -Vf "$ATTRFILE" -l2gp $file
+    commando $createattributes -Vf "$ATTRFILE" -l2gp $DGG
+  fi
 }
 
 #------------------------------- merge_files ----------------------------
-# Mrge the DGG and DGM files produced in the a and b subdirectories
+#------------------------------- (Obsolete) ----------------------------
+# Merge the DGG and DGM files produced in the a and b subdirectories
 # by the two independent nrt mlsl2 runs
 # ***                         ***
 
@@ -333,11 +347,20 @@ cp $b_file.xml $c_dir
 #
 verbose="yes"
 I=postl2script
-# Is there an env file we are supposed to source?
+#pwd
+#ls
+# Are there any env files we are supposed to source?
 ENVFILE=job.env
 if [ -f "$ENVFILE" ]
 then
- . ./"$ENVFILE"
+  . ./"$ENVFILE"
+fi
+
+# Did the ENVFILE define an ATTRFILE?
+if [ -f "$ATTRFILE" ]
+then
+  echo "dotting $ATTRFILE"
+  . "$ATTRFILE"
 fi
 
 # Now check on possible candidates for l2gpcat, l2auxcat, etc.
@@ -370,6 +393,16 @@ then
   insertl2gpvalues=$INSERTL2GPVALUES
 fi
 
+createattributes=`which createattributes 2>/dev/null`
+if [ ! -x "$createattributes" ]
+then
+  createattributes=$MLSTOOLS/createattributes
+fi
+if [ "$CREATEATTRIBUTES" != "" ]
+then
+  createattributes=$CREATEATTRIBUTES
+fi
+
 executable_or_exit l2gpcat "$l2gpcat"
 executable_or_exit l2auxcat "$l2auxcat"
 
@@ -378,7 +411,7 @@ echo "Launching postl2script with args $@"
 c_dir=$1
 a_dir=$2
 b_dir=$3
-pwd
+#pwd
 cwd=`pwd`
 
 # Merge the product files from a_dir and b_dir
@@ -399,7 +432,6 @@ set_if_not_def HNO3NNSCRIPT $MLSTOOLS/hno3_prediction.py
 echo "PYTHON3 $PYTHON3"
 echo "H2ONNSCRIPT $H2ONNSCRIPT"
 
-# -------------------------- Uncomment the following ------------
 if [ ! -f "$PYTHON3" ]
 then
   echo "PYTHON3 not defined so skipping n-n retrievals"
@@ -433,6 +465,9 @@ else
 fi
 # -------------------------- -------------------------- ------------
 # $Log$
+# Revision 1.10  2022/10/13 22:19:48  pwagner
+# Added hno3 and n2o swaths; using arrays like mols instead of multiple ifs
+#
 # Revision 1.9  2022/07/13 22:53:49  pwagner
 # Use new insertl2gpvalues cmdline opts
 #
