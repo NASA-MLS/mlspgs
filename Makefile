@@ -279,6 +279,7 @@ SHELL = /bin/sh
 # ncl2gpcat
 # ncl2gpdiff
 # ncl2gpdump
+# nc42l2gp     
 # remake_gh
 # resetl2gpstatus
 # resetl2gpvalues
@@ -502,7 +503,7 @@ MLSTOOLS = chunktimes checkpvmup compare createattributes \
   l1bcat l1bdiff l1bdump l1h5subset \
   l2auxcat l2auxchi l2auxdump l2gp2nc4 l2gpdiffnc4 l2gpcat l2gpdiff l2gpdump \
   l2pcdiff l2pcdump l2q lr machineok misalignment \
-  ncl2gpcat ncl2gpdiff ncl2gpdump resetl2gpDOIs resetl2gpstatus resetl2gpvalues \
+  nc42l2gp ncl2gpcat ncl2gpdiff ncl2gpdump resetl2gpDOIs resetl2gpstatus resetl2gpvalues \
   Spartacus \
   tellMasterToQuit vansGoldFilter WordSplit wrapLines
 
@@ -1200,6 +1201,18 @@ moonscan: $(CONFDIR)/$(MLSCFILE) install-l1
 	cat Calibration.f9h; \
 	touch Calibration.f9h
 
+nc42l2gp: $(CONFDIR)/$(MLSCFILE) $(CONFDIR)/netcdf/nc42l2gp.f90 l1--itm
+# Needs further refinement
+	cd $(CONFDIR)/tests/lib; \
+	mv *.f9[0h] hideme; \
+	cd ../../netcdf; \
+	cp nc42l2gp.f90 MLSFiles.f90 MLSNetCDF4.f90 MLS_Swrdfld.f9h \
+	MLS_Swwrfld.f9h NCL2GP.f90 ../tests/lib; \
+	cd ../tests/lib; \
+	make update; \
+	make NEEDS_ITM=yes NETCDF=yes
+	cp $(CONFDIR)/tests/lib/$(MLSCONFG)/test $(INSTALLDIR)/nc42l2gp
+
 ncl2gpcat: $(CONFDIR)/$(MLSCFILE) $(CONFDIR)/netcdf/ncl2gpcat.f90 l1--itm
 # Needs further refinement
 	cd $(CONFDIR)/tests/lib; \
@@ -1589,6 +1602,9 @@ tools: $(MLSTOOLS)
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.37  2023/04/14 15:48:08  pwagner
+# Now able to build createattributes
+#
 # Revision 1.36  2023/03/16 16:22:37  pwagner
 # can now build the tool resetl2gpDOIs
 #
