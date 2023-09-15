@@ -46,7 +46,7 @@ module NCL2GP
   private
 
   public :: AppendNCL2GPData, CpNCL2GPData, DumpNCL2GP, IsNCL2GPInFile, &
-    & ReadNCL2GPData, &
+    & ReadNCL2GPData, ReadNCGlobalAttr, &
     & WriteNCFileAttr, WriteNCGlobalAttr, WriteNCL2GPData
 
 !---------------------------- RCS Module Info ------------------------------
@@ -2837,6 +2837,9 @@ contains ! ======================= Public Procedures =========================
 end module NCL2GP
 
 ! $Log$
+! Revision 1.7  2022/12/22 22:56:41  pwagner
+! Added two new Dumping subroutines; fixed bugs
+!
 ! Revision 1.6  2022/12/08 18:56:25  pwagner
 ! Fixed typo; bypass ReadNCL2GPData_fileID
 !
