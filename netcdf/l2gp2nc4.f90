@@ -71,6 +71,7 @@ program l2gp2nc4 ! Rewrite L2GPData files as NetCDF4
      logical ::             verbose       = .false.
      logical ::             attributesToo = .false.
      logical ::             metaDataToo   = .false.
+     character(len=4)::     ncSuffix      = 'nc4'
   end type Options_T
 
   type ( Options_T ) :: options
@@ -148,6 +149,8 @@ contains
         options%attributesToo = .true.
       elseif ( filename(1:3) == '-m ' ) then
         options%metadataToo = .true.
+      elseif ( filename(1:4) == '-nc ' ) then
+        options%ncSuffix = 'nc'
       else if ( filename(1:3) == '-f ' ) then
         call getarg ( i+1+hp, filename )
         error = 0
@@ -175,9 +178,11 @@ contains
   subroutine print_help
   ! Print brief but helpful message
       write (*,*) &
-      & 'l2gpnc4: Converts each hdfeos file to NetCDF4 format' &
-      & // 'replacing the .he5 suffix with .nc4' &
-      & // 'Usage: l2gp2nc4 [options] [hdfeos_filenames]'
+      & ' l2gpnc4: Converts each hdfeos file to NetCDF4 format'
+      write (*,*) &
+      & ' replacing the .he5 suffix with .nc4'
+      write (*,*) &
+      & ' Usage: l2gp2nc4 [options] [hdfeos_filenames]'
       write (*,*) &
       & ' If no filenames supplied, you will be prompted to supply one'
       write (*,*) ' Options:'
@@ -187,6 +192,7 @@ contains
       write (*,*) ' -m          => copy metadata, too'
       write (*,*) ' -v          => verbose'
       write (*,*) ' -d          => debug'
+      write (*,*) ' -nc         => use .nc instead of .nc4 as NetCDF4 suffix'
 
       stop
   end subroutine print_help
@@ -292,8 +298,19 @@ contains
     ! Create nc4 file:
     ! Assume the hdfeos file name is some_name.he5
     ! We want                        some_name.nc4
+    ! A trick!
+    ! Reversing the filenames means simply transform
+    ! 5eh.whatever -> 4cn.whatever
+    ! which is easy with substrings
+    ! We'll use thee index of the '.' to separate the file name 
+    ! from its extension. Some NetCDF4 files use ".nc4", others ".nc".
     ncfilename = Reverse(trim(filename))
-    ncfilename = '4cn' // ncfilename(4:)
+    i = index( ncfilename, '.' )
+    if ( i < 1 ) then
+      print *, 'Sorry, coild not find file name extension in: ' // trim(filename)
+      stop
+    endif
+    ncfilename = trim(options%ncSuffix) // ncfilename(i:)
     ncfilename = Reverse(trim(ncfilename))
     call outputNamedValue( 'NetCDF4 file name', ncfilename )
     status = InitializeMLSFile ( NC4File, type=l_netcdf4, access=DFACC_CREATE, &
@@ -513,6 +530,9 @@ end program l2gp2nc4
 !==================
 
 ! $Log$
+! Revision 1.4  2022/12/22 22:59:42  pwagner
+! Fixed bugs, including LocalGranuleId
+!
 ! Revision 1.3  2022/01/27 16:42:41  pwagner
 ! Corrected build instructions
 !
