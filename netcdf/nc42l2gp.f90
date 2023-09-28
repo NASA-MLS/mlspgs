@@ -218,7 +218,7 @@ contains
     character (len=MAXSWATHNAMESBUFSIZE) :: matches
     type(MLSFile_T)                      :: MLSFile
     type(MLSFile_T)                      :: NC4File
-    character(len=255)                   :: ncfilename ! filename
+    character(len=255)                   :: hdfeosname ! filename
     integer                              :: noSwaths
     integer                              :: status
     character (len=L2GPNameLen)          :: swath
@@ -251,12 +251,19 @@ contains
     ! Reversing the filenames means simply transform
     ! 4cn.whatever -> 5eh.whatever
     ! which is easy with substrings
-    ncfilename = Reverse(trim(filename))
-    ncfilename = '5eh' // ncfilename(4:)
-    ncfilename = Reverse(trim(ncfilename))
-    call outputNamedValue( 'HDFEOS file name', ncfilename )
-    status = InitializeMLSFile ( NC4File, type=l_swath, access=DFACC_CREATE, &
-     & name=ncfilename, hdfVersion=HDFVERSION_5 )
+    ! We'll use the index of the '.' to separate the file name 
+    ! from its extension. Some NetCDF4 files use ".nc4", others ".nc".
+    hdfeosname = Reverse(trim(filename))
+    i = index( hdfeosname, '.' )
+    if ( i < 1 ) then
+      print *, 'Sorry, coild not find file name extension in: ' // trim(filename)
+      stop
+    endif
+    hdfeosname = '5eh' // hdfeosname(i:)
+    hdfeosname = Reverse(trim(hdfeosname))
+    call outputNamedValue( 'HDFEOS file name', hdfeosname )
+    status = InitializeMLSFile ( MLSFile, type=l_swath, access=DFACC_CREATE, &
+     & name=hdfeosname, hdfVersion=HDFVERSION_5 )
     if ( options%verbose ) call Dump ( NC4File )
     ! Loop over swaths in file 1
     do i = 1, noSwaths
@@ -474,3 +481,6 @@ end program nc42l2gp
 !==================
 
 ! $Log$
+! Revision 1.1  2023/09/15 16:40:21  pwagner
+! First commit
+!
