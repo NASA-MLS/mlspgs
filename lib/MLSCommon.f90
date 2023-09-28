@@ -94,9 +94,11 @@ module MLSCommon                ! Common definitions for the MLS software
 !     (subroutines and functions)
 ! accessType       Converts DFACC_* <-> {l_create, l_rdwr, l_rdonly}
 ! DontCrashHere    May we skip otherwise obligatory crash in named modules?
-! inRange          does an argument lie within a specified range or interval
-! is_what_ieee     is an argument a specified ieee type
-! split_path_name  splits the input path/name into path and name
+! inRange          Does an argument lie within a specified range or interval
+! is_what_ieee     Is an argument a specified ieee type
+! split_name_extension  
+!                  Splits the input name.ext into name and exxt
+! split_path_name  Splits the input path/name into path and name
 ! === (end of toc) ===                                                   
 ! === (start of api) ===
 ! char* accessType ( int dfacc )
@@ -105,6 +107,8 @@ module MLSCommon                ! Common definitions for the MLS software
 ! log inRange( int arg, Range_T range )
 ! log inRange( real arg, Interval_T range )
 ! log is_what_ieee( type_signal what, num arg )
+! split_name_extension ( char* full_file_name, char* name, char* extension,
+!  [char dot] )
 ! split_path_name ( char* full_file_name, char* path, char* name, [char slash] )
 ! === (end of api) ===
 
@@ -124,6 +128,7 @@ module MLSCommon                ! Common definitions for the MLS software
   public :: DontCrashHere
   public :: InRange
   public :: Is_what_ieee
+  public :: Split_name_extension
   public :: Split_path_name
   
   ! User-defined datatypes
@@ -697,6 +702,54 @@ contains
     & max(real(undefinedTolerance, r8), abs(theFillValue*1.d-6)) )
   end function equalsFillValue_r8
 
+  ! --------------------------------------------  split_name_extension  -----
+
+  ! This routine splits the input full_file_name
+  ! E.g. 'name.txt' -> 'name' + 'txt'
+
+  ! Optionally you may supply the '.'
+  ! which must be a single character
+
+  elemental subroutine split_name_extension ( full_file_name, name, extension, &
+    & dot )
+
+    ! Arguments
+
+    character (len=*), intent(in) :: full_file_name
+    character (len=*), intent(out) :: name
+    character (len=*), intent(out) :: extension
+    character (len=1), optional, intent(in) :: dot
+
+    ! Local
+
+    character (len=1) :: myDot
+    integer :: loc, n
+!   logical, parameter :: DEBUG = .false.
+
+    ! Begin
+    myDot = '.'
+    if ( present(dot) ) myDot = dot
+    call split_path_name ( full_file_name, name, extension, slash=myDot )
+    ! Now 
+    ! (1) Typically name will end with '.', so snip that off
+    ! (2) If the file name had no extension, its name has been returned
+    !     in the extension arg, so that must be dealt with
+    ! (3) If the file name was e.g., '.ext', the name has been returned as '.'
+    if ( len_trim(name) < 1 ) then
+      ! case (2)
+      name = extension
+      extension = ' '
+    elseif ( name == myDot ) then
+      ! case (3)
+      name = ' '
+    else
+      ! Now check for case (1)
+      loc = len_trim(name)
+      if ( name(loc:loc) == myDot ) name(loc:loc) = ' '
+    endif
+      
+  end subroutine split_name_extension
+
   ! --------------------------------------------  split_path_name  -----
 
   ! This routine splits the input full_file_name
@@ -775,6 +828,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.61  2023/09/28 20:57:28  pwagner
+! Added split_name_extension
+!
 ! Revision 2.60  2021/04/29 22:51:07  pwagner
 ! Makes MLS_HyperStart conform with hdf
 !
