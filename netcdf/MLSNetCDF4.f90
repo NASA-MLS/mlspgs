@@ -193,7 +193,7 @@ contains ! ======================= Public Procedures =========================
      returnStatus = NCError
   end function MLS_EHwrglAtt
 
-  ! --------------------------------------------  MLS_EHwrglAtt  -----
+  ! -------------------------------------------- mls_InqSwath  -----
   function mls_InqSwath ( FileName, SwathList, listSize ) result( returnStatus )
     character(len=*), intent(in)     :: FileName     ! File name
     character(len=*), intent(out)    :: SwathList    ! swath names
@@ -1100,6 +1100,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSNetCDF4
 
 ! $Log$
+! Revision 1.4  2022/12/22 22:54:49  pwagner
+! Comment out some debug statements
+!
 ! Revision 1.3  2022/12/08 18:53:23  pwagner
 ! Added mls_InqSwath
 !
