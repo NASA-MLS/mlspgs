@@ -115,9 +115,6 @@ cloudfwdm, cfm, idlcfm} will be henceforth called simply the "mlslevels".
 l3 and l3m are being carried along for now, but at some point in the future
 will be removed.
 
-cfm is anticipated to be added to the cvs repository in the near future. Your
-distribution may lack it just yet.
-
 WHAT YOU NEED
 You may begin when you checkout a fresh copy of the mlspgs archive or obtain
 the tar file. If you already have an archive with some changes you wish to
@@ -484,6 +481,11 @@ The only combinations of compiler.platform/OS provided for so far are
   NAG.SGI
   Sun.Sun
 
+The latest versions of the source code work only with NAG and IFC. The only
+platform we test on is Linux. All the other combinations exist in name only,
+i.e. we haven't forcibly deleted them but caveat emptor. Also, so-called
+32-bit platforms fall under the same rubric.
+
 Now we list some prohibitions to keep in mind:
 (1) Do not use the same .configure file to build with different versions of
 ifort. Treat them as two different compilers.
@@ -492,18 +494,6 @@ platforms and other times on 32-bit platforms. Keep the .configure file
 names, and their MLSCONFG=name subdirectories, distinct.
 (3) Do not use the same .configure while switching between internal
 ieee_arithmetic support and that supplied in machines/IFC.Linux.
-
-Although I have elsewhere claimed otherwise, you are not able to successfully
-both build and run 32-bit executables on 64-bit platforms.
-
-Can you run 32-bit executables on 64-bit platforms if they were built on
-32-bit platforms? It depends. Definitely not if the executable was
-linked dynamically. 
-
-Can you run 64-bit executables on 32-bit platforms if they were built on
-64-bit platforms? No.
-If you have a different combination, contact me. Even better, if you have a
-different combination and can get it to work, send it to me, or "cvs commit".
 
 Do not 'cvs add/commit' your .configure. Instead, if you want to keep a copy of
 your configuration handy, copy it someplace, like ~/mls.configure, then copy it
@@ -570,6 +560,8 @@ name nor the file name duplicate names of a module already in a lineal
 directory. Two directories are lineal if one is a prerequisite of the other.
 E.g., l1 and srclib are lineal, while l3 and fwdmdl are not.
 
+(Is "lineal" a word most people would recognize?)
+
 Not mentioned above are three extra directories: customblds, srclib, and 
 lib/machines/MLSCONFG. customblds contains custom build instructions for various
 modules, i.e. modules for which the default ".f.o" rules won't work. srclib
@@ -577,6 +569,15 @@ contains some files that are INCLUDEd in the Makefiles. The third contains at
 least one file, machine.f90, with compiler/platform-specific information about
 command-line  arguments and other features. Sometimes other files may accompany
 machine.f90, e.g. to compensate for missing ieee-arithmetic support.
+
+Moreover, we must mention
+* idlcfm:    like cfm but for the idl-callable forward model
+* conv_uars: a separate program to convert uars level 1 products
+* heconvert: a separate program to convert hdfeos4 files to hdfeos5 format
+* netcdf:    several programs programs to convert between hdfeeos and 
+             netcdf formats
+* util/lr:   the parser
+* doc:       tex files for various forms of technical documentation
 
 ADVANCED SETTINGS
 These include features which are otherwise given default values which may prove
@@ -746,33 +747,40 @@ MLSINSTALLDIR      install puts all the executables here instead of
 EXAMPLE OF A .configure FILE
 #	.configure for mls
 USEMYFC=yes
-FC=/usr/local/bin/ifort-v14
+FC=/users/pwagner/bin/ifort-v19
 MLSF95=IFC
 MLSPLAT=Linux
-MLSCONFG=IFC.Linux
-MLSTKROOT=/software/toolkit/ifc14
-PGSINC=${MLSTKROOT}/toolkit/include
-PGSTK=${MLSTKROOT}/toolkit/lib/linux
+MLSCONFG=IFC.Linux.ifc19-OL8
+MLSTKROOT=/users/pwagner/apps/test/ifc19-OL8
+PGSINC=${MLSTKROOT}/toolkit5.2.18/include
+PGSTK=${MLSTKROOT}/toolkit5.2.18/lib/linux
 HDFEOS=${MLSTKROOT}/hdfeos/lib/linux
 HDFEOS5=${MLSTKROOT}/hdfeos5/lib/linux
-HDF=${MLSTKROOT}/hdf/lib
-HDF5=${MLSTKROOT}/hdf5/lib
+HDF=${MLSTKROOT}/hdf-4.2.6/lib
+HDF5=${MLSTKROOT}/hdf5-1.8.18/lib
 GCTP=${MLSTKROOT}/hdfeos/lib/linux
-PGSLIB=${MLSTKROOT}/toolkit/lib/linux
+PGSLIB=${MLSTKROOT}/toolkit5.2.18/lib/linux
 HDFEOS_LIB=${MLSTKROOT}/hdfeos/lib/linux
-HDFLIB=${MLSTKROOT}/hdf/lib
+HDFLIB=${MLSTKROOT}/hdf-4.2.6/lib
 BLAS=
 LIB_BLAS=
 LAPACK=
 LIB_LAPACK=f95
 PVM_ROOT=${MLSTKROOT}/pvm3
 PVM_ARCH=LINUX
-FFTW_ROOT=${MLSTKROOT}/fftw/lib
+FFTW_ROOT=${MLSTKROOT}/fftw-2.1.5/lib
 COPTS=-D H5_USE_16_API
-FOPTS=-vec-report0 -traceback -xSSSe3
+FOPTS=-qopt-report=0 -traceback -xSSSe3
 LDOPTS=-static -xSSSe3
+LAFTER=-ltirpc
 REECHOMACHOPTS=-excl ieee_arithmetic.f90
 PRE=-D${MLSF95}
+LATEXPATH=/usr/local/depot/texlive/2020/bin/x86_64-linux
+TEXINPUTS=/software/toolkit/docs//:
+TEXMFLOCAL=/usr/local/depot/texlive/2020/texmf-dist:/software/toolkit/texmf.local
+BSTINPUTS=/usr/local/depot/texlive/2020/texmf-dist/bibtex/bst//:
+CNETCDF=/users/pwagner/netcdf-c-4.7.1-OL8/lib
+FNETCDF=/users/pwagner/netcdf-fortran-4.5.1-OL8/lib
 export MLSF95    
 export MLSPLAT   
 export MLSCONFG  
@@ -797,11 +805,21 @@ export COPTS
 export FOPTS     
 export LDOPTS    
 export PRE       
+export LAFTER
+export LATEXPATH
+export TEXINPUTS
+export TEXMFLOCAL
+export BSTINPUTS
+export CNETCDF
+export FNETCDF
 
--pw                           2000-Oct-24 to 2015-Aug-11
+-pw                           2000-Oct-24 to 2023-Sep-29
 EOF
 exit
 # $Log$
+# Revision 1.44  2015/08/12 18:42:43  pwagner
+# Removed outdated MakeFC stuff; also dropped most 32-bit vs. 64-bit stuff
+#
 # Revision 1.43  2012/06/19 23:24:55  pwagner
 # Brought up to date; mention idlcfm, NOF2003
 #
