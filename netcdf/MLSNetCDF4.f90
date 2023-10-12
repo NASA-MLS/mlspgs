@@ -30,15 +30,9 @@ module MLSNetCDF4
   
 
   use NetCDF
-  use HDF, only: Dfnt_Char8, Dfnt_Float32, Dfnt_Float64, &
-    & Dfnt_Int8, Dfnt_Int16, Dfnt_Int32, Dfnt_Int64
   use HighOutput, only: OutputNamedValue
   use MLSCommon, only: MLSFile_T
-  use MLSFiles, only: HDFversion_4, HDFversion_5, WildcardHDFversion, &
-    & MLS_HDF_Version
   use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, MLSMessage
-  use MLSStringlists, only: StringElementnum
-  use MLSStrings, only: Replace
   use Output_M, only: Output
   use Trace_M, only: Trace_Begin, Trace_End
 
@@ -168,7 +162,7 @@ module MLSNetCDF4
     & 'Geolocation Fields   ' &
     & /)
   ! Print debugging stuff?
-  logical, parameter          :: DEEBUG = .false.  
+  ! logical, parameter          :: DEEBUG = .false.  
   character(len=1), parameter :: BLANK = ' '
   integer, public, parameter  :: MAXNUMSWATHS = 300
 
@@ -183,10 +177,8 @@ contains ! ======================= Public Procedures =========================
     character(len=*), intent(in)  :: value        ! Attribute value
     integer                       :: returnStatus
     ! Local variables
-    logical, parameter            :: Countempty = .true.
     integer                       :: ListSize
     integer                       :: Status
-    logical, parameter            :: DEEBUG = .false.
     ! Executable code
     call check ( nf90_put_att( FileID, nf90_global, AttrName, value ), &
       & 'MLS_EHwrglAtt' // trim(Attrname), FailureOK=.true. )
@@ -194,18 +186,18 @@ contains ! ======================= Public Procedures =========================
   end function MLS_EHwrglAtt
 
   ! -------------------------------------------- mls_InqSwath  -----
-  function mls_InqSwath ( FileName, SwathList, listSize ) result( returnStatus )
+  function mls_InqSwath ( FileName, SwathList, listSize ) result( NoSwaths )
     character(len=*), intent(in)     :: FileName     ! File name
     character(len=*), intent(out)    :: SwathList    ! swath names
     integer, intent(out)             :: listSize
-    integer                          :: returnStatus
+    integer                          :: NoSwaths
     integer                          :: FileID
     integer                          :: grpID
     integer                          :: i
     integer, dimension(MAXNUMSWATHS) :: ncids
     character(len=256)               :: grpName
     integer                          :: Me = -1 !String index for trace cacheing
-    character, parameter             :: NULL = achar(0)
+    ! character, parameter             :: NULL = achar(0)
     !
     call trace_begin ( me, 'mls_InqSwath' , cond=.false. )
     SwathList = ""
@@ -228,21 +220,23 @@ contains ! ======================= Public Procedures =========================
     call check ( nf90_inq_grps( FileId, listSize, ncids ), &
       & 'mls_InqSwath' // '/inq grps', FailureOK=.true. )
 !     print *, 'listSize: ', listSize
+    NoSwaths = 0
     do i=1, listSize
       call check( nf90_inq_grpname( ncids(i), grpName) , &
         & 'mls_InqSwath ' // "/grpName", &
         & FailureOK=.true., silent=.true. )
+      ! Shouldn't we check for a blank grpName?
       if ( len_trim(SwathList) < 1 ) then
         SwathList = grpName
       else
         SwathList = trim(Swathlist) // "," // grpName
       endif
+      NoSwaths = NoSwaths + 1
 !       print *, 'grpName: ', trim(grpName)
     enddo
     
     call check( nf90_close(FileId), &
       & 'mls_InqSwath close ', FailureOK=.true. )
-    returnStatus = (NCError == nf90_noerr)
     call trace_end ( cond=.false. )
   end function mls_InqSwath
 
@@ -277,10 +271,8 @@ contains ! ======================= Public Procedures =========================
     character(len=*), intent(in)  :: Attrname     ! Attribute name
     logical                       :: IsThere
     ! Local variables
-    logical, parameter            :: Countempty = .true.
     integer                       :: ListSize
     integer                       :: Status
-    logical, parameter            :: DEEBUG = .false.
     ! Executable code
 !     print *, 'Checking for global attribute: ', trim(Attrname)
     call check ( nf90_inquire_attribute( FileID, nf90_global, AttrName), &
@@ -296,9 +288,6 @@ contains ! ======================= Public Procedures =========================
 
     ! Internal variables
     integer :: Me = -1                  ! String index for trace cacheing
-    logical :: myDontFail
-    integer :: myHdfVersion
-    logical :: needsFileName
 
     ! Executable code
     call trace_begin ( me, 'MLS_SwAttach_ID' , cond=.false. )
@@ -315,7 +304,6 @@ contains ! ======================= Public Procedures =========================
     ! Internal variables
     integer :: Me = -1                  ! String index for trace cacheing
     integer :: MLS_SwATTACH
-    logical :: myDontFail
 
     ! Executable code
     call trace_begin ( me, 'MLS_Swattach_mf' , cond=.false. )
@@ -326,18 +314,13 @@ contains ! ======================= Public Procedures =========================
   ! --------------------------------------------  MLS_Swcreate_mf  -----
   function MLS_Swcreate_mf ( MLSFile, SWATHNAME ) &
     & result(MLS_SwCREATE)
-    use hdf5, only: h5eSet_auto_f
     type (MLSFile_T)   :: MLSFile
     character(len=*), intent(in) :: SWATHNAME       ! Swath name
     integer :: MLS_SwCREATE
 
     ! Internal variables
-    logical :: alreadyThere
     integer :: Me = -1                  ! String index for trace cacheing
     integer :: status
-
-    logical, parameter :: ALWAYSTRYSWATTACH = .true.
-    logical, parameter :: MUSTCREATE = .true.
 
     ! Executable code
     call trace_begin ( me, 'MLS_Swcreate_mf' , cond=.false. )
@@ -349,13 +332,11 @@ contains ! ======================= Public Procedures =========================
   ! --------------------------------------------  MLS_Swcreate_id  -----
   function MLS_Swcreate_id ( FILEID, SWATHNAME ) &
     & result(MLS_SwCREATE)
-    use hdf5, only: h5eSet_auto_f
     integer, intent(in) :: FILEID      ! ID returned by MLS_Swopen
     character(len=*), intent(in) :: SWATHNAME       ! Swath name
     integer  :: MLS_SwCREATE
 
     ! Internal variables
-    logical :: alreadyThere
     integer :: Me = -1                  ! String index for trace cacheing
     integer :: dfid
     integer :: glid
@@ -400,8 +381,6 @@ contains ! ======================= Public Procedures =========================
 
     ! Internal variables
     integer :: Me = -1                  ! String index for trace cacheing
-    integer :: myHdfVersion
-    logical :: needsFileName
 
     ! Executable code
     call trace_begin ( me, 'MLS_Swdetach' , cond=.false. )
@@ -430,7 +409,6 @@ contains ! ======================= Public Procedures =========================
   integer function MLS_dfldsetup ( swathid, fieldname, dimname, maxdimlist, &
     & datatype, chunk_rank, chunksizes, DimIDs, &
     & iFill, rFill, dFill )
-    integer, parameter :: RANK = 7
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
     character(len=*), intent(in) :: DIMNAME       ! Dimension name
@@ -478,7 +456,6 @@ contains ! ======================= Public Procedures =========================
   integer function MLS_gfldsetup ( swathid, fieldname, dimname, maxdimlist, &
     & datatype, chunk_rank, chunksizes, DimIDs, &
     & iFill, rFill, dFill )
-    integer, parameter :: RANK = 7
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
     character(len=*), intent(in) :: DIMNAME       ! Dimension name
@@ -918,13 +895,11 @@ contains ! ======================= Public Procedures =========================
   ! --------------------------------------  MLS_Swath_In_File_sca  -----
   logical function MLS_Swath_In_File_sca( filename, swath, error )
     ! Returns .true. if swath found in file, .false. otherwise
-    use HDF5, only: Size_t
     character(len=*), intent(in) :: filename
     character(len=*), intent(in) :: swath
     integer, optional, intent(out) :: error
 
     ! Internal variables
-    logical, parameter               :: Deebug = .false.
     integer :: Me = -1               !   String index for trace cacheing
     integer                          :: FileId
     integer                          :: grpId
@@ -933,6 +908,7 @@ contains ! ======================= Public Procedures =========================
     ! print*,'Scalar version'
     call trace_begin ( me, 'MLS_Swath_In_File_sca' , cond=.false. )
     ! Now let's try to read the file we just created
+    error = 0 ! What kind of error should we catch?
     call check( nf90_open(Filename, NF90_NoWrite, FileId) , &
       & 'MLS_Swath_In_File_sca ' // trim(FileName) )
     ! Any group with that name?
@@ -946,13 +922,11 @@ contains ! ======================= Public Procedures =========================
   ! --------------------------------------  MLS_Swath_In_File_fid  -----
   logical function MLS_Swath_In_File_fid( fileId, swath, error )
     ! Returns .true. if swath found in file, .false. otherwise
-    use HDF5, only: Size_t
     integer, intent(in)            :: FileId
     character(len=*), intent(in)   :: swath
     integer, optional, intent(out) :: error
 
     ! Internal variables
-    logical, parameter               :: Deebug = .false.
     integer :: Me = -1               !   String index for trace cacheing
     integer                          :: grpId
 
@@ -960,6 +934,7 @@ contains ! ======================= Public Procedures =========================
     ! print*,'Scalar version'
     call trace_begin ( me, 'MLS_Swath_In_File_fid' , cond=.false. )
     ! Any group with that name?
+    error = 0 ! What kind of error should we catch?
     call check( nf90_inq_ncid( FileId, swath, grpId) , &
       & 'MLS_Swath_In_File_fid ' // trim(swath), &
       & FailureOK=.true., silent=.true. )
@@ -970,7 +945,6 @@ contains ! ======================= Public Procedures =========================
   ! --------------------------------------  MLS_Swath_In_File_arr  -----
   logical function MLS_Swath_In_File_arr(filename, swaths, &
     & which, error )
-    use HDF5, only: Size_t
     ! Array version of the above
     character(len=*), intent(in) :: filename
     character(len=*), dimension(:), intent(in) :: swaths
@@ -980,12 +954,11 @@ contains ! ======================= Public Procedures =========================
     ! Internal variables
     integer                          :: I
     integer :: Me = -1               !   String index for trace cacheing
-    integer                          :: Nswaths
 
     ! Begin execution
     call trace_begin ( me, 'MLS_Swath_In_File_arr' , cond=.false. )
-    nswaths = 0
     MLS_Swath_In_File_arr = .false.
+    error = 0 ! What kind of error should we catch?
     which = .false.
     if ( size(swaths) > size(which) ) &
         CALL MLSMessage ( MLSMSG_Error, moduleName,  &
@@ -1100,6 +1073,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSNetCDF4
 
 ! $Log$
+! Revision 1.5  2023/09/28 20:59:43  pwagner
+! Corrected bookending comment for mls_InqSwath
+!
 ! Revision 1.4  2022/12/22 22:54:49  pwagner
 ! Comment out some debug statements
 !

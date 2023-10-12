@@ -14,18 +14,17 @@ program l2gp2nc4 ! Rewrite L2GPData files as NetCDF4
 !=================================
 
    use Dump_1, only: Dump
-   use Dump_Options, only: SDFormatDefault, DumpDumpOptions
    use HDF, only: Dfacc_Read, Dfacc_Create    
    use HDF5, only: H5F_ACC_RDONLY_F, &
      & H5fclose_F, H5fopen_F, H5gopen_F, H5gclose_F, H5fis_HDF5_F
    use HighOutput, only: OutputNamedValue
    use Intrinsic, only: L_HDF, L_Swath, L_NetCDF4
-   use L2GPData, only: L2GPData_T, L2GPnamelen, Maxswathnamesbufsize, Rgp, &
+   use L2GPData, only: L2GPData_T, L2GPnamelen, Maxswathnamesbufsize, &
      & Dump, ReadL2GPData, DestroyL2GPcontents
    use Machine, only: Hp, Getarg
-   use MLSCommon, only: MLSFile_T, Split_path_name
+   use MLSCommon, only: MLSFile_T, Split_Path_Name, Split_Name_Extension
    use MLSFiles, only: HDFversion_5, InitializeMLSFile, MLS_Inqswath, &
-     & MLS_CloseFile, MLS_OpenFile, Split_Path_Name
+     & MLS_CloseFile, MLS_OpenFile
    use MLSHDF5, only: IsHDF5DSPresent, LoadFromHDF5DS, MLS_H5open, MLS_H5close
    use MLSHDFeos, only: MLS_Isglatt, He5_Ehrdglatt
    use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
@@ -33,13 +32,11 @@ program l2gp2nc4 ! Rewrite L2GPData files as NetCDF4
    use MLSNetCDF4, only: MLS_SwWrattr
    use MLSStringLists, only: GetStringElement, NumStringElements, &
      & ReplaceSubstring
-   use MLSStrings, only: Lowercase, Reverse
    use NCL2GP, only: WriteNCGlobalAttr, WriteNCL2GPData
    use NetCDF, only: NF90_Char, NF90_Open, NF90_Def_Dim, NF90_Def_Grp, &
      & NF90_Def_Var, NF90_Put_Var, NF90_StrError, NF90_Write
-   use Optional_M, only: Default
-   use Output_M, only: Blanks, Newline, Output, &
-     & ResumeOutput, SuspendOutput, SwitchOutput
+   use Output_M, only: Output, &
+     & ResumeOutput, SwitchOutput
    use Printit_M, only: Set_Config
    implicit none
 
@@ -79,24 +76,6 @@ program l2gp2nc4 ! Rewrite L2GPData files as NetCDF4
   integer            :: n_filenames
   integer     ::  error ! Counting indices & Error flags
   logical     :: is_hdf5
-  logical     :: is_present
-  integer, save                   :: numGood = 0
-  integer, save                   :: numGoodPrec = 0
-  integer, save                   :: numNotUseable = 0
-  integer, save                   :: numOddStatus = 0
-  integer, save                   :: numPostProcStatus = 0
-  real, dimension(3), save        :: numTest = 0.
-  integer, parameter              :: PostProcBitIndex = 4
-  integer, parameter              :: MAXNUMBITSUSED = 10 !9
-  ! The bit number starts at 0: bitNumber[1] = 0
-  integer, dimension(MAXNUMBITSUSED), parameter :: bitNumber = &
-    & (/ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 /)
-  integer, dimension(MAXNUMBITSUSED, 2), save :: bitCounts = 0
-  character(len=*), parameter     :: bitNames = &
-    & '  dontuse,   bewary,     info,postprocd,' // &
-    & '    hicld,    locld,   nogmao,abandoned,   toofew,    crash'
-  !   01234567890123456789012345678901234567890123456789012345678901234567890123456789
-  real(rgp), dimension(:), pointer :: values => null()
   ! Executable
   call set_config ( useToolkit = .false., logFileUnit = -1 )
   call switchOutput( 'stdout' )
@@ -130,7 +109,6 @@ contains
      type ( Options_T ) :: options
      integer ::                         error = 1
      integer, save ::                   i = 1
-     character(len=255) :: argstr
   ! Get inputfile name, process command-line args
   ! (which always start with -)
     do
@@ -265,10 +243,11 @@ contains
     integer                              :: i
     integer                              :: listsize
     type (L2GPData_T)                    :: l2gp
-    character (len=MAXSWATHNAMESBUFSIZE) :: matches
     type(MLSFile_T)                      :: MLSFile
     type(MLSFile_T)                      :: NC4File
     character(len=255)                   :: ncfilename ! filename
+    character(len=3)                     :: extension
+    character(len=255)                   :: purefilename ! w/o extension
     integer                              :: noSwaths
     integer                              :: status
     character (len=L2GPNameLen)          :: swath
@@ -298,20 +277,22 @@ contains
     ! Create nc4 file:
     ! Assume the hdfeos file name is some_name.he5
     ! We want                        some_name.nc4
+    call Split_Name_Extension( filename, purefilename, extension )
+    ncfilename = trim(purefilename) // '.' // options%ncSuffix
     ! A trick!
     ! Reversing the filenames means simply transform
     ! 5eh.whatever -> 4cn.whatever
     ! which is easy with substrings
     ! We'll use thee index of the '.' to separate the file name 
     ! from its extension. Some NetCDF4 files use ".nc4", others ".nc".
-    ncfilename = Reverse(trim(filename))
-    i = index( ncfilename, '.' )
-    if ( i < 1 ) then
-      print *, 'Sorry, coild not find file name extension in: ' // trim(filename)
-      stop
-    endif
-    ncfilename = trim(options%ncSuffix) // ncfilename(i:)
-    ncfilename = Reverse(trim(ncfilename))
+!     ncfilename = Reverse(trim(filename))
+!     i = index( ncfilename, '.' )
+!     if ( i < 1 ) then
+!       print *, 'Sorry, coild not find file name extension in: ' // trim(filename)
+!       stop
+!     endif
+!     ncfilename = trim(options%ncSuffix) // ncfilename(i:)
+!     ncfilename = Reverse(trim(ncfilename))
     call outputNamedValue( 'NetCDF4 file name', ncfilename )
     status = InitializeMLSFile ( NC4File, type=l_netcdf4, access=DFACC_CREATE, &
      & name=ncfilename )
@@ -386,8 +367,8 @@ contains
      ! They will be put into a new group 
      ! "HDFEOS INFORMATION"
      ! Args
-     type(MLSFile_T), intent(in)          :: hdf
-     type(MLSFile_T), intent(in)          :: nc4
+     type(MLSFile_T), intent(inout)       :: hdf
+     type(MLSFile_T), intent(inout)       :: nc4
      ! Internal variables
      integer                              :: coredimid
      integer                              :: corevarid
@@ -530,6 +511,9 @@ end program l2gp2nc4
 !==================
 
 ! $Log$
+! Revision 1.5  2023/09/28 21:01:14  pwagner
+! Added -nc option to name converted file something.nc
+!
 ! Revision 1.4  2022/12/22 22:59:42  pwagner
 ! Fixed bugs, including LocalGranuleId
 !
