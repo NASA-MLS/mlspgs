@@ -35,7 +35,7 @@
     returnStatus = -1
     logtemp = Is_datafield_in_swath(swathId, fieldname, which_group)
 !     print *, 'logtemp ', logtemp
-    if ( Is_datafield_in_swath(swathId, fieldname, which_group) ) then
+    if ( logTemp ) then
       ! Must get grpid for Groupname
 !       print *, 'seek group name and id'
       call check( &
@@ -60,6 +60,9 @@
 
 !   end subroutine MLS_Swrdfld_1D_DOUBLE
 ! $Log$
+! Revision 1.2  2022/11/16 23:14:46  pwagner
+! Warn if fieldname not found in either group
+!
 ! Revision 1.1  2020/03/06 00:24:19  pwagner
 ! First commit
 !
