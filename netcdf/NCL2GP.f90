@@ -17,15 +17,15 @@ module NCL2GP
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use Dump_1, only: Dump
   use NetCDF ! Everything
-  use HDF, only: Dfacc_Rdonly, Dfacc_Read, Dfacc_Create, Dfacc_Rdwr
-  use HighOutput, only: BeVerbose, OutputNamedValue, StyledOutput
+  use HDF, only: Dfacc_Rdonly, Dfacc_Read, Dfacc_Rdwr
+  use HighOutput, only: BeVerbose, OutputNamedValue
   use Intrinsic ! "units" Type Literals, Beginning With L
   use L2GPData, only: CharAttrLen, Col_Species_Keys, Col_Species_Hash, &
     & Data_Field1, Data_Field2, Dim_Name1, Dim_Name12, Dim_Name123, &
     & L2GPData_T, L2GPNameLen, MaxChunkTimes, MaxNLevels, &
     & Max_DimL, Max_DimL1, Max_DimL12, Max_DimL123, NumGeolocFields, &
-    & RGP, UnLim, &
-    & DestroyL2GPContents, Dump, OutputL2GP_Attributes, SetupNewL2GPRecord, &
+    & RGP, &
+    & DestroyL2GPContents, Dump, SetupNewL2GPRecord, &
     & WriteMastersFileAttributes
   use MLSCommon, only: L2MetaData_T, &
     & R4, R8, MLSFile_T, UndefinedIntegerValue
@@ -33,10 +33,10 @@ module NCL2GP
   use MLSMessagemodule, only: MLSMSG_Error, MLSMSG_Warning, MLSMessage
   use MLSStats1, only: MLSMin
   use MLSStringlists, only: ExtractSubstring, GetHashElement, GetStringElement, &
-    & List2Array, NumStringElements, ReplaceSubstring, StringElementnum
-  use MLSStrings, only: Lowercase, Replace
+    & List2Array, NumStringElements, ReplaceSubstring
+  use MLSStrings, only: Lowercase
   use Output_M, only: Output
-  use PCfhdr, only: GA_Value_Length, GlobalAttributes_T, GlobalAttributes, &
+  use PCfhdr, only: GlobalAttributes_T, GlobalAttributes, &
     & DumpGlobalAttributes
   use SDPToolKit, only: Max_Orbits
   use Time_M, only: SayTime, ConfigureSayTime, Time_Now
@@ -108,7 +108,6 @@ module NCL2GP
 
   ! Print debugging stuff?
   logical, parameter          :: DEEBUG = .false.  
-  character(len=1), parameter :: BLANK = ' '
   real                        :: t2
   integer, parameter          :: MaxFlds = 24
   integer, parameter          :: MaxRank = 7
@@ -126,8 +125,6 @@ contains ! ======================= Public Procedures =========================
     ! it is lengthened automagically. 
     ! This call has been altered recently, so that it can be used to create
     ! a swath as well as adding to one. 
-
-    use MLSHDFEOS, only: MLS_Swath_In_File
 
     ! Arguments
 
@@ -152,19 +149,16 @@ contains ! ======================= Public Procedures =========================
     logical, intent(in), optional :: createSwath
     integer, optional, intent(in) :: maxchunksize
     ! Local
-    integer :: actual_ntimes
     logical :: alreadyOpen
     type (L2GPData_T) :: largerl2gp
     integer :: Me = -1                  ! String index for trace cacheing
     integer :: myLastProfile
     character (len=L2GPNameLen) :: myswathName
     logical :: notUnlimited
-    integer :: numProfs
     integer :: status
     logical :: swath_exists
     logical :: timing
     real :: tFile ! How long have we been fooling with this file?
-    type (L2GPData_T) :: totall2gp
     ! logical, parameter :: DEEBUG = .false.
 
     ! Executable code
@@ -213,7 +207,6 @@ contains ! ======================= Public Procedures =========================
       if(DEEBUG) print *, 'Must create swath'
       if(DEEBUG) print *, 'Will have ', myLastProfile, ' profiles'
       if(DEEBUG) print *, 'instead of ', l2gp%nTimes, ' profiles'
-      actual_ntimes = l2gp%nTimes
       ! By default allow limited; 
       ! may force unlimited by setting avoidUnlimitedDims to FALSE
       notUnlimited = .false. ! ( avoidUnlimitedDims .and. present(totNumProfs) )
@@ -436,14 +429,12 @@ contains ! ======================= Public Procedures =========================
   ! ---------------------- CpNCGlobalAttr  ---------------------------
   subroutine CpNCGlobalAttr( File1Handle, File2Handle, status )
   ! Copy global attributes from file 1 to file 2
-    use MLSNetCDF4, only: MLS_SwRdattr, MLS_Swwrattr
     ! Args
     integer, intent(in)            :: File1Handle                      
     integer, intent(in)            :: File2Handle                      
     integer, intent(out)           :: status                           
     ! Internal variables
     type(GlobalAttributes_T)       :: gAttributes                      
-    type(GlobalAttributes_T)       :: gAttributesOriginal              
     ! Executable
     if ( DEEBUG ) then
       call output( 'Before reading global attributes', advance='yes' )
@@ -476,7 +467,6 @@ contains ! ======================= Public Procedures =========================
     logical, optional, intent(in) :: DumpData
 
     ! Local
-    logical                       :: alReadyOpen
     logical                       :: myDumpData
     logical                       :: myDumpAttributes
     integer                       :: numProfs ! Number actually Dump
@@ -523,9 +513,8 @@ contains ! ======================= Public Procedures =========================
   subroutine OutputNCL2GP_createFile_MF (l2gp, L2GPFile, &
     & swathName, nLevels, notUnlimited, compressTimes)
 
-  use HDFEOS5, only: HE5S_Unlimited_F
-  use MLSNetCDF4, only: NCError, &
-    & MLS_DFldsetup, MLS_GFldsetup, MLS_Swcreate, MLS_SWDetach, MLS_SWDefdim
+    use MLSNetCDF4, only: MLS_DFldsetup, MLS_GFldsetup, MLS_Swcreate, &
+      & MLS_SWDetach, MLS_SWDefdim
     ! Brief description of subroutine
     ! This subroutine sets up the structural definitions in an empty L2GP file.
 
@@ -555,7 +544,6 @@ contains ! ======================= Public Procedures =========================
     integer :: f_dimId       ! NetCDF dimension identifier for nFreqs
     integer :: x_dimId       ! NetCDF dimension identifier for nTimes
     integer :: y_dimId       ! NetCDF dimension identifier for nLevels
-    integer :: z_dimId       ! NetCDF dimension identifier for nTimesTotal
     ! Executable
     deebughere = DEEBUG !   .or. .TRUE.
     if (present(swathName)) then
@@ -595,7 +583,6 @@ contains ! ======================= Public Procedures =========================
       x_dimid = mls_swdefdim( swid, 'nTimes', max(l2gp%nTimesTotal,1) )
     endif
     y_dimid = mls_swdefdim( swid, 'nLevels', l2gp%nLevels )
-    z_dimid = mls_swdefdim( swid, 'nTimesTotal', max(l2gp%nTimesTotal,1) )
     ! dimids =  (/ y_dimid, x_dimid, z_dimid /)
     if ( l2gp%nFreqs > 0 ) then
       f_dimid = mls_swdefdim( swid, 'nFreqs', l2gp%nFreqs )
@@ -798,7 +785,6 @@ contains ! ======================= Public Procedures =========================
     logical, optional, intent(in) :: ReadData
 
     ! Local
-    integer :: myhdfVersion
     integer :: status
     type( MLSFile_T ) :: l2gpFile
     
@@ -822,7 +808,6 @@ contains ! ======================= Public Procedures =========================
     ! returning a filled data structure and the !
     ! number of profiles read.
     ! hdfVersion may be WILDCARDHDFVERSION
-    use Intrinsic, only: L_HDFeos, L_HDF, L_Swath
     use MLSFiles, only: HDFVersion_5
     ! Arguments
 
@@ -834,7 +819,6 @@ contains ! ======================= Public Procedures =========================
     logical, optional, intent(in) :: ReadData
 
     ! Local
-    integer :: L2FileHandle
     type(MLSFile_T)                :: MLSFile
     integer :: status
     
@@ -898,10 +882,8 @@ contains ! ======================= Public Procedures =========================
 
   subroutine ReadNCL2GPData_MF_NC4( L2GPFile, swathname, l2gp, &
     & numProfs, firstProf, lastProf, ReadData )
-  use HDF5, only: H5FClose_F
-  use MLSNetCDF4, only: MLS_SWAttach, MLS_SWDetach, MLS_SWDiminfo, &
-    & MLS_SwrdAttr, MLS_SWRdLAttr, MLS_SWRdfld
-  use MLSStringLists, only: IsInList
+  use MLSNetCDF4, only: MLS_SWAttach, MLS_SWDetach, &
+    & MLS_SWRdLAttr, MLS_SWRdfld
     !------------------------------------------------------------------------
 
     ! This routine reads an L2GP file that has been written in NetCDF format.
@@ -924,16 +906,8 @@ contains ! ======================= Public Procedures =========================
     ! Local Variables
     character (len=80) :: DF_Name
     character (len=80) :: DF_Precision
-    character (len=80) :: dimlist
-    character (len=80) :: fieldlist
     character (len=80) :: list
-    character (len=80) :: maxdimlist
     character (len=8)  :: dimName
-    integer :: hdfVersion
-    integer :: rank
-    integer, dimension(MaxFlds) :: ranks
-    integer, dimension(MaxFlds) :: types
-    integer, dimension(7) :: numberType
     character (len=480) :: msr
 
     integer, dimension(MAXDIMSIZE) :: dims
@@ -944,7 +918,6 @@ contains ! ======================= Public Procedures =========================
     integer :: lev
     integer :: nDims
     integer :: nFlds
-    integer :: size
     integer :: swid
     integer :: status
     integer :: Me = -1                  ! String index for trace cacheing
@@ -964,35 +937,25 @@ contains ! ======================= Public Procedures =========================
     real(r4), pointer, dimension(:) :: REALSURF
     real(r4), pointer, dimension(:) :: REALPROF
     real(r4), pointer, dimension(:,:,:) :: REAL3
-    logical :: dontfail
-    logical :: ReadingConvergence
-    logical :: ReadingAscDescMode
     logical :: ReadingData
     logical :: deeBugHere
     integer, dimension(MaxRank) :: start
     integer, dimension(MaxRank) :: edge
-    integer, dimension(MaxRank) :: block
     integer, dimension(MaxRank) :: stride
     integer, dimension(MaxFlds) :: varIDs
     ! Executable code
     call trace_begin ( me,  'ReadNCL2GPData_MF_NC4', cond=.false. )
     deeBugHere = DEEBUG ! .or. .true.
     nullify ( realFreq, realSurf, realProf, real3 )
-    hdfVersion = L2GPFile%hdfVersion
     ! Don't fail when trying to read an mls-specific field 
     ! if the file is from another Aura instrument
-    dontfail = .false.
     ReadingData = .true.
     if ( present(ReadData) ) ReadingData = ReadData
-    ReadingConvergence = .false.
-    ReadingAscDescMode = .false.
     if ( deeBugHere ) call Dump ( L2GPFile, Details=2 )
     ! Attach to the swath for reading
     l2gp%Name = swathname
     ! We have suffered surprises when hefeos character fields 
     ! were not initialized
-    dimlist = ' '
-    fieldlist = ' '
     list = ' '
     
     if ( deeBugHere ) print *, 'Trying to attach ', trim(l2gp%Name)
@@ -1317,7 +1280,7 @@ contains ! ======================= Public Procedures =========================
    subroutine ReadNCGlobalAttr_FileID ( fileID, gAttributes, status )
 !------------------------------------------------------------
 ! Should eventually be moved to PCFHdr module
-    use MLSNetCDF4, only: MLS_SwRdattr, MLS_IsGlAtt
+    use MLSNetCDF4, only: MLS_SwRdattr
 ! Brief description of subroutine
 ! This subroutine reads the global attributes for a NetCDF4 file
 
@@ -1327,11 +1290,8 @@ contains ! ======================= Public Procedures =========================
       type(GlobalAttributes_T)       :: gAttributes        
       integer                        :: status
 ! Internal variables
-      logical :: myDOI
       logical, parameter :: DeeBug = .false.
       integer, dimension(1) :: ibuf
-      real(r8), dimension(1) :: dbuf
-      logical :: my_skip
 ! Executable
       if ( DeeBug ) print *, 'Reading NetCDF4 Global attributes'
       status = MLS_SwRdattr(fileID, &
@@ -1575,19 +1535,15 @@ contains ! ======================= Public Procedures =========================
       logical, intent(in), optional :: Doi          ! Write DOI
       logical, intent(in), optional :: MiscNotes    ! Write MiscNotes
       logical, intent(in), optional :: Skip_if_already_there
-      double precision              :: TAI93At0zOfGranule ! Correct value to write
 ! Internal variables
       integer :: status
       logical :: myDOI
-      logical :: myMiscNotes
       logical, parameter :: DeeBug = .false.
       logical :: my_skip
 ! Executable
       if ( deebug ) print *, 'Writing NetCDF4 Global attributes'
       myDOI = .false.
       if ( present(DOI) ) myDOI=DOI
-      myMiscNotes = .false.
-      if ( present(MiscNotes) ) myMiscNotes=MiscNotes
       my_skip = .false.
       if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
       if ( deebug ) then
@@ -1602,7 +1558,7 @@ contains ! ======================= Public Procedures =========================
        & status = MLS_Swwrattr(fileID, &
        & 'identifier_product_doi', nf90_char, 1, &
        &  charBuffer=GlobalAttributes%DOI)
-      if ( len_trim(GlobalAttributes%productionLoc) ) &
+      if ( len_trim(GlobalAttributes%productionLoc) > 0 ) &
        & status = MLS_Swwrattr(fileID, &
        & 'ProductionLocation', nf90_char, 1, &
        &  charBuffer=GlobalAttributes%productionLoc)
@@ -1764,7 +1720,6 @@ contains ! ======================= Public Procedures =========================
     ! Variables
     character (len=132) :: name     ! Either swathName or l2gp%name
     character(len=CHARATTRLEN) :: abbr_uniq_fdef
-    logical, parameter :: countEmpty = .true.
     character(len=CHARATTRLEN) :: expnd_uniq_fdef
     integer :: field
     character(len=CHARATTRLEN) :: field_name
@@ -2244,9 +2199,9 @@ contains ! ======================= Public Procedures =========================
   !----------------------------------------  DumpL2GP_attributes_NC_MF  -----
   subroutine DumpL2GP_attributes_NC_MF( L2GPFile, l2gp, swathName )
   use HDFEOS5, only: MLS_Chartype
-  use MLSHDFEOS, only: MLS_SWAttach, MLS_SWDetach, HE5_EHRdglatt
-  use MLSNetCDF4, only: MLS_SwRdattr, MLS_SWRdLAttr
-  use PCFHdr, only:  GlobalAttributes_T, HE5_ReadGlobalAttr, &
+  use MLSHDFEOS, only: MLS_SWAttach, MLS_SWDetach
+  use MLSNetCDF4, only: MLS_SwRdLattr
+  use PCFHdr, only:  GlobalAttributes_T, &
     & DumpGlobalAttributes
     ! Brief description of subroutine
     ! This subroutine reads and then dumps the attributes for an l2gp
@@ -2266,7 +2221,6 @@ contains ! ======================= Public Procedures =========================
     ! Variables
     logical                           :: alreadyOpen
     type (GlobalAttributes_T)         :: gAttributes
-    character(len=255)                :: ProcessLevel
     integer                           :: DayofYear
     double precision                  :: TAI93At0zOfGranule
     real(rgp), dimension(MAXNLEVELS)  :: pressures
@@ -2519,12 +2473,9 @@ contains ! ======================= Public Procedures =========================
   ! What we really need is a subroutine to read l2gp attributes
   subroutine OutputL2GP_attributes_MF(l2gp, L2GPFile, swathName)
 
-  use HDFEOS5, only: HE5T_Native_Int, HE5T_Native_Real, HE5T_Native_Double, &
-    & MLS_Chartype
-  use HE5_SWAPI, only: HE5_SWWrattr, HE5_SWWrlattr
+  use HDFEOS5, only: HE5T_Native_Real, HE5T_Native_Double
   use MLSNetCDF4, only: MLS_ISGlatt, &
-    & MLS_SWAttach, MLS_SWDetach, MLS_SWWrattr, MLS_SWWrlattr
-  use PCFHDR, only:  HE5_Writeglobalattr
+    & MLS_SWAttach, MLS_SWDetach, MLS_SWWrlattr
     ! Brief description of subroutine
     ! This subroutine writes the attributes for an l2gp
     ! These include
@@ -2539,7 +2490,6 @@ contains ! ======================= Public Procedures =========================
     character (len=*), intent(in), optional :: swathName ! Defaults->l2gp%name
 
     ! Parameters
-    character (len=*), parameter :: NOUNITS = 'NoUnits'
 
     ! The following pair of string list encode the Units attribute
     ! corresponding to each Title attribute; e.g., the Units for Latitude is deg
@@ -2549,39 +2499,17 @@ contains ! ======================= Public Procedures =========================
     character (len=*), parameter :: GeolocationUnits = &
       & 'deg,deg,s,h,deg,' // &
       & 'deg,deg,NoUnits,hPa,GHz'
-    character (len=*), parameter :: GeoUniqueFieldDefinition = &
-      & 'HMT,HMT,AS,HMT,HMT,' // &
-      & 'M,M,M,AS,M'   ! These are abbreviated values
-    character (len=*), parameter :: UniqueFieldDefKeys = &
-      & 'HM,HMT,MT,AS,M'
-    character (len=*), parameter :: UniqueFieldDefValues = &
-      & 'HIRDLS-MLS-Shared,HIRDLS-MLS-TES-Shared,MLS-TES-Shared,' // &
-      & 'Aura-Shared,MLS-Specific'  ! Expanded values
-    ! The following associate UniqueFieldDefs with species names
-    character (len=*), parameter :: Species = &
-      & 'Temperature,BrO,CH3CN,CO,ClO,GPH,HCl,HCN,H2O,H2O2,' // &
-      & 'HNO3,HOCl,HO2,N2,N2O,OH,O2,O3,RHI,SO2'
-    character (len=*), parameter :: SpUniqueFieldDefinition = &
-      & 'HMT,M,M,MT,M,M,M,M,HMT,M,' // &
-      & 'HMT,M,M,M,HM,M,M,HMT,M,M'   ! These are abbreviated values
-    ! logical, parameter :: DEEBUG = .true.
 
     ! Variables
     character (len=132) :: name     ! Either swathName or l2gp%name
-    character(len=CHARATTRLEN) :: abbr_uniq_fdef
-    character(len=CHARATTRLEN) :: expnd_uniq_fdef
-    integer :: field
-    character(len=CHARATTRLEN) :: field_name
-    logical :: isColumnAmt
-    logical :: isTPPressure
     integer :: rgp_type
-    character(len=CHARATTRLEN) :: species_name ! Always lower case
+    ! character(len=CHARATTRLEN) :: species_name ! Always lower case
     integer :: status
     integer :: swid
-    character(len=CHARATTRLEN) :: temp_name
+    ! character(len=CHARATTRLEN) :: temp_name
     character(len=CHARATTRLEN), dimension(NumGeolocFields) :: theTitles
     character(len=CHARATTRLEN), dimension(NumGeolocFields) :: theUnits
-    character(len=CHARATTRLEN) :: units_name
+    ! character(len=CHARATTRLEN) :: units_name
     ! Begin
     if (present(swathName)) then
        name=swathName
@@ -2837,6 +2765,9 @@ contains ! ======================= Public Procedures =========================
 end module NCL2GP
 
 ! $Log$
+! Revision 1.8  2023/09/15 16:39:33  pwagner
+! ReadNCGlobalAttr now public
+!
 ! Revision 1.7  2022/12/22 22:56:41  pwagner
 ! Added two new Dumping subroutines; fixed bugs
 !

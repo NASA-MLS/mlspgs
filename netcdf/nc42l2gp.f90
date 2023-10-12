@@ -10,37 +10,33 @@
 ! foreign countries or providing access to foreign persons.
 
 !=================================
-program nc42l2gp ! Rewrite Netcdf4 L2GPData files as hdfeos
+program nc42l2gp ! Rewrite NetCDF4 L2GPData files as hdfeos
 !=================================
 
    use Dump_1, only: Dump
-   use Dump_Options, only: SDFormatDefault, DumpDumpOptions
    use HDF, only: Dfacc_Read, Dfacc_Create    
    use HDF5, only: H5F_Acc_RdOnly_F, &
-     & H5fclose_F, H5fopen_F, H5gopen_F, H5gclose_F, H5fis_HDF5_F
+     & H5fclose_F, H5fopen_F, H5gopen_F, H5fis_HDF5_F
    use HDFEOS5, only: MLS_Chartype
    use HighOutput, only: OutputNamedValue
    use Intrinsic, only: L_HDF, L_Swath, L_NetCDF4
-   use L2GPData, only: L2GPData_T, L2GPnamelen, Maxswathnamesbufsize, Rgp, &
+   use L2GPData, only: L2GPData_T, L2GPnamelen, Maxswathnamesbufsize, &
      & Dump, DestroyL2GPcontents, WriteL2GPData
    use Machine, only: Hp, Getarg
-   use MLSCommon, only: MLSFile_T, Split_path_name
+   use MLSCommon, only: MLSFile_T, Split_Path_Name, Split_Name_Extension
    use MLSFiles, only: HDFversion_5, InitializeMLSFile, &
-     & MLS_CloseFile, MLS_OpenFile, Split_Path_Name
+     & MLS_CloseFile, MLS_OpenFile
    use MLSHDF5, only: IsHDF5DSPresent, LoadFromHDF5DS, MLS_H5open, MLS_H5close
-   use MLSHDFeos, only: MLS_Isglatt, He5_Ehrdglatt, He5_EHWrGlAtt, MLS_EhwrGlAtt
+   use MLSHDFeos, only: MLS_Isglatt, MLS_EhwrGlAtt
    use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
      & MLSMessage
-   use MLSNetCDF4, only: MLS_Swrdattr, MLS_SwWrattr, MLS_InqSwath
+   use MLSNetCDF4, only: MLS_Swrdattr, MLS_InqSwath
    use MLSStringLists, only: GetStringElement, NumStringElements, &
      & ReplaceSubstring
-   use MLSStrings, only: Lowercase, Reverse
    use NCL2GP, only: ReadNCGlobalAttr, ReadNCL2GPData
    use NetCDF, only: NF90_Char, NF90_Open, NF90_Def_Dim, NF90_Def_Grp, &
      & NF90_Def_Var, NF90_Put_Var, NF90_StrError, NF90_Write
-   use Optional_M, only: Default
-   use Output_M, only: Blanks, Newline, Output, &
-     & ResumeOutput, SuspendOutput, SwitchOutput
+   use Output_M, only: Output, ResumeOutput, SwitchOutput
    use PCFHdr, only: HE5_WriteGlobalAttr
    use Printit_M, only: Set_Config
    implicit none
@@ -80,24 +76,6 @@ program nc42l2gp ! Rewrite Netcdf4 L2GPData files as hdfeos
   integer            :: n_filenames
   integer     ::  error ! Counting indices & Error flags
   logical     :: is_hdf5
-  logical     :: is_present
-  integer, save                   :: numGood = 0
-  integer, save                   :: numGoodPrec = 0
-  integer, save                   :: numNotUseable = 0
-  integer, save                   :: numOddStatus = 0
-  integer, save                   :: numPostProcStatus = 0
-  real, dimension(3), save        :: numTest = 0.
-  integer, parameter              :: PostProcBitIndex = 4
-  integer, parameter              :: MAXNUMBITSUSED = 10 !9
-  ! The bit number starts at 0: bitNumber[1] = 0
-  integer, dimension(MAXNUMBITSUSED), parameter :: bitNumber = &
-    & (/ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 /)
-  integer, dimension(MAXNUMBITSUSED, 2), save :: bitCounts = 0
-  character(len=*), parameter     :: bitNames = &
-    & '  dontuse,   bewary,     info,postprocd,' // &
-    & '    hicld,    locld,   nogmao,abandoned,   toofew,    crash'
-  !   01234567890123456789012345678901234567890123456789012345678901234567890123456789
-  real(rgp), dimension(:), pointer :: values => null()
   ! Executable
   call set_config ( useToolkit = .false., logFileUnit = -1 )
   call switchOutput( 'stdout' )
@@ -131,7 +109,6 @@ contains
      type ( Options_T ) :: options
      integer ::                         error = 1
      integer, save ::                   i = 1
-     character(len=255) :: argstr
   ! Get inputfile name, process command-line args
   ! (which always start with -)
     do
@@ -203,8 +180,8 @@ contains
   
   subroutine rewrite_one_file ( filename, options )
     use MLSStrings, only:  Asciify
-    use PCFHdr, only:  GlobalAttributes_T, HE5_ReadGlobalAttr, &
-      & DumpGlobalAttributes, GlobalAttributes
+    use PCFHdr, only:  GlobalAttributes_T, DumpGlobalAttributes, &
+      & GlobalAttributes
     type (GlobalAttributes_T)            :: gAttributes
     ! Dummy args
     character(len=*), intent(in)         :: filename ! filename
@@ -215,17 +192,16 @@ contains
     integer                              :: i
     integer                              :: listsize
     type (L2GPData_T)                    :: l2gp
-    character (len=MAXSWATHNAMESBUFSIZE) :: matches
     type(MLSFile_T)                      :: MLSFile
     type(MLSFile_T)                      :: NC4File
     character(len=255)                   :: hdfeosname ! filename
+    character(len=3)                     :: extension
+    character(len=255)                   :: purefilename ! w/o extension
     integer                              :: noSwaths
     integer                              :: status
     character (len=L2GPNameLen)          :: swath
     character (len=MAXSWATHNAMESBUFSIZE) :: SwathList
-    character(len=40)                    :: ProcessLevel       
     double precision                     :: TAI93At0zOfGranule 
-    integer                              :: DayofYear          
     character (len=L2GPNameLen)          :: HostName
     character (len=MAXSWATHNAMESBUFSIZE) :: MiscNotes
     character (len=L2GPNameLen)          :: DOI
@@ -247,20 +223,22 @@ contains
     ! Create hdfeos file:
     ! Assume the netcdf file name is some_name.nc4
     ! We want                        some_name.he5
+    call Split_Name_Extension( filename, purefilename, extension )
+    hdfeosname = trim(purefilename) // '.he5'
     ! A trick!
     ! Reversing the filenames means simply transform
     ! 4cn.whatever -> 5eh.whatever
     ! which is easy with substrings
     ! We'll use the index of the '.' to separate the file name 
     ! from its extension. Some NetCDF4 files use ".nc4", others ".nc".
-    hdfeosname = Reverse(trim(filename))
-    i = index( hdfeosname, '.' )
-    if ( i < 1 ) then
-      print *, 'Sorry, coild not find file name extension in: ' // trim(filename)
-      stop
-    endif
-    hdfeosname = '5eh' // hdfeosname(i:)
-    hdfeosname = Reverse(trim(hdfeosname))
+!     hdfeosname = Reverse(trim(filename))
+!     i = index( hdfeosname, '.' )
+!     if ( i < 1 ) then
+!       print *, 'Sorry, coild not find file name extension in: ' // trim(filename)
+!       stop
+!     endif
+!     hdfeosname = '5eh' // hdfeosname(i:)
+!     hdfeosname = Reverse(trim(hdfeosname))
     call outputNamedValue( 'HDFEOS file name', hdfeosname )
     status = InitializeMLSFile ( MLSFile, type=l_swath, access=DFACC_CREATE, &
      & name=hdfeosname, hdfVersion=HDFVERSION_5 )
@@ -481,6 +459,9 @@ end program nc42l2gp
 !==================
 
 ! $Log$
+! Revision 1.2  2023/09/28 21:05:46  pwagner
+! No longer assumes NetCDF file extension is .nc4
+!
 ! Revision 1.1  2023/09/15 16:40:21  pwagner
 ! First commit
 !
