@@ -82,7 +82,7 @@ contains ! =====     Public Procedures     =============================
       & Rhiprecisionfromortoh2o, Withestnoise, &
       & Hydrostatically_Gph, Hydrostatically_Ptan, Fromsplitsideband, &
       & Gphprecision, Fromisotope, Fromasciifile, Rotatemagneticfield, &
-      & Explicit, Froml1b, &
+      & Explicit, Froml1b, ResidualCorrection, &
       & Froml2aux, Usingmagneticmodel, &
       & Frominterpolatedqty, Fromlosgrid, NearestProfiles, &
       & Bymanipulation, ManipulateVectors, Withreflectortemperature, &
@@ -178,7 +178,8 @@ contains ! =====     Public Procedures     =============================
       & L_Plain, L_Profile, L_Ptan, L_Quality, &
       & L_Rectanglefromlos, L_Refgph, L_Refract,  L_HeightFromPressure, &
       & L_Reflectortempmodel, L_Resetunusedradiances, L_Rhi, &
-      & L_Rhifromh2o, L_Rhiprecisionfromh2o, L_Rotatefield, L_Scaleoverlaps, &
+      & L_Rhifromh2o, L_Rhiprecisionfromh2o, L_ResidualCorrection, &
+      & L_Rotatefield, L_Scaleoverlaps, &
       & L_Sectiontiming, L_Scatter, L_Scvelecr, L_Spd, L_Spreadchannel, &
       & L_Splitsideband, L_Status, L_SwapValues, &
       & L_Temperature, L_Tngtgeodalt, L_Tngtgeocalt, &
@@ -2992,6 +2993,17 @@ contains ! =====     Public Procedures     =============================
           & vectors(radianceVectorIndex), radianceQuantityIndex )
         call OffsetRadianceQuantity ( quantity, radianceQuantity, offsetAmount )
 
+      case ( l_residualCorrection ) ! ------------------- Residual correction --
+        if ( .not. got ( f_radianceQuantity ) ) &
+          & call Announce_error ( key, no_Error_Code, &
+          & 'radianceQuantity not supplied' )
+        if ( .not. got ( f_file ) ) &
+          & call Announce_Error ( key, no_Error_Code, &
+          & 'Need filename for asciiFile fill' )
+        radianceQuantity => GetVectorQtyByTemplateIndex( &
+          & vectors(radianceVectorIndex), radianceQuantityIndex )
+        call ResidualCorrection ( key, quantity, radianceQuantity, filename )
+
       case ( l_phaseTiming ) ! ---------  Fill timings for phases  -----
         call finishTimings('phases', returnStatus=status)
         if ( status /= 0 ) then
@@ -3504,6 +3516,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.486  2023/10/19 20:38:53  pwagner
+! Added residualCorrection Fill method
+!
 ! Revision 2.485  2020/07/29 23:36:19  pwagner
 ! May utilize BooleanFromEmptyGrid in Fill sections
 !
