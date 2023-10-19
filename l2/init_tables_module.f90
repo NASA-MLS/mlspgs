@@ -514,7 +514,7 @@ contains ! =====     Public procedures     =============================
              l+l_RHIPrecisionFromH2O, l+l_rotateField, l+l_scaleOverlaps, l+l_scatter, &
              l+l_sectionTiming, l+l_splitSideband, l+l_spreadChannel, &
              l+l_status, l+l_swapValues, l+l_uncompressRadiance, &
-             l+l_vector, l+l_vGrid, l+l_wmoTropopause, &
+             l+l_residualCorrection, l+l_vector, l+l_vGrid, l+l_wmoTropopause, &
              n+n_dt_def, &
       begin, t+t_fwmType, l+l_baseline, l+l_linear, l+l_full, &
              l+l_cloudFull, l+l_hybrid, l+l_scan, l+l_scan2d, l+l_switchingMirror, &
@@ -2185,6 +2185,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.660  2023/10/19 20:39:18  pwagner
+! Added residualCorrection Fill method
+!
 ! Revision 2.659  2021/10/14 22:24:15  pwagner
 ! The NeuralNet command now requires the field outputSD
 !
