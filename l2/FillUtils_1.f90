@@ -20,7 +20,7 @@ module FillUtils_1                     ! Procedures used by Fill
   use Expr_M, only: Expr, Expr_Check, GetindexFlagsfromlist
   use GriddedData, only: GriddedData_T, Dump, WrapGriddedData
   use HDF5, only: HSize_T, H5DOpen_F, H5DClose_F
-  use HighOutput, only: BeVerbose, OutputNamedValue
+  use HighOutput, only: BeVerbose, LetsDebug, OutputNamedValue
   use Init_Tables_Module, only: F_Measurements, F_TotalpowerVector, &
     & F_WeightsVector, &
     & L_Addnoise, L_Baseline, L_Binmax, L_Binmean, L_Binmin, L_Bintotal, &
@@ -66,7 +66,7 @@ module FillUtils_1                     ! Procedures used by Fill
   ! Note: If You Ever Want To Include Defined Assignment For Matrices, Please
   ! Carefully Check Out The Code Around The Call To Snoop.
   use MLSCommon, only: MLSFile_T, DefaultUndefinedValue, MLS_HyperStart
-  use MLSFiles, only: Hdfversion_5, Dump, GetMLSFileByType
+  use MLSFiles, only: Hdfversion_5, Dump, GetMLSFileByType, GetPCFromRef
   use MLSFillValues, only: IsFillValue, IsFinite, IsInfinite, &
     & Monotonize, RemoveFillValues
   use MLSKinds, only: R4, R8, Rm, Rp, Rv
@@ -75,6 +75,7 @@ module FillUtils_1                     ! Procedures used by Fill
   use MLSNumerics, only: Coefficients, InterpolateArraySetup, &
     & InterpolateArrayTeardown, InterpolateValues, Hunt
   use MLSFinds, only: FindFirst, FindLast
+  use MLSPCF2, only: MLSPCF_L2ascii_Start, MLSPCF_L2ascii_End
   use MLSSignals_M, only: GetFirstChannel, GetSignalName, GetModuleName, &
     & GetSignal, IsModuleSpacecraft, Signal_T, Signals
   use MLSStringLists, only: GetHashElement, NumStringElements, &
@@ -197,7 +198,7 @@ module FillUtils_1                     ! Procedures used by Fill
     & Withwmotropopause, Withbinresults, Withboxcarfunction, &
     & Statusquantity, Qualityfromchisq, Convergencefromchisq, &
     & Usingleastsquares, OffsetRadiancequantity, ResetunusedRadiances, &
-    & Scaleoverlaps, Scatter, SpreadChannelfill, &
+    & ResidualCorrection, Scaleoverlaps, Scatter, SpreadChannelfill, &
     & TransferVectors, TransferVectorsbymethod, UncompressRadiance, &
     & Announce_Error, QtyfromFile, VectorfromFile
 
@@ -5379,7 +5380,6 @@ contains ! =====     Public Procedures     =============================
 
     ! ----------------------------------------  WithReichlerWMOTP  -----
     subroutine WithReichlerWMOTP ( tpPres, temperature )
-      use HighOutput, only: LetsDebug
       use WMOTropopause, only: ExtraTropics, TWMO
       ! Implements the algorithm published in GRL
       ! Loosely called the "Reichler" algorithm
@@ -6923,6 +6923,54 @@ contains ! =====     Public Procedures     =============================
       call trace_end ( cond=toggle(gen) .and. levels(gen) > 2 )
     end subroutine OffsetRadianceQuantity
 
+    ! -----------------------------------  ResidualCorrection  -----
+    subroutine ResidualCorrection ( key, quantity, radianceQuantity, filename )
+      use Io_stuff, only: Get_lun
+      use Lexer_Core, only: Get_Where
+      use Machine, only: Io_error
+      use Tree, only: Where
+      integer, intent(in) :: KEY        ! Tree node
+      type (VectorValue_T), intent(inout) :: QUANTITY
+      type (VectorValue_T), intent(in) :: RADIANCEQUANTITY
+      integer, intent(in) :: FILENAME   ! ASCII filename to read from
+
+      integer :: LUN                    ! Unit number
+      integer :: Me = -1                  ! String index for trace
+      integer :: STATUS                 ! Flag from open/close/read etc.
+      character(len=1024) :: FILENAMESTR
+      character(len=1024) :: inputPhysicalFilename
+
+      ! Executable code
+      call trace_begin ( me, 'FillUtils_1.ResidualCorrection', &
+        & cond=toggle(gen) .and. levels(gen) > 2 )
+      if ( .not. ValidateVectorQuantity ( quantity, &
+        & quantityType=(/l_radiance/) ) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Quantity for offsetRadiance fill is not radiance' )
+      if ( .not. ValidateVectorQuantity ( quantity, &
+        & quantityType=(/l_radiance/) ) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Radiance quantity for offsetRadiance fill is not radiance' )
+      if ( quantity%template%signal /= radianceQuantity%template%signal .or. &
+        & quantity%template%sideband /= radianceQuantity%template%sideband ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Quantity and rad. qty. in offsetRadiance fill different signal/sideband' )
+      call get_lun ( lun, msg=.false. )
+      if ( lun < 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "No logical unit numbers available" )
+      call Get_String ( filename, filenameStr, strip=.true. )
+      call returnFullFileName( filenameStr, inputPhysicalFilename, &
+        & MLSPCF_l2ascii_start, MLSPCF_l2ascii_end )
+      open ( unit=lun, file=inputPhysicalFilename, status='old', form='formatted', &
+        & access='sequential', iostat=status )
+      if ( status /= 0 ) then
+        call io_Error ( "Unable to open ASCII input file ", status, fileNameStr )
+        call get_where ( where(key), fileNameStr, before='Error opening ASCII file at ' )
+        call MLSMessage( MLSMSG_Error, ModuleName, fileNameStr )
+      end if
+      call trace_end ( cond=toggle(gen) .and. levels(gen) > 2 )
+    end subroutine ResidualCorrection
+
     ! -------------------------------------  ResetUnusedRadiances  -----
     subroutine ResetUnusedRadiances ( quantity, amount )
       type (VectorValue_T), intent(inout) :: QUANTITY
@@ -7719,6 +7767,37 @@ contains ! =====     Public Procedures     =============================
 
     ! =====  Private procedures  =======================================
 
+    ! ---------------------------------------------  returnFullFileName  -----
+    subroutine returnFullFileName ( shortName, FullName, &
+      & pcf_start, pcf_end )
+      ! Given a possibly-abbreviated shortName, return the full name
+      ! as found in the PCF
+      ! (w/o toolkit panoply, simply return shortName)
+      ! Args
+      character(len=*), intent(in)  :: shortName
+      character(len=*), intent(out) :: FullName
+      integer, intent(in)           :: pcf_start
+      integer, intent(in)           :: pcf_end
+      ! Internal variables
+      ! logical, parameter :: DEBUG = .false.
+      logical :: debug
+      integer :: FileHandle
+      integer :: returnStatus
+      integer :: Version
+      ! Executable
+      debug = LetsDebug ( 'output', 0 )
+      if ( TOOLKIT .and. pcf_end >= pcf_start ) then
+        Version = 1
+        FileHandle = GetPCFromRef(shortName, pcf_start, &
+          & pcf_end, &
+          & TOOLKIT, returnStatus, Version, DEBUG, &
+          & exactName=FullName)
+        if ( returnStatus /= 0 ) FullName = shortName ! In cases omitted from PCF
+      else
+        FullName = shortName
+      end if
+    end subroutine returnFullFileName
+
     ! --------------------------------------------  FillableChiSq  -----
     function FillableChiSq ( qty, measQty, modelQty, noiseQty ) result ( aok )
       ! Purpose (A)
@@ -8066,6 +8145,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.154  2023/10/19 20:40:54  pwagner
+! Added stub for residualCorrection Fill method; needs work
+!
 ! Revision 2.153  2023/05/25 22:27:35  pwagner
 ! Try to avoid Filling convergence with ieee Infinity
 !
