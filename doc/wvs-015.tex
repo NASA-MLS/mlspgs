@@ -2,20 +2,54 @@
 
 \usepackage[fleqn]{amsmath}
 
-\textwidth 6.25in
+\textwidth 6.5in
 \oddsidemargin -0.25in
 %\evensidemargin -0.5in
 \topmargin -0.5in
-\textheight 9.25in
+\textheight 9.1in
+
+\newcommand{\docname}{wvs-015r1}
+\newcommand{\docdate}{28 January 2021}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+\fi
+\ifnum\pdfoutput>0
+  \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+  \hypersetup{%
+    hypertexnames=false,%
+    colorlinks=true,%
+    linktocpage=true,%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{pdftex}
+\else
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
 
 \begin{document}
 
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
 \makeatletter
 \def\@biblabel#1{#1.}
 \newcommand{\ps@twolines}{%
   \renewcommand{\@oddhead}{%
-    15 January 2003\hfill Page \thepage\ of \pageref{lastpage}\hfill{\bf
-    wvs-015}}%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
 \renewcommand{\@evenhead}{}%
 \renewcommand{\@oddfoot}{}%
 \renewcommand{\@evenfoot}{}%
@@ -23,11 +57,11 @@
 \makeatother
 \pagestyle{twolines}
 
-\vspace{-20pt}
+\vspace{-10pt}
 \begin{tabbing}
 \phantom{References: }\= \\
-To: \>Michael, Bill\\
-Subject: \>Exponential of a matrix, and derivative thereof\\
+To: \>Michael, Bill, Paul, William Daffer\\
+Subject: \>Exponential of a $2\times2$ matrix, and derivative thereof\\
 From: \>Van Snyder\\
 \end{tabbing}
 
@@ -37,6 +71,8 @@ From: \>Van Snyder\\
 This memo describes how to compute the exponential function of a $2 \times 2$
 matrix, and the derivative thereof, without encountering problems as the
 eigenvalues approach each other.
+
+The original version of this note had some needless complication.
 
 One can apply the Hamilton-Cayley theorem (``A matrix satisfies its
 characteristic equation'') to the series representation of any function of a
@@ -57,8 +93,7 @@ $\lambda_1 \rightarrow \lambda_2$.
 In our case $F = \exp$.  Using
  $s = \frac12 ( \lambda_1 + \lambda_2 ) = \frac12 \text{tr}(\mathbf{A})$
 and
- $d = \frac12 ( \lambda_1 - \lambda_2 ) = \sqrt { s^2 - \det(\mathbf{A})}
-  = \sqrt h$,
+ $d = \frac12 ( \lambda_1 - \lambda_2 ) = \sqrt { s^2 - \det(\mathbf{A})}$,
 this can be rewritten as
 
 \begin{equation}
@@ -68,118 +103,75 @@ this can be rewritten as
       \right ] \;.
 \end{equation}
 
-This form will be useful below, but for now it can be written in a somewhat
-more efficiently computable form as
+Noticing that $\lim_{d\rightarrow 0} \frac{\sinh\,d}d = 1$, one can conclude
+that there must be a way to compute $\frac{\sinh\,d}d$ without computational
+difficulty, even as $d \rightarrow 0$. The easiest way is to use 1 if $|d| <
+\sqrt{\rho}$, where $\rho$ is the unit round-off of the arithmetic in use, a
+Taylor series
+
+\begin{equation}\label{three}
+\frac{\sinh\,d}d = \sum_{i=0}^\infty \frac{d^{2 i}}{(2 i+1)!}
+=
+1 + \frac{d^2}6 + \frac{d^4}{24} + \frac{d^6}{5040} + O(d^8)
+\end{equation}
+
+for larger but still small $|d|$, and the Fortran intrinsic SINH function
+otherwise. For complex $d$ with $|d|<0.12$, this series converges to 16-digit
+accuracy with seven or fewer terms.
+
+Derivatives of $\exp(\mathbf{A})$ with respect to a parameter $P$, say
+temperature, are needed. The derivative of a matrix is just the matrix of the
+derivatives of its elements. For $\exp(\mathbf{A})$, one might write this as 
+
+\renewcommand{\d}{\text{d}}
+\begin{equation}\begin{split}
+\frac{\d \exp(\mathbf{A})}{\d P}
+ = \,& \exp(\mathbf{A}) \frac{\d \mathbf{A}}{\d P} \text{, or is it }
+\frac{\d \exp(\mathbf{A})}{\d P}
+ = \,& \frac{\d \mathbf{A}}{\d P} \exp(\mathbf{A}) \,?
+\end{split}\end{equation}
+
+In general
 
 \begin{equation}
-\exp(\mathbf{A}) = e^{\lambda_2} \left[
- \frac{e^{2d}-1}{2d} ( \mathbf{A} - \lambda_2 \mathbf{I} ) + \mathbf{I}
-  \right ]
+\exp(\mathbf{A}) \text{ and }
+\frac{\d \mathbf{A}}{\d P}
 \end{equation}
 
-which presents no computational difficulty as $d \rightarrow 0$, provided
-one computes $\frac{e^{2d}-1}{2d}$ carefully.  To do this, let $z = 2d = x + i
-y$ and notice that
-
-\begin{equation}\label{expdm1}
-\frac{e^z-1}z =
- \frac{\overline{z}}{|z|^2} \left[ e^{i y} ( e^x - 1 ) + e^{i y} - 1 \right ] =
- \frac{\overline{z}}{|z|^2}
-  \left[ e^{i y} ( e^x - 1 ) + \cos y - 1 + i \sin y \right ] \;.
-\end{equation}
-
-The reason to arrange the computation in this way is that both $e^x-1$ and
-$\cos y -1$ can be computed without cancellation, even when $x$ and $y$ are
-small, if care is taken (write a few terms of their Taylor series and you'll
-agree).
-
-To evaluate the derivative of $\exp(\mathbf{A})$, assume that $\mathbf{A}$ is a
-function of $p$ and let $X^\prime$ denote $\frac{\text{d}X}{\text{d}p}$. Then
-$s^\prime = \frac12 \text{tr}(\mathbf{A})^\prime$, $d^\prime = \frac{2 s
-s^\prime - \det(\mathbf{A})^\prime}{2 d} = \frac{h^\prime}{2 d}$ and
-
-\begin{equation}\begin{split}
-\frac{\text{d} \exp(\mathbf{A})}{\text{d}p} =\;
- e^s & \left\{ s^\prime \left [ 
-    \frac{\sinh d}d ( \mathbf{A} - s\, \mathbf{I} ) + \cosh d\, \mathbf{I}
-      \right ] + \right.\\
-   & \frac{h^\prime}2 \left [ 
-    \frac{d \cosh d - \sinh d}{d^3} ( \mathbf{A} - s\, \mathbf{I} )
-      + \frac{\sinh d}d\, \mathbf{I} \right ] +\\
-   &\left.
-    \frac{\sinh d}d ( \mathbf{A}^\prime - s^\prime\, \mathbf{I} )
-    \right\} \;.
-\end{split}\end{equation}
-
-Collecting terms, we have
-
-\begin{equation}\begin{split}\label{dexp}
-\frac{\text{d} \exp(\mathbf{A})}{\text{d}p} =\;
- e^s & \left\{ \frac{\sinh d}d
-       \left[ s^\prime \mathbf{A} + \mathbf{A}^\prime +
-              \left(\frac{h^\prime}2 - s^\prime s\right) \mathbf{I} \right]
-               + \right.\\
-     & \left. \frac{d \cosh d - \sinh d}{d^3}
-         \left[ \frac{h^\prime}{2} ( \mathbf{A} - s\, \mathbf{I} )
-       + h s^\prime\, \mathbf{I} \right]
-     \right \} \; \text{, or}
-\end{split}\end{equation}
-
-\begin{equation}\begin{split}
-\frac{\text{d} \exp(\mathbf{A})}{\text{d}p} =\;&
-  e^s \left [ s^\prime \frac{\sinh d}d +
-          \frac{h^\prime}{2} \frac{d \cosh d - \sinh d}{d^3} \right ] \mathbf{A}
-  + e^s \frac{\sinh d}d \mathbf{A}^\prime + \\
-&   e^s \left[ \frac{\sinh d}d
-               \left( \frac{h^\prime}{2} - s^\prime s \right) +
-               \frac{d \cosh d - \sinh d}{d^3}
-               \left( h s^\prime - \frac{h^\prime}{2} s \right) \right]
-        \mathbf{I}
-\end{split}\end{equation}
-
-To see that the terms involving $\sinh d$ and $\cosh d$ present no
-computational problems, write their Taylor series, \emph{viz.}
-$\frac{\sinh\,d}d = \sum_{k=0}^{\infty}
-\frac{d^{2k}}{(2k+1)!}$ and
-%
-$\frac{d \cosh d - \sinh d}{d^3} =
-\sum_{k=0}^{\infty} \frac{d^{2k}}{2^k k! (2k+3)!!}$, where $(2k+3)!! =
-3 \cdot 5 \cdot 7 \cdot \cdot \cdot 2k+3$.
-
-\vskip 5pt
-
-As the eigenvalues coalesce, no cancellations occur, and no infinities arise if
-the elements of $\mathbf{A}$ and $\mathbf{A}^\prime$ are finite.  In our case,
-$\mathbf{A}$ is a linear combination of three matrices, where the coefficients
-are Fadeeva functions in the first quadrant (therefore $<1$ in magnitude), and
-the elements of the matrices are like $\sin \phi \cos \phi \sin^2 \theta \pm i
-\cos \theta$ (therefore $< \sqrt2$ in magnitude).  So the elements of
-$\mathbf{A}$ are $< 3\,\sqrt2$ in magnitude, and the elements of
-$\mathbf{A}^\prime$ are finite.
-
-We can write $\frac{\sinh d}d$ as $e^{-d}\,\frac{e^{2d}-1}{2d}$, and equation
-(\ref{expdm1}) shows how to do that for complex $d$.  The series for $\frac{d
-\cosh d - \sinh d}{d^3}$ converges quite rapidly for small $d$, and there is
-no problem to compute it as written for large $d$.
-
-As a matter of curiosity we have
+do not commute. Therefore, compute
 
 \begin{equation}
-\lim_{d \rightarrow 0}
-\frac{\text{d} \exp(\mathbf{A})}{\text{d}p} =
- e^s \left[
-  (s^\prime+\frac{h^\prime}6)(\mathbf{A}-s\,\mathbf{I}) + \mathbf{A}^\prime +
-  \frac{h^\prime}2\mathbf{I}
-  \right]\;.
+\frac{\d \exp(\mathbf{A})}{\d P}
 \end{equation}
 
-There is cancellation in the $\mathbf{A}-s\,\mathbf{I}$ term if {\bf A} is
-diagonal and $d \approx 0$, but this will be negligible compared to
-$\mathbf{I}$ unless the eigenvalues are as large as the inverse of the
-round-off level, which they aren't in our case.  We couldn't compute near that
-condition anyway, because we can only evaluate $e^s$ if $s$ is less than the
-logarithm of the overflow limit.
+by computing the derivatives of its elements. Denote $\frac{\d s}{\d P}$ by
+$s^\prime$ and $\frac{\d d}{\d P}$ by $d^\prime$. Then
+
+\begin{equation}
+\frac{\d\exp(\mathbf{A})}{\d P} =
+s^\prime \exp(\mathbf{A}) +
+  e^s \left [ 
+    d^\prime \frac{\d}{\d P} \left(\frac{\sinh d}d \right)
+        ( \mathbf{A} - s\, \mathbf{I} )
+    + \left( d^\prime\,  \sinh d - s^\prime\, \frac{\sinh d}d \, \right) \mathbf{I}
+      \right ] \;.
+\end{equation}
+
+Using the usual method,
+
+\begin{equation}
+\frac{\d}{\d P} \frac{\sinh d}d = \frac{\cosh d}d - \frac{\sinh d}{d^2} \,,
+\end{equation}
+
+which is clearly problematic as $d \rightarrow 0$. But a Taylor series, the
+derivative of Equation (\ref{three})
+
+\begin{equation}
+\frac{\d}{\d P} \frac{\sinh d}d
+ = \sum_{i=1}^\infty \frac{2 i}{(2 i + 1)!} x^{2 i - 1}
+\end{equation}
+
+converges rapidly.
 
 \label{lastpage}
 \end{document}
-% $Id$
