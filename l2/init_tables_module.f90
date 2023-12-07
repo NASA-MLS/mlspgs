@@ -1101,6 +1101,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_sdname, string(), &
              begin, f+f_seed, numeric(phyq_dimensionless), &
              begin, f+f_shape, numeric(), &
+             begin, f+f_source, field_spec(s_vector), &
              begin, f+f_sourceGrid, field_spec( s_gridded, s_merge, s_concatenate, &
                                              &  s_ConvertEtaToP, s_wmoTrop ), &
              begin, f+f_sourceL2GP, field_spec(s_l2gp), &
@@ -2185,6 +2186,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.661  2023/12/07 23:06:53  pwagner
+! Improved ResidualCorrection Fill method
+!
 ! Revision 2.660  2023/10/19 20:39:18  pwagner
 ! Added residualCorrection Fill method
 !
