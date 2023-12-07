@@ -2005,6 +2005,9 @@ contains ! =====     Public Procedures     =============================
           seedNode=subtree(j,key)
         case ( f_sdname )
            call get_string ( sub_rosa ( gson ), sdName, strip=.true. )
+        case ( f_source )
+          sourceVectorIndex = decoration(fieldValue)
+          sourceVector => vectors( sourceVectorIndex )
         case ( f_sourceL2AUX )          ! Which L2AUXDatabase entry to use
           l2auxIndex = decoration(decoration(gson))
         case ( f_sourceL2GP )           ! Which L2GPDatabase entry to use
@@ -2994,15 +2997,13 @@ contains ! =====     Public Procedures     =============================
         call OffsetRadianceQuantity ( quantity, radianceQuantity, offsetAmount )
 
       case ( l_residualCorrection ) ! ------------------- Residual correction --
-        if ( .not. got ( f_radianceQuantity ) ) &
+        if ( .not. got ( f_source ) ) &
           & call Announce_error ( key, no_Error_Code, &
-          & 'radianceQuantity not supplied' )
+          & 'source radiance vector not supplied' )
         if ( .not. got ( f_file ) ) &
           & call Announce_Error ( key, no_Error_Code, &
           & 'Need filename for asciiFile fill' )
-        radianceQuantity => GetVectorQtyByTemplateIndex( &
-          & vectors(radianceVectorIndex), radianceQuantityIndex )
-        call ResidualCorrection ( key, quantity, radianceQuantity, filename )
+        call ResidualCorrection ( key, quantity, sourceVector, filename )
 
       case ( l_phaseTiming ) ! ---------  Fill timings for phases  -----
         call finishTimings('phases', returnStatus=status)
@@ -3516,6 +3517,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.487  2023/12/07 23:07:20  pwagner
+! Improved ResidualCorrection Fill method
+!
 ! Revision 2.486  2023/10/19 20:38:53  pwagner
 ! Added residualCorrection Fill method
 !
