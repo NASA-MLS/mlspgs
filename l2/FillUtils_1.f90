@@ -16,6 +16,7 @@ module FillUtils_1                     ! Procedures used by Fill
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use Chunks_M, only: MLSChunk_T
   use Constants, only: Deg2rad, Ln10, Rad2deg
+  use Diff_1, only: Diff
   use Dump_0, only: Dump
   use Expr_M, only: Expr, Expr_Check, GetindexFlagsfromlist
   use GriddedData, only: GriddedData_T, Dump, WrapGriddedData
@@ -79,8 +80,8 @@ module FillUtils_1                     ! Procedures used by Fill
   use MLSSignals_M, only: GetFirstChannel, GetSignalName, GetModuleName, &
     & GetSignal, IsModuleSpacecraft, Signal_T, Signals
   use MLSStringLists, only: GetHashElement, NumStringElements, &
-    & StringElement, StringElementNum, SwitchDetail
-  use MLSStrings, only: Indexes, LowerCase, WriteIntsToChars
+    & ReadNumsFromList, StringElement, StringElementNum, SwitchDetail
+  use MLSStrings, only: Asciify, Indexes, LowerCase, WriteIntsToChars
   use Molecules, only: L_H2O
   use Monotone, only: IsMonotonic
   use Output_M, only: Blanks, Newline, Output
@@ -6924,51 +6925,256 @@ contains ! =====     Public Procedures     =============================
     end subroutine OffsetRadianceQuantity
 
     ! -----------------------------------  ResidualCorrection  -----
-    subroutine ResidualCorrection ( key, quantity, radianceQuantity, filename )
-      use Io_stuff, only: Get_lun
+    ! Note that 
+    ! (1) this must be called after applying the baseliine
+    ! (2) the radiances vector must be a different vector from the one
+    !     that contains the quantity (to avoid being stepped on by
+    !     successive calls to this routine)
+    subroutine ResidualCorrection ( key, quantity, sourceradiances, filename )
+      use Io_Stuff, only: Get_Lun, Read_Textfile
       use Lexer_Core, only: Get_Where
-      use Machine, only: Io_error
+      use Machine, only: Io_Error
+      use MLSNumerics, only: F_Of_X
+      use MLSSignals_m, only: Signal_T, Signals, GetBandName
       use Tree, only: Where
       integer, intent(in) :: KEY        ! Tree node
       type (VectorValue_T), intent(inout) :: QUANTITY
-      type (VectorValue_T), intent(in) :: RADIANCEQUANTITY
-      integer, intent(in) :: FILENAME   ! ASCII filename to read from
-
+      type (Vector_T), intent(in) :: SOURCERADIANCES
+      integer, intent(in) :: FILENAME   ! Str indexx of ASCII filename to read from
+      ! The Filename should be something like
+      ! /users/pwagner/docs/mls/l2based_extended_residual_corrections.txt
       integer :: LUN                    ! Unit number
-      integer :: Me = -1                  ! String index for trace
+      integer :: Me = -1                ! String index for trace
       integer :: STATUS                 ! Flag from open/close/read etc.
       character(len=1024) :: FILENAMESTR
       character(len=1024) :: inputPhysicalFilename
+      ! ---------- Algorithm -----------
+      ! Bw(25) = 96,96,96,64,64,64,48,32,24,16,12,8,6,8,12,16,24,32,48,64,64,64,96,96,96
+      ! 
+      ! X(2:6) = 1,9,1,1,1
+      ! 
+      ! Y(2:6) = 23,24,25,25,25
+      ! 
+      !  
+      ! 
+      ! Tavg(mif,maf) = sum(b=2,6) sum(c=x(b),y(b)) I(b,c,mif,maf) * BW(c)
+      ! 
+      !  
+      ! 
+      ! Tavg(mif,maf) = (Tavg(mif,maf) + 962.670 * I(2,1,mif,maf)
+      ! 
+      ! + 0.5*(I(4,1,mif,maf) + I(5,25,mif,maf))*909.000
+      ! 
+      ! + 0.5*(I(5,1,mif,maf) + I(6,1,mif,maf))*534.000
+      ! 
+      ! + I(6,25,mif,maf)*1140.330) / 8928.04
+      !
+      ! Note that the only bands 2,3 and 4 are corrected. 
+      ! Not bands 5, 6, 23, and 27.
 
+      integer, dimension(25), parameter :: Bw = &
+        & (/ 96,96,96,64,64,64,48,32,24,16,12,8,6,8,12,16,24,32,48,64,64,64,96,96,96 /)
+      integer, dimension(6), parameter :: X = &
+        & (/-999, 1,9,1,1,1 /)
+      integer, dimension(6), parameter :: Y = &
+        & (/-999, 23,24,25,25,25 /)
+      ! ------------------------------------------------------------------
+      ! These are what GetBandName currently returns from the signal type
+      ! for Bands 2, 3, and 4
+      ! If a future revision to the l2cf or to to signal type changes that
+      ! then this routine may stop working properly
+      ! ------------------------------------------------------------------
+      character(len=*), parameter :: BandNames = 'B2F:H2O,B3F:N2O,B4F:HNO3' 
+      ! ------------------------------------------------------------------
+      ! The next array holds the coefficients of our lookup table for
+      ! bands 2, 3, and 4 (the final index of the big array) and
+      ! for the 25 channels (the middle index) and 19 possible values
+      ! of Tavg.
+      ! If the format or size of the ascii file holding coefficients
+      ! change, then this routine may stop working properly
+      real(r4), dimension(19, 25, 3) :: Coef
+      real(r4), dimension(19)        :: Tf    ! These are the reference T vals
+      ! This is the content of the Lookup file
+      character(len=80), dimension(400) :: string  
+      integer :: band
+      character(32) :: BandName
+      integer :: BandNumber
+      integer :: channel
+      integer :: line
+      integer :: maf
+      integer :: mif
+      integer :: NLines
+      integer :: NoChannels
+      integer :: NoMIFs
+      integer :: NoMAFs
+      integer :: p1, p2
+      integer :: ref
+      type (VectorValue_T), pointer :: SQ ! Source quantity
+      integer :: SQI                      ! Quantity index in source
+      character, parameter :: null = char(0)
+      real(r4) :: Tavg
+      real(r4) :: Tmin
+      real(r4) :: Tmax
+      real(r4), dimension(6, 25) :: I
+      logical :: NegativeSort ! If true, Tf are negatively sorted
       ! Executable code
+      string = null
       call trace_begin ( me, 'FillUtils_1.ResidualCorrection', &
         & cond=toggle(gen) .and. levels(gen) > 2 )
       if ( .not. ValidateVectorQuantity ( quantity, &
         & quantityType=(/l_radiance/) ) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Quantity for offsetRadiance fill is not radiance' )
-      if ( .not. ValidateVectorQuantity ( quantity, &
-        & quantityType=(/l_radiance/) ) ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Radiance quantity for offsetRadiance fill is not radiance' )
-      if ( quantity%template%signal /= radianceQuantity%template%signal .or. &
-        & quantity%template%sideband /= radianceQuantity%template%sideband ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Quantity and rad. qty. in offsetRadiance fill different signal/sideband' )
+      call GetBandName( signals(quantity%template%signal)%band, bandname )
+      call outputNamedValue ( 'Band name', trim(BandName) )
+      call Dump( quantity%values(:,1), 'values before correction (maf 1)' )
+      ! BandNumber must be in the range {2,3,4} to be correctable
+      ! StringElementNum returns {1,2,3} or else 0
+      BandNumber = StringElementNum( BandNames, trim(BandName), countEmpty ) + 1
+      if ( BandNumber < 2 .or. BandNumber > 4 ) return
+      NoMAFs = quantity%template%noInstances
+      NoMIFs = quantity%template%noSurfs ! 125
+      NoChannels = quantity%template%noChans ! 125
       call get_lun ( lun, msg=.false. )
       if ( lun < 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "No logical unit numbers available" )
       call Get_String ( filename, filenameStr, strip=.true. )
       call returnFullFileName( filenameStr, inputPhysicalFilename, &
         & MLSPCF_l2ascii_start, MLSPCF_l2ascii_end )
+      call outputNamedValue ( 'string fragment', trim(filenameStr) )
+      call outputNamedValue ( 'full path', trim(inputPhysicalFilename) )
       open ( unit=lun, file=inputPhysicalFilename, status='old', form='formatted', &
         & access='sequential', iostat=status )
       if ( status /= 0 ) then
-        call io_Error ( "Unable to open ASCII input file ", status, fileNameStr )
-        call get_where ( where(key), fileNameStr, before='Error opening ASCII file at ' )
-        call MLSMessage( MLSMSG_Error, ModuleName, fileNameStr )
+        call io_Error ( "Unable to open ASCII input file ", status, inputPhysicalFilename )
+        call get_where ( where(key), inputPhysicalFilename, before='Error opening ASCII file at ' )
+        call MLSMessage( MLSMSG_Error, ModuleName, inputPhysicalFilename )
       end if
+      ! Trying to read the file:
+      call Read_Textfile ( inputPhysicalFilename, string, maxLineLen=80, nLines=nLines )
+      if ( nLines < 1 ) then
+        call io_Error ( "Unable to properly read ASCII input file ", nLines, inputPhysicalFilename )
+        call get_where ( where(key), inputPhysicalFilename, before='Error reading ASCII file at ' )
+        call MLSMessage( MLSMSG_Error, ModuleName, inputPhysicalFilename )
+      endif
+      call OutputNamedValue ( 'number of lines read', nLines )
+      do line=1, NLines
+        string(line) = asciify( string(line), how='snip' )
+      enddo
+      ! Ignoring first three lines, first we obtain the reference T vals
+      line = 4
+      call ReadNumsFromList ( &
+        & trim(string(line)) // ' ' // &
+        & trim(string(line+1)) // ' ' // &
+        & trim(string(line+2)) // ' ' // &
+        & trim(string(line+3)), Tf, separator=' ' )
+!       call dump( Tf, name='Reference Temperatures' )
+      NegativeSort = ( Tf(2) < Tf(1) )
+      call OutputNamedValue ( 'T(ref) sorted from large to small?', NegativeSort )
+      line = line + 4
+      do band = 2,4 ! Loop over bands
+        ! Ignore the string announcing the band number
+        line = line + 1
+        do ref=1, 19 ! Loop over reference Temperatures
+          ! Ignore the string announcing the Temperature
+          line = line + 1
+          call ReadNumsFromList ( &
+            & trim(string(line)) // ' ' // &
+            & trim(string(line+1)) // ' ' // &
+            & trim(string(line+2)) // ' ' // &
+            & trim(string(line+3)) // ' ' // &
+            & trim(string(line+4)), Coef(ref,:,band-1), separator=' ' )
+          line = line + 5
+        enddo
+      enddo
+      ! How were the Tvalues sorted? 
+      ! Smallest to largest, or largest to smallest?
+!       call dump( Coef(:,:,1), name='Coeffficients for Band 2' )
+!       call dump( Coef(:,:,2), name='Coeffficients for Band 3' )
+!       call dump( Coef(:,:,3), name='Coeffficients for Band 4' )
+!       call trace_end ( cond=toggle(gen) .and. levels(gen) > 2 )
+      ! Now we get down to business
+      ! Compute the Tavg
+!      Changes to make in the following:
+! Tavg should be a scalar
+! I should be a 2d array I(b,c)
+      Tmin = 9999.
+      Tmax = -9999.
+      do maf=1, NoMAFs
+        do mif=1, NoMIFs
+          Tavg = 0.
+          do band=2, 6
+            sqi = band - 1 ! We'll assume the source quanitites are ordered so
+            sq => sourceRadiances%quantities(sqi)
+            do channel=x(band), y(band)
+              Tavg = Tavg + &
+                & sq%values(channel + (mif-1)*NoChannels, maf) * BW(channel)
+            enddo ! Loop of channels
+          enddo ! Loop of bands
+          
+          ! p1:p2 represent all the channels for a given mif
+          p1 = 1 + (mif-1)*NoChannels
+          p2 = mif*NoChannels
+
+          ! Now some  special Band-specific terms
+          ! We'll need Bands 2, 4, 5, and 6
+          I = 0.
+
+          band = 2
+          sqi = band - 1
+          sq => sourceRadiances%quantities(sqi)
+          I(band, :) = sq%values(p1:p2, maf)
+
+          band = 4
+          sqi = band - 1
+          sq => sourceRadiances%quantities(sqi)
+          I(band, :) = sq%values(p1:p2, maf)
+
+          band = 5
+          sqi = band - 1
+          sq => sourceRadiances%quantities(sqi)
+          I(band, :) = sq%values(p1:p2, maf)
+
+          band = 6
+          sqi = band - 1
+          sq => sourceRadiances%quantities(sqi)
+          I(band, :) = sq%values(p1:p2, maf)
+
+          Tavg = (Tavg + 962.670 * I(2,1) &
+          + 0.5*(I(4,1) + I(5,25))*909.000 &
+          + 0.5*(I(5,1) + I(6,1))*534.000 &
+          + I(6,25)*1140.330) / 8928.04
+          Tmin = min( Tmin, Tavg )
+          Tmax = max( Tmax, Tavg )
+          ! Now use the Look-up table with coefficients Coef
+          ! Note that 
+          ! (1) we subtract the corrections
+          ! (2) we interpolate (options='-pi')
+          ! (3) if Tf are sorted largest to smallest multiply them by -1
+          do channel=1, NoChannels
+            if ( NegativeSort ) then
+              quantity%values(channel + (mif-1)*NoChannels, maf) = &
+                & quantity%values(channel + (mif-1)*NoChannels, maf) &
+                & - &
+                & F_Of_X ( -Tavg, -Tf, Coef(:, channel, BandNumber-1), options='-pi')
+            else
+              quantity%values(channel + (mif-1)*NoChannels, maf) = &
+                & quantity%values(channel + (mif-1)*NoChannels, maf) &
+                & - &
+                & F_Of_X ( Tavg, Tf, Coef(:, channel, BandNumber-1), options='-pi')
+            endif
+          enddo ! Loop of channels
+        enddo ! Loop of mifs
+      enddo ! Loop of mafs
+      call Dump( quantity%values(:,1), 'values after correction (maf 1)' )
+      call outputNamedValue ( 'Tmin', Tmin )
+      call outputNamedValue ( 'Tmax', Tmax )
+      sqi = bandNumber - 1
+      sq => sourceRadiances%quantities(sqi)
+      call Diff( quantity%values, 'original', &
+        & sq%values, 'corrected', options='@' )
       call trace_end ( cond=toggle(gen) .and. levels(gen) > 2 )
+
     end subroutine ResidualCorrection
 
     ! -------------------------------------  ResetUnusedRadiances  -----
@@ -8145,6 +8351,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.155  2023/12/07 23:08:01  pwagner
+! Improved ResidualCorrection Fill method
+!
 ! Revision 2.154  2023/10/19 20:40:54  pwagner
 ! Added stub for residualCorrection Fill method; needs work
 !
