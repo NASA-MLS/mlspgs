@@ -32,6 +32,7 @@
 !defunlessdef(filterPath,!getdir(filterPath))
 !defunlessdef(pfaPath,!getdir(pfaPath))
 !defunlessdef(pfgPath,!getdir(pfgPath))
+!defunlessdef(rccPath,!getdir(rccPath))
 
 ; These may sometimes escape definition
 !defunlessdef(pfaVersion,!getdir(pfaVersion))
@@ -81,6 +82,9 @@
 !ifelse(!pfgPath, {}, {
 !define(pfgPath,{!calpath})
 })
+!ifelse(!rccPath, {}, {
+!define(rccPath,{/users/pwagner/docs/mls})
+})
 
 
 !defunlessdef(signalsL2cf, {!signalsPath/MLS-Aura_L2Cal-Signals_v1-5-0_0000d000.l2cf})
@@ -91,6 +95,7 @@
 !defunlessdef(fovdirL2cf, {!fovdirPath/MLS-Aura_L2Cal-FOV-Directions_v5-0-0_15adj_0000d000.l2cf})
 !defunlessdef(systempL2cf, {!systempPath/MLS-Aura_L2Cal-Tsys_v2-0-0_0000d000.l2cf})
 !defunlessdef(nbwL2cf, {!nbwPath/MLS-Aura_L2Cal-NBW_v2-0-0_0000d000.l2cf})
+!defunlessdef(rccASCII, {!rccPath/l2based_extended_residual_corrections.txt})
 
 ; The next lot are arguments to forwardModelGlobal, so quoted.
 !ifdef(flagUsingPCF,{
@@ -164,6 +169,20 @@
 !defunlessdef(outpathl2fwm,!getdir(outpathl2fwm))
 !defunlessdef(outpathl1brad,!getdir(outpathl1brad))
 !defunlessdef(outpathtmp,!getdir(outpathtmp))
+
+;;
+;; Default macro settings
+;; (These were once scattered among separate files in mlspgs/l2/l2cf/lib
+;; or in the l2cf template itself)
+;; What about lesserparams.l2cf?
+;; They may be overridden if you use a -Df macrosfile with expandl2cf.sh
+;; or else -Dvariable=value on the m4 command line
+!defunlessdef(scanModelPrecision,{30 m})
+!defunlessdef(flagAutoSplitSources,{1})
+;; This is the list of bands that the readradiances macro is to read
+;; from the level 1 data.
+!defunlessdef(relevantBands,{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,22,23,24,25,27,28,29,30,31,32,33,34})
+
 ;; Print debugging info if m4 called ith cmdline option -Ddee=bug
 !ifelse(!dee,{bug},{
 !divert!dnl
@@ -211,6 +230,9 @@ outpathtmp:          !outpathtmp
 !divert(-1)
 })
 ;$Log$
+;Revision 1.53  2021/08/05 22:33:45  pwagner
+;Correct file name of ElevOffsetHDF in PCF
+;
 ;Revision 1.52  2021/07/22 23:10:56  pwagner
 ;Allow user to define macro ElevOffsetHDF
 ;
