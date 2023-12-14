@@ -7017,7 +7017,9 @@ contains ! =====     Public Procedures     =============================
       real(r4) :: Tmax
       real(r4), dimension(6, 25) :: I
       logical :: NegativeSort ! If true, Tf are negatively sorted
+      logical :: verbose
       ! Executable code
+      verbose = ( BeVerbose( 'residual', -1 ) )
       string = null
       call trace_begin ( me, 'FillUtils_1.ResidualCorrection', &
         & cond=toggle(gen) .and. levels(gen) > 2 )
@@ -7026,8 +7028,10 @@ contains ! =====     Public Procedures     =============================
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Quantity for offsetRadiance fill is not radiance' )
       call GetBandName( signals(quantity%template%signal)%band, bandname )
-      call outputNamedValue ( 'Band name', trim(BandName) )
-      call Dump( quantity%values(:,1), 'values before correction (maf 1)' )
+      if ( verbose ) then
+        call outputNamedValue ( 'Band name', trim(BandName) )
+        call Dump( quantity%values(:,1), 'values before correction (maf 1)' )
+      endif
       ! BandNumber must be in the range {2,3,4} to be correctable
       ! StringElementNum returns {1,2,3} or else 0
       BandNumber = StringElementNum( BandNames, trim(BandName), countEmpty ) + 1
@@ -7041,8 +7045,10 @@ contains ! =====     Public Procedures     =============================
       call Get_String ( filename, filenameStr, strip=.true. )
       call returnFullFileName( filenameStr, inputPhysicalFilename, &
         & MLSPCF_l2ascii_start, MLSPCF_l2ascii_end )
-      call outputNamedValue ( 'string fragment', trim(filenameStr) )
-      call outputNamedValue ( 'full path', trim(inputPhysicalFilename) )
+      if ( verbose ) then
+        call outputNamedValue ( 'string fragment', trim(filenameStr) )
+        call outputNamedValue ( 'full path', trim(inputPhysicalFilename) )
+      endif
       open ( unit=lun, file=inputPhysicalFilename, status='old', form='formatted', &
         & access='sequential', iostat=status )
       if ( status /= 0 ) then
@@ -7057,7 +7063,7 @@ contains ! =====     Public Procedures     =============================
         call get_where ( where(key), inputPhysicalFilename, before='Error reading ASCII file at ' )
         call MLSMessage( MLSMSG_Error, ModuleName, inputPhysicalFilename )
       endif
-      call OutputNamedValue ( 'number of lines read', nLines )
+      if ( verbose ) call OutputNamedValue ( 'number of lines read', nLines )
       do line=1, NLines
         string(line) = asciify( string(line), how='snip' )
       enddo
@@ -7070,7 +7076,8 @@ contains ! =====     Public Procedures     =============================
         & trim(string(line+3)), Tf, separator=' ' )
 !       call dump( Tf, name='Reference Temperatures' )
       NegativeSort = ( Tf(2) < Tf(1) )
-      call OutputNamedValue ( 'T(ref) sorted from large to small?', NegativeSort )
+      if ( verbose ) &
+        & call OutputNamedValue ( 'T(ref) sorted from large to small?', NegativeSort )
       line = line + 4
       do band = 2,4 ! Loop over bands
         ! Ignore the string announcing the band number
@@ -7166,12 +7173,14 @@ contains ! =====     Public Procedures     =============================
           enddo ! Loop of channels
         enddo ! Loop of mifs
       enddo ! Loop of mafs
-      call Dump( quantity%values(:,1), 'values after correction (maf 1)' )
-      call outputNamedValue ( 'Tmin', Tmin )
-      call outputNamedValue ( 'Tmax', Tmax )
+      if ( verbose ) then
+        call Dump( quantity%values(:,1), 'values after correction (maf 1)' )
+        call outputNamedValue ( 'Tmin', Tmin )
+        call outputNamedValue ( 'Tmax', Tmax )
+      endif
       sqi = bandNumber - 1
       sq => sourceRadiances%quantities(sqi)
-      call Diff( quantity%values, 'original', &
+      if ( verbose ) call Diff( quantity%values, 'original', &
         & sq%values, 'corrected', options='@' )
       call trace_end ( cond=toggle(gen) .and. levels(gen) > 2 )
 
@@ -8351,6 +8360,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.156  2023/12/14 21:28:00  pwagner
+! Turned off printing in residualCorrection unless verbose
+!
 ! Revision 2.155  2023/12/07 23:08:01  pwagner
 ! Improved ResidualCorrection Fill method
 !
