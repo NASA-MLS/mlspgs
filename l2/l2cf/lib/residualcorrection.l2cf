@@ -1,0 +1,35 @@
+!divert(-1)
+    !ifdef(flagUsingPCF,{
+    !define(filename,{residual_corrections})
+    },{
+    !define(filename,{!rccASCII})
+    })
+!divert!dnl
+;$Id$
+; ===================================================================
+;                         Residual correction
+; The raw or uncorrected radiances must be saved in a separate vector
+; to avoid stepping on them as each Band is Filled.
+; The Fill method presently and inflexibly assumes that the raw vector 
+; holds the Bands in the order [2 3 4 5 6]
+begin Construct
+  rawRadiancesTemplate: VectorTemplate, quantities = $
+          [ band2, band3, band4, band5, band6 ]
+end Construct
+begin Fill
+  rawRadiances: Vector, template=rawRadiancesTemplate
+  Transfer, source=measurement, destination=rawRadiances
+  Dump, text='Residual correction'
+  Dump, text='Applied to Bands 2, 3, and 4'
+  Fill, quantity=measurement.Band2, source=rawRadiances, $
+    method=residualCorrection, file='!filename'
+  Fill, quantity=measurement.Band3, source=rawRadiances, $
+    method=residualCorrection, file='!filename'
+  Fill, quantity=measurement.Band4, source=rawRadiances, $
+    method=residualCorrection, file='!filename'
+  Destroy, vector=rawRadiances
+end Fill
+; ===================================================================
+!divert(-1)
+;$Log$
+!divert!dnl
