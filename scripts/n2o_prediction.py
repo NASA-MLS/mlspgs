@@ -426,6 +426,14 @@ def _n2o_prediction(l1bradg_file=None, \
                 if len(ind_thresh)>0:
                     prec[ind_lat[ind_thresh],:] = -999.99
 
+            # We see whether for each observation there is an outlier feature
+            for i_obs in range(0, len(ind_lat)):
+                thresh_min = np.where(features[ind_lat[i_obs],:]-(weights.bt_mean[:,i_lat]+5*weights.bt_std[:,i_lat])>0)[0]
+                thresh_max = np.where(features[ind_lat[i_obs],:]-(weights.bt_mean[:,i_lat]-5*weights.bt_std[:,i_lat])<0)[0]
+
+                if len(thresh_min)>0 or len(thresh_max)>0:
+                    prec[ind_lat[i_obs],:] = -999.99
+
     # Output file
     file = h5py.File(out_file, 'w')
     dset = file.create_dataset('ANN_Prediction', data=pred, shape=[len(features),37], dtype=float)
@@ -463,4 +471,6 @@ result = _n2o_prediction(l1bradg_file=l1bradg_file, \
 ## =========================================================================
 ## Revisions
 ## =========================================================================
-## n/a
+## Revision 1.1  2023/12/29 fwerner
+## Added a check for features outside of the training range.
+## Those observations get a negative precision.

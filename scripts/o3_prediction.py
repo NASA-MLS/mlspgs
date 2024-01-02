@@ -428,13 +428,14 @@ def _o3_prediction(l1bradg_file=None, \
         prec[ind_lat,:] = -999.99
 
     # Check for unrealistic predictions outside the expected range
+    # Check for unrealistic features outside the training range
     for i_lat in range ( 0, len(weights.lats) ):
         lat_bin = weights.lats[i_lat]
         ind_lat = np.where((lat>=lat_bin[0]) & (lat<lat_bin[1]))[0]
         if len(ind_lat)>0:
             for i_surfs in range(weights.surfs[0]-1, weights.surfs[-1]):
                 # We need to be careful: weights.labels_min and weights.labels_max
-                # are only provided for valid surfs (6:48)
+                # are only provided for valid surfs (7:45)
                 min_clim = weights.labels_min[i_surfs-weights.surfs[0]+1,i_lat]
                 max_clim = weights.labels_max[i_surfs-weights.surfs[0]+1,i_lat]
                 delta = np.zeros_like(max_clim) #max_clim - min_clim
@@ -445,6 +446,14 @@ def _o3_prediction(l1bradg_file=None, \
                                        (pred[ind_lat,i_surfs]>thresh_max) )[0]
                 if len(ind_thresh)>0:
                     prec[ind_lat[ind_thresh],:] = -999.99
+
+            # We see whether for each observation there is an outlier feature
+            for i_obs in range(0, len(ind_lat)):
+                thresh_min = np.where(features[ind_lat[i_obs],:]-(weights.bt_mean[:,i_lat]+5*weights.bt_std[:,i_lat])>0)[0]
+                thresh_max = np.where(features[ind_lat[i_obs],:]-(weights.bt_mean[:,i_lat]-5*weights.bt_std[:,i_lat])<0)[0]
+
+                if len(thresh_min)>0 or len(thresh_max)>0:
+                    prec[ind_lat[i_obs],:] = -999.99
 
     # Output file
     file = h5py.File(out_file, 'w')
@@ -493,3 +502,7 @@ result = _o3_prediction(l1bradg_file=l1bradg_file, \
 ## Revision 1.2.1  2022/09/02 fwerner
 ## Fixed a bug in the part that identifies unrealistic predictions outside the expected range.
 ## i_surfs-weights.surfs[0]-1 -> i_surfs-(weights.surfs[0]-1) = i_surfs-weights.surfs[0]+1
+##
+## Revision 1.3  2023/12/29 fwerner
+## Added a check for features outside of the training range.
+## Those observations get a negative precision.
