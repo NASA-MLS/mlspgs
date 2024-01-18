@@ -252,6 +252,14 @@ dtR3B9: Quantity, type=singleChannelRadiance, signal='R3:240.B9F:CO'
   !define(allCloudSummaries,{!dnl
     !makelist({lowCloudSummary},{},!allRadiometers), $
     !makelist({highCloudSummary},{},!allRadiometers)})
+  lowCloudSurfsDT33: Quantity, type=cloudMinMax, signal='R3:240.B33W:O3', $
+    vGrid=vGridStandard, hGrid=hGridStandard
+  highCloudSurfsDT33: Quantity, type=cloudMinMax, signal='R3:240.B33W:O3', $
+    vGrid=vGridStandard, hGrid=hGridStandard
+  lowCloudSummaryDT33: Quantity, type=cloudMinMax, signal='R3:240.B33W:O3', $
+    vGrid=vGridGlobal, hGrid=hGridStandard
+  highCloudSummaryDT33: Quantity, type=cloudMinMax, signal='R3:240.B33W:O3', $
+    vGrid=vGridGlobal, hGrid=hGridStandard
 
   ;; ----------------------------------------- Baselines
   !define(constructBaselineFine,{baselineFine$1: Quantity, type=baseline, $
@@ -779,6 +787,10 @@ dtR3B9: Quantity, type=singleChannelRadiance, signal='R3:240.B9F:CO'
     !allStatuses, !allQualities, !allConvergences, $
     !allCloudSummaries ]
 
+  CloudDT33DiagnosticsTemplate: VectorTemplate, quantities = [ $
+    lowCloudSurfsDT33, highCloudSurfsDT33, $
+    lowCloudSummaryDT33, highCloudSummaryDT33 ]
+
   !ifdef(flagUnfolded,{
   cloudOutputTemplate: VectorTemplate, quantities = [ $
     !allFoldedRadiances, !allUnfoldedRadiances, !allDTs, !allSplitDTs, !allCloudMinMax, !allRadDTs,  dtR3B7, dtR3B8, dtR3B9]
@@ -856,6 +868,9 @@ begin Fill
 end Fill
 !divert(-1)
 ;$Log$
+;Revision 1.133  2021/08/19 22:44:41  pwagner
+;Avoid hgridsingle for TotalExtinctionR3 in nrt
+;
 ;Revision 1.132  2017/12/15 18:27:25  mmadatya
 ;Added geoHeight as new quantity template
 ;
