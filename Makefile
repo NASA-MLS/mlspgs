@@ -849,8 +849,8 @@ install-mlstools:
   cd ../scripts; \
   cp l1pcffrag_generator.pl $(MLSTOOLSDIR)
   
-install-nrt: install-l1 install-l2 l2q
-	@cp $(MLSBIN)/mlsnrt*.sh $(INSTALLDIR)
+install-nrt: install-l1 install-l2 l2q createattributes insertl2gpvalues
+	@cp $(MLSBIN)/mlsnrt*.sh $(MLSBIN)/postl2script.sh $(INSTALLDIR)
 
 partialclean:
 	@echo "Cleaning objects from $(SUBDIRS)"; \
@@ -1602,6 +1602,9 @@ tools: $(MLSTOOLS)
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.38  2023/09/15 16:38:34  pwagner
+# Can now build ncl2gpcat tool
+#
 # Revision 1.37  2023/04/14 15:48:08  pwagner
 # Now able to build createattributes
 #
