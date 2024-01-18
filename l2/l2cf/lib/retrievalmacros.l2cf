@@ -1115,12 +1115,23 @@ Fill, quantity=temporaryDiagnostics.chisqTmp, method=manipulate, manipulation='a
 !define(addInOneNoRads,{!dnl
 Fill, quantity=temporaryDiagnostics.noRadsTmp, method=manipulate, manipulation='a+b', $
   a=temporaryDiagnostics.noRadsTmp, b=otherDiagnostics.noRadsProfile$1, /ignoreTemplate !nl})
+; !define(addInOneHighCloudContam,{!dnl
+; Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, status=!statusHighCloud+!statusBeWary, $
+;   sourceQuantity=otherDiagnostics.highCloudSummary$1, maxValue=!MFcloudmax, /additional!nl})
+; !define(addInOneLowCloudContam,{!dnl
+; Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, status=!statusLowCloud+!statusBeWary, $
+;   sourceQuantity=otherDiagnostics.lowCloudSummary$1, minValue=!MFcloudmin, /additional!nl})
+
+; The new way of setting Cloud status bits
+; *CloudSummaryDT33 will be 0 (if not set) or 1 (if set)
+; Using the Fill method 'status', this translates to setting the status bit
+; whenever the CloudSummary is > 0
 !define(addInOneHighCloudContam,{!dnl
-Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, status=!statusHighCloud+!statusBeWary, $
-  sourceQuantity=otherDiagnostics.highCloudSummary$1, maxValue=!MFcloudmax, /additional!nl})
+Fill, quantity=standardDiagnostics.status!HRQuantity, method=status, status=!statusHighCloud+!statusBeWary, $
+  sourceQuantity=CloudDT33Diagnostics.highCloudSummaryDT33, maxValue=0K, /additional!nl})
 !define(addInOneLowCloudContam,{!dnl
-Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, status=!statusLowCloud+!statusBeWary, $
-  sourceQuantity=otherDiagnostics.lowCloudSummary$1, minValue=!MFcloudmin, /additional!nl})
+Fill, quantity=standardDiagnostics.status!HRQuantity, method=status, status=!statusLowCloud+!statusBeWary, $
+  sourceQuantity=CloudDT33Diagnostics.lowCloudSummaryDT33, maxValue=0K, /additional!nl})
 
 !define(sumTooFewRads,{!dnl
 ;; too few radiances summed over all Bands
@@ -1256,6 +1267,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.162  2019/12/13 00:08:56  pwagner
+; May override more default settings with macros
+;
 ; Revision 1.161  2019/10/16 21:01:17  pwagner
 ; May SetPtanPrecPositive as part of each completePhase macro
 ;
