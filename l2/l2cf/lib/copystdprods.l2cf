@@ -128,6 +128,11 @@ Copy, $
 ;; The IWC, RHI files require special treatment
 ;; In each case we copy two related swaths into the same l2gp file
 Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='CloudTopPressure-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName(CloudTopPressure)', rename='CloudTopPressure', $
+    /create
+
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
     inputFile='!DGGFileName', swath='IWC-StdProd', inputtype=l2dgg, $
     file='!l2gpFileName(IWC)', rename='IWC', $
     /create
@@ -215,6 +220,9 @@ begin Output
 end Output
 !divert(-1)
 ; $Log$
+; Revision 1.9  2017/05/17 22:28:04  pwagner
+; flagSkipOtherStdProds can be used by (b) task of dual-l2 nrt
+;
 ; Revision 1.8  2016/06/15 22:04:29  pwagner
 ; We organize control flow around flagNRT more rationally
 ;
