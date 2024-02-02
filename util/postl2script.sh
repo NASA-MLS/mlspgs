@@ -428,6 +428,7 @@ set_if_not_def SO2NNSCRIPT $MLSTOOLS/so2_prediction.py
 set_if_not_def TEMPNNSCRIPT $MLSTOOLS/temp_prediction.py
 set_if_not_def N2ONNSCRIPT $MLSTOOLS/n2o_prediction.py
 set_if_not_def HNO3NNSCRIPT $MLSTOOLS/hno3_prediction.py
+set_if_not_def CLOUDNNSCRIPT $MLSTOOLS/cloud_prediction.py
 
 echo "PYTHON3 $PYTHON3"
 echo "H2ONNSCRIPT $H2ONNSCRIPT"
@@ -443,12 +444,36 @@ else
   radg=*RADG*.h5
   radd=*RADD*.h5
   boa=*L1BOA*.h5
+  # It's possible we'll have a PCF defined but the above files don't exist
+  if [ ! -f "$boa" ]
+  then
+    line=`sed -n '/^21050/p' ${PGS_PC_INFO_FILE}`
+    a=`echo $line | awk -F'|' '{print $2}'`
+    b=`echo $line | awk -F'|' '{print $3}'`
+    radd=$b/$a
+    line=`sed -n '/^21051/p' ${PGS_PC_INFO_FILE}`
+    a=`echo $line | awk -F'|' '{print $2}'`
+    b=`echo $line | awk -F'|' '{print $3}'`
+    radg=$b/$a
+    line=`sed -n '/^21110/p' ${PGS_PC_INFO_FILE}`
+    a=`echo $line | awk -F'|' '{print $2}'`
+    b=`echo $line | awk -F'|' '{print $3}'`
+    boa=$b/$a
+  fi
   # The following arrays hold corresponding names for
   # molecules  swaths  pythonscripts  weightsfiles
   mols="h2o o3 co so2 temp n2o hno3"
   swaths="H2O O3 CO SO2 Temperature N2O HNO3"
   scripts="$H2ONNSCRIPT $O3NNSCRIPT $CONNSCRIPT $SO2NNSCRIPT $TEMPNNSCRIPT $N2ONNSCRIPT $HNO3NNSCRIPT"
   weights="$H2OANNWEIGHTS $O3ANNWEIGHTS $COANNWEIGHTS $SO2ANNWEIGHTS $TEMPANNWEIGHTS $N2OANNWEIGHTS $HNO3ANNWEIGHTS"
+  # We may be called to predict only cloud tops, instead of the standard molecules
+  if [ ! -f "$H2OANNWEIGHTS" ]
+  then
+    mols="cloud"
+    swaths="CloudTopPressure"
+    scripts="$CLOUDNNSCRIPT"
+    weights="$CLOUDANNWEIGHTS"
+  fi
   echo "weights: $weights"
   for mol in $mols
   do
@@ -465,6 +490,9 @@ else
 fi
 # -------------------------- -------------------------- ------------
 # $Log$
+# Revision 1.11  2023/09/01 18:38:43  pwagner
+# Added feature to create attributes in product files
+#
 # Revision 1.10  2022/10/13 22:19:48  pwagner
 # Added hno3 and n2o swaths; using arrays like mols instead of multiple ifs
 #
