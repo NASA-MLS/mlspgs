@@ -5317,6 +5317,8 @@ contains ! =====     Public Procedures     =============================
       units_name = '%rhi'
     case ('iwc', 'iwp')
       units_name = 'g/m^3'
+    case ('cloudtoppressure')
+      units_name = 'hPa'
     case default
       units_name = 'vmr'
     end select
@@ -5883,6 +5885,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.257  2023/07/06 18:42:48  pwagner
+! Added flexibility to read swaths of derived products
+!
 ! Revision 2.256  2023/02/02 22:25:11  pwagner
 ! Light housekeeping
 !
