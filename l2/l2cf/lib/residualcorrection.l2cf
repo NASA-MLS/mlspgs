@@ -29,7 +29,24 @@ begin Fill
     method=residualCorrection, file='!filename'
   Destroy, vector=rawRadiances
 end Fill
+
+; Unless we decide otherwise, for now write the corrected radiances
+; to one of the forward model radiance files
+begin Join
+  label, quantity=measurement.band2, /prefixSignal, label=' Residual Corrected'
+  label, quantity=measurement.band3, /prefixSignal, label=' Residual Corrected'
+  label, quantity=measurement.band4, /prefixSignal, label=' Residual Corrected'
+  DirectWrite, $
+    source=measurement.band2, type=l2fwm, $
+    source=measurement.band3, type=l2fwm, $
+    source=measurement.band4, type=l2fwm, $
+    file='!l2fwmFileName(GHz)', $
+    hdfVersion=5
+end Join
 ; ===================================================================
 !divert(-1)
 ;$Log$
+;Revision 1.1  2023/12/14 21:26:47  pwagner
+;First commit
+;
 !divert!dnl
