@@ -1127,12 +1127,14 @@ Fill, quantity=temporaryDiagnostics.noRadsTmp, method=manipulate, manipulation='
 ; Using the Fill method 'status', this translates to setting the status bit
 ; whenever the CloudSummary is > 0
 !define(addInOneHighCloudContam,{!dnl
-Fill, quantity=standardDiagnostics.status!HRQuantity, method=status, status=!statusHighCloud+!statusBeWary, $
+Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, status=!statusHighCloud+!statusBeWary, $
   sourceQuantity=CloudDT33Diagnostics.highCloudSummaryDT33, maxValue=0K, /additional!nl})
 !define(addInOneLowCloudContam,{!dnl
-Fill, quantity=standardDiagnostics.status!HRQuantity, method=status, status=!statusLowCloud+!statusBeWary, $
-  sourceQuantity=CloudDT33Diagnostics.lowCloudSummaryDT33, maxValue=0K, /additional!nl})
-
+Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, status=!statusLowCloud+!statusBeWary, $
+  sourceQuantity=CloudDT33Diagnostics.lowCloudSummaryDT33, maxValue=0K, /additional!nl
+  Dump, text='!HRQuantity status (high+low)'
+  Dump, options='-1', quantity=otherDiagnostics.status!HRQuantity
+})
 !define(sumTooFewRads,{!dnl
 ;; too few radiances summed over all Bands
 Fill, quantity=temporaryDiagnostics.noRadsTmp, method=explicit, explicitValues=0, /spread
@@ -1259,14 +1261,26 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })!dnl
 !dnl
 ;; Status - cloudy radiances - don't do a boxcar.
+; In our new DT33-based cloud flagging, we don't loop over flagging radiometers
+; but instead rely solely upon R3
+; !ifdef(MFcloudmax,{!dnl
+; !forall(addInOneHighCloudContam,!flaggingRadiometers)
+; })
 !ifdef(MFcloudmax,{!dnl
-!forall(addInOneHighCloudContam,!flaggingRadiometers)
-})
+!addInOneHighCloudContam}!dnl
+)
+; !ifdef(MFcloudmin,{!dnl
+; !forall(addInOneLowCloudContam,!flaggingRadiometers)!dnl
+; })
 !ifdef(MFcloudmin,{!dnl
-!forall(addInOneLowCloudContam,!flaggingRadiometers)!dnl
-})})
+!addInOneLowCloudContam}!dnl
+)!dnl
+})
 
 ; $Log$
+; Revision 1.163  2024/01/18 23:32:37  pwagner
+; Put in place new way of setting Cloud Status bits based on DT33
+;
 ; Revision 1.162  2019/12/13 00:08:56  pwagner
 ; May override more default settings with macros
 ;
