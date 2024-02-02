@@ -149,6 +149,10 @@ begin Construct
   !define(allColumns,
     {!makelist({column_},{},!allLinearMolecules),!makelist({column_},{},!allLogMolecules),!makelist({column_},{},!O3Molecule),!makelist({column_},{},!OHMolecule)})
 
+  ;; ----------------------------------------- Cloud tops
+  CloudTopPressure:Quantity, vGrid=vGridRefIWC, $
+    hGrid=hGridStandard, type=CloudIce
+
   ;; ----------------------------------------- Cloud Input/Output
   hGridFine: hGrid, type=regular, spacing=0.5 degrees, origin=0 degrees, $
   module=GHz !ifdef(flagforbidOverspill, {, /forbidOverspill, /insetOverlaps})
@@ -738,6 +742,7 @@ dtR3B9: Quantity, type=singleChannelRadiance, signal='R3:240.B9F:CO'
     !allMolecules, $
     !allHiResMolecules, $
     RHiVMR, RHiVMRSNGL, UTRHi, rhi, rhi_HR, RHiPrfl, MIFRHi, $
+    CloudTopPressure, $
     !allColumns, $
     !allBaselines, $
     !allBaselinesFine, $
@@ -868,6 +873,9 @@ begin Fill
 end Fill
 !divert(-1)
 ;$Log$
+;Revision 1.134  2024/01/18 23:30:28  pwagner
+;New quantities for DT33-based cloud fflagging
+;
 ;Revision 1.133  2021/08/19 22:44:41  pwagner
 ;Avoid hgridsingle for TotalExtinctionR3 in nrt
 ;
