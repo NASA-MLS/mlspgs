@@ -441,9 +441,9 @@ then
   echo "insertl2gpvalues not found so skipping n-n retrievals"
 else
   cd $c_dir
-  radg=*RADG*.h5
-  radd=*RADD*.h5
-  boa=*L1BOA*.h5
+  radg=`ls *RADG*.h5`
+  radd=`ls *RADD*.h5`
+  boa=`ls *L1BOA*.h5`
   # It's possible we'll have a PCF defined but the above files don't exist
   if [ ! -f "$boa" ]
   then
@@ -460,6 +460,9 @@ else
     b=`echo $line | awk -F'|' '{print $3}'`
     boa=$b/$a
   fi
+  echo "boa $boa"
+  echo "radg $radg"
+  echo "radd $radd"
   # The following arrays hold corresponding names for
   # molecules  swaths  pythonscripts  weightsfiles
   mols="h2o o3 co so2 temp n2o hno3"
@@ -490,6 +493,9 @@ else
 fi
 # -------------------------- -------------------------- ------------
 # $Log$
+# Revision 1.12  2024/02/02 21:44:56  pwagner
+# Cope with being used for CloudTopPressure by v6 level 2
+#
 # Revision 1.11  2023/09/01 18:38:43  pwagner
 # Added feature to create attributes in product files
 #
