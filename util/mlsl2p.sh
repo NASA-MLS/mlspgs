@@ -28,6 +28,8 @@
 # (6) OTHEROPTS is defined as an environment variable
 #     It would contain other meaningful runtime options, 
 #       e.g. OTHEROPTS="--skipRetrieval"
+# (7) POSTL2SCRIPT (just like mlsnrt) is defined
+# (8) ATTRFILE (just like mlsnrt) is defined
 #
 # Copyright 2005, by the California Institute of Technology. ALL
 # RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
@@ -236,9 +238,48 @@ set_if_not_def()
      fi
 }
 
+#---------------------------- rename_all_nc
+#
+# Function to rename all the .nc-marked l2gp files to .he5
+rename_all_nc()
+{
+  files=`extant_files *L2GP-[A-CE-Z]*.nc *L2GP-DGG_*.nc`
+  for file in $files
+  do
+    hname=`echo $file | sed 's/\.nc/\.he5/'`
+    mv $file $hname
+  done
+}
+
+#---------------------------- create_nc_metafiles
+#
+# Function to create metadata files for
+# all the .nc-marked l2gp files
+create_nc_metafiles()
+{
+  files=`extant_files *L2GP-[A-CE-Z]*.nc *L2GP-DGG_*.nc`
+  for file in $files
+  do
+    hname=`echo $file | sed 's/\.nc/\.he5/'`
+    # 1st: the .met files
+    if [ -f "$hname.met" ]
+    then
+      cp $hname.met $file.met.tmp
+      sed 's/\.he5/\.nc/' $file.met.tmp > $file.met
+      rm $file.met.tmp
+    fi
+    # 2nd: the .xml files
+    if [ -f "$hname.xml" ]
+    then
+      cp $hname.xml $file.xml.tmp
+      sed 's/\.he5/\.nc/' $file.xml.tmp > $file.xml
+      rm $file.xml.tmp
+    fi
+  done
+}
+
 # ------------------ check for misalignment ----------------------
 # ----------------------------------------------------------------
-file=`extant_files *L2GP-DGG_*.he5`
 # Check products for misaligned geolocations
 # If they are found to be misaligned, set return_status to 99
 check_for_misalignment()
@@ -279,28 +320,26 @@ logit "NCCOPY: $NCCOPY"
 if [ -x "$NETCDFCONVERT" ]
 then
   logit "Converting file format to NetCDF4"
-  files=`extant_files *L2GP-*.nc`
+  files=`extant_files *L2GP-*.he5`
   if [ "$files" = "" ]
   then
     if [ -d "outputs" ]
     then
       cd "outputs"
-      files=`extant_files *L2GP-*.nc`
+      files=`extant_files *L2GP-*.he5`
     fi
   fi
   for file in $files
   do
-    hname=`echo $file | sed 's/\.nc$/\.he5/'`
-    logit "mving $file to $hname"
-    mv $file $hname
-    logit "Converting $hname to $file"
-    $NETCDFCONVERT $hname
+    ncname=`echo $file | sed 's/\.he5/\.nc/'`
+    logit "Converting $file to $ncname"
+    $NETCDFCONVERT $file
     # The tool insists on naming its output file "something.nc4"
     # So we must rename it yet again to "something.nc"
     # What a shameful mess we've made
-    nc4name=`echo $hname | sed 's/\.he5$/\.nc4/'`
-    logit "mving $nc4name to $file"
-    mv $nc4name $file
+    nc4name=`echo $file | sed 's/\.he5/\.nc4/'`
+    logit "mving $nc4name to $ncname"
+    mv $nc4name $ncname
   done
 fi
 }
@@ -423,6 +462,35 @@ then
   done
 fi
 # ----------------------------------------------------------------
+}
+
+# ----------------------reformat_and_repack-----------------
+# ----------------------------------------------------------------
+reformat_and_repack()
+{
+
+  # Will we use python scripts to predict values for any other
+  # products, e.g. CloudTopHeight?
+  if [ -f "$POSTL2SCRIPT" -a -f "$ATTRFILE" ]
+  then
+      $POSTL2SCRIPT "$OUTPUTS_C" OUTPUTS_A OUTPUTS_B PCF_A PCF_B
+  fi
+  convert_file_formats
+  
+  # Do we have metadata files for NetCDF-formatted product files yet?
+  ncmetadata=`extant_files *L2GP-DGG_*.nc.met`
+  if [ "$ncmetadata" = "" ]
+  then
+    create_nc_metafiles
+  fi
+
+
+  nccopy_files
+
+  repack_files
+
+  augment_files
+
 }
 
 # ----------------------wait_for_slaves_to_finish-----------------
@@ -597,6 +665,50 @@ run_mlsl2_tk()
   wait_for_slaves_to_finish
 }
 
+# ------------------------------- run_serially
+run_serially()
+{
+  if [ "$PGE_BINARY" = "" ]
+  then
+    PGE_BINARY=$BIN_DIR/$MLSPROG
+  fi
+  echo $PGE_BINARY $EXTRA_OPTIONS "$@"
+  
+  if [ ! -x "$PGE_BINARY"  ]
+  then
+    echo "************************************************************************"
+    echo "$PGE_BINARY doesn't exist!"
+    echo "Check for typos in its path and program names"
+    echo "************************************************************************"
+    exit 1
+  fi
+  if [ -f $BIN_DIR/license.txt ]
+  then
+    cat $BIN_DIR/license.txt
+  fi
+  echo $PGE_BINARY $otheropts "$@"
+  if [ "$CAPTURE_MT" = "yes" -a "$STDERRFILE" = "" ]
+  then
+    STDERRFILE=$MLSPROG.stderr
+  fi
+  if [ "$UsingPCF" != "" ]
+  then
+    otheropts="--tk $otheropts"
+  fi
+  if [ "$CAPTURE_MT" = "yes" ]
+  then
+    /usr/bin/time -f 'M: %M t: %e' $PGE_BINARY $otheropts "$@" 2> "$STDERRFILE"
+  elif [ "$STDERRFILE" != "" ]
+  then
+    $PGE_BINARY $otheropts "$@" 2> "$STDERRFILE"
+  else
+    $PGE_BINARY $otheropts "$@"
+  fi
+  return_status=`expr $?`
+  H5REPACK=$BIN_DIR/h5repack
+  MISALIGNMENT=$BIN_DIR/misalignment
+}
+
 #------------------------------- Main Program ------------
 
 #****************************************************************
@@ -624,6 +736,8 @@ if [ -f "$MLSL2PLOG" ]
 then
   mv $MLSL2PLOG $MLSL2PLOG.1
 fi
+echo "Entering mlsl2p.sh with args $@"
+pwd
 echo "MLSL2PLOG " > "$MLSL2PLOG"
 
 logit "$MLSL2PLOG"
@@ -806,7 +920,11 @@ NORMAL_STATUS=2
 
 # ------------------ launch the level 2 run ----------------------
 # ----------------------------------------------------------------
-if [ "$UsingPCF" != "" ]
+if [ "$SERIALRUN" = "yes" ]
+then
+  run_serially
+  reformat_and_repack
+elif [ "$UsingPCF" != "" ]
 then
   # Use sed to convert slavetmplt.sh into an executable script
   # The resulting script sets some toolkit-savvy environment variables
@@ -827,16 +945,30 @@ then
 
   run_mlsl2_tk
   l2cf=$L2CF
+  
+  # Do we have an outputs subdirectory of JOBDIR for std prods?
+  if [ -d "$JOBDIR/outputs" ]
+  then
+    STDPRODDIR="$JOBDIR/outputs"
+    OUTPUTS_C=outputs
+  else
+    STDPRODDIR="$JOBDIR"
+    OUTPUTS_C=./
+  fi
+  
+  cd $STDPRODDIR
+  OUTPUTS_C=`pwd`
+  # Did we name the dgg file *L2GP-DGG*.nc in the PCF?
+  # if so, rename all the l2gp files so they end with .he5
+  dggfilenc=`extant_files *L2GP-DGG_*.nc`
+  if [ "$dggfilenc" != "" ]
+  then
+    rename_all_nc
+  fi
+
   check_for_misalignment
-
-  convert_file_formats
-
-  nccopy_files
-
-  repack_files
-
-  augment_files
-
+  reformat_and_repack
+  
 else
   # Use sed to convert slavetmplt.sh into an executable script
   # The resulting script sets some toolkitless environment variables
@@ -886,6 +1018,9 @@ else
 fi
 
 # $Log$
+# Revision 1.46  2023/05/11 22:42:13  pwagner
+# Now insists that H5REPACK and NETCDFAUGMENT be defined before running
+#
 # Revision 1.45  2022/09/28 21:41:52  pwagner
 # Add comments regarding NCCOPY variable
 #
