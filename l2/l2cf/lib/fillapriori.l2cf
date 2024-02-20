@@ -230,10 +230,6 @@ Fill, quantity=apriori.refGPH,$
   Fill, quantity=apriori.fieldStrength, method=rotateField, $
     fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV})
     
-  ;; Adjust tropospheric HCN per HCP message 2013 May 16
-  Fill, quantity=apriori.hcn, method=explicit, explicitValues=0.22 ppbv, $
-    height=[1000 mb : 100 mb], /spread
-  
   ;; -------------------------------- Apriori precisions for species
 
   Fill, quantity=aprioriPrecision.bro,  method=explicit, /spread, explicitValues= 1 ppbv
@@ -812,6 +808,9 @@ end Fill
 !include(writeapriori.l2cf)
 !divert(-1)
 ;$Log$
+;Revision 1.167  2019/11/08 18:18:25  pwagner
+;Changes needed for test SA-01 103
+;
 ;Revision 1.166  2019/10/31 18:03:34  pwagner
 ;Changed to satisfy requirements of v5.00 SA-01-102
 ;
