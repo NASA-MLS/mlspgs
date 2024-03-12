@@ -471,9 +471,17 @@ reformat_and_repack()
 
   # Will we use python scripts to predict values for any other
   # products, e.g. CloudTopHeight?
+  echo "POSTL2SCRIPT: $POSTL2SCRIPT"
+  echo "ATTRFILE: $ATTRFILE"
   if [ -f "$POSTL2SCRIPT" -a -f "$ATTRFILE" ]
   then
-      $POSTL2SCRIPT "$OUTPUTS_C" OUTPUTS_A OUTPUTS_B PCF_A PCF_B
+    # for postl2script.sh to work properly, we must be in $JOBDIR
+    olddir=`pwd`
+    cd $JOBDIR
+    $POSTL2SCRIPT "$OUTPUTS_C" OUTPUTS_A OUTPUTS_B PCF_A PCF_B
+    cd $olddir
+  else
+    echo "POSTL2SCRIPT or ATTRFILE was not defined, so no post l2 script to run"
   fi
   convert_file_formats
   
@@ -817,7 +825,7 @@ fi
 
 set_if_not_def H5REPACK       $PGE_BINARY_DIR/h5repack
 set_if_not_def NETCDFAUGMENT  $PGE_BINARY_DIR/aug_hdfeos5
-set_if_not_def NETCDFCONVERT  $PGE_BINARY_DIR/l2gp2nc4
+# set_if_not_def NETCDFCONVERT  $PGE_BINARY_DIR/l2gp2nc4
 set_if_not_def MISALIGNMENT   $PGE_BINARY_DIR/misalignment
 if [ ! -x "$H5REPACK" ]
 then
@@ -848,10 +856,10 @@ then
   fi
 fi
 
-if [ ! -x "$NETCDFCONVERT" ]
-then
-  NETCDFCONVERT=$MLSTOOLS/l2gp2nc4
-fi
+# if [ # -x "$NETCDFCONVERT" ]
+# then
+#   NETCDFCONVERT=$MLSTOOLS/l2gp2nc4
+# fi
 if [ ! -x "$MISALIGNMENT" ]
 then
   MISALIGNMENT=$MLSTOOLS/misalignment
@@ -1018,6 +1026,9 @@ else
 fi
 
 # $Log$
+# Revision 1.47  2024/02/15 17:40:02  pwagner
+# Repaired numerous goldbrick-killing bugs introduced with last commit
+#
 # Revision 1.46  2023/05/11 22:42:13  pwagner
 # Now insists that H5REPACK and NETCDFAUGMENT be defined before running
 #
