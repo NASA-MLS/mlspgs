@@ -225,7 +225,8 @@ executable_or_exit()
 # swath SWATHNNSCRIPT L1BRADG L1BRADD L1BOA Weights_File Prediction_File 
 #
 # In effect we are running
-#   python3 $SWATHNNSCRIPT $L1BRADG $L1BRADD $L1BOA $Weights_File $Prediction_File
+#   python3 $SWATHNNSCRIPT $L1BRADG $L1BRADD $L1BOA \
+#     $Weights_File $Prediction_File [$Weights_File_2]
 # Afterwards we 
 # * use insertl2gpvalues to overwrite the relevant levels in the swath
 # ***                         ***
@@ -238,8 +239,21 @@ swath_nn_retrieval()
   SWATHNNSCRIPT="$2"
   shift
   shift
-  echo $PYTHON3 $SWATHNNSCRIPT $@
-  $PYTHON3 $SWATHNNSCRIPT $@
+  # How many args remain? 5 or 6?
+  if [ $# -lt 6 ]
+  then
+    echo $PYTHON3 $SWATHNNSCRIPT $@
+    $PYTHON3 $SWATHNNSCRIPT $@
+  else
+    radg=$1
+    radd=$2
+    oa=$3
+    weight1=$4
+    weight2=$6
+    pred=$5
+    echo $PYTHON3 $SWATHNNSCRIPT $radg $oa $weight1 $weight2 $pred
+    $PYTHON3 $SWATHNNSCRIPT $radg $oa $weight1 $weight2 $pred
+  fi
   file=`echo *L2GP-$swath*.he5`
   DGG=`echo *L2GP-DGG_*.he5`
   # echo $insertl2gpvalues $file
@@ -347,12 +361,15 @@ cp $b_file.xml $c_dir
 #
 verbose="yes"
 I=postl2script
+#echo "Now in postl2script with args: $@"
+#echo "But where are we right now?"
 #pwd
-#ls
+#ls 
 # Are there any env files we are supposed to source?
 ENVFILE=job.env
 if [ -f "$ENVFILE" ]
 then
+  echo "dotting $ENVFILE"
   . ./"$ENVFILE"
 fi
 
@@ -476,8 +493,10 @@ else
     swaths="CloudTopPressure"
     scripts="$CLOUDNNSCRIPT"
     weights="$CLOUDANNWEIGHTS"
+    weights2="$CLOUDANNWEIGHTS2"
   fi
   echo "weights: $weights"
+  echo "weights2: $weights2"
   for mol in $mols
   do
     # mol_num is the index number in mols corresponding to mol
@@ -486,13 +505,24 @@ else
     swath=`print_nth_array_element $mol_num "$swaths"`
     script=`print_nth_array_element $mol_num "$scripts"`
     weight=`print_nth_array_element $mol_num "$weights"`
+    weight2=`print_nth_array_element $mol_num "$weights2"`
     pred=${mol}_prediction.h5
-    commando swath_nn_retrieval $swath $script $radg $radd $boa $weight $pred
+    if [ "$weight2" = "" ]
+    then
+      commando swath_nn_retrieval $swath $script $radg $radd $boa \
+        $weight $pred
+    else
+      commando swath_nn_retrieval $swath $script $radg $radd $boa \
+        $weight $pred $weight2
+    fi
   done
   cd $cwd
 fi
 # -------------------------- -------------------------- ------------
 # $Log$
+# Revision 1.13  2024/02/07 23:33:14  mlsgold
+# Fixed bug affecting nrt test in gold brick
+#
 # Revision 1.12  2024/02/02 21:44:56  pwagner
 # Cope with being used for CloudTopPressure by v6 level 2
 #
