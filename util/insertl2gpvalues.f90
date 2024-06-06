@@ -15,10 +15,11 @@ program insertL2GPValues ! inserts values of L2GPData files, e.g. nrt
 
    use Dump_0, only: Dump
    use HDF, only: DFACC_Create, Dfacc_RdOnly, Dfacc_Rdwr
-   use HDF5, only: HSize_T
+   use HDF5, only: HSize_T, H5F_ACC_RDWR_F, H5FClose_f, H5FOpen_f
+   use HDFEOS5, only: MLS_Chartype
    use HighOutput, only: OutputNamedValue
    use Intrinsic, only: L_HDF, L_Swath
-   use L2GPData, only: L2GPData_T, L2GPnamelen, MaxSwathNamesBufSize, Rgp, &
+   use L2GPData, only: L2GPData_T, MaxSwathNamesBufSize, Rgp, &
      & AppendL2GPData, DestroyL2GPContents, Dump, &
      & ReadL2GPData, SetupNewL2GPRecord
    use Machine, only: Hp, Getarg
@@ -27,11 +28,14 @@ program insertL2GPValues ! inserts values of L2GPData files, e.g. nrt
      & Dump, MLS_CloseFile, MLS_OpenFile, MLS_Exists, &
      & MLS_Inqswath, InitializeMLSFile
    use MLSFinds, only: FindFirst, FindLast
+   use MLSHDFEOS, only: MLS_SWattach, MLS_SWdetach, &
+     & MLS_SWwrlattr
    use MLSHDF5, only: GetAllHDF5DSNames, GetHDF5DSDims, LoadFromHDF5DS, &
-     & MLS_H5open, MLS_H5close
+     & MLS_H5open, MLS_H5close, MakeHDF5Attribute, ReadHDF5Attribute
    use MLSMessageModule, only: MLSMessageConfig, MLSMessage, MLSMSG_Warning
    use MLSStringLists, only: GetStringElement, &
-     & Intersection, NumStringElements, StringElementNum
+     & NumStringElements, StringElementNum
+   use MLSStrings, only: Asciify
    use Output_M, only: Blanks, Output
    use PCFHdr, only: GlobalAttributes, GlobalAttributes_T, &
      & DumpGlobalAttributes, He5_ReadGlobalAttr, He5_WriteGlobalAttr
@@ -205,6 +209,8 @@ contains
     integer :: numProfs
     integer :: numTotProfs
     integer :: NvTimes
+    integer :: Status
+    integer :: swid
     real (rgp), dimension(:), allocatable   :: DYNTpVals
     real (rgp), dimension(:), allocatable   :: Pressure
     real (rgp), dimension(:,:), allocatable :: precisions
@@ -217,10 +223,14 @@ contains
       & "10.5067/AURA/MLS/DATA2523"
 !      & "10.5067/AURA/MLS/DATA2521"
     character(len=16)                       :: ProcessLevel
+    logical                                 :: LogStatus
+    character(len=16)                       :: Units
     integer                                 :: DayofYear
+    integer                                 :: FileID
     double precision                        :: TAI93At0zOfGranule
     character(len=64)                       :: HostName
     character(len=256)                      :: MiscNotes
+    character(len=256)                      :: DataName
     
     ! --------------------------------------------------------------------
     ! This is the number of instances in the new values file
@@ -455,7 +465,11 @@ contains
       gAttributes%MiscNotes          = '(Not relevant)'
       gAttributes%ProductionLoc      = 'SCF'
       ! We now start to choose DOI depending on the file name
-      print *, 'values file: ', trim(options%newValues)
+      DSName = '/HDFEOS/SWATHS/' // trim(options%DSNames) // &
+        & '/Data Fields/' // trim(options%DSNames)
+      if ( options%debug ) print *, 'values file: ', trim(options%newValues)
+      if ( options%debug ) print *, 'options%DSNames: ', trim(options%DSNames)
+      if ( options%debug ) print *, 'DSName: ', trim(DSName)
       if ( index( trim(options%newValues), 'MERRA' ) > 0 ) &
         & gAttributes%doi            = identifier_product_doi_merra
 
@@ -469,6 +483,59 @@ contains
       & call AppendL2GPData ( L2GP, L2GPFile, L2GP%Name )
     if ( options%verbose ) &
       & call dump( L2GP%L2GPValue(1,1,1:NvTimes), 'new values', width=5 )
+
+    ! Must get Units name, too
+    if ( .not. valuesFile%stillOpen ) call MLS_OpenFile ( valuesFile )
+    call dump ( ValuesFile, details=1 )
+    LogStatus = ReadHDF5Attribute ( valuesFile%fileid%f_id, DSName, &
+      & 'Units', Units )
+    if ( .not. LogStatus ) &
+      & call MLSMessage( MLSMSG_Warning, ModuleName, &
+      & "Units attribute not found in values field " // trim(DSName) )
+    if ( options%debug ) print *, 'Units name as read from values file: ', trim(Units)
+    Units = Asciify( Units, how='snip' )
+    if ( options%debug ) print *, 'Units name after asciifying: ', trim(Units)
+
+    ! Set appropriate Units name as attribute
+    if ( options%debug ) call Dump ( L2GPFile )
+    if ( .false. ) then
+      ! hdfeos interface
+      ! Unfortunately, rewriting an hdf5 string attribute truncates the new
+      ! value to be no longer than the original.
+      ! The only workaround is to resort to the vanilla hdf5
+      ! version which, by default, we got to delete the original
+      ! attribute first and then create it afresh with whatever length 
+      ! it needs to be
+      !
+      ! Must first swopen
+      call MLS_OpenFile ( L2GPFile )
+      if ( options%debug ) print *, trim(L2GP%name)
+      swid = MLS_SWattach ( L2GPFile, L2GP%name )
+      if ( options%debug ) print *, 'swid: ', swid
+      status = MLS_SWwrlattr( swid, 'L2gpValue', 'Units', &
+        & MLS_CHARTYPE, 1, units )
+      if ( options%debug ) print *, 'status after writing L2GPValue Units: ', status
+      status = MLS_SWwrlattr( swid, 'L2gpPrecision', 'Units', &
+        & MLS_CHARTYPE, 1, units )
+      if ( options%debug ) print *, 'status after writing L2GPPrecision Units: ', status
+      status = MLS_SWdetach(swid, hdfVersion=HDFVERSION_5)
+      call MLS_CloseFile ( L2GPFile )
+      if ( options%debug ) print *, status
+    else
+      ! hdf interface
+      ! Must first h5fopen
+      dataName = '/HDFEOS/SWATHS/' // trim(L2GP%Name) // &
+        & '/Data Fields/L2gpValue'
+      call h5fopen_f ( trim(L2GPFile%Name), H5F_ACC_RDWR_F, FileID, status )
+      if ( options%debug ) print *, 'Status after h5open_f: ', status
+      call MakeHDF5Attribute ( FileID, dataName, 'Units', units )
+      dataName = '/HDFEOS/SWATHS/' // trim(L2GP%Name) // &
+        & '/Data Fields/L2gpPrecision'
+      call MakeHDF5Attribute ( FileID, dataName, 'Units', units )
+      call h5fclose_f ( FileID, status )
+      if ( options%debug ) print *, 'Status after h5close_f: ', status
+    endif
+
     if ( options%debug ) call Dump( L2GP )
     call DestroyL2GPContents( L2GP )
     if ( options%debug ) then
@@ -482,11 +549,12 @@ contains
     if ( L2GPFile%StillOpen ) call MLS_CloseFile( L2GPFile )
     deallocate(precisions)
     deallocate(values)
-    deallocate(Pressure)
+    ! deallocate(Pressure)
     call sayTime('inserting this swath', tFile)
     if ( .not. options%silent ) call Blanks( 72, advance='yes' )
-    call MLS_CloseFile( ValuesFile )
-    call sayTime('inserting all DMP swaths')
+    ! call dump (ValuesFile)
+    ! if ( ValuesFile%stillOpen ) call MLS_CloseFile( ValuesFile )
+    call sayTime('inserting all DMP swaths', tFile)
   end subroutine DMP_swaths
 
 !------------------------- insert_swaths ---------------------
@@ -951,6 +1019,9 @@ end program insertL2GPValues
 !==================
 
 ! $Log$
+! Revision 1.7  2023/05/10 15:52:00  pwagner
+! Fixed bugs related to non-pressure dim of some dmp datasets
+!
 ! Revision 1.6  2023/03/14 16:04:24  pwagner
 ! New and corrected values for DOI
 !
