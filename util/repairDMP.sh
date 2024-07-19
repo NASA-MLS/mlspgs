@@ -266,6 +266,7 @@ fi
 # Process each day in one day's worth of files.
 one_day()
 {
+  AttrFile=$AttrDay/$AttrFile
   # Repairing an entire day of files
   files=`/bin/ls $DMPDay`
   for file in $files
@@ -274,7 +275,6 @@ one_day()
     DMP=$DMPDay/$file
     bogusDMP=`bogify $DMP`
     # bogusDMP=$DMPDay/$bogusDMP
-    AttrFile=$AttrDay/$AttrFile
     # Can't repair a non-existent DMP file
     if [ ! -f "$DMP" ]
     then
@@ -560,6 +560,9 @@ else
   done
 fi
 # $Log$
+# Revision 1.3  2023/05/08 21:57:02  pwagner
+# Added -redo option
+#
 # Revision 1.2  2023/02/17 21:12:14  pwagner
 # Now can repair every file in a days directory
 #
