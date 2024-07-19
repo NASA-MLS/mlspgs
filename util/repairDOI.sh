@@ -117,7 +117,7 @@ applyit()
      then
        # non-MERRA
        commando $resetl2gpDOIs -v -a identifier_product_doi \
-         -V "10.5067/AURA/MLS/DATA2523" "$DMP"
+         -V "10.5067/AURA/MLS/DATA2525" "$DMP"
      else
        # MERRA
        commando $resetl2gpDOIs -v -a identifier_product_doi \
@@ -407,6 +407,9 @@ else
   done
 fi
 # $Log$
+# Revision 1.2  2023/03/30 21:35:09  pwagner
+# Fixed many bugs
+#
 # Revision 1.1  2023/03/16 16:24:29  pwagner
 # First commit
 #
