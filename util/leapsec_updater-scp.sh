@@ -20,7 +20,7 @@
 # "$Id$"
 
 #scp pwagner@fox.jpl.nasa.gov:/science/pge/v1300-nrt/toolkit5.2.18/database/common/TD/leapsec.dat ./
-scp pwagner@kestrel.jpl.nasa.gov:/science/pge/v0502-l2/toolkit5.2.18/database/common/TD/leapsec.dat ./
+scp pwagner@jackal.jpl.nasa.gov:/science/pge/v1800-nrt/toolkit5.2.18/database/common/TD/leapsec.dat ./
 
 state=$?
 
@@ -31,6 +31,9 @@ fi
 
 exit 0
 # $Log$
+# Revision 1.2  2024/01/04 22:21:23  pwagner
+# Simplified--no longer uses PGSHOME
+#
 # Revision 1.1  2023/05/25 21:53:24  pwagner
 # ftp no longer supported; scp from sips machine instead
 #
