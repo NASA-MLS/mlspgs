@@ -14,7 +14,8 @@ program fixAttribute ! tests MLSHDF5 routines
 !=================================
 
   use HDF, only: Dfacc_Rdwr
-  use HDF5, only: H5fis_HDF5_F
+  use HDF5, only: H5F_ACC_RDWR_F, &
+    & H5fis_HDF5_F, H5FOpen_f, H5FClose_f, H5GOpen_f, H5GClose_f
   use HDFEOS5, only: He5_Swclose, He5_Swopen, MLS_CharType
   use Machine, only: Hp, Getarg, NeverCrash
   use MLSCommon, only: MLSFile_T
@@ -221,7 +222,9 @@ contains
 
 !------------------------- TheMetadata ---------------------
   subroutine TheMetadata
-   character(len=255) :: DOIValue
+    character(len=255) :: DOIValue
+    integer            :: grp_id
+    integer            :: status
    ! Is the file plain hdf or hdfeos?
    if ( index( trim(Filename), '.he5' ) < 1 ) then
      fileID = mls_sfstart ( trim(Filename), DFACC_RDWR, &
@@ -247,24 +250,70 @@ contains
      endif
    else
      ! Now let's try to do this with hdfeos files
-     returnStatus = InitializeMLSFile( l2gp, access=DFACC_RDWR, &
-       & name=Filename )
+     if ( .false. ) then
+       returnStatus = InitializeMLSFile( l2gp, access=DFACC_RDWR, &
+         & name=Filename )
 
-     fileID = he5_swopen( trim(Filename), HE5F_ACC_RDWR )
-     DOIValue = ' '
-     returnStatus = HE5_EHRDGLATT( fileID, "identifier_product_DOI", DOIValue )
-     if ( options%verbose ) then
-       print *,'hdfeos file name : ', trim(Filename)
-       print *,'text file     : ', trim(textFile)
-       print *,'len(text file)  : ', len_trim(textFile)
-       call output ( trim(DOIValue), advance='yes' )
+       fileID = he5_swopen( trim(Filename), HE5F_ACC_RDWR )
+       DOIValue = ' '
+       returnStatus = HE5_EHRDGLATT( fileID, "identifier_product_DOI", DOIValue )
+       if ( options%verbose ) then
+         print *,'hdfeos file name : ', trim(Filename)
+         print *,'text file     : ', trim(textFile)
+         print *,'len(text file)  : ', len_trim(textFile)
+         call output ( trim(DOIValue), advance='yes' )
+       endif
      endif
+     ! fileID = mls_sfstart ( trim(Filename), DFACC_RDWR, &
+     !     &                                          hdfVersion=hdfVersion )
+     call h5fopen_f ( trim(FileName), H5F_ACC_RDWR_F, FileID, status )
+     if ( status /= 0 ) then
+       print *, 'Error in opening hdf access to file'
+       stop
+     endif
+     ! print *, 'file ID: ', fileID
+     if ( options%dumpcore ) then
+       if ( options%verbose ) print *,'DS name  : ', trim(DSname2)
+       coremetadata = ' '
+       call LoadFromHDF5DS ( fileID, &
+         & "HDFEOS INFORMATION/" // DSname2, coremetadata )
+       call output ( trim(coremetadata), advance='yes' )
+     endif
+     if ( options%dumpxml ) then
+       if ( options%verbose ) print *,'DS name  : ', trim(DSname)
+       coremetadata = ' '
+       call LoadFromHDF5DS ( fileID, &
+         & "HDFEOS INFORMATION/" // DSname, coremetadata )
+       call output ( trim(coremetadata), advance='yes' )
+     endif
+     call h5gopen_f( fileID, "HDFEOS INFORMATION", grp_id, status )
+     if ( status /= 0 ) then
+       print *, 'Error in opening hdf access to group'
+       stop
+     endif
+     if ( len_trim(options%corefile) > 0 ) then
+       call SaveAsHDF5DS ( trim(options%corefile), grp_id, &
+         & DSname2, 4096 )
+     endif
+     if ( len_trim(options%xmlfile) > 0 ) then
+       call SaveAsHDF5DS ( trim(options%xmlfile), grp_id, &
+         & DSname, 4096 )
+     endif
+     call h5gclose_f( grp_id, status )
 !      if ( len_trim(options%AttributeValue) > 0 ) then
 !        returnStatus = mls_EHwrglatt( fileID, &
 !        & 'identifier_product_DOI', MLS_CHARTYPE, 1, &
 !        &  options%AttributeValue )
 !      endif
-     returnstatus = he5_swclose( fileID )
+     if ( len_trim(options%AttributeValue) > 0 ) then
+       call h5gopen_f( fileID, '/HDFEOS/ADDITIONAL/FILE_ATTRIBUTES', grp_id, status )
+       call MakeHDF5Attribute ( grp_ID, "identifier_product_DOI", &
+         & trim(options%AttributeValue) )
+       call h5gclose_f( grp_id, status )
+     endif
+     ! returnstatus = he5_swclose( fileID )
+     call h5fclose_f(fileID, status)
+     
      
    endif
   end subroutine TheMetadata
@@ -431,3 +480,6 @@ end program fixAttribute
 !==================
 
 ! $Log$
+! Revision 1.1  2018/11/14 18:48:03  pwagner
+! First commit
+!
