@@ -1,6 +1,7 @@
 #!/bin/sh
 # --------------- repairDOI.sh help
 # repairDOI.sh
+# (Superseded by repairDMP.sh which does all this does and more now)
 # Repairs the DOI attribute in DMP files for each day in a given year 
 # * resetl2gpDOIs to the correct value
 
@@ -24,14 +25,14 @@
 # Bugs and limitations
 # (1) resetl2gpDOIs is assumed to exist, to be an executable, and to be in
 #     your path; otherwise use the -b option
-# (4) If -Dd is left undefined, you must
+# (2) If -Dd is left undefined, you must
 #     supply -Df instead. Perhaps most useful when testing.
-# (5) If the years args are supplied: 
+# (3) If the years args are supplied: 
 #     DMP_dir should include only paths up to
 #     the version string; e.g.,
 #       /data/emls/dmp/l2edmp/v05.01
 #     and you will repair all the files for each day in all the years supplied.
-# (6) If, however, the years args are absent:
+# (4) If, however, the years args are absent:
 #     DMP_dir must include the year, too; e.g.
 #       /data/emls/dmp/l2edmp/v05.01/2023
 #     and you will repair only the files for each day in that year.
@@ -252,6 +253,15 @@ one_year()
 #	The entry point where control is given to the script    *
 #****************************************************************
 #
+RUNANYWAY="no"
+#           ^  -- set this to yes if you're really, really sure
+if [ "$RUNANYWAY" != "yes" ]
+then
+  echo "repairDOI.sh has been superseded by repairDMP.sh"
+  echo "so run that instead"
+  echo "For more info contact Paul Wagner"
+  exit 1
+fi
 debug=1
 #     ^  -- set this to 1 if worried
 
@@ -294,6 +304,10 @@ then
   NETCDFAUGMENT=/software/toolkit/mlstools/aug_eos5
 fi
 
+if [ ! -x "$FIXER" ]
+then
+  FIXER=$MLSTOOLS/fixAttribute
+fi
 
 me="$0"
 my_name=repairDOI.sh
@@ -407,6 +421,9 @@ else
   done
 fi
 # $Log$
+# Revision 1.3  2024/07/19 16:45:48  pwagner
+# Avoid collision between non-Merra and CloudTopPressure dois
+#
 # Revision 1.2  2023/03/30 21:35:09  pwagner
 # Fixed many bugs
 #
