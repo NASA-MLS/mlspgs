@@ -5,6 +5,11 @@
 # (1) rename the existing l2GP-DMP file
 # (2) insertl2gpvalues creating the new DMP with the original name
 #     using dataset values from the original DMP file
+# (3) repair the DOI value
+# (4) write the .met and .xml files as hdf 
+#
+# Note that (3) does what the standalone script repairDOI.sh once did
+# Note that (2) is done
 # for the swaths
 #   Altitude
 #   DTDZ
@@ -57,6 +62,7 @@
 #    -redo         Redo effects of a previous, presumably faulty, repair,
 #                    assuming the .bogus files were left in place
 #    -undo         Undo effects of a previous repair, restoring the old files
+#    -refreesh     Refresh the contents of DMPDir from SourceDMPDir
 
 # Effect:
 # The DMP file will be replaced with a genuine hdfeos formatted DMP file
@@ -197,6 +203,83 @@ applyit()
         "CREATE /HDFEOS/ADDITIONAL/FILE_ATTRIBUTES/AddedNotes {DATATYPE  H5T_STRING {STRSIZE 21} DATASPACE  SCALAR DATA {'Repaired faulty DMP file'}};"  \
         $DMP
       fi
+      # Now for my next trick, repair the DOI value(s)
+      # Use the default DOIs which depend solely on the file name:
+      # Does the file name contain the string MERRA?
+      a=`echo "$DMP" | grep MERRA`
+      if [ "$a" = "" ]
+      then
+        # non-MERRA
+        commando $resetl2gpDOIs -v -a identifier_product_doi \
+          -V "10.5067/AURA/MLS/DATA2525" "$DMP"
+        ShortName=MLSL2EDMP
+        ShortDOI=DATA2525
+      else
+        # MERRA
+        commando $resetl2gpDOIs -v -a identifier_product_doi \
+          -V "10.5067/AURA/MLS/DATA2524" "$DMP"
+        ShortName=MLSL2EDMP
+        ShortDOI=DATA2524
+      fi
+      # Last but not least, the metadata must be edited
+      # Because we stopped archiving .met files we must extract it instead
+      # cp $AttrFile.met $DMPmet
+      $L2AUXDUMP -d "/HDFEOS INFORMATION/coremetadata.0" $AttrFile > $DMPmet
+      cp $AttrFile.xml $DMPxml
+
+      #              (1)
+      vold=DATA2506
+      vnew=$ShortDOI
+      # DOI contains the vold string
+      # They must be changed to vnew
+      # Do this first for the odl-formatted metadata
+      echo sed 's/'"$vold"'/'"$vnew"'/g' $DMPmet $DMPmet.temp
+      sed 's/'"$vold"'/'"$vnew"'/g' $DMPmet > $DMPmet.temp
+      mv $DMPmet.temp $DMPmet
+      
+      # Do this next for the xml-formatted metadata
+      echo sed 's/'"$vold"'/'"$vnew"'/g' $DMPxml $DMPxml.temp
+      sed 's/'"$vold"'/'"$vnew"'/g' $DMPxml > $DMPxml.temp
+      mv $DMPxml.temp $DMPxml
+
+      #              (2)
+      vold=$AttrGranID
+      vnew=$DMPGranID
+      # local gran id contains the vold string
+      # They must be changed to vnew
+      # Do this first for the odl-formatted metadata
+      echo sed 's/'"$vold"'/'"$vnew"'/g' $DMPmet $DMPmet.temp
+      sed 's/'"$vold"'/'"$vnew"'/g' $DMPmet > $DMPmet.temp
+      mv $DMPmet.temp $DMPmet
+      
+      # Do this next for the xml-formatted metadata
+      echo sed 's/'"$vold"'/'"$vnew"'/g' $DMPxml $DMPxml.temp
+      sed 's/'"$vold"'/'"$vnew"'/g' $DMPxml > $DMPxml.temp
+      mv $DMPxml.temp $DMPxml
+      
+
+      #              (3)
+      vold=ML2CO
+      vnew=$ShortName
+      # short name contains the vold string
+      # They must be changed to vnew
+      # Do this first for the odl-formatted metadata
+      echo sed 's/'"$vold"'/'"$vnew"'/g' $DMPmet $DMPmet.temp
+      sed 's/'"$vold"'/'"$vnew"'/g' $DMPmet > $DMPmet.temp
+      mv $DMPmet.temp $DMPmet
+      
+      # Do this next for the xml-formatted metadata
+      echo sed 's/'"$vold"'/'"$vnew"'/g' $DMPxml $DMPxml.temp
+      sed 's/'"$vold"'/'"$vnew"'/g' $DMPxml > $DMPxml.temp
+      mv $DMPxml.temp $DMPxml
+      
+      # Now insert the two kinds of metadata
+      echo "Now insert the two kinds of metadata"
+      echo $FIXER -c $DMPmet $DMP
+      echo $FIXER -x $DMPxml $DMP
+      $FIXER -c $DMPmet $DMP
+      $FIXER -x $DMPxml $DMP
+      
     fi
 }
       
@@ -266,41 +349,62 @@ fi
 # Process each day in one day's worth of files.
 one_day()
 {
+  AttrGranID=$AttrFile
   AttrFile=$AttrDay/$AttrFile
-  # Repairing an entire day of files
-  files=`/bin/ls $DMPDay`
-  for file in $files
-  do
-    echo $file
-    DMP=$DMPDay/$file
-    bogusDMP=`bogify $DMP`
-    # bogusDMP=$DMPDay/$bogusDMP
-    # Can't repair a non-existent DMP file
-    if [ ! -f "$DMP" ]
-    then
-      echo "No standard product DMP file in $DMPYear/$day"
-    # Have we been asked to undo an earlier repair?
-    elif [ "$redo" = "yes" ]
-    then
-      # redo means first undo, then do it over again
-      # with whatever corrected tools are needed
-      echo "First, undo the faulty conversion"
-      undoit
-      echo "Second, do the new conversion"
-      applyit
-      echo "Third, repack the files"
-      repack_files
-      echo "Fourth, augment the files"
-      augment_files
-    elif [ "$undo" = "yes" ]
-    then
-      undoit
-    else
-      applyit
-      repack_files
-      augment_files
-    fi
-  done
+  if [ "$refresh" = "yes" ]
+  then
+    /bin/rm -f $DMPDay/*
+    echo cp $SourceDay/* $DMPDay
+    cp $SourceDay/* $DMPDay
+  else
+    # Repairing an entire day of files
+    files=`/bin/ls $DMPDay`
+    for file in $files
+    do
+      echo $file
+      DMPGranID=$file
+      DMP=$DMPDay/$file
+      DMPmet=$DMP.met
+      DMPxml=$DMP.xml
+      bogusDMP=`bogify $DMP`
+      # bogusDMP=$DMPDay/$bogusDMP
+      a=`echo "$file" | grep '\.met'`
+      b=`echo "$file" | grep '\.xml'`
+      echo "a means .met $a"
+      echo "b means .xml $b"
+      if [ "$a" != "" ]
+      then
+        echo "metadata file will not be converted"
+      elif [ "$b" != "" ]
+      then
+        echo "metadata file will not be converted"
+      # Can't repair a non-existent DMP file
+      elif [ ! -f "$DMP" ]
+      then
+        echo "No standard product DMP file in $DMPYear/$day"
+      # Have we been asked to undo an earlier repair?
+      elif [ "$redo" = "yes" ]
+      then
+        # redo means first undo, then do it over again
+        # with whatever corrected tools are needed
+        echo "First, undo the faulty conversion"
+        undoit
+        echo "Second, do the new conversion"
+        applyit
+        echo "Third, repack the files"
+        repack_files
+        echo "Fourth, augment the files"
+        augment_files
+      elif [ "$undo" = "yes" ]
+      then
+        undoit
+      else
+        applyit
+        repack_files
+        augment_files
+      fi
+    done
+  fi
 }
 
 # ------------------ one_year ----------------------
@@ -310,6 +414,7 @@ one_year()
 {
   # Repairing an entire year of files
   days=`/bin/ls $DMPYear`
+  #  days=038
   for day in $days
   do
     if [ ! -d "$DMPYear/$day" ]
@@ -319,6 +424,7 @@ one_year()
       # Get files with highest cycle numbers (except for DMP)
       thisDir=`pwd`
       DMPDay=$DMPYear/$day
+      SourceDay=$SourceYear/$day
       AttrDay=$AttrYear/$day
       cd $AttrDay
       AttrFile=`magnify L2GP-CO`
@@ -372,6 +478,16 @@ then
   NETCDFAUGMENT=$MLSTOOLS/aug_eos5
 fi
 
+if [ ! -x "$L2AUXDUMP" ]
+then
+  L2AUXDUMP=$MLSTOOLS/l2auxdump
+fi
+
+if [ ! -x "$FIXER" ]
+then
+  FIXER=$MLSTOOLS/fixAttribute
+fi
+
 MUSTLOG="no"
 MASTERLOG=/dev/null
 
@@ -394,12 +510,14 @@ my_name=repairDMP.sh
 I=repairDMP
 h5edit=""
 insertl2gpvalues=insertl2gpvalues
+resetl2gpDOIs=resetl2gpDOIs
 insertoptions="-v"
 split_path="`echo $0 | sed 's/'$I'/split_path/'`"
 dryrun="no"
 miscnotes=""
 more_opts="yes"
 redo="no"
+refresh="no"
 undo="no"
 AttrDir=""
 DMPDir=""
@@ -419,6 +537,10 @@ while [ "$more_opts" = "yes" ] ; do
        ;;
     -redo )
 	    redo="yes"
+	    shift
+       ;;
+    -refresh )
+	    refresh="yes"
 	    shift
        ;;
     -undo )
@@ -481,15 +603,18 @@ if [ "$debug" = 1 ]
 then
   echo "dryrun $dryrun"
   echo "redo $redo"
+  echo "refresh $refresh"
   echo "undo $undo"
   echo "h5edit $h5edit"
   echo "insertl2gpvalues $insertl2gpvalues"
+  echo "FIXER $FIXER"
   echo "AttrDir $AttrDir"
   echo "DMPDir $DMPDir"
   echo "AttrFile $AttrFile"
   echo "DMP file $DMP"
   echo "miscnotes $miscnotes"
   echo "H5REPACK $H5REPACK"
+  echo "L2AUXDUMP $L2AUXDUMP"
   echo "NETCDFAUGMENT $NETCDFAUGMENT"
   echo "years $years"
 fi
@@ -543,10 +668,11 @@ then
   fi
 elif [ "$years" = "" ]
 then
-  # DMPDir and AttrDir contain the year datum;
+  # DMPDir and AttrDir already contain the year datum;
   # you're doing just one year
   DMPYear=$DMPDir
   AttrYear=$AttrDir
+  SourceYear=$SourceDMPDir
   one_year
 else
   # DMPDir and AttrDir are jusst the version;
@@ -556,10 +682,14 @@ else
     logit "year     $year"
     DMPYear=$DMPDir/$year
     AttrYear=$AttrDir/$year
+    SourceYear=$SourceDMPDir/$year
     one_year
   done
 fi
 # $Log$
+# Revision 1.4  2024/07/19 16:43:22  pwagner
+# Fixed bug with multiple files
+#
 # Revision 1.3  2023/05/08 21:57:02  pwagner
 # Added -redo option
 #
