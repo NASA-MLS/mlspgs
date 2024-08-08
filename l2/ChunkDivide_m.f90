@@ -34,8 +34,8 @@ module ChunkDivide_m
     & Phyq_Dimensionless, Phyq_Length, Phyq_Mafs, Phyq_Time
   use L1bData, only: L1bData_T, Namelen, Precisionsuffix, &
     & AssembleL1Bqtyname, Dump, DeallocateL1BData, GetL1BFile, ReadL1BData
-  use MLSCommon, only: MLSFile_T, Tai93_Range_T
-  use MLSFinds, only: findfirst, FindLongestRange
+  use MLSCommon, only: MLSFile_T, Range_T, Tai93_Range_T, InRange
+  use MLSFinds, only: FindFirst, FindLast, FindLongestRange
   use MLSFiles, only: Dump, GetMLSFilebytype, MLS_OpenFile
   use MLSKinds, only: R8, Rp
   use MLSMessageModule, only: MLSMessage, MLSMsg_Error, MLSMsg_Warning
@@ -217,7 +217,7 @@ contains ! ===================================== Public Procedures =====
     integer, intent(in) :: ROOT    ! Root of the L2CF tree for ChunkDivide
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
     type( TAI93_Range_T ), intent(in) :: PROCESSINGRANGE
-    type( MLSChunk_T ), dimension(:), pointer  :: CHUNKS
+    type( MLSChunk_T ), dimension(:), pointer  :: CHUNKS, TempChunks
 
     ! Local variables
     integer(c_intptr_t) :: Addr    ! For tracing
@@ -233,6 +233,8 @@ contains ! ===================================== Public Procedures =====
     logical :: DidOne                   ! Found a ChunkDivide spec
     integer :: ERROR                    ! Error level
     integer :: CHUNK                    ! Loop counter
+    integer :: NumberOlds               ! Loop counter
+    integer :: OLDCHUNK                 ! Loop counter
 
     integer, parameter :: BadUnits = 1
     integer, parameter :: NotSpecified = BadUnits + 1
@@ -240,6 +242,7 @@ contains ! ===================================== Public Procedures =====
     integer, parameter :: invalid = Unnecessary + 1
     integer :: instrumentModule
     character (len=NameLen) :: InstrumentModuleName
+    type(Range_T), dimension(:), allocatable :: MAFRanges
 
     ! For timing
     logical :: Timing
@@ -407,16 +410,46 @@ contains ! ===================================== Public Procedures =====
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'ChunkDivide failed to produce any chunks' )
     endif
+    
+    !! Check that no chunk is wholly contained inside another
+    NumberOlds = size ( chunks )
+    allocate( MAFRanges( NumberOlds ) )
+    do chunk = 1, NumberOlds
+      MAFRanges(chunk)%Bottom = chunks(chunk)%firstMAFIndex
+      MAFRanges(chunk)%Top    = chunks(chunk)%lastMAFIndex
+    enddo
+    
+    call OutputNamedValue('Num Chunks before checking inRange', NumberOlds )
+    
+    nullify (TempChunks)
+    do OldChunk = 1, NumberOlds
+      if ( OldChunk == 1 ) then
+        if ( any ( inRange( MAFRanges(OldChunk), MAFRanges(2:NumberOlds) ) ) ) cycle
+      elseif ( OldChunk < size ( chunks ) ) then
+        if ( &
+          & any ( inRange( MAFRanges(OldChunk), MAFRanges(1:OldChunk-1) ) ) &
+          & .or. &
+          & any ( inRange( MAFRanges(OldChunk), MAFRanges(OldChunk+1:NumberOlds) ) ) &
+          & ) cycle
+      else
+        if ( any ( inRange( MAFRanges(OldChunk), MAFRanges(1:OldChunk-1) ) ) ) cycle
+      endif
+      call AddChunkToDatabase ( TempChunks, Chunks(OldChunk) )
+    enddo
+    call DestroyChunkDatabase ( chunks, shallow=.true. )
+    chunks => TempChunks
+    
+    call OutputNamedValue('Num Chunks after removing inRange', size ( chunks ) )
 
     ! Now go through and number the chunks
     do chunk = 1, size ( chunks )
       chunks(chunk)%chunkNumber = chunk
     end do
 
-    if ( swLevel > 0 ) then
+    if ( swLevel > 0 .or. .true. ) then
       call dump ( chunks )
     else
-      call outputnamedValue( 'Number of chunks', size(chunks) )
+      call OutputNamedValue( 'Number of chunks', size(chunks) )
     endif
     if ( specialDumpFile /= ' ' ) call revertOutput
     call trace_end ( "ChunkDivide", cond=toggle(gen) )
@@ -2073,7 +2106,7 @@ contains ! ===================================== Public Procedures =====
           newObstruction%range = .true.
           newObstruction%mafs(1) = maf - 1 + offset
         else
-          newObstruction%mafs(2) = maf - 2 + offset
+          newObstruction%mafs(2) = maf - 1 + offset
           call AddObstructionToDatabase ( obstructions, newObstruction )
           if ( swLevel > -1 ) &
             call outputNamedValue( &
@@ -2082,6 +2115,17 @@ contains ! ===================================== Public Procedures =====
       end if
       lastOneValid = valid(maf)
     end do
+    ! Check that the two mafs after the obstruction end are valid
+!     maf = newObstruction%mafs(2) + 1
+!     if ( maf <= size(valid) ) then
+!       if ( .not. valid(maf) ) print *, 'Warning not valid at maf ', maf
+!       newObstruction%mafs(2) = newObstruction%mafs(2) + 1
+!     endif
+!     maf = newObstruction%mafs(2) + 1
+!     if ( maf <= size(valid) ) then
+!       if ( .not. valid(maf) ) print *, 'Warning not valid at maf ', maf
+!       newObstruction%mafs(2) = newObstruction%mafs(2) + 1
+!     endif
 
     ! Make sure any range at the end gets added
     if ( .not. lastOneValid ) then
@@ -2095,15 +2139,19 @@ contains ! ===================================== Public Procedures =====
 
   ! ------------------------------------------------ SurveyL1BData -----
   subroutine SurveyL1BData ( processingRange, filedatabase, mafRange )
-    ! This goes through the L1B data files and tries to spot possible
+    ! This goes through the L1B o/a data file and tries to spot possible
     ! obstructions.
-    ! use MLSL2Options, only: sharedPCF
+    ! If any breaks in valid data are revealed, they will be added to 
+    ! the obsstructions database
     use Monotone, only: isMonotonic
-    type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
-    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-    type (MAFRange_T), intent(out) :: MAFRange
+    type (TAI93_Range_T), intent(in)        :: PROCESSINGRANGE
+    type (MLSFile_T), dimension(:), pointer :: FILEDATABASE
+    type (MAFRange_T), intent(out)          :: MAFRange
 
     ! Local variables
+    ! The following 5 l1b data sets will be examined for possible breaks
+    ! in valid data
+    type (L1BData_T) :: SCVEL           ! Read from L1BOA file
     type (L1BData_T) :: TAITIME         ! Read from L1BOA file
     type (L1BData_T) :: TPGEODALT       ! Read from L1BOA file
     type (L1BData_T) :: TPGEODANGLE     ! Read from L1BOA file
@@ -2118,17 +2166,22 @@ contains ! ===================================== Public Procedures =====
     integer :: NOMAFSREAD               ! From L1B
 
     logical :: THISONEVALID             ! To go into valid
+    logical, dimension(:), pointer :: ANGLEWASSMOOTHED ! Flag for each MAF
     logical, dimension(:), pointer :: VALID ! Flag for each MAF
     logical, dimension(:), pointer :: WASSMOOTHED ! Flag for each MAF
-    logical, dimension(:), pointer :: ANGLEWASSMOOTHED ! Flag for each MAF
 
+    real(r8) :: ORBYMAX                 ! Maximum value of orbY each maf
     real(r8) :: SCANMAX                 ! Range of scan each maf
     real(r8) :: SCANMIN                 ! Range of scan each maf
-    real(r8) :: ORBYMAX                 ! Maximum value of orbY each maf
+    real(r8) :: SCVELMAX                ! Maximum value of abs(sc/VelECR)
 
     integer   ::                       l1b_hdf_version
-    character(len=namelen) ::         MAF_start, tp_alt, tp_orbY, tp_angle
-    type (MLSFile_T), pointer             :: L1BFile
+    character(len=namelen) ::          MAF_start
+    character(len=namelen) ::          sc_vel
+    character(len=namelen) ::          tp_alt
+    character(len=namelen) ::          tp_orbY
+    character(len=namelen) ::          tp_angle
+    type (MLSFile_T), pointer       :: L1BFile
     ! Executable code
     swlevel = switchDetail(switches, 'chu' )
 
@@ -2205,6 +2258,10 @@ contains ! ===================================== Public Procedures =====
       call Allocate_test ( valid, noMAFs, 'valid', ModuleName )
       call Allocate_test ( anglewasSmoothed, noMAFs, 'angleWasSmoothed', ModuleName )
       call Allocate_test ( wasSmoothed, noMAFs, 'wasSmoothed', ModuleName )
+      ! How to choose initial values for valid:
+      ! It depends on whether we insist "both" modules are critical
+      ! or not.
+      ! In practice we will never insist.
       if ( ChunkDivideConfig%criticalModules == l_both ) then
         valid = .true.
       else
@@ -2212,6 +2269,7 @@ contains ! ===================================== Public Procedures =====
       endif
       do mod = 1, size(modules)
         call get_string ( modules(mod)%name, modNameStr, strip=.true. )
+        sc_vel = 'sc/VelECR'
         tp_alt = AssembleL1BQtyName ( trim(modNameStr)//'.tpGeodAlt', &
           & l1b_hdf_version, .false. )
         tp_orby = AssembleL1BQtyName ( trim(modNameStr)//'.tpOrbY', &
@@ -2221,6 +2279,11 @@ contains ! ===================================== Public Procedures =====
         if ( .not. modules(mod)%spacecraft .and. &
           & ( any ( ChunkDivideConfig%criticalModules == (/ l_either, l_both /) ) .or. &
           &   lit_indices(ChunkDivideConfig%criticalModules) == modules(mod)%name ) ) then
+          ! Read the s/c velocity
+          call ReadL1BData ( L1BFile, trim(sc_vel), &
+            & scVel, noMAFsRead, flag, &
+            & firstMAF=mafRange%Expanded(1), lastMAF=mafRange%Expanded(2), &
+            & dontPad=DONTPAD )
           ! Read the tangent point altitude
           call ReadL1BData ( L1BFile, trim(tp_alt), &
             & tpGeodAlt, noMAFsRead, flag, &
@@ -2242,11 +2305,13 @@ contains ! ===================================== Public Procedures =====
                 & 'tpGeodAngle is not monotonic--may quit', MLSFile=L1BFile )
             endif
           endif
+          ! For a reason forgotten in the fog of antiquity we, and mlsl2,
+          ! smooth out discontinuities in the tp quantities if possible.
           call smoothOutDroppedMAFs(tpGeodAngle%dpField, angleWasSmoothed, &
             & monotonize=.true.)
           call smoothOutDroppedMAFs(tpGeodAlt%dpField, wasSmoothed)
           call smoothOutDroppedMAFs(tpOrbY%dpField)
-          if ( swLevel > -1 ) then
+          if ( swLevel > 1 ) then
             call dump( angleWasSmoothed, 'smoothed because of geodetic angle' )
             call dump( wasSmoothed, 'smoothed because of geodetic altitude' )
           endif
@@ -2256,6 +2321,7 @@ contains ! ===================================== Public Procedures =====
             scanMax = maxval ( tpGeodAlt%dpField(1,:,maf) )
             scanMin = minval ( tpGeodAlt%dpField(1,:,maf) )
             orbyMax = maxval ( tpOrbY%dpField(1,:,maf) )
+            scVelMax = maxval ( abs(scVel%dpField(1,:,maf)) )
 
             thisOneValid = ( &
               &   scanMin >= ChunkDivideConfig%scanLowerLimit(1) .and. &
@@ -2264,6 +2330,9 @@ contains ! ===================================== Public Procedures =====
               &   scanMax <= ChunkDivideConfig%scanUpperLimit(2) )
             if ( ChunkDivideConfig%maxOrbY > 0.0 ) then
               thisOneValid = thisOneValid .and. orbYMax < ChunkDivideConfig%maxOrbY
+            end if
+            if ( ChunkDivideConfig%maxscVel > 0.0 ) then
+              thisOneValid = thisOneValid .and. scVelMax < ChunkDivideConfig%maxscVel
             end if
             ! this one is not valid if it's valid only by virtue
             ! of having been smoothed
@@ -2278,9 +2347,15 @@ contains ! ===================================== Public Procedures =====
           call DeallocateL1BData ( tpgeodalt )
           call DeallocateL1BData ( tpgeodangle )
           call DeallocateL1BData ( tporby )
+          call DeallocateL1BData ( scVel )
         end if                          ! Consider this module
       end do                            ! Module Loop
       ! Convert this information into obstructions and tidy up.
+      if ( swLevel > 1 ) call Dump( valid, 'valid array passed to ConvertFlagsToObstructions' )
+      maf = FindFirst ( .not. valid )
+      call OutputNamedValue ( 'First not valid', maf )
+      maf = FindLast ( .not. valid )
+      call OutputNamedValue ( 'Last not valid', maf )
       call ConvertFlagsToObstructions ( valid, obstructions, &
         & obstructionType='scan' )
       call Deallocate_test ( valid, 'valid', ModuleName )
@@ -3028,6 +3103,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.139  2024/08/08 20:42:22  pwagner
+! Fixed two bugs in handling level 1 obstructions
+!
 ! Revision 2.138  2020/07/22 22:50:04  pwagner
 ! Added chunks%Start, EndTimes to Dumps ending ChunkDivide_Orbital
 !
