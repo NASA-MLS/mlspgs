@@ -219,7 +219,7 @@ module MLSCommon                ! Common definitions for the MLS software
   end interface
 
   interface inRange
-    module procedure inRange_r4, inRange_r8, inRange_int
+    module procedure inRange_r4, inRange_r8, inRange_int, inRange_range
   end interface
 
   interface is_a_fill_value
@@ -328,6 +328,9 @@ module MLSCommon                ! Common definitions for the MLS software
   end type Fileids_T
 
   ! A PCFid range
+  ! Also could be a ranges of MAFs
+  ! Should we put one inside the MLSChunk_T?
+  ! Or should we create a type-limited function inside the MLSChunk_T?
   type Range_T
     integer :: Bottom   = 0
     integer :: Top      = 0
@@ -524,6 +527,14 @@ contains
     logical                   :: relation
     relation = (arg < (range%top + 1)) .and. (arg > (range%bottom - 1))
   end function inRange_int
+
+  elemental function inRange_range(arg, range) result(relation)
+    ! Is arg wholly contained in range?
+    type(Range_T), intent(in) :: arg
+    type(Range_T), intent(in) :: range
+    logical                   :: relation
+    relation = (arg%top < (range%top + 1)) .and. (arg%bottom > (range%bottom - 1))
+  end function inRange_range
 
   elemental function inRange_r4(arg, range) result(relation)
     ! Is arg in range?
@@ -828,6 +839,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.62  2024/08/08 20:37:33  pwagner
+! inRange now works with arg that is a range,  too
+!
 ! Revision 2.61  2023/09/28 20:57:28  pwagner
 ! Added split_name_extension
 !
