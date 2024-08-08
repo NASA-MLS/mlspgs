@@ -245,6 +245,7 @@ SHELL = /bin/sh
 # end_stmts      
 # extinctionmaker      
 # f90tex         
+# fixAttribute
 # fixDOI  
 # h5cat          
 # Goldbrick_More
@@ -497,7 +498,7 @@ MIESOURCESWITHHDF = $(shell ${REECHO} -excl $(MIE)/WriteNoHDF_m.f90 $(MIE)/*.f90
 MIESOURCESWOHDF = $(shell ${REECHO} -excl $(MIE)/WriteHDF_m.f90 $(MIE)/*.f90 $(MIE)/math77/*.f)
 
 MLSTOOLS = chunktimes checkpvmup compare createattributes \
-  dateconverter extinctionmaker fixDOI \
+  dateconverter extinctionmaker fixAttribute fixDOI \
   Goldbrick_More heconvert h5subset h5cat hl \
   insertl2gpvalues killmaster \
   l1bcat l1bdiff l1bdump l1h5subset \
@@ -975,6 +976,11 @@ extinctionmaker: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/extinctionmaker.f90 l2
 f90tex: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/f90tex.f90
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+fixAttribute: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/fixAttribute.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
 fixDOI: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/fixDOI.f90 l1--itm
@@ -1602,6 +1608,9 @@ tools: $(MLSTOOLS)
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.39  2024/01/18 22:14:38  pwagner
+# Ensure that install-nrt also installs needed tools
+#
 # Revision 1.38  2023/09/15 16:38:34  pwagner
 # Can now build ncl2gpcat tool
 #
