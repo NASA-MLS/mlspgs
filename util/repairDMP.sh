@@ -169,7 +169,7 @@ undoit()
 }
       
 #---------------------------- applyit
-# Apply the repair by using va;ues from the old DMP and attributes
+# Apply the repair by using values from the old DMP and attributes
 # copied from the legitimate L2GP-CO.
 
 applyit()
@@ -212,14 +212,16 @@ applyit()
         # non-MERRA
         commando $resetl2gpDOIs -v -a identifier_product_doi \
           -V "10.5067/AURA/MLS/DATA2525" "$DMP"
-        ShortName=MLSL2EDMP
+        LongName="MLS L2 EDMP"
+        ShortName=ML2EDMP
         ShortDOI=DATA2525
       else
         # MERRA
         commando $resetl2gpDOIs -v -a identifier_product_doi \
           -V "10.5067/AURA/MLS/DATA2524" "$DMP"
-        ShortName=MLSL2EDMP
+        ShortName=ML2EDMP
         ShortDOI=DATA2524
+        LongName="MLS L2 EDMP"
       fi
       # Last but not least, the metadata must be edited
       # Because we stopped archiving .met files we must extract it instead
@@ -272,7 +274,36 @@ applyit()
       echo sed 's/'"$vold"'/'"$vnew"'/g' $DMPxml $DMPxml.temp
       sed 's/'"$vold"'/'"$vnew"'/g' $DMPxml > $DMPxml.temp
       mv $DMPxml.temp $DMPxml
-      
+
+      #              (4)
+      vnew=$LongName
+      # These lines are not yet in the metadata files so they must be added
+      # OBJECT                 = LONGNAME
+      #   NUM_VAL              = 1
+      #   VALUE                = "$LONGNAME"
+      # END_OBJECT             = LONGNAME
+      sed -n '1,/END_OBJECT             = SHORTNAME/ p' $DMPmet > $DMPmet.tmp.1  
+      sed -n '/END_GROUP              = COLLECTIONDESCRIPTIONCLASS/,$ p' $DMPmet > $DMPmet.tmp.2  
+      cat $DMPmet.tmp.1 > $DMPmet.tmp
+      echo "" >> $DMPmet.tmp
+      echo "    OBJECT                 = LONGNAME  " >> $DMPmet.tmp
+      echo "      NUM_VAL              = 1          " >> $DMPmet.tmp
+      echo "      VALUE                = "$vnew >> $DMPmet.tmp
+      echo "    END_OBJECT             = LONGNAME  " >> $DMPmet.tmp
+      echo "" >> $DMPmet.tmp
+      cat $DMPmet.tmp.2 >> $DMPmet.tmp
+      mv $DMPmet.temp $DMPmet
+
+      # Do this next for the xml-formatted metadata
+      # These lines are not yet in the metadata files so they must be added
+      # <LongName>$LongName</LongName>
+      sed -n '1,/<ShortName>/ p' $DMPxml > $DMPxml.tmp.1  
+      sed -n '/<VersionID>/,$ p' $DMPxml > $DMPxml.tmp.2  
+      cat $DMPxml.tmp.1 > $DMPxml.tmp
+      echo "      <ShortName>$LongName</ShortName>" >> $DMPxml.tmp
+      cat $DMPxml.tmp.2 >> $DMPxml.tmp
+      mv $DMPxml.temp $DMPxml
+
       # Now insert the two kinds of metadata
       echo "Now insert the two kinds of metadata"
       echo $FIXER -c $DMPmet $DMP
@@ -687,6 +718,9 @@ else
   done
 fi
 # $Log$
+# Revision 1.5  2024/08/01 20:48:40  pwagner
+# Copies metadata, too; adds function of repairing doi
+#
 # Revision 1.4  2024/07/19 16:43:22  pwagner
 # Fixed bug with multiple files
 #
